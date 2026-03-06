@@ -1861,10 +1861,10 @@ function logJobProgress(jobId, stage, qty, person) {
 function progressDisplay(job) {
   const p = getJobProgress(job);
   const ordered = p.ordered;
-  const main = `${p.qcPassed.toLocaleString()} / ${ordered.toLocaleString()}`;
-  const sub = ordered === 0 && p.pressed === 0
-    ? '0 pressed'
-    : `${p.pressed.toLocaleString()} pressed${p.rejected > 0 ? ' · ' + p.rejected.toLocaleString() + ' rej' : ''}`;
+  const main = `${p.pressed.toLocaleString()} / ${ordered.toLocaleString()}`;
+  const sub = p.qcPassed === 0 && p.rejected === 0
+    ? '0 QC passed'
+    : `${p.qcPassed.toLocaleString()} QC passed${p.rejected > 0 ? ' · ' + p.rejected.toLocaleString() + ' rej' : ''}`;
   return { main, sub, overQty: p.pressed > ordered, p };
 }
 
@@ -2052,7 +2052,7 @@ function renderPresses() {
     const job = p.job ? S.jobs.find(j => j.id === p.job) : null;
     const ah = job ? assetHealth(job) : {done:0, total:0, pct:0};
     const prog = job ? progressDisplay(job) : null;
-    const barPct = prog && prog.p.ordered ? Math.min(100, (prog.p.qcPassed / prog.p.ordered) * 100) : 0;
+    const barPct = prog && prog.p.ordered ? Math.min(100, (prog.p.pressed / prog.p.ordered) * 100) : 0;
     const segs = ASSET_DEFS.slice(0,8).map(a => {
       const got = job && job.assets && job.assets[a.key]?.received;
       return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
