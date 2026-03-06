@@ -450,6 +450,13 @@ body::after {
 .abar-seg.done { background: var(--g); }
 .abar-seg.warn { background: var(--w); }
 
+.pc-progress { margin-top:10px; padding-top:8px; border-top:1px solid var(--b2); }
+.pc-progress-label { font-size:11px; color: var(--g); letter-spacing:2px; }
+.pc-progress-sub { font-size:10px; color: var(--d3); margin-top:2px; }
+.pc-progress-bar-outer { height:4px; background: var(--s3); border:1px solid var(--b2); margin-top:6px; overflow:hidden; }
+.pc-progress-bar-fill { height:100%; background: var(--g); transition:width 0.3s; }
+.pc-progress-over { font-size:9px; color: var(--w); letter-spacing:2px; margin-top:4px; }
+
 .pc-controls { margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; }
 .pc-select {
   flex:1; min-width:0;
@@ -472,6 +479,11 @@ thead th {
 tbody tr { border-bottom:1px solid var(--b1); transition:background 0.1s; }
 tbody tr:hover { background: var(--s2); }
 tbody td { padding:9px 10px; vertical-align:middle; }
+
+/* Progress column (floor + jobs table) */
+.td-progress { font-size:12px; white-space:nowrap; }
+.progress-main { color: var(--g); font-weight:600; }
+.progress-sub { font-size:11px; color: var(--d3); margin-top:2px; }
 
 /* Asset health inline */
 .ah { display:flex; align-items:center; gap:5px; font-size:12px; white-space:nowrap; }
@@ -928,6 +940,9 @@ body.tv #tv { display:flex; }
 }
 .jc-detail { font-size:12px; color: var(--d2); }
 .jc-detail span { color: var(--d3); }
+.jc-progress { margin-top:8px; padding-top:6px; border-top:1px solid var(--b1); display:flex; flex-direction:column; gap:2px; }
+.jc-progress-main { font-size:12px; color: var(--g); }
+.jc-progress-sub { font-size:11px; color: var(--d3); }
 
 /* ============================================================ IDLE / EMPTY PRESS CARDS
    Active presses should draw the eye. Idle ones should recede.
@@ -1054,7 +1069,7 @@ body.tv #tv { display:flex; }
       <table>
         <thead><tr>
           <th>CATALOG</th><th>ARTIST / ALBUM</th><th>FORMAT</th>
-          <th>STATUS</th><th>DUE</th><th>ASSETS</th><th>LOCATION</th><th></th>
+          <th>STATUS</th><th>DUE</th><th>ASSETS</th><th>PROGRESS</th><th>LOCATION</th><th></th>
         </tr></thead>
         <tbody id="floorBody"></tbody>
       </table>
@@ -1087,7 +1102,7 @@ body.tv #tv { display:flex; }
         <thead><tr>
           <th>CATALOG</th><th>ARTIST</th><th>ALBUM</th><th>FORMAT</th>
           <th>COLOR / WT</th><th>QTY</th><th>+10%</th>
-          <th>STATUS</th><th>DUE</th><th>PRESS</th><th>ASSETS</th><th>LOCATION</th><th></th>
+          <th>STATUS</th><th>DUE</th><th>PRESS</th><th>ASSETS</th><th>PROGRESS</th><th>LOCATION</th><th></th>
         </tr></thead>
         <tbody id="jobsBody"></tbody>
       </table>
@@ -1843,6 +1858,16 @@ function logJobProgress(jobId, stage, qty, person) {
   return { ok: true };
 }
 
+function progressDisplay(job) {
+  const p = getJobProgress(job);
+  const ordered = p.ordered;
+  const main = `${p.qcPassed.toLocaleString()} / ${ordered.toLocaleString()}`;
+  const sub = ordered === 0 && p.pressed === 0
+    ? '0 pressed'
+    : `${p.pressed.toLocaleString()} pressed${p.rejected > 0 ? ' · ' + p.rejected.toLocaleString() + ' rej' : ''}`;
+  return { main, sub, overQty: p.pressed > ordered, p };
+}
+
 // Smart polling — skip full render if panel is open (prevents focus loss)
 let pollTimer = null;
 function startPolling() {
@@ -2026,6 +2051,8 @@ function renderPresses() {
   el.innerHTML = S.presses.map(p => {
     const job = p.job ? S.jobs.find(j => j.id === p.job) : null;
     const ah = job ? assetHealth(job) : {done:0, total:0, pct:0};
+    const prog = job ? progressDisplay(job) : null;
+    const barPct = prog && prog.p.ordered ? Math.min(100, (prog.p.qcPassed / prog.p.ordered) * 100) : 0;
     const segs = ASSET_DEFS.slice(0,8).map(a => {
       const got = job && job.assets && job.assets[a.key]?.received;
       return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
@@ -2051,6 +2078,12 @@ function renderPresses() {
           <div class="pc-assets">
             <div class="pc-assets-label">ASSETS ${ah.done}/${ah.total}</div>
             <div class="abar">${segs}</div>
+          </div>
+          <div class="pc-progress">
+            <div class="pc-progress-label">PROGRESS ${prog.main}</div>
+            <div class="pc-progress-sub">${prog.sub}</div>
+            <div class="pc-progress-bar-outer"><div class="pc-progress-bar-fill" style="width:${barPct}%"></div></div>
+            ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
           </div>
         ` : `<div class="pc-idle-msg">No job assigned</div>`}
         ${isAdmin ? `
@@ -2117,10 +2150,12 @@ function renderFloor() {
   }
 
   if (!jobs.length) {
-    el.innerHTML = `<tr><td colspan="8" class="empty">${q ? 'No matches for "' + q + '"' : 'No active jobs'}</td></tr>`;
+    el.innerHTML = `<tr><td colspan="9" class="empty">${q ? 'No matches for "' + q + '"' : 'No active jobs'}</td></tr>`;
     return;
   }
-  el.innerHTML = jobs.map(j => `
+  el.innerHTML = jobs.map(j => {
+    const prog = progressDisplay(j);
+    return `
     <tr>
       <td style="color:var(--w);font-weight:700">${j.catalog || '—'}</td>
       <td>
@@ -2135,10 +2170,15 @@ function renderFloor() {
       </td>
       <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
       <td>${ahHTML(j)}</td>
+      <td class="td-progress">
+        <div class="progress-main">${prog.main}</div>
+        <div class="progress-sub">${prog.sub}</div>
+      </td>
       <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
       <td><button class="open-btn" onclick="openPanel('${j.id}')">OPEN →</button></td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   // Recently completed — shows last 5 "done" jobs so they don't vanish
   const doneEl = document.getElementById('recentDone');
@@ -2269,6 +2309,7 @@ function renderJobs() {
   if (tbody) {
     tbody.innerHTML = jobs.map(j => {
       const ah = assetHealth(j);
+      const prog = progressDisplay(j);
       return `<tr>
         <td style="color:var(--w);font-weight:700">${j.catalog || '—'}</td>
         <td style="color:var(--d)">${j.artist || '—'}</td>
@@ -2281,6 +2322,10 @@ function renderJobs() {
         <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
         <td style="color:var(--d3);font-size:12px">${j.press || '—'}</td>
         <td>${ahHTML(j)}</td>
+        <td class="td-progress">
+          <div class="progress-main">${prog.main}</div>
+          <div class="progress-sub">${prog.sub.split(' · ')[0]}</div>
+        </td>
         <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
         <td><button class="open-btn" onclick="openPanel('${j.id}')">OPEN</button></td>
       </tr>`;
@@ -2291,6 +2336,7 @@ function renderJobs() {
   if (cards) {
     cards.innerHTML = jobs.map(j => {
       const ah = assetHealth(j);
+      const prog = progressDisplay(j);
       return `
         <div class="job-card st-${j.status}" onclick="openPanel('${j.id}')">
           <div class="jc-top">
@@ -2311,6 +2357,10 @@ function renderJobs() {
             ${ahHTML(j)}
             ${j.press ? `<span class="jc-detail">⬡ ${j.press}</span>` : ''}
             ${j.location ? `<span class="loc">${j.location}</span>` : ''}
+          </div>
+          <div class="jc-progress">
+            <span class="jc-progress-main">Progress: ${prog.main}</span>
+            <span class="jc-progress-sub">${prog.sub}</span>
           </div>
         </div>
       `;
