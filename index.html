@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&family=Inconsolata:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
-   DESIGN SYSTEM — PMP OPS v7
+   DESIGN SYSTEM — PMP OPS v7.1
    Color carries meaning:
    --g   = GOOD / COMPLETE / ONLINE
    --w   = WARNING / NEEDS ATTENTION
@@ -989,6 +989,13 @@ body.tv #tv { display:flex; }
   background: var(--s3);
 }
 </style>
+<!-- Supabase: set URL and anon key (e.g. from Vercel env at build, or paste here) -->
+<script>
+  window.SUPABASE_URL = window.SUPABASE_URL || '';
+  window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || '';
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 </head>
 <body>
 
@@ -1177,7 +1184,7 @@ body.tv #tv { display:flex; }
 <!-- SYNC BAR -->
 <div class="syncbar">
   <span id="syncStatus" class="sync-ok">● READY</span>
-  <span style="color:var(--d3);font-size:10px;letter-spacing:2px;">PMP OPS v7</span>
+  <span style="color:var(--d3);font-size:10px;letter-spacing:2px;">PMP OPS v7.1</span>
 </div>
 
 <!-- ============================================================ SLIDE PANEL — Unified single-scroll form -->
@@ -1609,7 +1616,24 @@ const SAMPLE_JOBS = [
       mktSticker:{received:false, date:'', person:'', na:false, note:''},
       upcSticker:{received:true, date:'2026-03-01', person:'Floor', na:false, note:''},
       outerPkg:{received:true, date:'2026-03-03', person:'Floor', na:false, note:'Shrink wrap ready'},
-    }
+    },
+    progressLog:[
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T09:15:00Z'},
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T10:30:00Z'},
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T11:45:00Z'},
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T13:20:00Z'},
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T14:35:00Z'},
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-05T08:45:00Z'},
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-05T10:00:00Z'},
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-05T11:15:00Z'},
+      {qty:22, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T15:00:00Z'},
+      {qty:24, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T16:20:00Z'},
+      {qty:25, stage:'qc_passed', person:'Alex', timestamp:'2026-03-05T09:30:00Z'},
+      {qty:23, stage:'qc_passed', person:'Alex', timestamp:'2026-03-05T11:00:00Z'},
+      {qty:3, stage:'rejected', person:'Alex', timestamp:'2026-03-04T15:00:00Z'},
+      {qty:1, stage:'rejected', person:'Alex', timestamp:'2026-03-04T16:20:00Z'},
+      {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-03-05T11:00:00Z'},
+    ],
   },
   {
     id:'s2', catalog:'BRKEP0042', artist:'Glass Hammer', album:'Fracture Lines',
@@ -1636,7 +1660,13 @@ const SAMPLE_JOBS = [
       mktSticker:{received:false, date:'', person:'', na:true, note:''},
       upcSticker:{received:false, date:'', person:'', na:false, note:''},
       outerPkg:{received:false, date:'', person:'', na:false, note:''},
-    }
+    },
+    progressLog:[
+      {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-05T13:00:00Z'},
+      {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-05T14:30:00Z'},
+      {qty:48, stage:'qc_passed', person:'Alex', timestamp:'2026-03-05T15:45:00Z'},
+      {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-03-05T15:45:00Z'},
+    ],
   },
   {
     id:'s3', catalog:'RCL7-009', artist:'The Satellites', album:'Radio Silence b/w Dead Air',
@@ -1663,7 +1693,25 @@ const SAMPLE_JOBS = [
       mktSticker:{received:false, date:'', person:'', na:true, note:''},
       upcSticker:{received:true, date:'2026-03-03', person:'Floor', na:false, note:''},
       outerPkg:{received:true, date:'2026-03-04', person:'Floor', na:false, note:'Polybags ready'},
-    }
+    },
+    progressLog:[
+      {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T09:00:00Z'},
+      {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T10:15:00Z'},
+      {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T11:30:00Z'},
+      {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T13:00:00Z'},
+      {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T14:15:00Z'},
+      {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T15:30:00Z'},
+      {qty:30, stage:'pressed', person:'Colby', timestamp:'2026-03-04T08:30:00Z'},
+      {qty:48, stage:'qc_passed', person:'Alex', timestamp:'2026-03-03T15:00:00Z'},
+      {qty:49, stage:'qc_passed', person:'Alex', timestamp:'2026-03-03T16:30:00Z'},
+      {qty:50, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T09:00:00Z'},
+      {qty:50, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T10:30:00Z'},
+      {qty:50, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T11:45:00Z'},
+      {qty:48, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T13:00:00Z'},
+      {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-03-03T15:00:00Z'},
+      {qty:1, stage:'rejected', person:'Alex', timestamp:'2026-03-03T16:30:00Z'},
+      {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-03-04T13:00:00Z'},
+    ],
   },
   {
     id:'s4', catalog:'HNYLP2200', artist:'Magnolia Sound', album:'Honey & Smoke',
@@ -1690,7 +1738,8 @@ const SAMPLE_JOBS = [
       mktSticker:{received:false, date:'', person:'', na:false, note:''},
       upcSticker:{received:false, date:'', person:'', na:false, note:''},
       outerPkg:{received:false, date:'', person:'', na:false, note:''},
-    }
+    },
+    progressLog:[],
   },
   {
     id:'s5', catalog:'DSTLP0887', artist:'Cold Frequency', album:'Dissolve',
@@ -1718,7 +1767,23 @@ const SAMPLE_JOBS = [
       mktSticker:{received:true, date:'2026-02-20', person:'Floor', na:false, note:''},
       upcSticker:{received:true, date:'2026-02-20', person:'Floor', na:false, note:''},
       outerPkg:{received:true, date:'2026-02-22', person:'Floor', na:false, note:''},
-    }
+    },
+    progressLog:[
+      {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-24T09:00:00Z'},
+      {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-24T11:00:00Z'},
+      {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-24T14:00:00Z'},
+      {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-25T09:00:00Z'},
+      {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-25T11:00:00Z'},
+      {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-02-25T13:00:00Z'},
+      {qty:98, stage:'qc_passed', person:'Alex', timestamp:'2026-02-24T15:00:00Z'},
+      {qty:99, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T10:00:00Z'},
+      {qty:100, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T12:00:00Z'},
+      {qty:100, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T14:00:00Z'},
+      {qty:100, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T15:30:00Z'},
+      {qty:25, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T16:00:00Z'},
+      {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-02-24T15:00:00Z'},
+      {qty:1, stage:'rejected', person:'Alex', timestamp:'2026-02-25T10:00:00Z'},
+    ],
   },
 ];
 
@@ -1767,39 +1832,80 @@ let panelOpen = false;
 // ============================================================
 // STORAGE — unified on window.storage, no localStorage split
 // ============================================================
-const STORE_KEY = 'pmp4_data';
+const STORE_KEY = 'pmp_ops_data';
 
 async function safeGet(k) {
-  try { const r = await window.storage.get(k, true); return r ? r.value : null; }
-  catch { return null; }
+  // Try window.storage first (Claude artifact environment)
+  try {
+    if (window.storage && typeof window.storage.get === 'function') {
+      const r = await window.storage.get(k, true);
+      return r ? r.value : null;
+    }
+  } catch {}
+  // Fallback: localStorage (Vercel / standalone deployment)
+  try {
+    const v = localStorage.getItem(k);
+    return v || null;
+  } catch { return null; }
 }
 async function safeSet(k, v) {
-  try { await window.storage.set(k, JSON.stringify(v), true); }
-  catch {}
+  const data = JSON.stringify(v);
+  // Try window.storage first (Claude artifact environment)
+  try {
+    if (window.storage && typeof window.storage.set === 'function') {
+      await window.storage.set(k, data, true);
+      return;
+    }
+  } catch {}
+  // Fallback: localStorage
+  try {
+    localStorage.setItem(k, data);
+  } catch {}
+}
+
+function useSupabase() {
+  if (window.PMP_SUPABASE_INITIALIZED) return window.PMP_USE_SUPABASE;
+  window.PMP_SUPABASE_INITIALIZED = true;
+  window.PMP_USE_SUPABASE = !!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY && window.PMP?.Supabase?.initSupabase?.());
+  return window.PMP_USE_SUPABASE;
 }
 
 async function loadAll() {
   sync('loading', 'save');
   try {
-    const raw = await safeGet(STORE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      if (data.jobs) S.jobs = data.jobs;
-      if (data.presses) S.presses = data.presses;
-      if (data.todos) S.todos = data.todos;
-      if (data.qcLog) S.qcLog = data.qcLog;
-      if (data.lastReset) S._lastReset = data.lastReset;
+    if (useSupabase()) {
+      const data = await window.PMP.Supabase.loadAllData();
+      S.jobs = data.jobs || S.jobs;
+      S.presses = data.presses || S.presses;
+      S.todos = data.todos || S.todos;
+      S.qcLog = data.qcLog || S.qcLog;
+      S.jobs.forEach(ensureJobProgressLog);
+      checkTodoReset();
+      if (S.todos) window.PMP.Supabase.saveTodos(S.todos).catch(() => {});
+      sync('● SYNCED', 'ok');
+    } else {
+      const raw = await safeGet(STORE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.jobs) S.jobs = data.jobs;
+        if (data.presses) S.presses = data.presses;
+        if (data.todos) S.todos = data.todos;
+        if (data.qcLog) S.qcLog = data.qcLog;
+        if (data.lastReset) S._lastReset = data.lastReset;
+      }
+      S.jobs.forEach(ensureJobProgressLog);
+      checkTodoReset();
+      sync('● SYNCED', 'ok');
     }
-    S.jobs.forEach(ensureJobProgressLog);
-    checkTodoReset();
-    sync('● SYNCED', 'ok');
-  } catch {
+  } catch (e) {
+    console.error(e);
     sync('● LOCAL', 'ok');
   }
   renderAll();
 }
 
 function scheduleSave() {
+  if (useSupabase()) return;
   sync('● SAVING…', 'save');
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
@@ -1865,13 +1971,12 @@ function logJobProgress(jobId, stage, qty, person) {
     const newRej = cur.rejected + (stage === 'rejected' ? q : 0);
     if (newQC + newRej > cur.pressed) return { ok: false, error: 'qc_passed + rejected cannot exceed pressed' };
   }
-  job.progressLog.push({
-    qty: q,
-    stage,
-    person: (person != null && String(person).trim()) ? String(person).trim() : 'Unknown',
-    timestamp: new Date().toISOString(),
-  });
-  scheduleSave();
+  const personVal = (person != null && String(person).trim()) ? String(person).trim() : 'Unknown';
+  const timestamp = new Date().toISOString();
+  job.progressLog.push({ qty: q, stage, person: personVal, timestamp });
+  if (useSupabase()) {
+    window.PMP.Supabase.logProgress({ job_id: jobId, qty: q, stage, person: personVal, timestamp }).then(() => sync('● SYNCED', 'ok')).catch((e) => { console.error(e); toastError('LOG FAILED'); });
+  } else scheduleSave();
   return { ok: true };
 }
 
@@ -2138,13 +2243,20 @@ function assignJob(pid, jid) {
       if (j.id === jid) j.press = p.name;
       // Clear old assignment if another press had this job
     });
-    scheduleSave(); renderAll();
+    if (useSupabase()) window.PMP.Supabase.savePresses(S.presses).then(() => sync('● SYNCED', 'ok')).catch(() => {});
+    else scheduleSave();
+    renderAll();
   }
 }
 
 function setPressStatus(pid, st) {
   const p = S.presses.find(x => x.id === pid);
-  if (p) { p.status = st; scheduleSave(); renderAll(); }
+  if (p) {
+    p.status = st;
+    if (useSupabase()) window.PMP.Supabase.savePresses(S.presses).then(() => sync('● SYNCED', 'ok')).catch(() => {});
+    else scheduleSave();
+    renderAll();
+  }
 }
 
 // ============================================================
@@ -2239,16 +2351,16 @@ function cycleStatus(jid) {
   const cur = STATUS_ORDER.indexOf(j.status);
   const next = (cur + 1) % STATUS_ORDER.length;
   j.status = STATUS_ORDER[next];
-  scheduleSave();
+  if (useSupabase()) window.PMP.Supabase.saveJob(j).then(() => sync('● SYNCED', 'ok')).catch(() => {});
+  else scheduleSave();
   renderAll();
 
-  // Show undo toast — especially important when cycling to "done"
-  // since the job disappears from the active table
   showUndoToast(
     `${j.catalog || j.artist || 'Job'} → ${j.status.toUpperCase()}`,
     () => {
       j.status = prevStatus;
-      scheduleSave();
+      if (useSupabase()) window.PMP.Supabase.saveJob(j).then(() => sync('● SYNCED', 'ok')).catch(() => {});
+      else scheduleSave();
       renderAll();
       toast('UNDONE');
     }
@@ -2438,16 +2550,22 @@ function toggleTodo(key, idx) {
   const t = S.todos[key][idx];
   t.done = !t.done;
   t.who = t.done ? (S.mode === 'admin' ? 'Admin' : 'Floor') : '';
-  scheduleSave(); renderTodos();
+  if (useSupabase()) window.PMP.Supabase.saveTodos(S.todos).then(() => sync('● SYNCED', 'ok')).catch(() => {}); else scheduleSave();
+  renderTodos();
 }
-function removeTodo(key, idx) { S.todos[key].splice(idx, 1); scheduleSave(); renderTodos(); }
+function removeTodo(key, idx) {
+  S.todos[key].splice(idx, 1);
+  if (useSupabase()) window.PMP.Supabase.saveTodos(S.todos).then(() => sync('● SYNCED', 'ok')).catch(() => {}); else scheduleSave();
+  renderTodos();
+}
 function addTodo(key) {
   const el = document.getElementById('ta-' + key);
   const text = el.value.trim();
   if (!text) return;
   S.todos[key].push({id:'u' + Date.now(), text, done:false, who:''});
   el.value = '';
-  scheduleSave(); renderTodos();
+  if (useSupabase()) window.PMP.Supabase.saveTodos(S.todos).then(() => sync('● SYNCED', 'ok')).catch(() => {}); else scheduleSave();
+  renderTodos();
 }
 
 // ============================================================
@@ -2472,9 +2590,11 @@ function logQC(type) {
   S.qcLog.unshift({time, type, job, date});
   if (S.qcLog.length > 1000) S.qcLog.splice(1000);
 
-  // Snap view back to today when logging
+  if (useSupabase()) window.PMP.Supabase.logQC({ time, type, job, date }).then(() => sync('● SYNCED', 'ok')).catch((e) => { console.error(e); toast('QC LOG FAILED'); });
+  else scheduleSave();
   qcViewDate = date;
-  scheduleSave(); renderQC(); toast(`${type} → ${job}`);
+  renderQC();
+  toast(`${type} → ${job}`);
 }
 
 function selectQCJob(jid) {
@@ -2902,7 +3022,9 @@ function saveJob() {
   }
 
   closePanel();
-  scheduleSave();
+  if (useSupabase()) {
+    window.PMP.Supabase.saveJob(job).then(() => { sync('● SYNCED', 'ok'); }).catch((e) => { console.error(e); sync('● ERR', 'err'); toast('SAVE FAILED'); });
+  } else scheduleSave();
   renderAll();
   toast(S.editId ? 'JOB UPDATED' : 'JOB ADDED');
 }
@@ -2913,11 +3035,20 @@ function saveJob() {
 let confCb = null;
 function confirmDel() {
   const j = S.jobs.find(x => x.id === S.editId);
-  openConfirm('Delete Job?', `Remove ${j?.catalog || 'this job'} — ${j?.artist || ''}? Cannot be undone.`, () => {
-    // Clear from any press
-    S.presses.forEach(p => { if (p.job === S.editId) p.job = null; });
-    S.jobs = S.jobs.filter(x => x.id !== S.editId);
-    closePanel(); scheduleSave(); renderAll(); toast('JOB DELETED');
+  openConfirm('Delete Job?', `Remove ${j?.catalog || 'this job'} — ${j?.artist || ''}? Cannot be undone.`, async () => {
+    const id = S.editId;
+    S.presses.forEach(p => { if (p.job === id) p.job = null; });
+    S.jobs = S.jobs.filter(x => x.id !== id);
+    closePanel();
+    if (useSupabase()) {
+      try {
+        await window.PMP.Supabase.deleteJob(id);
+        await window.PMP.Supabase.savePresses(S.presses);
+        sync('● SYNCED', 'ok');
+      } catch (e) { console.error(e); toast('DELETE FAILED'); }
+    } else scheduleSave();
+    renderAll();
+    toast('JOB DELETED');
   });
 }
 function openConfirm(title, msg, cb) {
@@ -2972,7 +3103,11 @@ function importCSV(input) {
         n++;
       }
     });
-    scheduleSave(); renderAll(); toast(`${n} JOBS IMPORTED`);
+    if (useSupabase()) {
+      Promise.all(S.jobs.slice(-n).map((j) => window.PMP.Supabase.saveJob(j))).then(() => { sync('● SYNCED', 'ok'); renderAll(); toast(`${n} JOBS IMPORTED`); }).catch((e) => { console.error(e); toast('IMPORT FAILED'); renderAll(); });
+    } else {
+      scheduleSave(); renderAll(); toast(`${n} JOBS IMPORTED`);
+    }
     input.value = '';
   };
   r.readAsText(f);
@@ -3104,7 +3239,7 @@ document.addEventListener('keydown', e => {
       }
     }
 
-    // N for new job (only ongit push -u origin main pages where FAB is visible)
+    // N for new job (only on pages where FAB is visible)
     if ((e.key === 'n' || e.key === 'N') && (currentPage === 'floor' || currentPage === 'jobs')) {
       openPanel(null);
     }
