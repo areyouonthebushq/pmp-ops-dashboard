@@ -2267,6 +2267,16 @@ function setPressStatus(pid, st) {
   }
 }
 
+// Release any press that has this job assigned — sets press to idle
+function releasePressByJob(jobId) {
+  S.presses.forEach(p => {
+    if (p.job === jobId) {
+      p.job = null;
+      p.status = 'idle';
+    }
+  });
+}
+
 // ============================================================
 // FLOOR TABLE — tap-to-cycle status, text search filtering
 // ============================================================
@@ -2359,6 +2369,22 @@ function cycleStatus(jid) {
   const cur = STATUS_ORDER.indexOf(j.status);
   const next = (cur + 1) % STATUS_ORDER.length;
   j.status = STATUS_ORDER[next];
+
+  // If job just left "pressing" status, release its press
+  if (prevStatus === 'pressing' && j.status !== 'pressing') {
+    releasePressByJob(j.id);
+    if (useSupabase()) window.PMP.Supabase.savePresses(S.presses).catch(() => {});
+  }
+  // If job just entered "pressing" and has a press assigned, set that press online
+  if (j.status === 'pressing' && j.press) {
+    const matchPress = S.presses.find(p => p.name === j.press);
+    if (matchPress) {
+      matchPress.job = j.id;
+      matchPress.status = 'online';
+      if (useSupabase()) window.PMP.Supabase.savePresses(S.presses).catch(() => {});
+    }
+  }
+
   if (useSupabase()) window.PMP.Supabase.saveJob(j).then(() => sync('● SYNCED', 'ok')).catch(() => {});
   else scheduleSave();
   renderAll();
@@ -2367,6 +2393,19 @@ function cycleStatus(jid) {
     `${j.catalog || j.artist || 'Job'} → ${j.status.toUpperCase()}`,
     () => {
       j.status = prevStatus;
+      // If undoing back TO pressing, re-attach to press
+      if (prevStatus === 'pressing' && j.press) {
+        const matchPress = S.presses.find(p => p.name === j.press);
+        if (matchPress) {
+          matchPress.job = j.id;
+          matchPress.status = 'online';
+        }
+      }
+      // If undoing away FROM pressing, release press
+      if (prevStatus !== 'pressing') {
+        releasePressByJob(j.id);
+      }
+      if (useSupabase()) window.PMP.Supabase.savePresses(S.presses).catch(() => {});
       if (useSupabase()) window.PMP.Supabase.saveJob(j).then(() => sync('● SYNCED', 'ok')).catch(() => {});
       else scheduleSave();
       renderAll();
@@ -3031,6 +3070,10 @@ function saveJob() {
       matchPress.status = 'online';
     }
   }
+  // If job is not pressing, make sure no press is holding it
+  if (job.status !== 'pressing') {
+    releasePressByJob(job.id);
+  }
 
   closePanel();
   if (useSupabase()) {
@@ -3048,7 +3091,7 @@ function confirmDel() {
   const j = S.jobs.find(x => x.id === S.editId);
   openConfirm('Delete Job?', `Remove ${j?.catalog || 'this job'} — ${j?.artist || ''}? Cannot be undone.`, async () => {
     const id = S.editId;
-    S.presses.forEach(p => { if (p.job === id) p.job = null; });
+    releasePressByJob(id);
     S.jobs = S.jobs.filter(x => x.id !== id);
     closePanel();
     if (useSupabase()) {
