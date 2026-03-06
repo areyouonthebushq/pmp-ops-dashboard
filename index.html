@@ -2240,6 +2240,12 @@ function assignJob(pid, jid) {
   const p = S.presses.find(x => x.id === pid);
   if (p) {
     p.job = jid || null;
+    // Auto-update press status: online when job assigned, idle when cleared
+    if (p.job) {
+      p.status = 'online';
+    } else {
+      p.status = 'idle';
+    }
     // Sync: update job.press to match (single source of truth: press owns assignment)
     S.jobs.forEach(j => {
       if (j.id === jid) j.press = p.name;
@@ -3020,7 +3026,10 @@ function saveJob() {
   // Sync press assignment: if job.press is set, update the matching press
   if (job.press) {
     const matchPress = S.presses.find(p => p.name === job.press);
-    if (matchPress) matchPress.job = job.id;
+    if (matchPress) {
+      matchPress.job = job.id;
+      matchPress.status = 'online';
+    }
   }
 
   closePanel();
