@@ -449,21 +449,25 @@ body::after {
 .abar-seg { flex:1; background: var(--b2); transition:background 0.3s; }
 .abar-seg.done { background: var(--g); }
 .abar-seg.warn { background: var(--w); }
+.abar-thin { height:3px; }
+.pc-assets-demoted { margin-top:8px; padding-top:6px; border-top:1px solid var(--b1); opacity:0.88; }
+.pc-assets-demoted .pc-assets-label { font-size:9px; color: var(--d3); letter-spacing:1px; }
 
-.pc-progress { margin-top:10px; padding-top:8px; border-top:1px solid var(--b2); }
-.pc-progress-label { font-size:11px; color: var(--g); letter-spacing:2px; }
-.pc-progress-sub { font-size:10px; color: var(--d3); margin-top:2px; }
-.pc-progress-bar-outer { height:6px; background: var(--s3); border:1px solid var(--b2); margin-top:6px; overflow:hidden; position:relative; }
-.pc-progress-bar-fill { height:100%; background: var(--g); transition:width 0.3s; }
+.pc-progress { margin-top:12px; padding-top:10px; padding-bottom:4px; border-top:1px solid var(--b2); }
+.pc-progress-label { font-size:9px; color: var(--d2); letter-spacing:2px; text-transform:uppercase; margin-bottom:2px; }
+.pc-progress-num { font-size:18px; font-weight:700; color: var(--g); letter-spacing:1px; margin-bottom:6px; line-height:1.2; }
+.pc-progress-bar-outer { height:10px; background: var(--s3); border:1px solid var(--b2); margin-top:0; margin-bottom:6px; overflow:hidden; position:relative; }
+.pc-progress-sub { font-size:10px; color: var(--d3); margin-top:0; }
 .pc-progress-over { font-size:9px; color: var(--w); letter-spacing:2px; margin-top:4px; }
 
 /* Dual-layer progress bar: yellow = pressed, green = QC passed (on top) */
 .dl-bar { position:relative; overflow:hidden; background: var(--s3); border:1px solid var(--b2); }
 .dl-bar-pressed { position:absolute; left:0; top:0; height:100%; background: var(--w); transition:width 0.3s; }
 .dl-bar-qc { position:absolute; left:0; top:0; height:100%; background: var(--g); transition:width 0.3s; }
-.dl-bar.pc { height:6px; margin-top:6px; }
+.dl-bar.pc { height:10px; margin-top:0; }
 .dl-bar.td { height:4px; margin-top:4px; min-width:48px; }
 .dl-bar.jc { height:5px; margin-top:6px; }
+.dl-bar.tv { height:8px; margin-top:6px; }
 
 .pc-controls { margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; }
 .pc-select {
@@ -490,6 +494,7 @@ tbody td { padding:9px 10px; vertical-align:middle; }
 
 /* Progress column (floor + jobs table) */
 .td-progress { font-size:12px; white-space:nowrap; }
+.td-progress .progress-main { font-size:13px; color: var(--g); font-weight:700; }
 .progress-main { color: var(--g); font-weight:600; }
 .progress-sub { font-size:11px; color: var(--d3); margin-top:2px; }
 
@@ -796,6 +801,11 @@ body.tv #tv { display:flex; }
 .tv-pname.seven { color: var(--p); }
 .tv-pjob  { font-size:13px; color: var(--w); font-weight:700; margin:4px 0 2px; }
 .tv-pmeta { font-size:12px; color: var(--d2); }
+.tv-progress { margin-top:10px; padding-top:8px; border-top:1px solid var(--b1); }
+.tv-progress-num { font-size:22px; font-weight:700; color: var(--g); letter-spacing:1px; margin-bottom:6px; line-height:1.2; }
+.tv-progress-sub { font-size:11px; color: var(--d3); margin-top:4px; }
+.tv-progress-over { font-size:10px; color: var(--w); letter-spacing:2px; margin-top:2px; }
+.tv-assets-demoted { font-size:10px; color: var(--d3); margin-top:6px; opacity:0.85; }
 .tv-assets { margin-top:8px; height:4px; background: var(--s3); }
 .tv-assets-fill { height:100%; background: var(--g); transition:width 0.5s; }
 
@@ -1819,8 +1829,6 @@ function checkTodoReset() {
 }
 
 // ============================================================
-// PRODUCTION PROGRESS — data model and helpers (no UI yet)
-// ============================================================
 const PROGRESS_STAGES = ['pressed', 'qc_passed', 'rejected'];
 
 function ensureJobProgressLog(job) {
@@ -2090,15 +2098,16 @@ function renderPresses() {
             <div class="pc-due ${dueClass(job.due)}">${dueLabel(job.due)}</div>
             <div class="pc-job-hint">TAP TO OPEN →</div>
           </div>
-          <div class="pc-assets">
-            <div class="pc-assets-label">ASSETS ${ah.done}/${ah.total}</div>
-            <div class="abar">${segs}</div>
-          </div>
           <div class="pc-progress">
-            <div class="pc-progress-label">PROGRESS ${prog.main}</div>
-            <div class="pc-progress-sub">${prog.sub}</div>
+            <div class="pc-progress-label">PROGRESS</div>
+            <div class="pc-progress-num">${prog.main}</div>
             <div class="pc-progress-bar-outer dl-bar pc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+            <div class="pc-progress-sub">${prog.sub}</div>
             ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
+          </div>
+          <div class="pc-assets pc-assets-demoted">
+            <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
+            <div class="abar abar-thin">${segs}</div>
           </div>
         ` : `<div class="pc-idle-msg">No job assigned</div>`}
         ${isAdmin ? `
@@ -2580,14 +2589,21 @@ function renderTV() {
   const pe = document.getElementById('tvPresses');
   if (pe) pe.innerHTML = S.presses.map(p => {
     const j = p.job ? S.jobs.find(x => x.id === p.job) : null;
-    const ah = j ? assetHealth(j) : {pct:0};
+    const ah = j ? assetHealth(j) : {done:0, total:0, pct:0};
+    const prog = j ? progressDisplay(j) : null;
     return `
       <div class="tv-press ${p.status}">
         <div class="tv-pname ${p.type === '7"' ? 'seven' : ''}">${p.name}</div>
         ${j ? `
           <div class="tv-pjob">${j.catalog || '—'} · ${j.artist || ''}</div>
-          <div class="tv-pmeta">${j.format || ''} · ${j.color || 'Black'} · ${j.weight || ''} · Qty ${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</div>
-          <div class="tv-assets"><div class="tv-assets-fill" style="width:${Math.round(ah.pct * 100)}%"></div></div>
+          <div class="tv-pmeta">${j.format || ''} · ${j.color || 'Black'} · Qty ${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</div>
+          <div class="tv-progress">
+            <div class="tv-progress-num">${prog.main}</div>
+            <div class="tv-dl-bar dl-bar tv">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+            <div class="tv-progress-sub">${prog.sub}</div>
+            ${prog.overQty ? '<div class="tv-progress-over">OVER QTY</div>' : ''}
+          </div>
+          <div class="tv-assets-demoted">Assets ${ah.done}/${ah.total}</div>
         ` : `<div class="tv-pmeta" style="color:var(--d3);margin-top:4px">Idle</div>`}
       </div>
     `;
