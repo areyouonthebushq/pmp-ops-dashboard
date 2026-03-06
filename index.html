@@ -453,9 +453,17 @@ body::after {
 .pc-progress { margin-top:10px; padding-top:8px; border-top:1px solid var(--b2); }
 .pc-progress-label { font-size:11px; color: var(--g); letter-spacing:2px; }
 .pc-progress-sub { font-size:10px; color: var(--d3); margin-top:2px; }
-.pc-progress-bar-outer { height:4px; background: var(--s3); border:1px solid var(--b2); margin-top:6px; overflow:hidden; }
+.pc-progress-bar-outer { height:6px; background: var(--s3); border:1px solid var(--b2); margin-top:6px; overflow:hidden; position:relative; }
 .pc-progress-bar-fill { height:100%; background: var(--g); transition:width 0.3s; }
 .pc-progress-over { font-size:9px; color: var(--w); letter-spacing:2px; margin-top:4px; }
+
+/* Dual-layer progress bar: yellow = pressed, green = QC passed (on top) */
+.dl-bar { position:relative; overflow:hidden; background: var(--s3); border:1px solid var(--b2); }
+.dl-bar-pressed { position:absolute; left:0; top:0; height:100%; background: var(--w); transition:width 0.3s; }
+.dl-bar-qc { position:absolute; left:0; top:0; height:100%; background: var(--g); transition:width 0.3s; }
+.dl-bar.pc { height:6px; margin-top:6px; }
+.dl-bar.td { height:4px; margin-top:4px; min-width:48px; }
+.dl-bar.jc { height:5px; margin-top:6px; }
 
 .pc-controls { margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; }
 .pc-select {
@@ -1862,10 +1870,18 @@ function progressDisplay(job) {
   const p = getJobProgress(job);
   const ordered = p.ordered;
   const main = `${p.pressed.toLocaleString()} / ${ordered.toLocaleString()}`;
-  const sub = p.qcPassed === 0 && p.rejected === 0
-    ? '0 QC passed'
-    : `${p.qcPassed.toLocaleString()} QC passed${p.rejected > 0 ? ' · ' + p.rejected.toLocaleString() + ' rej' : ''}`;
-  return { main, sub, overQty: p.pressed > ordered, p };
+  const parts = [];
+  parts.push(p.qcPassed.toLocaleString() + ' QC passed');
+  if (p.rejected > 0) parts.push(p.rejected.toLocaleString() + ' rej');
+  if (p.pendingQC > 0) parts.push(p.pendingQC.toLocaleString() + ' pending');
+  const sub = parts.length === 1 && p.qcPassed === 0 ? '0 QC passed' : parts.join(' · ');
+  const pressedPct = ordered ? Math.min(100, (p.pressed / ordered) * 100) : 0;
+  const qcPassedPct = ordered ? Math.min(100, (p.qcPassed / ordered) * 100) : 0;
+  return { main, sub, overQty: p.pressed > ordered, pressedPct, qcPassedPct, p };
+}
+
+function progressDualBarHTML(pressedPct, qcPassedPct) {
+  return `<div class="dl-bar-pressed" style="width:${pressedPct}%"></div><div class="dl-bar-qc" style="width:${qcPassedPct}%"></div>`;
 }
 
 // Smart polling — skip full render if panel is open (prevents focus loss)
@@ -2052,7 +2068,6 @@ function renderPresses() {
     const job = p.job ? S.jobs.find(j => j.id === p.job) : null;
     const ah = job ? assetHealth(job) : {done:0, total:0, pct:0};
     const prog = job ? progressDisplay(job) : null;
-    const barPct = prog && prog.p.ordered ? Math.min(100, (prog.p.pressed / prog.p.ordered) * 100) : 0;
     const segs = ASSET_DEFS.slice(0,8).map(a => {
       const got = job && job.assets && job.assets[a.key]?.received;
       return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
@@ -2082,7 +2097,7 @@ function renderPresses() {
           <div class="pc-progress">
             <div class="pc-progress-label">PROGRESS ${prog.main}</div>
             <div class="pc-progress-sub">${prog.sub}</div>
-            <div class="pc-progress-bar-outer"><div class="pc-progress-bar-fill" style="width:${barPct}%"></div></div>
+            <div class="pc-progress-bar-outer dl-bar pc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
             ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
           </div>
         ` : `<div class="pc-idle-msg">No job assigned</div>`}
@@ -2172,6 +2187,7 @@ function renderFloor() {
       <td>${ahHTML(j)}</td>
       <td class="td-progress">
         <div class="progress-main">${prog.main}</div>
+        <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
         <div class="progress-sub">${prog.sub}</div>
       </td>
       <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
@@ -2324,7 +2340,8 @@ function renderJobs() {
         <td>${ahHTML(j)}</td>
         <td class="td-progress">
           <div class="progress-main">${prog.main}</div>
-          <div class="progress-sub">${prog.sub.split(' · ')[0]}</div>
+          <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+          <div class="progress-sub">${prog.sub}</div>
         </td>
         <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
         <td><button class="open-btn" onclick="openPanel('${j.id}')">OPEN</button></td>
@@ -2360,6 +2377,7 @@ function renderJobs() {
           </div>
           <div class="jc-progress">
             <span class="jc-progress-main">Progress: ${prog.main}</span>
+            <div class="dl-bar jc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
             <span class="jc-progress-sub">${prog.sub}</span>
           </div>
         </div>
