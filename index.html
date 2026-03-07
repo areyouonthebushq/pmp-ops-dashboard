@@ -55,7 +55,7 @@
     overflow-x: hidden;
     }
 
-    /* Scanlines — TV only */
+    /* Scanlines — TV only; stronger when party mode on */
     body.tv::after {
     content:'';
     position:fixed; inset:0; z-index:9998; pointer-events:none;
@@ -64,8 +64,14 @@
         rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px
     );
     }
+    body.tv.tv-party::after {
+    background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.14) 2px, rgba(0,0,0,0.14) 4px
+    );
+    }
 
-    /* Matrix rain — TV only (shown via body.tv #rain below) */
+    /* Matrix rain — TV only; opacity controlled by party toggle */
     #rain {
     position:fixed; inset:0; z-index:0; pointer-events:none;
     opacity:0;
@@ -849,8 +855,10 @@
     /* ============================================================ TV MODE — operations board
     Main signal: production progress (press cards + queue). Secondary info receded. */
     body.tv #app { display:none!important; }
-    body.tv #rain { opacity:50.5; }
-    
+    body.tv #rain { opacity:0.1; }
+    body.tv.tv-party #rain { opacity:0.32; }
+    body.tv.tv-party #tv { box-shadow: inset 0 0 120px rgba(0,230,118,0.04); }
+
     #tv {
     display:none; position:fixed; inset:0; z-index:500;
     background: var(--bg); flex-direction:column;
@@ -916,6 +924,16 @@
     opacity:0.6;
     }
     .tv-esc:hover { opacity:1; color: var(--d); border-color: var(--d2); }
+
+    .tv-pizzaz-btn {
+    position:fixed; top: var(--space-md); left: var(--space-lg); z-index:600;
+    background:none; border:1px solid var(--b1); color: var(--d3);
+    padding: var(--space-xs) var(--space-md); font-size:10px; cursor:pointer;
+    font-family:'Inconsolata',monospace; letter-spacing:1.5px;
+    opacity:0.7; transition: opacity 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .tv-pizzaz-btn:hover { opacity:1; color: var(--d2); border-color: var(--b2); }
+    body.tv.tv-party .tv-pizzaz-btn { color: var(--g); border-color: var(--g2); opacity:1; }
 
     /* ============================================================ SYNC BAR — system status line
     Integrated instrument strip: status (primary) left, version (secondary) right.
@@ -1132,6 +1150,7 @@
 
     <!-- ============================================================ TV VIEW -->
     <div id="tv">
+    <button type="button" class="tv-pizzaz-btn" id="tvPizzazBtn" onclick="toggleTVParty()" title="Toggle matrix / theatrical effect for client demos">◇ PIZZAZ</button>
     <button class="tv-esc" onclick="exitTV()">ESC · EXIT TV</button>
     <div class="tv-bar">
         <div>
@@ -2947,9 +2966,14 @@
     // ============================================================
     function enterTV() {
     document.body.classList.add('tv');
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('tvParty') === '1') document.body.classList.add('tv-party');
     renderTV();
     }
-    function exitTV() { document.body.classList.remove('tv'); }
+    function exitTV() { document.body.classList.remove('tv'); document.body.classList.remove('tv-party'); }
+    function toggleTVParty() {
+    document.body.classList.toggle('tv-party');
+    try { sessionStorage.setItem('tvParty', document.body.classList.contains('tv-party') ? '1' : '0'); } catch (e) {}
+    }
 
     function renderTV() {
     const pe = document.getElementById('tvPresses');
