@@ -1,39 +1,118 @@
-# PMP OPS v7.1
+# PMP OPS — Vinyl Press Floor Operations System
 
-Vinyl pressing plant operations dashboard — jobs, presses, todos, QC log, production progress.
+**Physical Music Products · Nashville, TN**
+[pmp-ops-dashboard.vercel.app](https://pmp-ops-dashboard.vercel.app/)
 
-## Supabase setup (multi-user persistence)
+---
 
-1. **Create a Supabase project** at [supabase.com](https://supabase.com).
+## What it is
 
-2. **Run the SQL in order** (Dashboard → SQL Editor):
-   - `supabase/schema.sql` — creates tables (jobs, progress_log, presses, todos, qc_log)
-   - `supabase/policies.sql` — enables RLS and policies for authenticated users
-   - `supabase/seed.sql` — optional sample data
+PMP OPS is a real-time operations system for a vinyl record pressing plant. It tracks every job from intake through pressing, QC, assembly, and shipping — across multiple presses, multiple operators, and multiple roles.
 
-3. **Configure the app** with your project URL and anon key:
-   - **Option A (static):** In `index.html`, set the config script before `</head>`:
-     ```html
-     <script>
-       window.SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-       window.SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
-     </script>
-     ```
-   - **Option B (Vercel):** Add env vars `SUPABASE_URL` and `SUPABASE_ANON_KEY` in the Vercel dashboard, then add a build step that injects them into `index.html` (e.g. replace placeholders).
+It replaces whiteboards, text messages, spreadsheets, and the question "where is that job?"
 
-4. **Auth (optional):** RLS policies currently allow full CRUD for `authenticated` users. To use the app with Supabase Auth, sign in and the client will send the session. For local/demo without auth, you can temporarily add anon policies (see comment in `policies.sql`) or use the service role (server-side only).
+## Who uses it
 
-5. **Fallback:** If `SUPABASE_URL` or `SUPABASE_ANON_KEY` is empty, the app uses **localStorage** only (single-browser, no sync).
+| Role | Station | What they do |
+|------|---------|-------------|
+| **Admin** | Full workspace | Create jobs, assign presses, manage assets, export data |
+| **Press Operator** | Press Station | Log pressed quantities per stack, hold/resume jobs |
+| **QC Inspector** | QC Station | Rapid reject logging by defect type, tied to jobs |
+| **Floor Manager** | Floor Manager | Scan-first operations overview, quick-edit statboard |
+| **Everyone** | TV Mode | Wall-mounted display showing press status and queue |
 
-## Local run
+## What it tracks
 
-Open `index.html` in a browser or serve the folder (e.g. `npx serve .`). With Supabase configured, data loads from and saves to Supabase. Without it, data stays in localStorage.
+- **Jobs**: Catalog, artist, album, format, color spec, quantity, due date, status lifecycle (queue → pressing → assembly → hold → done)
+- **Presses**: 4 presses (3 LP + 1 7"), online/idle/warning/offline status, automatic job assignment and release
+- **Production Progress**: Append-only log of pressed/QC passed/rejected quantities per person, dual-layer progress bars (yellow = pressed, green = QC passed)
+- **Assets**: 15-item checklist per job (stampers through outer packaging), received/N/A/pending with date and person tracking
+- **QC Rejects**: 6 defect types (flash, blemish, off-center, audio, untrimmed, biscuit/flash), date-navigable history, job-linked
+- **Todos**: Daily (auto-reset midnight), weekly (auto-reset Monday), standing (persistent)
 
-## File layout
+## Architecture
 
-- `index.html` — single-file app (HTML, CSS, JS)
-- `supabase.js` — Supabase API layer (load/save jobs, presses, todos, progress, QC)
-- `supabase/schema.sql` — table definitions
-- `supabase/policies.sql` — RLS policies
-- `supabase/seed.sql` — sample data
-- `.env.local.example` — env var template
+Single-page vanilla HTML/CSS/JS application. No framework, no build step.
+
+```
+index.html      → HTML structure (~600 lines)
+styles.css      → All CSS including design system, stations, themes (~2,000 lines)
+app.js          → All application logic, rendering, state management (~2,000 lines)
+supabase.js     → Persistence layer: Supabase API mapping
+```
+
+### Persistence
+
+- **Primary**: Supabase (PostgreSQL) — 5 tables: `jobs`, `progress_log`, `presses`, `todos`, `qc_log`
+- **Fallback**: localStorage (when Supabase is unavailable)
+- **Polling**: 15-second sync interval, skips render when panel is open
+- **Guard**: Empty Supabase responses don't overwrite populated local state (transient failure protection)
+
+### Design System
+
+Five semantic colors — color carries meaning, not decoration:
+
+| Token | Hex | Meaning |
+|-------|-----|---------|
+| `--g` | `#00e676` | Good / complete / online |
+| `--w` | `#ffb300` | Warning / needs attention |
+| `--r` | `#ff3d3d` | Blocked / overdue / offline |
+| `--p` | `#e040fb` | 7" format / accent |
+| `--d` | `#c8d6c8` | Data / body text |
+
+Three fonts: Special Elite (identity), VT323 (navigation), Inconsolata (data).
+
+Minimal theme available (toggle: `MIN` button) — same layout, black/white/gray, no glow.
+
+### Station System
+
+Role-based stations share a common `station-shell` CSS component and read from the same state object `S`. Each station has scoped edit permissions:
+
+- **Admin**: Full panel access, all fields editable
+- **Press Station**: Log pressed quantities only, hold/resume
+- **QC Station**: Log rejects only
+- **Floor Manager**: Quick-edit statboard (status, press, location, due, notes)
+
+## Deployment
+
+Deployed on Vercel at [pmp-ops-dashboard.vercel.app](https://pmp-ops-dashboard.vercel.app/).
+
+### Supabase Setup
+
+1. Create project at [supabase.com](https://supabase.com)
+2. SQL Editor → run `supabase/schema.sql`, then `supabase/policies.sql`
+3. (Optional) Run `supabase/seed.sql` for demo data
+4. Settings → API → copy Project URL and anon public key
+5. Paste into `window.SUPABASE_URL` and `window.SUPABASE_ANON_KEY` in `index.html`
+6. Deploy to Vercel
+
+### Current Auth
+
+Anon key with open RLS policies (full CRUD for `anon` role). Suitable for internal/demo use. Supabase Auth can be added later — swap `anon` policies to `authenticated`, add login screen.
+
+## File Structure
+
+```
+pmp-ops-dashboard/
+├── index.html              # HTML structure
+├── styles.css              # Design system + all CSS
+├── app.js                  # Application logic
+├── supabase.js             # Supabase API layer
+├── supabase/
+│   ├── schema.sql          # CREATE TABLE statements
+│   ├── policies.sql        # RLS policies (anon access)
+│   └── seed.sql            # Demo data (5 jobs, 4 presses, QC history)
+├── .env.local.example      # Environment variable template
+└── README.md
+```
+
+## Status
+
+**Production-adjacent prototype.** Data persists across devices and browsers via Supabase. All core workflows functional. Used for real job tracking at Physical Music Products.
+
+### Known Limitations
+
+- No authentication (anon key, open RLS)
+- Todo reset is client-side only (requires someone to open the app)
+- CSV import can break on 7" format (quote character in field value)
+- Single-page: no URL routing, no deep links
