@@ -34,6 +34,10 @@
     --s3:   #181d18;
     --b1:   #1e261e;
     --b2:   #252d25;
+    --b3:   #2a332a;
+    --b4:   #333d33;
+    --b5:   #3d473d;
+    --radius: 6px;
     --gg:   0 0 8px rgba(0,230,118,0.5);
     --gw:   0 0 8px rgba(255,179,0,0.5);
     --gr:   0 0 8px rgba(255,61,61,0.5);
@@ -2581,6 +2585,58 @@
     }
 
     // ============================================================
+    // SHELL VISIBILITY — one source for admin vs station shells
+    // IDs of station shell elements (Press, QC, Floor Manager). Admin UI lives in #app.
+    // ============================================================
+    const STATION_SHELL_IDS = ['pressStationShell', 'qcStationShell', 'floorManagerShell'];
+
+    /** Hide all station shells and show the admin shell (#app) and bar UI (fab, syncbar). */
+    function hideAllShells() {
+    const app = document.getElementById('app');
+    if (app) app.style.display = 'block';
+    STATION_SHELL_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('on');
+    });
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'flex';
+    const fabLabel = document.querySelector('.fab-label');
+    if (fabLabel) fabLabel.style.display = 'block';
+    const syncbar = document.querySelector('.syncbar');
+    if (syncbar) syncbar.style.display = 'block';
+    }
+
+    /** Show only the requested station shell; hide admin and other shells. Call after setStationContext. */
+    function showShell(shellId) {
+    hideAllShells();
+    const app = document.getElementById('app');
+    if (app) app.style.display = 'none';
+    const el = document.getElementById(shellId);
+    if (el) el.classList.add('on');
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'none';
+    const fabLabel = document.querySelector('.fab-label');
+    if (fabLabel) fabLabel.style.display = 'none';
+    const syncbar = document.querySelector('.syncbar');
+    if (syncbar) syncbar.style.display = 'none';
+    }
+
+    /** Return to admin/launcher: clear station context, show admin shell, hide all station shells, re-render. */
+    function returnToAdmin() {
+    setStationContext({});
+    hideAllShells();
+    renderAll();
+    }
+
+    /** True if any station shell is currently visible (so admin shortcuts should be disabled). */
+    function isStationShellVisible() {
+    return STATION_SHELL_IDS.some(id => {
+        const el = document.getElementById(id);
+        return el && el.classList.contains('on');
+    });
+    }
+
+    // ============================================================
     // STATION EDIT PERMISSIONS — single source for what each role can edit
     // ============================================================
     /** Returns edit permissions for current context (admin = full; stations = restricted). */
@@ -3284,30 +3340,12 @@
     const p = S.presses.find(x => x.id === pressId);
     if (!p) return;
     setStationContext({ stationType: 'press', stationId: pressId, assignedPressId: pressId });
-    document.getElementById('app').style.display = 'none';
-    const shell = document.getElementById('pressStationShell');
-    if (shell) shell.classList.add('on');
-    const fab = document.getElementById('fab');
-    if (fab) fab.style.display = 'none';
-    const fabLabel = document.querySelector('.fab-label');
-    if (fabLabel) fabLabel.style.display = 'none';
-    const syncbar = document.querySelector('.syncbar');
-    if (syncbar) syncbar.style.display = 'none';
+    showShell('pressStationShell');
     renderAll();
     }
 
     function exitPressStation() {
-    setStationContext({});
-    document.getElementById('app').style.display = 'block';
-    const shell = document.getElementById('pressStationShell');
-    if (shell) shell.classList.remove('on');
-    const fab = document.getElementById('fab');
-    if (fab) fab.style.display = 'flex';
-    const fabLabel = document.querySelector('.fab-label');
-    if (fabLabel) fabLabel.style.display = 'block';
-    const syncbar = document.querySelector('.syncbar');
-    if (syncbar) syncbar.style.display = 'block';
-    renderAll();
+    returnToAdmin();
     }
 
     function renderPressStationShell() {
@@ -3417,30 +3455,12 @@
     /** Open the QC Station view. Call from bar (e.g. QC button). */
     function openQCStation() {
     setStationContext({ stationType: 'qc', stationId: 'qc1', assignedPressId: null });
-    document.getElementById('app').style.display = 'none';
-    const shell = document.getElementById('qcStationShell');
-    if (shell) shell.classList.add('on');
-    const fab = document.getElementById('fab');
-    if (fab) fab.style.display = 'none';
-    const fabLabel = document.querySelector('.fab-label');
-    if (fabLabel) fabLabel.style.display = 'none';
-    const syncbar = document.querySelector('.syncbar');
-    if (syncbar) syncbar.style.display = 'none';
+    showShell('qcStationShell');
     renderAll();
     }
 
     function exitQCStation() {
-    setStationContext({});
-    document.getElementById('app').style.display = 'block';
-    const shell = document.getElementById('qcStationShell');
-    if (shell) shell.classList.remove('on');
-    const fab = document.getElementById('fab');
-    if (fab) fab.style.display = 'flex';
-    const fabLabel = document.querySelector('.fab-label');
-    if (fabLabel) fabLabel.style.display = 'block';
-    const syncbar = document.querySelector('.syncbar');
-    if (syncbar) syncbar.style.display = 'block';
-    renderAll();
+    returnToAdmin();
     }
 
     function renderQCStationShell() {
@@ -3505,30 +3525,12 @@
     /** Open the Floor Manager view. Scan-first: presses, active orders, floor card for inspect + quick edit. */
     function openFloorManager() {
     setStationContext({ stationType: 'floor_manager', stationId: 'fm1', assignedPressId: null });
-    document.getElementById('app').style.display = 'none';
-    const shell = document.getElementById('floorManagerShell');
-    if (shell) shell.classList.add('on');
-    const fab = document.getElementById('fab');
-    if (fab) fab.style.display = 'none';
-    const fabLabel = document.querySelector('.fab-label');
-    if (fabLabel) fabLabel.style.display = 'none';
-    const syncbar = document.querySelector('.syncbar');
-    if (syncbar) syncbar.style.display = 'none';
+    showShell('floorManagerShell');
     renderAll();
     }
 
     function exitFloorManager() {
-    setStationContext({});
-    document.getElementById('app').style.display = 'block';
-    const shell = document.getElementById('floorManagerShell');
-    if (shell) shell.classList.remove('on');
-    const fab = document.getElementById('fab');
-    if (fab) fab.style.display = 'flex';
-    const fabLabel = document.querySelector('.fab-label');
-    if (fabLabel) fabLabel.style.display = 'block';
-    const syncbar = document.querySelector('.syncbar');
-    if (syncbar) syncbar.style.display = 'block';
-    renderAll();
+    returnToAdmin();
     }
 
     function renderFloorManagerShell() {
@@ -4713,8 +4715,15 @@
     // Don't intercept if user is typing in an input or textarea
     const tag = document.activeElement?.tagName;
     const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+    const stationVisible = isStationShellVisible();
 
     if (e.key === 'Escape') {
+        // When a station shell is open, Escape returns to admin; don't run admin UI handlers
+        if (stationVisible) {
+        returnToAdmin();
+        e.preventDefault();
+        return;
+        }
         if (document.getElementById('confirmWrap').classList.contains('open')) closeConfirm();
         else if (panelOpen) closePanel();
         else if (document.body.classList.contains('tv')) exitTV();
@@ -4727,8 +4736,8 @@
         return;
     }
 
-    // QC keyboard shortcuts: 1-6 when QC page is active and not typing
-    if (!isTyping && !panelOpen) {
+    // Admin-only shortcuts: do not run when a station shell is visible (admin UI is hidden)
+    if (!isTyping && !panelOpen && !stationVisible) {
         const qcPage = document.getElementById('pg-qc');
         if (qcPage && qcPage.classList.contains('on')) {
         const n = parseInt(e.key);
