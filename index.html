@@ -856,7 +856,7 @@
     Main signal: production progress (press cards + queue). Secondary info receded. */
     body.tv #app { display:none!important; }
     body.tv #rain { opacity:0.1; }
-    body.tv.tv-party #rain { opacity:0.32; }
+    body.tv.tv-party #rain { opacity:0.52; }
     body.tv.tv-party #tv { box-shadow: inset 0 0 120px rgba(0,230,118,0.04); }
 
     #tv {
@@ -1351,11 +1351,7 @@
             <input class="fi" id="jAlbum" placeholder="Album title">
             </div>
         </div>
-        <div class="frow c3">
-            <div class="fg">
-            <label class="fl">Invoice #</label>
-            <input class="fi" id="jInv" placeholder="1729">
-            </div>
+        <div class="frow c2">
             <div class="fg">
             <label class="fl">Due Date</label>
             <input class="fi" type="date" id="jDue">
@@ -1375,13 +1371,17 @@
         <div class="job-details-secondary">
         <div class="frow c2">
             <div class="fg">
+            <label class="fl">Invoice #</label>
+            <input class="fi" id="jInv" placeholder="1729">
+            </div>
+            <div class="fg">
             <label class="fl">Client / Label</label>
             <input class="fi" id="jClient" placeholder="Client name">
             </div>
-            <div class="fg">
+        </div>
+        <div class="fg">
             <label class="fl">Contact Email</label>
             <input class="fi" id="jEmail" placeholder="email@label.com">
-            </div>
         </div>
         <div class="frow c2">
             <div class="fg">
@@ -1540,8 +1540,8 @@
         <div class="form-section form-section--recede"><span class="fs-num">6</span> BILLING</div>
         <div class="billing-toggle" id="billingToggle" onclick="toggleBilling()">
             <span class="bt-arrow">▸</span>
-            <span>INVOICE &amp; PAYMENT DETAILS</span>
-            <span class="billing-toggle-hint">(EXPAND)</span>
+            <span>BILLING DETAILS</span>
+            <span class="billing-toggle-hint">OPTIONAL</span>
         </div>
         <div class="billing-body" id="billingBody">
             <div class="frow c2" style="margin-top: var(--space-md)">
