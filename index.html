@@ -3141,12 +3141,13 @@ function importCSV(input) {
     if (lines.length < 2) { toast('EMPTY CSV'); return; }
     const hdrs = lines[0].map(h => h.trim().toLowerCase());
     let n = 0;
-    lines.slice(1).forEach(vals => {
+    const baseId = 'csv' + Date.now();
+    lines.slice(1).forEach((vals, idx) => {
       const row = {};
       hdrs.forEach((h, i) => row[h] = (vals[i] || '').trim());
       if (row.catalog || row.artist) {
         S.jobs.push({
-          id: 'csv' + Date.now() + Math.random(),
+          id: baseId + '_' + idx + '_' + Math.random().toString(36).slice(2, 8),
           ...row,
           status: row.status || 'queue',
           assets: {},
@@ -3156,7 +3157,16 @@ function importCSV(input) {
       }
     });
     if (useSupabase()) {
-      Promise.all(S.jobs.slice(-n).map((j) => window.PMP.Supabase.saveJob(j))).then(() => { sync('● SYNCED', 'ok'); renderAll(); toast(`${n} JOBS IMPORTED`); }).catch((e) => { console.error(e); toast('IMPORT FAILED'); renderAll(); });
+      const toSave = S.jobs.slice(-n);
+      Promise.all(toSave.map((j) => window.PMP.Supabase.saveJob(j)))
+        .then(() => { sync('● SYNCED', 'ok'); renderAll(); toast(`${n} JOBS IMPORTED`); })
+        .catch((e) => {
+          console.error('CSV import save failed', e);
+          const msg = (e && (e.message || e.error?.message)) ? String(e.message || e.error.message) : 'Save failed';
+          toast('IMPORT FAILED: ' + msg.slice(0, 40));
+          sync('● ERR', 'err');
+          renderAll();
+        });
     } else {
       scheduleSave(); renderAll(); toast(`${n} JOBS IMPORTED`);
     }

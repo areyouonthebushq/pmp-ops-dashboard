@@ -42,6 +42,10 @@ CREATE POLICY "Authenticated users full access to qc_log"
   USING (true)
   WITH CHECK (true);
 
--- Optional: allow anon (e.g. for demo without auth). Remove in production.
--- CREATE POLICY "Anon read/write for demo" ON jobs FOR ALL TO anon USING (true) WITH CHECK (true);
--- (Repeat for other tables if needed.)
+-- Optional: allow anon for demo without auth (e.g. CSV import, test data).
+-- Remove or disable these in production if you use Supabase Auth.
+CREATE POLICY "Anon full access to jobs" ON jobs FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Anon full access to progress_log" ON progress_log FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Anon full access to presses" ON presses FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Anon full access to todos" ON todos FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Anon full access to qc_log" ON qc_log FOR ALL TO anon USING (true) WITH CHECK (true);
