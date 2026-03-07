@@ -1316,8 +1316,8 @@
     .fc-edit-row input, .fc-edit-row select, .fc-edit-row textarea { width: 100%; max-width: 320px; padding: 6px 8px; background: var(--b3); border: 1px solid var(--b5); color: var(--d); border-radius: var(--radius); }
     .fc-edit-actions { margin-top: var(--space-md); }
 
-    /* Press Station v1 — single-press workstation; extends press-card / floor language */
-    .press-station-shell {
+    /* ============================================================ STATION COMPONENTS — shared across all station shells */
+    .station-shell {
     display: none;
     position: fixed;
     inset: 0;
@@ -1326,8 +1326,8 @@
     flex-direction: column;
     overflow: auto;
     }
-    .press-station-shell.on { display: flex; }
-    .ps-v1 {
+    .station-shell.on { display: flex; }
+    .station-inner {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -1336,7 +1336,8 @@
     margin: 0 auto;
     width: 100%;
     }
-    .ps-v1-header {
+    .station-inner.wide { max-width: 1200px; }
+    .station-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1345,14 +1346,15 @@
     padding-bottom: var(--space-sm);
     border-bottom: 1px solid var(--b1);
     }
-    .ps-v1-press-name {
+    .station-name {
     font-family: 'Special Elite', cursive;
     font-size: 18px;
     color: var(--g);
     letter-spacing: 1px;
     }
-    .ps-v1-press-name.seven { color: var(--p); }
-    .ps-v1-back {
+    .station-name.seven { color: var(--p); }
+    .station-name.warn { color: var(--w); }
+    .station-back {
     padding: var(--space-sm) var(--space-lg);
     font-size: 12px;
     letter-spacing: 1px;
@@ -1364,10 +1366,8 @@
     cursor: pointer;
     transition: all 0.15s;
     }
-    .ps-v1-back:hover { border-color: var(--g); color: var(--g); }
-    .ps-v1-content { flex: 1; margin-bottom: var(--space-sm); }
-    /* Section labels — same rhythm as .sec in admin (small label, thin divider) */
-    .ps-v1-sec {
+    .station-back:hover { border-color: var(--g); color: var(--g); }
+    .station-sec {
     font-family: 'Special Elite', cursive;
     font-size: 13px;
     color: var(--d2);
@@ -1377,16 +1377,21 @@
     padding-bottom: var(--space-xs);
     border-bottom: 1px solid var(--b1);
     }
-    .ps-v1-sec:first-child { margin-top: 0; }
-    .ps-v1-job-title { font-size: 15px; font-weight: 700; color: var(--d); margin-bottom: var(--space-xs); font-family: 'Inconsolata', monospace; }
-    .ps-v1-job-meta { font-size: 13px; color: var(--d3); margin-bottom: var(--space-sm); font-family: 'Inconsolata', monospace; letter-spacing: 0.5px; }
-    /* Grouped stat block — bordered panel like stats row / press card */
-    .ps-v1-stat-block {
+    .station-sec:first-child { margin-top: 0; }
+    .station-stat-block {
     background: var(--s1);
     border: 1px solid var(--b1);
     padding: var(--space-md);
     margin-bottom: var(--space-sm);
     }
+    .station-content { flex: 1; margin-bottom: var(--space-sm); }
+
+    /* Press Station v1 — single-press workstation; extends press-card / floor language */
+    .ps-v1-sec { font-family: 'Special Elite', cursive; font-size: 13px; color: var(--d2); letter-spacing: 3px; text-transform: uppercase; margin: var(--space-md) 0 var(--space-sm); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--b1); }
+    .ps-v1-sec:first-child { margin-top: 0; }
+    .ps-v1-stat-block { background: var(--s1); border: 1px solid var(--b1); padding: var(--space-md); margin-bottom: var(--space-sm); }
+    .ps-v1-job-title { font-size: 15px; font-weight: 700; color: var(--d); margin-bottom: var(--space-xs); font-family: 'Inconsolata', monospace; }
+    .ps-v1-job-meta { font-size: 13px; color: var(--d3); margin-bottom: var(--space-sm); font-family: 'Inconsolata', monospace; letter-spacing: 0.5px; }
     .ps-v1-stat-row { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-xs); }
     .ps-v1-stat { font-size: 13px; font-family: 'Inconsolata', monospace; }
     .ps-v1-stat .num { font-weight: 700; color: var(--g); }
@@ -1476,43 +1481,12 @@
     .pc-station-btn:hover { border-color: var(--g); color: var(--g); }
 
     /* QC Station v1 — rapid reject logging */
-    .qc-station-shell {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    background: var(--b1);
-    flex-direction: column;
-    overflow: auto;
-    }
-    .qc-station-shell.on { display: flex; }
-    .qcs-v1 {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: var(--space-lg);
-    max-width: 900px;
-    margin: 0 auto;
-    width: 100%;
-    }
-    .qcs-v1-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-md);
-    flex-shrink: 0;
-    }
-    .qcs-v1-title { font-size: clamp(20px, 4vw, 28px); font-weight: 800; color: var(--w); letter-spacing: 2px; }
-    .qcs-v1-back {
-    padding: var(--space-sm) var(--space-md);
-    font-size: 16px;
-    background: var(--b3);
-    border: 1px solid var(--b4);
-    color: var(--d2);
-    border-radius: var(--radius);
-    cursor: pointer;
-    }
-    .qcs-v1-back:hover { background: var(--b4); color: var(--d); }
+    .qc-station-shell.station-shell { background: var(--b1); }
+    .qcs-v1.station-inner { padding: var(--space-lg); }
+    .qcs-v1-header.station-header { margin-bottom: var(--space-md); }
+    .qcs-v1-title.station-name { font-size: clamp(20px, 4vw, 28px); font-weight: 800; letter-spacing: 2px; }
+    .qcs-v1-back.station-back { padding: var(--space-sm) var(--space-md); font-size: 16px; background: var(--b3); border-color: var(--b4); border-radius: var(--radius); }
+    .qcs-v1-back.station-back:hover { background: var(--b4); color: var(--d); }
     .qcs-v1-current {
     font-size: clamp(18px, 3.5vw, 24px);
     font-weight: 700;
@@ -1603,47 +1577,16 @@
     .qcs-v1-entry .job { color: var(--d2); }
 
     /* Floor Manager shell — operations overview, scan-first */
-    .floor-manager-shell {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    background: var(--b1);
-    flex-direction: column;
-    overflow: auto;
-    }
-    .floor-manager-shell.on { display: flex; }
-    .fm-v1 {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: var(--space-lg);
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
-    }
-    .fm-v1-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-md);
-    flex-shrink: 0;
-    }
-    .fm-v1-title { font-size: clamp(18px, 3vw, 24px); font-weight: 800; color: var(--g); letter-spacing: 2px; }
+    .floor-manager-shell.station-shell { background: var(--b1); }
+    .fm-v1.station-inner.wide { padding: var(--space-lg); }
+    .fm-v1-bar.station-header { margin-bottom: var(--space-md); padding-bottom: 0; border-bottom: none; }
+    .fm-v1-title.station-name { font-size: clamp(18px, 3vw, 24px); font-weight: 800; letter-spacing: 2px; }
     .fm-v1-clock { font-size: 14px; color: var(--d3); }
-    .fm-v1-back {
-    padding: var(--space-sm) var(--space-md);
-    font-size: 14px;
-    background: var(--b3);
-    border: 1px solid var(--b4);
-    color: var(--d2);
-    border-radius: var(--radius);
-    cursor: pointer;
-    }
-    .fm-v1-back:hover { background: var(--b4); color: var(--d); }
+    .fm-v1-back.station-back { padding: var(--space-sm) var(--space-md); font-size: 14px; background: var(--b3); border-color: var(--b4); border-radius: var(--radius); }
+    .fm-v1-back.station-back:hover { background: var(--b4); color: var(--d); }
     .fm-v1-stats { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-md); }
     .fm-v1-stats .stat { margin: 0; }
-    .fm-v1-sec { font-size: 11px; color: var(--d3); letter-spacing: 2px; margin-bottom: var(--space-sm); }
+    .fm-v1-sec.station-sec { font-size: 11px; color: var(--d3); letter-spacing: 2px; margin: 0 0 var(--space-sm); padding-bottom: 0; border-bottom: none; }
     .fm-v1-presses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg); }
     .fm-v1-presses .press-card { margin: 0; }
     .fm-v1-presses .pc-job-link { cursor: pointer; }
@@ -1774,7 +1717,7 @@
         <div class="bar-actions">
         <button type="button" class="bar-btn" id="minimalThemeBtn" onclick="toggleMinimalTheme()" title="Toggle minimal theme">MIN</button>
         <button class="bar-btn" onclick="enterTV()">⬛ TV</button>
-        <button class="bar-btn" onclick="openQCStation()" title="QC Station — rapid reject logging">QC</button>
+        <button class="bar-btn" onclick="openQCStation()" title="QC Station — rapid reject logging" style="display:none">QC</button>
         <button id="exportBtn" class="bar-btn" onclick="exportCSV()">↓ CSV</button>
         <button class="bar-btn warn" onclick="doLogout()">EXIT</button>
         </div>
@@ -1891,23 +1834,23 @@
     </div>
 
     <!-- ============================================================ PRESS STATION SHELL (v1) -->
-    <div id="pressStationShell" class="press-station-shell">
-    <div class="ps-v1">
-        <header class="ps-v1-header">
-            <span class="ps-v1-press-name" id="psPressName">—</span>
-            <button type="button" class="ps-v1-back" onclick="exitPressStation()">← BACK</button>
+    <div id="pressStationShell" class="press-station-shell station-shell">
+    <div class="ps-v1 station-inner">
+        <header class="ps-v1-header station-header">
+            <span class="ps-v1-press-name station-name" id="psPressName">—</span>
+            <button type="button" class="ps-v1-back station-back" onclick="exitPressStation()">← BACK</button>
         </header>
-        <div class="ps-v1-content" id="pressStationContent"></div>
+        <div class="ps-v1-content station-content" id="pressStationContent"></div>
         <div class="ps-v1-log" id="pressStationLog"></div>
     </div>
     </div>
 
     <!-- ============================================================ QC STATION SHELL (v1) -->
-    <div id="qcStationShell" class="qc-station-shell">
-    <div class="qcs-v1">
-        <header class="qcs-v1-header">
-            <span class="qcs-v1-title">QC STATION</span>
-            <button type="button" class="qcs-v1-back" onclick="exitQCStation()">← BACK</button>
+    <div id="qcStationShell" class="qc-station-shell station-shell">
+    <div class="qcs-v1 station-inner">
+        <header class="qcs-v1-header station-header">
+            <span class="qcs-v1-title station-name warn">QC STATION</span>
+            <button type="button" class="qcs-v1-back station-back" onclick="exitQCStation()">← BACK</button>
         </header>
         <div class="qcs-v1-current" id="qcStationCurrent"></div>
         <div class="qcs-v1-summary-label">TODAY</div>
@@ -1921,17 +1864,17 @@
     </div>
 
     <!-- ============================================================ FLOOR MANAGER SHELL -->
-    <div id="floorManagerShell" class="floor-manager-shell">
-    <div class="fm-v1">
-        <header class="fm-v1-bar">
-            <span class="fm-v1-title">FLOOR MANAGER</span>
+    <div id="floorManagerShell" class="floor-manager-shell station-shell">
+    <div class="fm-v1 station-inner wide">
+        <header class="fm-v1-bar station-header">
+            <span class="fm-v1-title station-name">FLOOR MANAGER</span>
             <span class="fm-v1-clock" id="fmClock"></span>
-            <button type="button" class="fm-v1-back" onclick="exitFloorManager()">← BACK</button>
+            <button type="button" class="fm-v1-back station-back" onclick="exitFloorManager()">← BACK</button>
         </header>
         <div class="fm-v1-stats" id="fmStatsRow"></div>
-        <div class="fm-v1-sec">PRESS STATUS</div>
+        <div class="fm-v1-sec station-sec">PRESS STATUS</div>
         <div class="fm-v1-presses" id="fmPressGrid"></div>
-        <div class="fm-v1-sec">ACTIVE ORDERS</div>
+        <div class="fm-v1-sec station-sec">ACTIVE ORDERS</div>
         <div class="fm-v1-search">
             <input class="fm-v1-search-input" id="fmFloorSearch" placeholder="Filter…" oninput="renderFloorManagerShell()">
             <span class="fm-v1-count" id="fmFloorCount"></span>
@@ -2387,239 +2330,27 @@
     const STATUS_ORDER = ['queue','pressing','assembly','hold','done'];
 
     // ============================================================
-    // SAMPLE DATA — realistic seed so you can see the architecture
+    // SAMPLE DATA — empty defaults; Supabase seed.sql is the source of demo data
     // ============================================================
-    const SAMPLE_JOBS = [
-    {
-        id:'s1', catalog:'LUNLP3108', artist:'Willow Creek', album:'Midnight Garden',
-        invoice:'1729', status:'pressing', due:'2026-03-12', press:'PRESS 1',
-        client:'Lunar Records', email:'orders@lunarrecords.com', location:'Bay 3 Row 2',
-        format:'1LP', vinylType:'Color', qty:'500', weight:'180g',
-        color:'Dark Purple / Natty Swirl', specialty:'Swirl', labelType:'CMYK',
-        sleeve:'Printed', jacket:'Gatefold', outer_pkg:'Shrink',
-        notes:'Client wants swirl heavy on A-side. Test press approved 2/28.',
-        assembly:'Gatefold inserts on pallet Bay 3',
-        assets:{
-        stampers:{received:true, date:'2026-02-20', person:'Mike', na:false, note:''},
-        compound:{received:true, date:'2026-02-22', person:'Mike', na:false, note:'Purple + white compound'},
-        testPress:{received:true, date:'2026-02-25', person:'Alex', na:false, note:''},
-        testApproved:{received:true, date:'2026-02-28', person:'Alex', na:false, note:'Client approved via email'},
-        labels:{received:true, date:'2026-03-01', person:'Floor', na:false, note:''},
-        cut:{received:true, date:'2026-03-01', person:'Mike', na:false, note:''},
-        baked:{received:true, date:'2026-03-02', person:'Mike', na:false, note:''},
-        sleeves:{received:false, date:'', person:'', na:false, note:''},
-        jackets:{received:true, date:'2026-03-03', person:'Floor', na:false, note:'Gatefold from PrintCo'},
-        insert:{received:true, date:'2026-03-03', person:'Floor', na:false, note:''},
-        booklet:{received:false, date:'', person:'', na:true, note:''},
-        dlCard:{received:true, date:'2026-03-02', person:'Alex', na:false, note:''},
-        mktSticker:{received:false, date:'', person:'', na:false, note:''},
-        upcSticker:{received:true, date:'2026-03-01', person:'Floor', na:false, note:''},
-        outer_pkg:{received:true, date:'2026-03-03', person:'Floor', na:false, note:'Shrink wrap ready'},
-        },
-        progressLog:[
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T09:15:00Z'},
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T10:30:00Z'},
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T11:45:00Z'},
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T13:20:00Z'},
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T14:35:00Z'},
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-05T08:45:00Z'},
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-05T10:00:00Z'},
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-05T11:15:00Z'},
-        {qty:22, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T15:00:00Z'},
-        {qty:24, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T16:20:00Z'},
-        {qty:25, stage:'qc_passed', person:'Alex', timestamp:'2026-03-05T09:30:00Z'},
-        {qty:23, stage:'qc_passed', person:'Alex', timestamp:'2026-03-05T11:00:00Z'},
-        {qty:3, stage:'rejected', person:'Alex', timestamp:'2026-03-04T15:00:00Z'},
-        {qty:1, stage:'rejected', person:'Alex', timestamp:'2026-03-04T16:20:00Z'},
-        {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-03-05T11:00:00Z'},
-        ],
-    },
-    {
-        id:'s2', catalog:'BRKEP0042', artist:'Glass Hammer', album:'Fracture Lines',
-        invoice:'1731', status:'pressing', due:'2026-03-18', press:'PRESS 2',
-        client:'Broken Arrow Music', email:'press@brokenarrow.co', location:'Bay 1 Row 4',
-        format:'2LP', vinylType:'Color', qty:'1000', weight:'150g',
-        color:'Smoke Gray / Black Marble', specialty:'Marble', labelType:'CMYK',
-        sleeve:'Printed', jacket:'Gatefold', outer_pkg:'Shrink',
-        notes:'Double LP — discs A/B and C/D. Marble pattern should be subtle.',
-        assembly:'',
-        assets:{
-        stampers:{received:true, date:'2026-03-01', person:'Mike', na:false, note:'2 sets for 2LP'},
-        compound:{received:true, date:'2026-03-02', person:'Mike', na:false, note:''},
-        testPress:{received:true, date:'2026-03-03', person:'Alex', na:false, note:''},
-        testApproved:{received:true, date:'2026-03-04', person:'Alex', na:false, note:''},
-        labels:{received:true, date:'2026-03-04', person:'Floor', na:false, note:'4 labels total'},
-        cut:{received:true, date:'2026-03-04', person:'Mike', na:false, note:''},
-        baked:{received:false, date:'', person:'', na:false, note:''},
-        sleeves:{received:false, date:'', person:'', na:false, note:''},
-        jackets:{received:false, date:'', person:'', na:false, note:''},
-        insert:{received:false, date:'', person:'', na:false, note:''},
-        booklet:{received:false, date:'', person:'', na:false, note:'8-page booklet'},
-        dlCard:{received:false, date:'', person:'', na:true, note:''},
-        mktSticker:{received:false, date:'', person:'', na:true, note:''},
-        upcSticker:{received:false, date:'', person:'', na:false, note:''},
-        outer_pkg:{received:false, date:'', person:'', na:false, note:''},
-        },
-        progressLog:[
-        {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-05T13:00:00Z'},
-        {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-05T14:30:00Z'},
-        {qty:48, stage:'qc_passed', person:'Alex', timestamp:'2026-03-05T15:45:00Z'},
-        {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-03-05T15:45:00Z'},
-        ],
-    },
-    {
-        id:'s3', catalog:'RCL7-009', artist:'The Satellites', album:'Radio Silence b/w Dead Air',
-        invoice:'1735', status:'assembly', due:'2026-03-08', press:'7" PRESS',
-        client:'Recluse Records', email:'info@recluserecs.com', location:'Bay 5 Row 1',
-        format:'7"', vinylType:'Color', qty:'300', weight:'140g',
-        color:'Translucent Red', specialty:'', labelType:'1-Color',
-        sleeve:'Printed', jacket:'None', outer_pkg:'Polybag',
-        notes:'Rush order — client needs for SXSW merch table.',
-        assembly:'Pressed, waiting on sleeves for assembly. Polybags on shelf B5.',
-        assets:{
-        stampers:{received:true, date:'2026-02-28', person:'Alex', na:false, note:''},
-        compound:{received:true, date:'2026-02-28', person:'Alex', na:false, note:'Red translucent'},
-        testPress:{received:true, date:'2026-03-01', person:'Alex', na:false, note:''},
-        testApproved:{received:true, date:'2026-03-02', person:'Alex', na:false, note:''},
-        labels:{received:true, date:'2026-03-02', person:'Floor', na:false, note:''},
-        cut:{received:true, date:'2026-03-03', person:'Mike', na:false, note:''},
-        baked:{received:true, date:'2026-03-03', person:'Mike', na:false, note:''},
-        sleeves:{received:false, date:'', person:'', na:false, note:'WAITING — due 3/7 from printer'},
-        jackets:{received:false, date:'', person:'', na:true, note:''},
-        insert:{received:false, date:'', person:'', na:true, note:''},
-        booklet:{received:false, date:'', person:'', na:true, note:''},
-        dlCard:{received:false, date:'', person:'', na:true, note:''},
-        mktSticker:{received:false, date:'', person:'', na:true, note:''},
-        upcSticker:{received:true, date:'2026-03-03', person:'Floor', na:false, note:''},
-        outer_pkg:{received:true, date:'2026-03-04', person:'Floor', na:false, note:'Polybags ready'},
-        },
-        progressLog:[
-        {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T09:00:00Z'},
-        {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T10:15:00Z'},
-        {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T11:30:00Z'},
-        {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T13:00:00Z'},
-        {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T14:15:00Z'},
-        {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T15:30:00Z'},
-        {qty:30, stage:'pressed', person:'Colby', timestamp:'2026-03-04T08:30:00Z'},
-        {qty:48, stage:'qc_passed', person:'Alex', timestamp:'2026-03-03T15:00:00Z'},
-        {qty:49, stage:'qc_passed', person:'Alex', timestamp:'2026-03-03T16:30:00Z'},
-        {qty:50, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T09:00:00Z'},
-        {qty:50, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T10:30:00Z'},
-        {qty:50, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T11:45:00Z'},
-        {qty:48, stage:'qc_passed', person:'Alex', timestamp:'2026-03-04T13:00:00Z'},
-        {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-03-03T15:00:00Z'},
-        {qty:1, stage:'rejected', person:'Alex', timestamp:'2026-03-03T16:30:00Z'},
-        {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-03-04T13:00:00Z'},
-        ],
-    },
-    {
-        id:'s4', catalog:'HNYLP2200', artist:'Magnolia Sound', album:'Honey & Smoke',
-        invoice:'1722', status:'queue', due:'2026-03-25', press:'',
-        client:'Honeybee Collective', email:'vinyl@honeybeecollective.com', location:'',
-        format:'1LP', vinylType:'Color', qty:'750', weight:'180g',
-        color:'Honey Gold', specialty:'', labelType:'CMYK',
-        sleeve:'Printed', jacket:'Standard', outer_pkg:'Shrink',
-        notes:'Waiting on stampers from cutting house. ETA 3/10.',
-        assembly:'',
-        assets:{
-        stampers:{received:false, date:'', person:'', na:false, note:'ETA 3/10 from cutting house'},
-        compound:{received:true, date:'2026-03-01', person:'Mike', na:false, note:'Gold compound ordered'},
-        testPress:{received:false, date:'', person:'', na:false, note:''},
-        testApproved:{received:false, date:'', person:'', na:false, note:''},
-        labels:{received:false, date:'', person:'', na:false, note:''},
-        cut:{received:false, date:'', person:'', na:false, note:''},
-        baked:{received:false, date:'', person:'', na:false, note:''},
-        sleeves:{received:false, date:'', person:'', na:false, note:''},
-        jackets:{received:false, date:'', person:'', na:false, note:''},
-        insert:{received:false, date:'', person:'', na:true, note:''},
-        booklet:{received:false, date:'', person:'', na:true, note:''},
-        dlCard:{received:false, date:'', person:'', na:false, note:''},
-        mktSticker:{received:false, date:'', person:'', na:false, note:''},
-        upcSticker:{received:false, date:'', person:'', na:false, note:''},
-        outer_pkg:{received:false, date:'', person:'', na:false, note:''},
-        },
-        progressLog:[],
-    },
-    {
-        id:'s5', catalog:'DSTLP0887', artist:'Cold Frequency', album:'Dissolve',
-        invoice:'1718', status:'done', due:'2026-03-01', press:'PRESS 3',
-        client:'Dust & Static', email:'releases@duststatic.com', location:'Shipping Bay',
-        format:'1LP', vinylType:'Black', qty:'500', weight:'180g',
-        color:'Black', specialty:'', labelType:'2-Color',
-        sleeve:'Printed', jacket:'Standard', outer_pkg:'Shrink',
-        notes:'Completed. 525 units pressed (includes overage). Boxed and ready to ship.',
-        assembly:'Boxed on pallet, shipping bay. Pickup scheduled 3/7.',
-        invDate:'2026-01-15', deposit:'2026-01-20', inv2:'2026-02-28', pay2:'2026-03-04',
-        assets:{
-        stampers:{received:true, date:'2026-02-01', person:'Mike', na:false, note:''},
-        compound:{received:true, date:'2026-02-01', person:'Mike', na:false, note:''},
-        testPress:{received:true, date:'2026-02-05', person:'Alex', na:false, note:''},
-        testApproved:{received:true, date:'2026-02-07', person:'Alex', na:false, note:''},
-        labels:{received:true, date:'2026-02-10', person:'Floor', na:false, note:''},
-        cut:{received:true, date:'2026-02-10', person:'Mike', na:false, note:''},
-        baked:{received:true, date:'2026-02-11', person:'Mike', na:false, note:''},
-        sleeves:{received:true, date:'2026-02-15', person:'Floor', na:false, note:''},
-        jackets:{received:true, date:'2026-02-15', person:'Floor', na:false, note:''},
-        insert:{received:false, date:'', person:'', na:true, note:''},
-        booklet:{received:false, date:'', person:'', na:true, note:''},
-        dlCard:{received:true, date:'2026-02-18', person:'Alex', na:false, note:''},
-        mktSticker:{received:true, date:'2026-02-20', person:'Floor', na:false, note:''},
-        upcSticker:{received:true, date:'2026-02-20', person:'Floor', na:false, note:''},
-        outer_pkg:{received:true, date:'2026-02-22', person:'Floor', na:false, note:''},
-        },
-        progressLog:[
-        {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-24T09:00:00Z'},
-        {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-24T11:00:00Z'},
-        {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-24T14:00:00Z'},
-        {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-25T09:00:00Z'},
-        {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-25T11:00:00Z'},
-        {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-02-25T13:00:00Z'},
-        {qty:98, stage:'qc_passed', person:'Alex', timestamp:'2026-02-24T15:00:00Z'},
-        {qty:99, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T10:00:00Z'},
-        {qty:100, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T12:00:00Z'},
-        {qty:100, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T14:00:00Z'},
-        {qty:100, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T15:30:00Z'},
-        {qty:25, stage:'qc_passed', person:'Alex', timestamp:'2026-02-25T16:00:00Z'},
-        {qty:2, stage:'rejected', person:'Alex', timestamp:'2026-02-24T15:00:00Z'},
-        {qty:1, stage:'rejected', person:'Alex', timestamp:'2026-02-25T10:00:00Z'},
-        ],
-    },
-    ];
+    const SAMPLE_JOBS = [];
 
-    // Sample QC history — a few days of data so date navigation is visible
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 864e5).toDateString();
-    const twoDaysAgo = new Date(Date.now() - 864e5 * 2).toDateString();
+    const SAMPLE_QC = [];
 
-    const SAMPLE_QC = [
-    {time:'14:22:05', type:'FLASH', job:'LUNLP3108', date:today},
-    {time:'14:18:31', type:'BLEMISH', job:'LUNLP3108', date:today},
-    {time:'11:05:12', type:'OFF-CENTER', job:'BRKEP0042', date:today},
-    {time:'16:42:09', type:'FLASH', job:'RCL7-009', date:yesterday},
-    {time:'15:30:44', type:'FLASH', job:'RCL7-009', date:yesterday},
-    {time:'15:28:11', type:'UNTRIMMED', job:'RCL7-009', date:yesterday},
-    {time:'14:10:33', type:'BLEMISH', job:'RCL7-009', date:yesterday},
-    {time:'10:15:20', type:'AUDIO', job:'DSTLP0887', date:twoDaysAgo},
-    {time:'09:44:55', type:'FLASH', job:'DSTLP0887', date:twoDaysAgo},
-    {time:'09:22:18', type:'BISCUIT/FLASH', job:'DSTLP0887', date:twoDaysAgo},
-    ];
-
-    // Sample press assignments matching the jobs
     const SAMPLE_PRESSES = [
-    {id:'p1', name:'PRESS 1', type:'LP',  status:'online',  job:'s1'},
-    {id:'p2', name:'PRESS 2', type:'LP',  status:'online',  job:'s2'},
-    {id:'p3', name:'PRESS 3', type:'LP',  status:'idle',    job:null},
-    {id:'p4', name:'7" PRESS',type:'7"',  status:'warning', job:null},  // warning: 7" just finished rush job
+    {id:'p1', name:'PRESS 1', type:'LP',  status:'idle', job:null},
+    {id:'p2', name:'PRESS 2', type:'LP',  status:'idle', job:null},
+    {id:'p3', name:'PRESS 3', type:'LP',  status:'idle', job:null},
+    {id:'p4', name:'7" PRESS',type:'7"',  status:'idle', job:null},
     ];
 
     // ============================================================
     // STATE — seeded with sample data for first run
     // ============================================================
     let S = {
-    jobs: JSON.parse(JSON.stringify(SAMPLE_JOBS)),
+    jobs: [],
     presses: JSON.parse(JSON.stringify(SAMPLE_PRESSES)),
     todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)),
-    qcLog: JSON.parse(JSON.stringify(SAMPLE_QC)),
+    qcLog: [],
     mode: 'floor',
     editId: null,
     qcSelectedJob: null,
@@ -2815,10 +2546,21 @@
     setSyncState('loading');
     try {
         const data = await Storage.loadAllData();
-        S.jobs = data.jobs || S.jobs;
+        if (data.jobs && data.jobs.length > 0) {
+        S.jobs = data.jobs;
+        } else if (S.jobs.length === 0 && data.jobs) {
+        S.jobs = data.jobs;
+        }
         S.presses = data.presses && data.presses.length > 0 ? data.presses : JSON.parse(JSON.stringify(DEFAULT_PRESSES));
         S.todos = data.todos || S.todos;
-        S.qcLog = data.qcLog || S.qcLog;
+        if (data.qcLog && data.qcLog.length > 0) {
+        S.qcLog = data.qcLog;
+        } else if (S.qcLog.length === 0 && data.qcLog) {
+        S.qcLog = data.qcLog;
+        }
+        if (data.jobs && data.jobs.length === 0 && S.jobs.length > 0) {
+        console.warn('[PMP] Supabase returned 0 jobs but local state has', S.jobs.length, '— keeping local state (possible transient failure)');
+        }
         if (data.lastReset) S._lastReset = data.lastReset;
         S.jobs.forEach(ensureJobProgressLog);
         syncJobPressFromPresses();
