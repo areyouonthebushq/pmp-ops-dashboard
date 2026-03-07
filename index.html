@@ -131,6 +131,54 @@
     .mode-btn.floor:hover { background: var(--s2); border-color: var(--d2); }
     .mode-city { margin-top: var(--space-lg); font-size:11px; color: var(--d3); letter-spacing:3px; text-align:center; }
 
+    /* Station launcher — four choices + press picker + last-used */
+    .launcher-grid { display: flex; flex-direction: column; gap: var(--space-sm); }
+    .launcher-btn {
+    display: flex; align-items: center; gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    border: 1px solid; background: transparent;
+    font-family: 'Inconsolata', monospace; font-size: 14px; letter-spacing: 2px;
+    cursor: pointer; transition: all 0.2s; text-align: left;
+    }
+    .launcher-btn .mb-icon { font-size: 22px; width: 28px; flex-shrink: 0; text-align: center; }
+    .launcher-btn .mb-label { font-size: 15px; font-weight: 700; }
+    .launcher-btn .mb-sub { font-size: 11px; color: var(--d2); margin-top: 2px; }
+    .launcher-btn.admin { border-color: var(--g2); color: var(--g); }
+    .launcher-btn.admin:hover { background: var(--g3); border-color: var(--g); box-shadow: var(--gg); }
+    .launcher-btn.fm { border-color: var(--b2); color: var(--d); }
+    .launcher-btn.fm:hover { background: var(--s2); border-color: var(--d2); }
+    .launcher-btn.press { border-color: var(--b2); color: var(--d); }
+    .launcher-btn.press:hover { background: var(--s2); border-color: var(--d2); }
+    .launcher-btn.qc { border-color: var(--w); color: var(--w); }
+    .launcher-btn.qc:hover { background: rgba(255,193,7,0.1); border-color: var(--w); }
+    .launcher-press-row {
+    display: none;
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--b2);
+    margin-top: var(--space-xs);
+    }
+    .launcher-press-row.on { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+    .launcher-press-row .launcher-press-btn {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 13px;
+    border: 1px solid var(--b4);
+    background: var(--b3);
+    color: var(--d);
+    border-radius: var(--radius);
+    cursor: pointer;
+    }
+    .launcher-press-row .launcher-press-btn:hover { background: var(--b4); color: var(--w); }
+    .launcher-last-row {
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--b2);
+    display: none;
+    }
+    .launcher-last-row.on { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); }
+    .launcher-last-row span { font-size: 12px; color: var(--d3); }
+    .launcher-last-row .btn-open { padding: var(--space-xs) var(--space-md); font-size: 12px; background: var(--g); color: var(--b); border: none; border-radius: var(--radius); cursor: pointer; font-weight: 700; }
+    .launcher-last-row .btn-open:hover { filter: brightness(1.1); }
+
     /* ============================================================ APP SHELL */
     #app { position:relative; z-index:1; display:none; padding-bottom:56px; }
 
@@ -1233,6 +1281,293 @@
     .fc-edit-row label { display: block; font-size: 12px; color: var(--d3); margin-bottom: 2px; }
     .fc-edit-row input, .fc-edit-row select, .fc-edit-row textarea { width: 100%; max-width: 320px; padding: 6px 8px; background: var(--b3); border: 1px solid var(--b5); color: var(--d); border-radius: var(--radius); }
     .fc-edit-actions { margin-top: var(--space-md); }
+
+    /* Press Station v1 — single-press workstation (iPad) */
+    .press-station-shell {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--b1);
+    flex-direction: column;
+    overflow: auto;
+    }
+    .press-station-shell.on { display: flex; }
+    .ps-v1 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-lg);
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+    }
+    .ps-v1-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-xl);
+    flex-shrink: 0;
+    }
+    .ps-v1-press-name {
+    font-size: clamp(22px, 5vw, 32px);
+    font-weight: 800;
+    color: var(--g);
+    letter-spacing: 2px;
+    }
+    .ps-v1-press-name.seven { color: var(--p); }
+    .ps-v1-back {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 16px;
+    background: var(--b3);
+    border: 1px solid var(--b4);
+    color: var(--d2);
+    border-radius: var(--radius);
+    cursor: pointer;
+    }
+    .ps-v1-back:hover { background: var(--b4); color: var(--d); }
+    .ps-v1-content { flex: 1; margin-bottom: var(--space-lg); }
+    .ps-v1-job-title { font-size: clamp(18px, 4vw, 28px); font-weight: 700; color: var(--d); margin-bottom: var(--space-xs); }
+    .ps-v1-job-meta { font-size: clamp(14px, 2.5vw, 18px); color: var(--d3); margin-bottom: var(--space-md); }
+    .ps-v1-stat-row { display: flex; flex-wrap: wrap; gap: var(--space-lg); margin-bottom: var(--space-md); }
+    .ps-v1-stat { font-size: clamp(20px, 4vw, 28px); }
+    .ps-v1-stat .num { font-weight: 800; color: var(--g); }
+    .ps-v1-stat .lbl { color: var(--d3); font-size: 0.6em; font-weight: 600; letter-spacing: 1px; }
+    .ps-v1-remaining { font-size: clamp(22px, 5vw, 36px); font-weight: 800; color: var(--w); margin: var(--space-md) 0; }
+    .ps-v1-blocked { font-size: clamp(14px, 2vw, 18px); color: var(--r); margin-top: var(--space-sm); }
+    .ps-v1-bar { height: 14px; background: var(--b4); border-radius: 7px; overflow: hidden; margin: var(--space-sm) 0; }
+    .ps-v1-bar-fill { height: 100%; background: var(--g); border-radius: 7px; transition: width 0.2s; }
+    .ps-v1-idle { font-size: clamp(20px, 4vw, 28px); color: var(--d3); font-weight: 600; }
+    .ps-v1-log {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: center;
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--b3);
+    flex-shrink: 0;
+    }
+    .ps-v1-log-btn {
+    min-width: 100px;
+    min-height: 64px;
+    padding: var(--space-md) var(--space-lg);
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: 800;
+    background: var(--g);
+    color: var(--b);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    }
+    .ps-v1-log-btn:hover { filter: brightness(1.15); }
+    .ps-v1-log-btn:active { transform: scale(0.98); }
+    .pc-station-btn {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 11px;
+    background: var(--b4);
+    color: var(--d2);
+    border: 1px solid var(--b5);
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-top: 4px;
+    }
+    .pc-station-btn:hover { background: var(--b5); color: var(--d); }
+
+    /* QC Station v1 — rapid reject logging */
+    .qc-station-shell {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--b1);
+    flex-direction: column;
+    overflow: auto;
+    }
+    .qc-station-shell.on { display: flex; }
+    .qcs-v1 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-lg);
+    max-width: 900px;
+    margin: 0 auto;
+    width: 100%;
+    }
+    .qcs-v1-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+    flex-shrink: 0;
+    }
+    .qcs-v1-title { font-size: clamp(20px, 4vw, 28px); font-weight: 800; color: var(--w); letter-spacing: 2px; }
+    .qcs-v1-back {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 16px;
+    background: var(--b3);
+    border: 1px solid var(--b4);
+    color: var(--d2);
+    border-radius: var(--radius);
+    cursor: pointer;
+    }
+    .qcs-v1-back:hover { background: var(--b4); color: var(--d); }
+    .qcs-v1-current {
+    font-size: clamp(18px, 3.5vw, 24px);
+    font-weight: 700;
+    color: var(--g);
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--b3);
+    }
+    .qcs-v1-current .none { color: var(--d3); font-weight: 600; }
+    .qcs-v1-jobs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    }
+    .qcs-v1-job-btn {
+    padding: var(--space-sm) var(--space-md);
+    font-size: clamp(14px, 2vw, 16px);
+    font-weight: 600;
+    background: var(--b3);
+    border: 2px solid var(--b4);
+    color: var(--d2);
+    border-radius: var(--radius);
+    cursor: pointer;
+    }
+    .qcs-v1-job-btn:hover { background: var(--b4); color: var(--d); }
+    .qcs-v1-job-btn.active { border-color: var(--g); color: var(--g); background: rgba(0,230,118,0.08); }
+    .qcs-v1-reject-label, .qcs-v1-summary-label, .qcs-v1-log-label {
+    font-size: 11px; color: var(--d3); letter-spacing: 2px; margin-bottom: var(--space-xs);
+    }
+    .qcs-v1-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    }
+    .qcs-v1-reject-btn {
+    min-width: 120px;
+    min-height: 64px;
+    padding: var(--space-md) var(--space-lg);
+    font-size: clamp(14px, 2.5vw, 18px);
+    font-weight: 700;
+    background: var(--b3);
+    border: 2px solid var(--b5);
+    color: var(--d);
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    }
+    .qcs-v1-reject-btn:hover { background: var(--b4); border-color: var(--w); color: var(--w); }
+    .qcs-v1-reject-btn .qi { font-size: 1.2em; }
+    .qcs-v1-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    min-height: 36px;
+    }
+    .qcs-v1-sum-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--b3);
+    border-radius: var(--radius);
+    font-size: 14px;
+    }
+    .qcs-v1-sum-pill .n { font-weight: 800; color: var(--w); }
+    .qcs-v1-sum-pill .l { color: var(--d3); }
+    .qcs-v1-log {
+    flex: 1;
+    min-height: 120px;
+    font-size: 14px;
+    color: var(--d2);
+    }
+    .qcs-v1-entry {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-xs) 0;
+    border-bottom: 1px solid var(--b2);
+    }
+    .qcs-v1-entry .t { color: var(--d3); min-width: 64px; }
+    .qcs-v1-entry .type { font-weight: 700; color: var(--d); }
+    .qcs-v1-entry .job { color: var(--d2); }
+
+    /* Floor Manager shell — operations overview, scan-first */
+    .floor-manager-shell {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--b1);
+    flex-direction: column;
+    overflow: auto;
+    }
+    .floor-manager-shell.on { display: flex; }
+    .fm-v1 {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-lg);
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    }
+    .fm-v1-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+    flex-shrink: 0;
+    }
+    .fm-v1-title { font-size: clamp(18px, 3vw, 24px); font-weight: 800; color: var(--g); letter-spacing: 2px; }
+    .fm-v1-clock { font-size: 14px; color: var(--d3); }
+    .fm-v1-back {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 14px;
+    background: var(--b3);
+    border: 1px solid var(--b4);
+    color: var(--d2);
+    border-radius: var(--radius);
+    cursor: pointer;
+    }
+    .fm-v1-back:hover { background: var(--b4); color: var(--d); }
+    .fm-v1-stats { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-md); }
+    .fm-v1-stats .stat { margin: 0; }
+    .fm-v1-sec { font-size: 11px; color: var(--d3); letter-spacing: 2px; margin-bottom: var(--space-sm); }
+    .fm-v1-presses { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-lg); }
+    .fm-v1-presses .press-card { margin: 0; }
+    .fm-v1-presses .pc-job-link { cursor: pointer; }
+    .fm-v1-search {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    }
+    .fm-v1-search-input {
+    flex: 1;
+    max-width: 280px;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--b3);
+    border: 1px solid var(--b4);
+    color: var(--d);
+    border-radius: var(--radius);
+    font-size: 13px;
+    }
+    .fm-v1-count { font-size: 12px; color: var(--d3); }
+    .fm-v1-tbl-wrap { flex: 1; min-height: 0; overflow: auto; }
+    .fm-v1-tbl { width: 100%; border-collapse: collapse; }
+    .fm-v1-tbl th { text-align: left; padding: var(--space-sm); font-size: 10px; color: var(--d3); letter-spacing: 1px; border-bottom: 1px solid var(--b3); }
+    .fm-v1-tbl td { padding: var(--space-sm); border-bottom: 1px solid var(--b2); font-size: 13px; }
+    .fm-v1-tbl .floor-card-trigger { cursor: pointer; }
+    .fm-v1-tbl .floor-card-trigger:hover { color: var(--w); }
     </style>
     <!-- Supabase: set URL and anon key (e.g. from Vercel env at build, or paste here) -->
     <script>
@@ -1246,7 +1581,7 @@
 
     <canvas id="rain"></canvas>
 
-    <!-- ============================================================ MODE SELECT -->
+    <!-- ============================================================ STATION LAUNCHER (mode select) -->
     <div id="modeScreen">
     <div class="mode-wrap">
         <div class="mode-head">
@@ -1254,20 +1589,46 @@
         <div class="mode-sub">Nashville · Press Floor Operations</div>
         </div>
         <div class="mode-body">
-        <button class="mode-btn admin" onclick="enterApp('admin')">
-            <span class="mb-icon">⬡</span>
-            <div>
-            <div class="mb-label">Admin View</div>
-            <div class="mb-sub">Full edit · assign · export</div>
+        <div class="launcher-grid">
+            <button type="button" class="launcher-btn admin" onclick="enterByLauncher('admin')">
+                <span class="mb-icon">⬡</span>
+                <div>
+                <div class="mb-label">Admin</div>
+                <div class="mb-sub">Full edit · assign · export</div>
+                </div>
+            </button>
+            <button type="button" class="launcher-btn fm" onclick="enterByLauncher('floor_manager')">
+                <span class="mb-icon">▶</span>
+                <div>
+                <div class="mb-label">Floor Manager</div>
+                <div class="mb-sub">Operations overview · statboard · quick edit</div>
+                </div>
+            </button>
+            <button type="button" class="launcher-btn press" onclick="toggleLauncherPressPicker()">
+                <span class="mb-icon">⬢</span>
+                <div>
+                <div class="mb-label">Press Station</div>
+                <div class="mb-sub">Single-press view · log qty</div>
+                </div>
+            </button>
+            <div class="launcher-press-row" id="launcherPressPicker">
+                <button type="button" class="launcher-press-btn" onclick="enterByLauncher('press','p1')">Press 1</button>
+                <button type="button" class="launcher-press-btn" onclick="enterByLauncher('press','p2')">Press 2</button>
+                <button type="button" class="launcher-press-btn" onclick="enterByLauncher('press','p3')">Press 3</button>
+                <button type="button" class="launcher-press-btn" onclick="enterByLauncher('press','p4')">7" Press</button>
             </div>
-        </button>
-        <button class="mode-btn floor" onclick="enterApp('floor')">
-            <span class="mb-icon">▶</span>
-            <div>
-            <div class="mb-label">Floor View</div>
-            <div class="mb-sub">Update · check off · log</div>
-            </div>
-        </button>
+            <button type="button" class="launcher-btn qc" onclick="enterByLauncher('qc')">
+                <span class="mb-icon">⚠</span>
+                <div>
+                <div class="mb-label">QC Station</div>
+                <div class="mb-sub">Rapid reject logging</div>
+                </div>
+            </button>
+        </div>
+        <div class="launcher-last-row" id="launcherLastRow">
+            <span id="launcherLastLabel">Last: —</span>
+            <button type="button" class="btn-open" id="launcherLastOpen" onclick="openLastLauncherChoice()">OPEN</button>
+        </div>
         </div>
     </div>
     <div class="mode-city">Nashville, TN · physicalmusicproducts.com</div>
@@ -1300,7 +1661,7 @@
     <div class="tv-ticker"><span class="tv-ticker-inner" id="tvTicker"></span></div>
     </div>
 
-    <!-- ============================================================ APP -->
+    <!-- ============================================================ APP (admin shell) -->
     <div id="app">
 
     <!-- TOP BAR -->
@@ -1311,6 +1672,8 @@
         <div class="bar-actions">
         <button type="button" class="bar-btn" id="minimalThemeBtn" onclick="toggleMinimalTheme()" title="Toggle minimal theme">MIN</button>
         <button class="bar-btn" onclick="enterTV()">⬛ TV</button>
+        <button class="bar-btn" onclick="openQCStation()" title="QC Station — rapid reject logging">QC</button>
+        <button class="bar-btn" onclick="openFloorManager()" title="Floor Manager — operations overview">FLOOR MGR</button>
         <button id="exportBtn" class="bar-btn" onclick="exportCSV()">↓ CSV</button>
         <button class="bar-btn warn" onclick="doLogout()">EXIT</button>
         </div>
@@ -1422,6 +1785,64 @@
         </div>
         <div class="qc-log" id="qcLog">
         <div class="empty">NO REJECTS LOGGED TODAY</div>
+        </div>
+    </div>
+    </div>
+
+    <!-- ============================================================ PRESS STATION SHELL (v1) -->
+    <div id="pressStationShell" class="press-station-shell" style="display:none">
+    <div class="ps-v1">
+        <header class="ps-v1-header">
+            <span class="ps-v1-press-name" id="psPressName">—</span>
+            <button type="button" class="ps-v1-back" onclick="exitPressStation()">← BACK</button>
+        </header>
+        <div class="ps-v1-content" id="pressStationContent"></div>
+        <div class="ps-v1-log" id="pressStationLog"></div>
+    </div>
+    </div>
+
+    <!-- ============================================================ QC STATION SHELL (v1) -->
+    <div id="qcStationShell" class="qc-station-shell" style="display:none">
+    <div class="qcs-v1">
+        <header class="qcs-v1-header">
+            <span class="qcs-v1-title">QC STATION</span>
+            <button type="button" class="qcs-v1-back" onclick="exitQCStation()">← BACK</button>
+        </header>
+        <div class="qcs-v1-current" id="qcStationCurrent"></div>
+        <div class="qcs-v1-jobs" id="qcStationJobs"></div>
+        <div class="qcs-v1-reject-label">LOG REJECT</div>
+        <div class="qcs-v1-btns" id="qcStationRejectBtns"></div>
+        <div class="qcs-v1-summary-label">TODAY</div>
+        <div class="qcs-v1-summary" id="qcStationSummary"></div>
+        <div class="qcs-v1-log-label">RECENT</div>
+        <div class="qcs-v1-log" id="qcStationLog"></div>
+    </div>
+    </div>
+
+    <!-- ============================================================ FLOOR MANAGER SHELL -->
+    <div id="floorManagerShell" class="floor-manager-shell" style="display:none">
+    <div class="fm-v1">
+        <header class="fm-v1-bar">
+            <span class="fm-v1-title">FLOOR MANAGER</span>
+            <span class="fm-v1-clock" id="fmClock"></span>
+            <button type="button" class="fm-v1-back" onclick="exitFloorManager()">← BACK</button>
+        </header>
+        <div class="fm-v1-stats" id="fmStatsRow"></div>
+        <div class="fm-v1-sec">PRESS STATUS</div>
+        <div class="fm-v1-presses" id="fmPressGrid"></div>
+        <div class="fm-v1-sec">ACTIVE ORDERS</div>
+        <div class="fm-v1-search">
+            <input class="fm-v1-search-input" id="fmFloorSearch" placeholder="Filter…" oninput="renderFloorManagerShell()">
+            <span class="fm-v1-count" id="fmFloorCount"></span>
+        </div>
+        <div class="fm-v1-tbl-wrap">
+            <table class="fm-v1-tbl">
+                <thead><tr>
+                <th>CATALOG</th><th>ARTIST / ALBUM</th><th>FORMAT</th>
+                <th>STATUS</th><th>DUE</th><th>ASSETS</th><th>PROGRESS</th><th>LOCATION</th><th></th>
+                </tr></thead>
+                <tbody id="fmFloorBody"></tbody>
+            </table>
         </div>
     </div>
     </div>
@@ -2103,10 +2524,76 @@
     qcSelectedJob: null,
     floorCardJobId: null,
     floorCardEditMode: false,
+    // Station context (optional). When null/empty, app shows admin shell (#app).
+    stationType: null,       // 'admin' | 'floor_manager' | 'press' | 'qc'
+    stationId: '',
+    assignedPressId: null,   // for stationType === 'press'
     };
     let saveTimer = null;
     let curAssets = {};
     let panelOpen = false;
+
+    // ============================================================
+    // STATION CONTEXT — helpers for future station-specific shells.
+    // When no station is set, these return null/false; existing behavior unchanged.
+    // ============================================================
+    /** Returns current station context or null if not in station mode. */
+    function getStationContext() {
+    if (!S.stationType) return null;
+    return {
+        stationType: S.stationType,
+        stationId: S.stationId || '',
+        assignedPressId: S.assignedPressId || null,
+    };
+    }
+    /** True if current station matches type (e.g. isStationType('press')). */
+    function isStationType(type) {
+    return S.stationType === type;
+    }
+    /** For press stations: the press object for assignedPressId, or null. */
+    function getStationPress() {
+    if (S.stationType !== 'press' || !S.assignedPressId) return null;
+    return S.presses.find(p => p.id === S.assignedPressId) || null;
+    }
+    /** Job currently on this station's assigned press (press stations only). */
+    function getStationJob() {
+    const press = getStationPress();
+    return press && press.job ? S.jobs.find(j => j.id === press.job) || null : null;
+    }
+    /** Set station context; call when entering a station shell (future). */
+    function setStationContext(opts) {
+    S.stationType = opts.stationType ?? null;
+    S.stationId = opts.stationId ?? '';
+    S.assignedPressId = opts.assignedPressId ?? null;
+    }
+
+    // ============================================================
+    // STATION EDIT PERMISSIONS — single source for what each role can edit
+    // ============================================================
+    /** Returns edit permissions for current context (admin = full; stations = restricted). */
+    function getStationEditPermissions() {
+    const ctx = getStationContext();
+    if (!ctx) {
+        return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+    }
+    switch (ctx.stationType) {
+        case 'floor_manager':
+            return { canUseFullPanel: false, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: false, canLogQC: false };
+        case 'press':
+            return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: true, canLogQC: false };
+        case 'qc':
+            return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: false, canLogQC: true };
+        default:
+            return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+    }
+    }
+
+    /** True if current context may edit this floor-card field (or any field when in admin). */
+    function canEditField(field) {
+    const p = getStationEditPermissions();
+    if (p.canUseFullPanel) return true;
+    return p.floorCardFields.indexOf(field) !== -1;
+    }
 
     // ============================================================
     // STORAGE — unified on window.storage, no localStorage split
@@ -2378,7 +2865,119 @@
     }
 
     // ============================================================
-    // AUTH — renamed from "login" to "enter app"
+    // STATION LAUNCHER — single entry point, persist last choice
+    // ============================================================
+    const LAUNCHER_STORAGE_KEY = 'pmp_launcher_last';
+
+    function getLastLauncherChoice() {
+    try {
+        const raw = localStorage.getItem(LAUNCHER_STORAGE_KEY);
+        if (!raw) return null;
+        const o = JSON.parse(raw);
+        if (!o || (o.stationType !== null && typeof o.stationType !== 'string')) return null;
+        return { stationType: o.stationType ?? null, assignedPressId: o.assignedPressId ?? null };
+    } catch { return null; }
+    }
+
+    function setLastLauncherChoice(obj) {
+    try {
+        localStorage.setItem(LAUNCHER_STORAGE_KEY, JSON.stringify({
+            stationType: obj.stationType ?? null,
+            assignedPressId: obj.assignedPressId ?? null,
+        }));
+    } catch {}
+    }
+
+    /** Enter app from launcher: admin | floor_manager | press | qc. For press, pass pressId (e.g. p1). */
+    function enterByLauncher(choice, pressId) {
+    hideLauncherPressPicker();
+    document.getElementById('modeScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    S.mode = choice === 'admin' ? 'admin' : 'floor';
+    const badge = document.getElementById('modeBadge');
+    if (badge) { badge.textContent = (choice === 'admin' ? 'ADMIN' : 'FLOOR').toUpperCase(); badge.className = 'bar-mode ' + (choice === 'admin' ? 'admin' : 'floor'); }
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) exportBtn.style.display = choice === 'admin' ? '' : 'none';
+    updateFAB();
+    loadAll();
+    startPolling();
+
+    if (choice === 'admin') {
+        setLastLauncherChoice({ stationType: null });
+        return;
+    }
+    if (choice === 'floor_manager') {
+        setLastLauncherChoice({ stationType: 'floor_manager' });
+        openFloorManager();
+        return;
+    }
+    if (choice === 'press' && pressId) {
+        setLastLauncherChoice({ stationType: 'press', assignedPressId: pressId });
+        openPressStation(pressId);
+        return;
+    }
+    if (choice === 'qc') {
+        setLastLauncherChoice({ stationType: 'qc' });
+        openQCStation();
+        return;
+    }
+    }
+
+    function toggleLauncherPressPicker() {
+    const el = document.getElementById('launcherPressPicker');
+    if (el) el.classList.toggle('on');
+    }
+
+    function hideLauncherPressPicker() {
+    const el = document.getElementById('launcherPressPicker');
+    if (el) el.classList.remove('on');
+    }
+
+    function openLastLauncherChoice() {
+    const last = getLastLauncherChoice();
+    if (!last) return;
+    if (last.stationType === null) {
+        enterByLauncher('admin');
+        return;
+    }
+    if (last.stationType === 'floor_manager') {
+        enterByLauncher('floor_manager');
+        return;
+    }
+    if (last.stationType === 'press' && last.assignedPressId) {
+        enterByLauncher('press', last.assignedPressId);
+        return;
+    }
+    if (last.stationType === 'qc') {
+        enterByLauncher('qc');
+        return;
+    }
+    }
+
+    function renderLauncherLast() {
+    const row = document.getElementById('launcherLastRow');
+    const label = document.getElementById('launcherLastLabel');
+    if (!row || !label) return;
+    const last = getLastLauncherChoice();
+    if (!last) {
+        row.classList.remove('on');
+        return;
+    }
+    let text = 'Last: ';
+    if (last.stationType === null) text += 'Admin';
+    else if (last.stationType === 'floor_manager') text += 'Floor Manager';
+    else if (last.stationType === 'press' && last.assignedPressId) {
+        const names = { p1: 'Press 1', p2: 'Press 2', p3: 'Press 3', p4: '7" Press' };
+        text += names[last.assignedPressId] || last.assignedPressId;
+    } else if (last.stationType === 'qc') text += 'QC Station';
+    else { row.classList.remove('on'); return; }
+    label.textContent = text;
+    row.classList.add('on');
+    }
+    renderLauncherLast(); // show "Last: …" on load if persisted
+
+    // ============================================================
+    // AUTH — enterApp still used internally; launcher is primary entry
     // ============================================================
     function enterApp(mode) {
     S.mode = mode;
@@ -2388,12 +2987,15 @@
     badge.textContent = mode.toUpperCase();
     badge.className = 'bar-mode ' + mode;
     if (mode === 'floor') document.getElementById('exportBtn').style.display = 'none';
-    updateFAB(); // context-aware FAB visibility
+    updateFAB();
     loadAll();
     startPolling();
     }
 
     function doLogout() {
+    setStationContext({});
+    hideLauncherPressPicker();
+    renderLauncherLast();
     document.getElementById('modeScreen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
     document.getElementById('fab').style.display = 'none';
@@ -2410,6 +3012,8 @@
     const d = n.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
     const cl = document.getElementById('clock');
     if (cl) cl.textContent = `${d} · ${t}`;
+    const fmCl = document.getElementById('fmClock');
+    if (fmCl) fmCl.textContent = `${d} · ${t}`;
     const tv = document.getElementById('tvClock');
     if (tv) tv.textContent = t;
     const td = document.getElementById('tvDate');
@@ -2504,9 +3108,152 @@
     }
 
     // ============================================================
-    // RENDER ALL
+    // SHARED DATA & RENDER HELPERS — single source for floor/stats/press
+    // All shells (Admin, Floor Manager, Press, QC) use these; no forked logic.
+    // ============================================================
+    /** Returns the five floor stats (presses, active, queued, overdue, total). */
+    function getFloorStats() {
+    const active = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
+    const overdue = S.jobs.filter(j => j.due && j.status !== 'done' && new Date(j.due) < Date.now());
+    const online = S.presses.filter(p => p.status === 'online').length;
+    return [
+        { v: `${online}/${S.presses.length}`, l: 'PRESSES', s: 'online', c: online < S.presses.length ? 'warn' : '' },
+        { v: active.length, l: 'ACTIVE', s: 'pressing/assembly', c: '' },
+        { v: S.jobs.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
+        { v: overdue.length, l: 'OVERDUE', s: 'past due date', c: overdue.length ? 'red' : '' },
+        { v: S.jobs.filter(j => j.status !== 'done').length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
+    ];
+    }
+
+    /** Active jobs (not done), optionally filtered by query. Returns { jobs, total }. */
+    function getFloorJobs(query) {
+    const q = (query || '').toLowerCase().trim();
+    const total = S.jobs.filter(j => j.status !== 'done').length;
+    let jobs = S.jobs.filter(j => j.status !== 'done');
+    if (q) {
+        jobs = jobs.filter(j =>
+            (j.catalog || '').toLowerCase().includes(q) ||
+            (j.artist || '').toLowerCase().includes(q) ||
+            (j.album || '').toLowerCase().includes(q) ||
+            (j.location || '').toLowerCase().includes(q)
+        );
+    }
+    return { jobs, total };
+    }
+
+    /** One active-orders table row. Uses progressDisplay, dueClass, dueLabel, ahHTML, statusTapClass. */
+    function floorTableRowHTML(j, opts) {
+    const prog = progressDisplay(j);
+    const statusId = (opts && opts.statusCellId) ? ` id="st-${j.id}"` : '';
+    return `
+    <tr>
+    <td style="color:var(--w);font-weight:700">${j.catalog || '—'}</td>
+    <td class="floor-card-trigger" onclick="openFloorCard('${j.id}')" title="Open floor statboard">
+        <div style="color:var(--d)">${j.artist || '—'}</div>
+        <div style="color:var(--d3);font-size:11px">${j.album || ''}</div>
+    </td>
+    <td>${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
+    <td>
+        <div class="status-tap ${statusTapClass(j.status)}"${statusId} onclick="cycleStatus('${j.id}')" title="Tap to change status">
+        ${(j.status || 'queue').toUpperCase()}
+        </div>
+    </td>
+    <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
+    <td>${ahHTML(j)}</td>
+    <td class="td-progress">
+        <div class="progress-main">${prog.main}</div>
+        <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+        <div class="progress-sub">${prog.sub}</div>
+    </td>
+    <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
+    <td><button class="open-btn" onclick="openPanel('${j.id}')">OPEN →</button></td>
+    </tr>`;
+    }
+
+    /** One press card HTML. linkTo: 'panel' | 'floorCard'. showControls: show assign/status/STATION (admin only). */
+    function buildPressCardHTML(p, linkTo, showControls) {
+    const job = p.job ? S.jobs.find(j => j.id === p.job) : null;
+    const ah = job ? assetHealth(job) : { done: 0, total: 0, pct: 0 };
+    const prog = job ? progressDisplay(job) : null;
+    const segs = ASSET_DEFS.slice(0, 8).map(a => {
+        const got = job && job.assets && job.assets[a.key]?.received;
+        return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
+    }).join('');
+    const onClick = linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : `openPanel('${job?.id}')`;
+    const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : 'TAP TO OPEN →';
+    return `
+    <div class="press-card ${p.status}">
+        <div class="pc-head">
+        <div class="pc-name ${p.type === '7"' ? 'seven' : ''}">${p.name}</div>
+        <div class="pc-status">
+            <div class="psdot ${p.status}"></div>
+            <span style="color:${p.status === 'online' ? 'var(--g)' : p.status === 'warning' ? 'var(--w)' : 'var(--r)'}">${p.status.toUpperCase()}</span>
+        </div>
+        </div>
+        ${job ? `
+        <div class="pc-job-link" onclick="${onClick}" title="${linkTo === 'floorCard' ? 'Open statboard' : 'Open job'}">
+            <div class="pc-job"><span class="job-id">${job.catalog || '—'}</span> — ${job.artist || ''}</div>
+            <div class="pc-meta">${job.format || ''} · ${job.color || 'Black'} · ${job.weight || ''}</div>
+            <div class="pc-meta">Qty: ${job.qty ? parseInt(job.qty).toLocaleString() : '—'}</div>
+            <div class="pc-due ${dueClass(job.due)}">${dueLabel(job.due)}</div>
+            <div class="pc-job-hint">${hint}</div>
+        </div>
+        <div class="pc-progress">
+            <div class="pc-progress-label">PROGRESS <span class="pc-progress-num">${prog.main}</span></div>
+            <div class="pc-progress-bar-outer dl-bar pc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+            <div class="pc-progress-sub">${prog.sub}</div>
+            ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
+        </div>
+        <div class="pc-assets pc-assets-demoted">
+            <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
+            <div class="abar abar-thin">${segs}</div>
+        </div>
+        ` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>'}
+        ${showControls ? `
+        <div class="pc-controls">
+            <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
+            <option value="">— ASSIGN JOB</option>
+            ${S.jobs.filter(j => j.status !== 'done').map(j => `<option value="${j.id}" ${p.job === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
+            </select>
+            <select class="pc-select" style="max-width:110px" onchange="setPressStatus('${p.id}',this.value)">
+            <option value="online"  ${p.status === 'online'  ? 'selected' : ''}>Online</option>
+            <option value="warning" ${p.status === 'warning' ? 'selected' : ''}>Warning</option>
+            <option value="offline" ${p.status === 'offline' ? 'selected' : ''}>Offline</option>
+            <option value="idle"    ${p.status === 'idle'    ? 'selected' : ''}>Idle</option>
+            </select>
+            <button type="button" class="pc-station-btn" onclick="openPressStation('${p.id}')" title="Open as Press Station (single-press view)">STATION</button>
+        </div>
+        ` : ''}
+    </div>`;
+    }
+
+    // ============================================================
+    // RENDER ALL — single entry; all shells read from S and shared helpers
+    // Admin, Floor Manager, Press Station, QC Station: same S.jobs, S.presses, S.qcLog;
+    // getFloorStats, getFloorJobs, floorTableRowHTML, buildPressCardHTML, progressDisplay, assetHealth, etc.
     // ============================================================
     function renderAll() {
+    const ctx = getStationContext();
+    if (ctx && isStationType('press')) {
+        renderPressStationShell();
+        return;
+    }
+    if (ctx && isStationType('qc')) {
+        renderQCStationShell();
+        return;
+    }
+    if (ctx && isStationType('floor_manager')) {
+        renderFloorManagerShell();
+        return;
+    }
+    renderAdminShell();
+    }
+
+    // ============================================================
+    // ADMIN SHELL — full workspace: nav, Floor / Jobs / Todos / QC, panel, TV.
+    // #app is the admin shell container. Other shells (e.g. press, qc) use same data.
+    // ============================================================
+    function renderAdminShell() {
     renderStats();
     renderPresses();
     renderFloor();
@@ -2517,21 +3264,252 @@
     }
 
     // ============================================================
+    // PRESS STATION SHELL (v1) — single-press workstation
+    // ============================================================
+    /** Open the Press Station view for a specific press. Call from admin (e.g. STATION on press card). */
+    function openPressStation(pressId) {
+    const p = S.presses.find(x => x.id === pressId);
+    if (!p) return;
+    setStationContext({ stationType: 'press', stationId: pressId, assignedPressId: pressId });
+    document.getElementById('app').style.display = 'none';
+    const shell = document.getElementById('pressStationShell');
+    if (shell) shell.classList.add('on');
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'none';
+    const fabLabel = document.querySelector('.fab-label');
+    if (fabLabel) fabLabel.style.display = 'none';
+    const syncbar = document.querySelector('.syncbar');
+    if (syncbar) syncbar.style.display = 'none';
+    renderAll();
+    }
+
+    function exitPressStation() {
+    setStationContext({});
+    document.getElementById('app').style.display = 'block';
+    const shell = document.getElementById('pressStationShell');
+    if (shell) shell.classList.remove('on');
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'flex';
+    const fabLabel = document.querySelector('.fab-label');
+    if (fabLabel) fabLabel.style.display = 'block';
+    const syncbar = document.querySelector('.syncbar');
+    if (syncbar) syncbar.style.display = 'block';
+    renderAll();
+    }
+
+    function renderPressStationShell() {
+    const press = getStationPress();
+    const job = getStationJob();
+    const nameEl = document.getElementById('psPressName');
+    const contentEl = document.getElementById('pressStationContent');
+    const logEl = document.getElementById('pressStationLog');
+    if (!nameEl || !contentEl || !logEl) return;
+
+    nameEl.textContent = press ? press.name : '—';
+    nameEl.classList.toggle('seven', press && press.type === '7"');
+
+    if (!job) {
+        contentEl.innerHTML = `<div class="ps-v1-idle">NO JOB ASSIGNED</div><p style="color:var(--d3);margin-top:var(--space-sm)">Assign a job from Admin to start logging.</p>`;
+        logEl.innerHTML = '';
+        return;
+    }
+
+    const prog = getJobProgress(job);
+    const ordered = prog.ordered;
+    const pressed = prog.pressed;
+    const remaining = Math.max(0, ordered - pressed);
+    const pct = ordered ? Math.min(100, (pressed / ordered) * 100) : 0;
+    const blocked = [];
+    if (job.status === 'hold') blocked.push('Job on hold');
+    if (remaining <= 0 && ordered > 0) blocked.push('Order complete');
+
+    contentEl.innerHTML = `
+    <div class="ps-v1-job-title">${(job.catalog || '—')} · ${(job.artist || '—')}</div>
+    <div class="ps-v1-job-meta">${job.album || ''} ${job.format ? ' · ' + job.format : ''}</div>
+    <div class="ps-v1-stat-row">
+        <div class="ps-v1-stat"><span class="num">${ordered.toLocaleString()}</span> <span class="lbl">ORDERED</span></div>
+        <div class="ps-v1-stat"><span class="num">${pressed.toLocaleString()}</span> <span class="lbl">PRESSED</span></div>
+    </div>
+    <div class="ps-v1-remaining">${remaining.toLocaleString()} REMAINING</div>
+    <div class="ps-v1-bar"><div class="ps-v1-bar-fill" style="width:${pct}%"></div></div>
+    ${blocked.length ? `<div class="ps-v1-blocked">${blocked.join(' · ')}</div>` : ''}
+    `;
+
+    logEl.innerHTML = remaining > 0 ? `
+    <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(10)">+10</button>
+    <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(25)">+25</button>
+    <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(50)">+50</button>
+    <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(100)">+100</button>
+    ` : '';
+    }
+
+    function pressStationLogPressed(qty) {
+    if (!getStationEditPermissions().canLogPressProgress) return;
+    const job = getStationJob();
+    if (!job) return;
+    const result = logJobProgress(job.id, 'pressed', qty, 'Press Station');
+    if (result.ok) {
+        Storage.saveJob(job); // persist updated progressLog (Supabase or local)
+        renderPressStationShell();
+        toast(`+${qty} logged`);
+    } else {
+        toastError(result.error || 'Log failed');
+    }
+    }
+
+    // ============================================================
+    // QC STATION SHELL (v1) — rapid reject logging
+    // ============================================================
+    /** Open the QC Station view. Call from bar (e.g. QC button). */
+    function openQCStation() {
+    setStationContext({ stationType: 'qc', stationId: 'qc1', assignedPressId: null });
+    document.getElementById('app').style.display = 'none';
+    const shell = document.getElementById('qcStationShell');
+    if (shell) shell.classList.add('on');
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'none';
+    const fabLabel = document.querySelector('.fab-label');
+    if (fabLabel) fabLabel.style.display = 'none';
+    const syncbar = document.querySelector('.syncbar');
+    if (syncbar) syncbar.style.display = 'none';
+    renderAll();
+    }
+
+    function exitQCStation() {
+    setStationContext({});
+    document.getElementById('app').style.display = 'block';
+    const shell = document.getElementById('qcStationShell');
+    if (shell) shell.classList.remove('on');
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'flex';
+    const fabLabel = document.querySelector('.fab-label');
+    if (fabLabel) fabLabel.style.display = 'block';
+    const syncbar = document.querySelector('.syncbar');
+    if (syncbar) syncbar.style.display = 'block';
+    renderAll();
+    }
+
+    function renderQCStationShell() {
+    const today = new Date().toDateString();
+    const todayLog = S.qcLog.filter(e => e.date === today);
+    const pressing = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
+    const selectedJob = S.qcSelectedJob ? S.jobs.find(j => j.id === S.qcSelectedJob) : null;
+
+    const currentEl = document.getElementById('qcStationCurrent');
+    const jobsEl = document.getElementById('qcStationJobs');
+    const btnsEl = document.getElementById('qcStationRejectBtns');
+    const summaryEl = document.getElementById('qcStationSummary');
+    const logEl = document.getElementById('qcStationLog');
+    if (!currentEl || !jobsEl || !btnsEl || !summaryEl || !logEl) return;
+
+    currentEl.innerHTML = selectedJob
+        ? `${selectedJob.catalog || '—'} · ${selectedJob.artist || '—'}`
+        : '<span class="none">Select a job below</span>';
+
+    jobsEl.innerHTML = pressing.length
+        ? pressing.map(j => `
+            <button type="button" class="qcs-v1-job-btn ${S.qcSelectedJob === j.id ? 'active' : ''}" onclick="selectQCJob('${j.id}')">
+            ${j.catalog || '—'} · ${j.artist || '—'}
+            </button>
+        `).join('')
+        : '<span style="color:var(--d3);font-size:14px">No jobs pressing / in assembly</span>';
+
+    const qcIcons = { FLASH:'⚡', BLEMISH:'◉', 'OFF-CENTER':'⊕', AUDIO:'♫', UNTRIMMED:'⬡', 'BISCUIT/FLASH':'✕' };
+    btnsEl.innerHTML = QC_TYPES.map(t => `
+        <button type="button" class="qcs-v1-reject-btn" onclick="qcStationLogReject('${t.replace(/'/g, "\\'")}')">
+        <span class="qi">${qcIcons[t] || ''}</span>
+        <span>${t}</span>
+        </button>
+    `).join('');
+
+    const counts = {};
+    todayLog.forEach(e => counts[e.type] = (counts[e.type] || 0) + 1);
+    summaryEl.innerHTML = todayLog.length
+        ? `<span style="color:var(--d2);margin-right:var(--space-sm)">${todayLog.length} total</span>` +
+          Object.entries(counts).map(([t, n]) => `<div class="qcs-v1-sum-pill"><span class="n">${n}</span><span class="l">${t}</span></div>`).join('')
+        : '<span style="color:var(--d3);font-size:13px">No rejects today</span>';
+
+    logEl.innerHTML = todayLog.length
+        ? todayLog.slice(0, 30).map(e => `
+            <div class="qcs-v1-entry">
+            <span class="t">${e.time}</span>
+            <span class="type">${e.type}</span>
+            <span class="job">${e.job}</span>
+            </div>
+        `).join('')
+        : '<span style="color:var(--d3);font-size:13px">No entries today</span>';
+    }
+
+    function qcStationLogReject(type) {
+    logQC(type);
+    if (getStationContext() && isStationType('qc')) renderQCStationShell();
+    }
+
+    // ============================================================
+    // FLOOR MANAGER SHELL — operations overview, scan-first
+    // ============================================================
+    /** Open the Floor Manager view. Scan-first: presses, active orders, floor card for inspect + quick edit. */
+    function openFloorManager() {
+    setStationContext({ stationType: 'floor_manager', stationId: 'fm1', assignedPressId: null });
+    document.getElementById('app').style.display = 'none';
+    const shell = document.getElementById('floorManagerShell');
+    if (shell) shell.classList.add('on');
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'none';
+    const fabLabel = document.querySelector('.fab-label');
+    if (fabLabel) fabLabel.style.display = 'none';
+    const syncbar = document.querySelector('.syncbar');
+    if (syncbar) syncbar.style.display = 'none';
+    renderAll();
+    }
+
+    function exitFloorManager() {
+    setStationContext({});
+    document.getElementById('app').style.display = 'block';
+    const shell = document.getElementById('floorManagerShell');
+    if (shell) shell.classList.remove('on');
+    const fab = document.getElementById('fab');
+    if (fab) fab.style.display = 'flex';
+    const fabLabel = document.querySelector('.fab-label');
+    if (fabLabel) fabLabel.style.display = 'block';
+    const syncbar = document.querySelector('.syncbar');
+    if (syncbar) syncbar.style.display = 'block';
+    renderAll();
+    }
+
+    function renderFloorManagerShell() {
+    const statsEl = document.getElementById('fmStatsRow');
+    const pressEl = document.getElementById('fmPressGrid');
+    const bodyEl = document.getElementById('fmFloorBody');
+    const countEl = document.getElementById('fmFloorCount');
+    const searchEl = document.getElementById('fmFloorSearch');
+    if (!statsEl || !pressEl || !bodyEl) return;
+
+    const q = searchEl?.value || '';
+    const { jobs, total } = getFloorJobs(q);
+    if (countEl) countEl.textContent = q ? `${jobs.length} of ${total}` : `${jobs.length} jobs`;
+
+    const statItems = getFloorStats();
+    statsEl.innerHTML = statItems.map(i => `
+        <div class="stat"><div class="sv ${i.c}">${i.v}</div><div class="sl">${i.l}</div><div class="ss">${i.s}</div></div>
+    `).join('');
+
+    pressEl.innerHTML = S.presses.map(p => buildPressCardHTML(p, 'floorCard', false)).join('');
+
+    if (!jobs.length) {
+        bodyEl.innerHTML = `<tr><td colspan="9" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
+        return;
+    }
+    bodyEl.innerHTML = jobs.map(j => floorTableRowHTML(j)).join('');
+    }
+
+    // ============================================================
     // STATS
     // ============================================================
     function renderStats() {
     const el = document.getElementById('statsRow');
     if (!el) return;
-    const active = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
-    const overdue = S.jobs.filter(j => j.due && j.status !== 'done' && new Date(j.due) < Date.now());
-    const online = S.presses.filter(p => p.status === 'online').length;
-    const items = [
-        {v:`${online}/${S.presses.length}`, l:'PRESSES', s:'online', c:online < S.presses.length ? 'warn' : ''},
-        {v:active.length, l:'ACTIVE', s:'pressing/assembly', c:''},
-        {v:S.jobs.filter(j => j.status === 'queue').length, l:'QUEUED', s:'waiting', c:''},
-        {v:overdue.length, l:'OVERDUE', s:'past due date', c:overdue.length ? 'red' : ''},
-        {v:S.jobs.filter(j => j.status !== 'done').length, l:'TOTAL OPEN', s:'jobs in system', c:''},
-    ];
+    const items = getFloorStats();
     el.innerHTML = items.map(i => `
         <div class="stat">
         <div class="sv ${i.c}">${i.v}</div>
@@ -2547,60 +3525,8 @@
     function renderPresses() {
     const el = document.getElementById('pressGrid');
     if (!el) return;
-    el.innerHTML = S.presses.map(p => {
-        const job = p.job ? S.jobs.find(j => j.id === p.job) : null;
-        const ah = job ? assetHealth(job) : {done:0, total:0, pct:0};
-        const prog = job ? progressDisplay(job) : null;
-        const segs = ASSET_DEFS.slice(0,8).map(a => {
-        const got = job && job.assets && job.assets[a.key]?.received;
-        return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
-        }).join('');
-        const isAdmin = S.mode === 'admin';
-        return `
-        <div class="press-card ${p.status}">
-            <div class="pc-head">
-            <div class="pc-name ${p.type === '7"' ? 'seven' : ''}">${p.name}</div>
-            <div class="pc-status">
-                <div class="psdot ${p.status}"></div>
-                <span style="color:${p.status === 'online' ? 'var(--g)' : p.status === 'warning' ? 'var(--w)' : 'var(--r)'}">${p.status.toUpperCase()}</span>
-            </div>
-            </div>
-            ${job ? `
-            <div class="pc-job-link" onclick="openPanel('${job.id}')">
-                <div class="pc-job"><span class="job-id">${job.catalog || '—'}</span> — ${job.artist || ''}</div>
-                <div class="pc-meta">${job.format || ''} · ${job.color || 'Black'} · ${job.weight || ''}</div>
-                <div class="pc-meta">Qty: ${job.qty ? parseInt(job.qty).toLocaleString() : '—'}</div>
-                <div class="pc-due ${dueClass(job.due)}">${dueLabel(job.due)}</div>
-                <div class="pc-job-hint">TAP TO OPEN →</div>
-            </div>
-            <div class="pc-progress">
-                <div class="pc-progress-label">PROGRESS <span class="pc-progress-num">${prog.main}</span></div>
-                <div class="pc-progress-bar-outer dl-bar pc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
-                <div class="pc-progress-sub">${prog.sub}</div>
-                ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
-            </div>
-            <div class="pc-assets pc-assets-demoted">
-                <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
-                <div class="abar abar-thin">${segs}</div>
-            </div>
-            ` : `<div class="pc-idle-msg">NO JOB ASSIGNED</div>`}
-            ${isAdmin ? `
-            <div class="pc-controls">
-                <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
-                <option value="">— ASSIGN JOB</option>
-                ${S.jobs.filter(j => j.status !== 'done').map(j => `<option value="${j.id}" ${p.job === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
-                </select>
-                <select class="pc-select" style="max-width:110px" onchange="setPressStatus('${p.id}',this.value)">
-                <option value="online"  ${p.status === 'online'  ? 'selected' : ''}>Online</option>
-                <option value="warning" ${p.status === 'warning' ? 'selected' : ''}>Warning</option>
-                <option value="offline" ${p.status === 'offline' ? 'selected' : ''}>Offline</option>
-                <option value="idle"    ${p.status === 'idle'    ? 'selected' : ''}>Idle</option>
-                </select>
-            </div>
-            ` : ''}
-        </div>
-        `;
-    }).join('');
+    const isAdmin = S.mode === 'admin';
+    el.innerHTML = S.presses.map(p => buildPressCardHTML(p, 'panel', isAdmin)).join('');
     }
 
     function assignJob(pid, jid) {
@@ -2657,57 +3583,16 @@
     function renderFloor() {
     const el = document.getElementById('floorBody');
     if (!el) return;
-    const q = (document.getElementById('floorSearch')?.value || '').toLowerCase().trim();
-    let jobs = S.jobs.filter(j => j.status !== 'done');
-
-    // Text filter — matches catalog, artist, album, location
-    if (q) {
-        jobs = jobs.filter(j =>
-        (j.catalog || '').toLowerCase().includes(q) ||
-        (j.artist || '').toLowerCase().includes(q) ||
-        (j.album || '').toLowerCase().includes(q) ||
-        (j.location || '').toLowerCase().includes(q)
-        );
-    }
-
-    // Update count
+    const q = document.getElementById('floorSearch')?.value || '';
+    const { jobs, total } = getFloorJobs(q);
     const countEl = document.getElementById('floorCount');
-    if (countEl) {
-        const total = S.jobs.filter(j => j.status !== 'done').length;
-        countEl.textContent = q ? `${jobs.length} of ${total}` : `${total} jobs`;
-    }
+    if (countEl) countEl.textContent = q ? `${jobs.length} of ${total}` : `${total} jobs`;
 
     if (!jobs.length) {
         el.innerHTML = `<tr><td colspan="9" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
-    el.innerHTML = jobs.map(j => {
-        const prog = progressDisplay(j);
-        return `
-        <tr>
-        <td style="color:var(--w);font-weight:700">${j.catalog || '—'}</td>
-        <td class="floor-card-trigger" onclick="openFloorCard('${j.id}')" title="Open floor statboard">
-            <div style="color:var(--d)">${j.artist || '—'}</div>
-            <div style="color:var(--d3);font-size:11px">${j.album || ''}</div>
-        </td>
-        <td>${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
-        <td>
-            <div class="status-tap ${statusTapClass(j.status)}" id="st-${j.id}" onclick="cycleStatus('${j.id}')" title="Tap to change status">
-            ${(j.status || 'queue').toUpperCase()}
-            </div>
-        </td>
-        <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
-        <td>${ahHTML(j)}</td>
-        <td class="td-progress">
-            <div class="progress-main">${prog.main}</div>
-            <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
-            <div class="progress-sub">${prog.sub}</div>
-        </td>
-        <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
-        <td><button class="open-btn" onclick="openPanel('${j.id}')">OPEN →</button></td>
-        </tr>
-    `;
-    }).join('');
+    el.innerHTML = jobs.map(j => floorTableRowHTML(j, { statusCellId: true })).join('');
 
     // Recently completed — shows last 5 "done" jobs so they don't vanish
     const doneEl = document.getElementById('recentDone');
@@ -2774,19 +3659,19 @@
     const j = S.jobs.find(x => x.id === S.floorCardJobId);
     if (!j) return;
     const get = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
-    j.status = get('fcStatus') || j.status;
-    j.press = get('fcPress') || j.press;
-    j.location = get('fcLocation') || j.location;
-    j.due = get('fcDue') || j.due;
-    j.notes = get('fcNotes') || j.notes;
-    j.assembly = get('fcAssembly') || j.assembly;
+    if (canEditField('status')) j.status = get('fcStatus') || j.status;
+    if (canEditField('press')) j.press = get('fcPress') || j.press;
+    if (canEditField('location')) j.location = get('fcLocation') || j.location;
+    if (canEditField('due')) j.due = get('fcDue') || j.due;
+    if (canEditField('notes')) j.notes = get('fcNotes') || j.notes;
+    if (canEditField('assembly')) j.assembly = get('fcAssembly') || j.assembly;
     Storage.saveJob(j);
     S.floorCardEditMode = false;
     const btn = document.getElementById('floorCardQuickEditBtn');
     if (btn) { btn.textContent = 'QUICK EDIT'; btn.classList.remove('edit-mode'); }
     renderFloorCard();
-    renderFloor();
-    renderPresses();
+    if (getStationContext() && isStationType('floor_manager')) renderFloorManagerShell();
+    else { renderFloor(); renderPresses(); }
     }
 
     function renderFloorCard() {
@@ -2802,41 +3687,30 @@
     const edit = S.floorCardEditMode;
 
     if (edit) {
+        const perm = getStationEditPermissions();
+        const getRow = (field, label, html) => canEditField(field) ? `<div class="fc-edit-row">${label}${html}</div>` : '';
+        const rows = [
+            getRow('status', '<label>Status</label>', `<select id="fcStatus">${STATUS_OPTS.map(o => `<option value="${o.v}" ${j.status === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
+            getRow('press', '<label>Press assigned</label>', `<select id="fcPress">${PRESS_OPTS.map(o => `<option value="${o}" ${(j.press || '') === o ? 'selected' : ''}>${o || '— Unassigned'}</option>`).join('')}</select>`),
+            getRow('location', '<label>Location</label>', `<input type="text" id="fcLocation" value="${(j.location || '').replace(/"/g, '&quot;')}" placeholder="Rack, bay...">`),
+            getRow('due', '<label>Due date</label>', `<input type="date" id="fcDue" value="${j.due || ''}">`),
+            getRow('notes', '<label>Production notes</label>', `<textarea id="fcNotes" rows="3">${(j.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
+            getRow('assembly', '<label>Assembly / location notes</label>', `<textarea id="fcAssembly" rows="2">${(j.assembly || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
+        ].join('');
         content.innerHTML = `
         <div class="fc-header">
             <div class="fc-catalog">${(j.catalog || j.matrix || '—')}</div>
             <div class="fc-artist">${(j.artist || '—')}</div>
             <div class="fc-album">${j.album || ''}</div>
         </div>
-        <div class="fc-edit-row">
-            <label>Status</label>
-            <select id="fcStatus">${STATUS_OPTS.map(o => `<option value="${o.v}" ${j.status === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>
-        </div>
-        <div class="fc-edit-row">
-            <label>Press assigned</label>
-            <select id="fcPress">${PRESS_OPTS.map(o => `<option value="${o}" ${(j.press || '') === o ? 'selected' : ''}>${o || '— Unassigned'}</option>`).join('')}</select>
-        </div>
-        <div class="fc-edit-row">
-            <label>Location</label>
-            <input type="text" id="fcLocation" value="${(j.location || '').replace(/"/g, '&quot;')}" placeholder="Rack, bay...">
-        </div>
-        <div class="fc-edit-row">
-            <label>Due date</label>
-            <input type="date" id="fcDue" value="${j.due || ''}">
-        </div>
-        <div class="fc-edit-row">
-            <label>Production notes</label>
-            <textarea id="fcNotes" rows="3">${(j.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
-        </div>
-        <div class="fc-edit-row">
-            <label>Assembly / location notes</label>
-            <textarea id="fcAssembly" rows="2">${(j.assembly || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
-        </div>
-        <div class="fc-edit-actions">
+        ${rows}
+        ${perm.canUseFloorCard ? `<div class="fc-edit-actions">
             <button type="button" class="btn go" onclick="saveFloorCardQuickEdit()">SAVE</button>
             <button type="button" class="btn ghost" onclick="toggleFloorCardEdit()">CANCEL</button>
-        </div>
+        </div>` : ''}
         `;
+        const qeBtn = document.getElementById('floorCardQuickEditBtn');
+        if (qeBtn) qeBtn.style.display = perm.canUseFloorCard ? '' : 'none';
         return;
     }
 
@@ -2874,6 +3748,9 @@
     <div class="fc-secondary">${secLine}</div>
     ${notes ? `<div class="fc-notes">${notes.replace(/\n/g, '<br>').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ''}
     `;
+    const perm = getStationEditPermissions();
+    const qeBtn = document.getElementById('floorCardQuickEditBtn');
+    if (qeBtn) qeBtn.style.display = perm.canUseFloorCard ? '' : 'none';
     }
 
     // Tap-to-cycle with undo support
@@ -2882,6 +3759,7 @@
     let undoData = null;
 
     function cycleStatus(jid) {
+    if (!canEditField('status')) return;
     const j = S.jobs.find(x => x.id === jid);
     if (!j) return;
     const prevStatus = j.status;
@@ -3133,6 +4011,7 @@
     let qcViewDate = new Date().toDateString(); // which day's log we're viewing
 
     function logQC(type) {
+    if (!getStationEditPermissions().canLogQC) return;
     const time = new Date().toLocaleTimeString('en-US', {hour12:false});
     const date = new Date().toDateString();
 
@@ -3156,12 +4035,14 @@
         toast(`${type} → ${job}`);
     }
     qcViewDate = date;
-    renderQC();
+    if (getStationContext() && isStationType('qc')) renderQCStationShell();
+    else renderQC();
     }
 
     function selectQCJob(jid) {
     S.qcSelectedJob = S.qcSelectedJob === jid ? null : jid;
-    renderQC();
+    if (getStationContext() && isStationType('qc')) renderQCStationShell();
+    else renderQC();
     }
 
     // Get all unique dates in the QC log, sorted newest first
@@ -3324,6 +4205,11 @@
     // SLIDE PANEL — unified single-scroll form
     // ============================================================
     function openPanel(id) {
+    const perm = getStationEditPermissions();
+    if (id && id !== 'null' && !perm.canUseFullPanel) {
+        openFloorCard(id);
+        return;
+    }
     const ov = document.getElementById('overlay');
     ov.classList.add('open');
     panelOpen = true;
