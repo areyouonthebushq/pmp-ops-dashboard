@@ -789,14 +789,16 @@
         if (realtimeApplyTimeout) return;
         realtimeApplyTimeout = setTimeout(() => {
             realtimeApplyTimeout = null;
-            if (panelOpen) {
-                if (Date.now() - (S.lastLocalWriteAt || 0) < 1000) {
+            if (Date.now() - (S.lastLocalWriteAt || 0) < 1000) {
+                console.log('[PMP] Realtime event ignored (self-echo)');
                 return;
-                }
+            }
+            if (panelOpen) {
                 S.dataChangedWhileEditing = true;
-                console.log('[PMP] showDataChangedNotice (panel open, external change)');
+                console.log('[PMP] Realtime event → showDataChangedNotice');
                 showDataChangedNotice();
             } else {
+                console.log('[PMP] Realtime event → loadAll');
                 loadAll();
             }
         }, 300);

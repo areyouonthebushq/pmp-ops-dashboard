@@ -6,9 +6,9 @@ Patch to prevent duplicate realtime subscriptions, self-echo “Data updated els
 
 ## Root causes
 
-1. **Self-echo “Data updated elsewhere”**  
-   Realtime receives postgres_changes for this client’s own writes. With the panel open, the callback showed “Data updated elsewhere” immediately after a save.  
-   **Fix:** Self-echo guard: when the realtime callback runs with the panel open, if `Date.now() - S.lastLocalWriteAt < 1000`, we skip showing the notice (treated as our own write). We still run `loadAll()` when the panel is closed.
+1. **Self-echo “Data updated elsewhere” and sync bar blink**  
+   Realtime receives postgres_changes for this client’s own writes. With the panel open, the callback showed “Data updated elsewhere” immediately after a save. With the panel closed, the callback still ran `loadAll()`, so the sync bar blinked LOADING → SYNCED after every local save.  
+   **Fix:** A single self-echo guard at the start of the debounced callback: if `Date.now() - (S.lastLocalWriteAt || 0) < 1000`, we return and skip **both** `showDataChangedNotice()` and `loadAll()`. So this client’s own realtime echo is ignored for both panel-open and panel-closed paths.
 
 2. **Sync bar stuck on LOADING**  
    If `loadAll()` ever failed to set a terminal state (synced / local / offline / error), the bar could stay on “loading”.  
@@ -28,7 +28,7 @@ Patch to prevent duplicate realtime subscriptions, self-echo “Data updated els
 |------|--------|
 | **State** | Added `S.lastLocalWriteAt: 0` to the initial state object. |
 | **stopDataSync()** | Added console log when realtime unsubscribes: `[PMP] Realtime unsubscribed`. |
-| **startRealtime()** | (1) Log when realtime starts: `[PMP] Realtime started`. (2) In the debounced callback: when `panelOpen`, if `Date.now() - (S.lastLocalWriteAt \|\| 0) < 1000` then return without showing the notice. (3) Log when showing the notice: `[PMP] showDataChangedNotice (panel open, external change)`. (4) Log when a realtime event is received: `[PMP] Realtime event received`. |
+| **startRealtime()** | (1) Log when realtime starts: `[PMP] Realtime started`. (2) In the debounced callback: **single self-echo guard before branching:** if `Date.now() - (S.lastLocalWriteAt \|\| 0) < 1000` then log `[PMP] Realtime event ignored (self-echo)` and return (skip both notice and loadAll). (3) If not self-echo and panel open: log `[PMP] Realtime event → showDataChangedNotice` and show notice. (4) If not self-echo and panel closed: log `[PMP] Realtime event → loadAll` and run loadAll(). (5) Log when a realtime event is received: `[PMP] Realtime event received`. |
 | **loadAll()** | (1) Log at start: `[PMP] loadAll start`. (2) On success, log: `[PMP] loadAll finish (synced)`. (3) In catch, log: `[PMP] loadAll error` with error. (4) After `renderAll()`, if `#syncStatus` text is still `'loading'`, call `setSyncState('synced')`. |
 | **showDataChangedNotice()** | Added console log: `[PMP] showDataChangedNotice`. |
 | **Storage.saveJob** | On successful Supabase save, set `S.lastLocalWriteAt = Date.now()` before `setSyncState('synced')`. |
@@ -40,7 +40,7 @@ Patch to prevent duplicate realtime subscriptions, self-echo “Data updated els
 | **Storage.saveJobs** | On success, set `S.lastLocalWriteAt = Date.now()` before `setSyncState('synced')`. |
 
 **Temporary console logs** (can be removed for production):  
-`[PMP] Realtime started`, `[PMP] Realtime unsubscribed`, `[PMP] Realtime event received`, `[PMP] loadAll start`, `[PMP] loadAll finish (synced)`, `[PMP] loadAll error`, `[PMP] showDataChangedNotice`, `[PMP] showDataChangedNotice (panel open, external change)`.
+`[PMP] Realtime started`, `[PMP] Realtime unsubscribed`, `[PMP] Realtime event received`, `[PMP] Realtime event ignored (self-echo)`, `[PMP] Realtime event → loadAll`, `[PMP] Realtime event → showDataChangedNotice`, `[PMP] loadAll start`, `[PMP] loadAll finish (synced)`, `[PMP] loadAll error`, `[PMP] showDataChangedNotice`.
 
 ---
 
@@ -56,12 +56,13 @@ Patch to prevent duplicate realtime subscriptions, self-echo “Data updated els
 
 3. **Realtime event**  
    Postgres change → callback runs (debounced 300 ms).  
-   - If **panel closed:** run `loadAll()` (sets loading → then synced/offline/local).  
-   - If **panel open:** if within 1 s of `S.lastLocalWriteAt`, do nothing (self-echo). Otherwise set `S.dataChangedWhileEditing = true` and `showDataChangedNotice()`.
+   - **Self-echo guard (first):** If `Date.now() - (S.lastLocalWriteAt || 0) < 1000`, return and do nothing (no notice, no loadAll). Applies to both panel-open and panel-closed.  
+   - If **panel open:** set `S.dataChangedWhileEditing = true` and `showDataChangedNotice()`.  
+   - If **panel closed:** run `loadAll()` (sets loading → then synced/offline/local).
 
 4. **Local write**  
    Any successful Supabase write (saveJob, savePresses, saveTodos, logProgress, logQC, saveJobs, deleteJob) sets `S.lastLocalWriteAt = Date.now()` in its `.then()` before `setSyncState('synced')`.  
-   The next realtime event from that write (within 1 s) does not show “Data updated elsewhere” when the panel is open.
+   The next realtime event from that write (within 1 s) is ignored entirely: no “Data updated elsewhere” and no `loadAll()`, so the sync bar does not blink.
 
 5. **loadAll()**  
    Sets `loading`, then in try: fetches data, assigns state, `setSyncState('synced')`. In catch: applies offline snapshot or local, `setSyncState('offline')` or `setSyncState('local')`. After `renderAll()`, if sync bar is still “loading”, `setSyncState('synced')`.  
@@ -77,8 +78,8 @@ Patch to prevent duplicate realtime subscriptions, self-echo “Data updated els
 1. **Single subscription**  
    Open app, sign in, enter Admin. In console, expect one `[PMP] Realtime started` and no further “Realtime started” until you leave and re-enter. Log out; expect `[PMP] Realtime unsubscribed`.
 
-2. **No self-echo notice**  
-   Enter Admin, open a job (slide panel). Edit and save (e.g. change status, SAVE). Within 1 s you should **not** see “Data updated elsewhere”. Console may show `[PMP] Realtime event received` but should not show `[PMP] showDataChangedNotice (panel open, external change)` for that event.
+2. **No self-echo notice and no sync bar blink**  
+   Enter Admin. With panel **closed**, save a job or log progress; within 1 s the sync bar should **not** blink LOADING → SYNCED (console: `[PMP] Realtime event ignored (self-echo)`). With panel **open**, edit and save; you should **not** see “Data updated elsewhere” (same log). Only external changes should trigger `[PMP] Realtime event → loadAll` or `[PMP] Realtime event → showDataChangedNotice`.
 
 3. **External change notice**  
    Tab A: Admin, panel open on a job. Tab B: change the same job (or another) and save. Within a few seconds Tab A should show “Data updated elsewhere”. Console: `[PMP] showDataChangedNotice` / `(panel open, external change)`.
