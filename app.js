@@ -108,10 +108,10 @@
     ];
 
     const DEFAULT_PRESSES = [
-    {id:'p1', name:'PRESS 1', type:'LP',  status:'online', job:null},
-    {id:'p2', name:'PRESS 2', type:'LP',  status:'online', job:null},
-    {id:'p3', name:'PRESS 3', type:'LP',  status:'online', job:null},
-    {id:'p4', name:'7" PRESS',type:'7"',  status:'online', job:null},
+    {id:'p1', name:'PRESS 1', type:'LP',  status:'online', job_id:null},
+    {id:'p2', name:'PRESS 2', type:'LP',  status:'online', job_id:null},
+    {id:'p3', name:'PRESS 3', type:'LP',  status:'online', job_id:null},
+    {id:'p4', name:'7" PRESS',type:'7"',  status:'online', job_id:null},
     ];
 
     const DEFAULT_TODOS = {
@@ -148,10 +148,10 @@
     const SAMPLE_QC = [];
 
     const SAMPLE_PRESSES = [
-    {id:'p1', name:'PRESS 1', type:'LP',  status:'idle', job:null},
-    {id:'p2', name:'PRESS 2', type:'LP',  status:'idle', job:null},
-    {id:'p3', name:'PRESS 3', type:'LP',  status:'idle', job:null},
-    {id:'p4', name:'7" PRESS',type:'7"',  status:'idle', job:null},
+    {id:'p1', name:'PRESS 1', type:'LP',  status:'idle', job_id:null},
+    {id:'p2', name:'PRESS 2', type:'LP',  status:'idle', job_id:null},
+    {id:'p3', name:'PRESS 3', type:'LP',  status:'idle', job_id:null},
+    {id:'p4', name:'7" PRESS',type:'7"',  status:'idle', job_id:null},
     ];
 
     // ============================================================
@@ -189,6 +189,17 @@
         const raw = localStorage.getItem(OFFLINE_SNAPSHOT_KEY);
         return raw ? JSON.parse(raw) : null;
     } catch { return null; }
+    }
+
+    // Legacy compatibility: migrate cached press objects from `job` to `job_id` during hydration. Remove after old local snapshots are no longer in use.
+    function normalizeLegacyPresses(presses) {
+    if (!Array.isArray(presses)) return presses;
+    presses.forEach(p => {
+        if (p && p.job_id == null && p.job != null) {
+        p.job_id = p.job;
+        }
+    });
+    return presses;
     }
 
     function setOfflineSnapshot(data) {
@@ -302,7 +313,7 @@
     /** Job currently on this station's assigned press (press stations only). */
     function getStationJob() {
     const press = getStationPress();
-    return press && press.job ? S.jobs.find(j => j.id === press.job) || null : null;
+    return press && press.job_id ? S.jobs.find(j => j.id === press.job_id) || null : null;
     }
     /** Set station context; call when entering a station shell (future). */
     function setStationContext(opts) {
@@ -499,6 +510,7 @@
     setSyncState('loading');
     try {
         const data = await Storage.loadAllData();
+        if (data.presses) normalizeLegacyPresses(data.presses);
         if (data.jobs && data.jobs.length > 0) {
         S.jobs = data.jobs;
         } else if (S.jobs.length === 0 && data.jobs) {
@@ -528,7 +540,10 @@
         const snap = getOfflineSnapshot();
         if (snap && (snap.jobs || snap.presses)) {
             if (snap.jobs && snap.jobs.length) S.jobs = snap.jobs;
-            if (snap.presses && snap.presses.length) S.presses = snap.presses;
+            if (snap.presses && snap.presses.length) {
+            normalizeLegacyPresses(snap.presses);
+            S.presses = snap.presses;
+            }
             if (snap.todos) S.todos = snap.todos;
             if (snap.qcLog && snap.qcLog.length) S.qcLog = snap.qcLog;
             if (snap.lastReset) S._lastReset = snap.lastReset;
@@ -1428,7 +1443,7 @@
 
     /** One press card HTML. linkTo: 'panel' | 'floorCard' | 'pressStation'. showControls: show assign/status/STATION (admin only). */
     function buildPressCardHTML(p, linkTo, showControls) {
-    const job = p.job ? S.jobs.find(j => j.id === p.job) : null;
+    const job = p.job_id ? S.jobs.find(j => j.id === p.job_id) : null;
     const ah = job ? assetHealth(job) : { done: 0, total: 0, pct: 0 };
     const prog = job ? progressDisplay(job) : null;
     const segs = ASSET_DEFS.slice(0, 8).map(a => {
@@ -1471,7 +1486,7 @@
         <div class="pc-controls" onclick="event.stopPropagation()">
             <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
             <option value="">— ASSIGN JOB</option>
-            ${S.jobs.filter(j => j.status !== 'done').map(j => `<option value="${j.id}" ${p.job === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
+            ${S.jobs.filter(j => j.status !== 'done').map(j => `<option value="${j.id}" ${p.job_id === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
             </select>
             <select class="pc-select" style="max-width:110px" onchange="setPressStatus('${p.id}',this.value)">
             <option value="online"  ${p.status === 'online'  ? 'selected' : ''}>Online</option>
@@ -1775,7 +1790,7 @@
     }
 
     // ============================================================
-    // PRESSES — single source of truth: press.job references job.id
+    // PRESSES — single source of truth: press.job_id references job.id
     // ============================================================
     function renderPresses() {
     const el = document.getElementById('pressGrid');
@@ -1802,10 +1817,10 @@
     }
     }
 
-    // Canonical source of truth: press.job. job.press is derived for display (may list multiple presses).
+    // Canonical source of truth: press.job_id. job.press is derived for display (may list multiple presses).
     function syncJobPressFromPresses() {
     S.jobs.forEach(j => {
-        const presses = S.presses.filter(p => p.job === j.id);
+        const presses = S.presses.filter(p => p.job_id === j.id);
         j.press = presses.length ? presses.map(p => p.name).join(', ') : '';
     });
     }
@@ -1815,7 +1830,7 @@
     const jobIdVal = jobId || null;
     const p = S.presses.find(x => x.id === pressId);
     if (p) {
-        p.job = jobIdVal;
+        p.job_id = jobIdVal;
         p.status = jobIdVal ? 'online' : 'idle';
     }
     syncJobPressFromPresses();
@@ -1824,8 +1839,8 @@
     // Release any press that has this job assigned — sets press to idle, then syncs job.press
     function releasePressByJob(jobId) {
     S.presses.forEach(p => {
-        if (p.job === jobId) {
-        p.job = null;
+        if (p.job_id === jobId) {
+        p.job_id = null;
         p.status = 'idle';
         }
     });
@@ -2411,7 +2426,7 @@
     function renderTV() {
     const pe = document.getElementById('tvPresses');
     if (pe) pe.innerHTML = S.presses.map(p => {
-        const j = p.job ? S.jobs.find(x => x.id === p.job) : null;
+        const j = p.job_id ? S.jobs.find(x => x.id === p.job_id) : null;
         const ah = j ? assetHealth(j) : {done:0, total:0, pct:0};
         const prog = j ? progressDisplay(j) : null;
         return `
@@ -2723,7 +2738,7 @@
     }
     ensureJobProgressLog(job);
 
-    // Apply assignment from form; canonical source is press.job, then we derive job.press
+    // Apply assignment from form; canonical source is press.job_id, then we derive job.press
     if (job.status === 'pressing' && job.press) {
         const matchPress = S.presses.find(p => p.name === job.press);
         if (matchPress) setAssignment(matchPress.id, job.id);
