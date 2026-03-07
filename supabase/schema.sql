@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   label_type text,
   sleeve text,
   jacket text,
-  "outer" text,
+  outer_pkg text,
   cpl text,
   notes text,
   assembly text,
