@@ -1090,6 +1090,7 @@ window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_p7Yu80WI9
         <input class="search-input" id="floorSearch" placeholder="Filter by catalog, artist, album…" oninput="renderFloor()">
       </div>
       <span class="search-count" id="floorCount"></span>
+      <button type="button" class="bar-btn" onclick="openPanel(null)" style="white-space:nowrap;">+ Add job</button>
     </div>
     <div class="tbl-wrap">
       <table>
@@ -1118,6 +1119,7 @@ window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'sb_publishable_p7Yu80WI9
         <input class="search-input" id="jobSearch" placeholder="Search jobs…" oninput="renderJobs()">
       </div>
       <span class="search-count" id="jobCount"></span>
+      <button type="button" class="bar-btn" onclick="openPanel(null)">+ Add job</button>
       <label class="bar-btn" style="cursor:pointer;border:1px solid var(--b2);padding:7px 12px;">
         ↑ Import CSV
         <input type="file" accept=".csv" style="display:none" onchange="importCSV(this)">
@@ -1876,7 +1878,13 @@ async function loadAll() {
     if (useSupabase()) {
       const data = await window.PMP.Supabase.loadAllData();
       S.jobs = data.jobs || S.jobs;
-      S.presses = data.presses || S.presses;
+      // If presses table is empty (e.g. seed not run), use defaults and persist so floor/TV show press status
+      if (data.presses && data.presses.length > 0) {
+        S.presses = data.presses;
+      } else {
+        S.presses = JSON.parse(JSON.stringify(DEFAULT_PRESSES));
+        await window.PMP.Supabase.savePresses(S.presses).catch(() => {});
+      }
       S.todos = data.todos || S.todos;
       S.qcLog = data.qcLog || S.qcLog;
       S.jobs.forEach(ensureJobProgressLog);
