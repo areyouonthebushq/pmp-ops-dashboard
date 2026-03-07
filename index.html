@@ -1108,6 +1108,50 @@
     color: var(--d);
     background: var(--s3);
     }
+
+    /* ============================================================ THEME: MINIMAL (toggle via body.theme-minimal)
+    Same layout/spacing/hierarchy; black/white/gray, no neon, no glow. */
+    body.theme-minimal {
+    --bg:   #000000;
+    --s1:   #0a0a0a;
+    --s2:   #111111;
+    --s3:   #1a1a1a;
+    --b1:   #222222;
+    --b2:   #333333;
+    --d:    #f0f0f0;
+    --d2:   #999999;
+    --d3:   #666666;
+    --g:    #b8b8b8;
+    --g2:   #444444;
+    --g3:   #1a1a1a;
+    --w:    #a0a0a0;
+    --w2:   #444444;
+    --r:    #888888;
+    --r2:   #333333;
+    --p:    #888888;
+    --p2:   #222222;
+    --gg:   none;
+    --gw:   none;
+    --gr:   none;
+    --gp:   none;
+    }
+    body.theme-minimal .mode-title,
+    body.theme-minimal .bar-logo,
+    body.theme-minimal .pc-name,
+    body.theme-minimal .tv-logo { text-shadow: none; }
+    body.theme-minimal .mode-btn.admin:hover,
+    body.theme-minimal .psdot.online,
+    body.theme-minimal .psdot.offline,
+    body.theme-minimal .psdot.warning,
+    body.theme-minimal .btn.go:hover { box-shadow: none; }
+    body.theme-minimal .syncbar { box-shadow: none; }
+    body.theme-minimal .fab,
+    body.theme-minimal .fab:hover { box-shadow: none; }
+    body.theme-minimal.tv #rain { opacity: 0 !important; }
+    body.theme-minimal.tv::after { background: none !important; }
+    body.theme-minimal.tv.tv-party #rain { opacity: 0.08 !important; }
+    body.theme-minimal.tv.tv-party::after { background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px) !important; }
+    body.theme-minimal.tv.tv-party #tv { box-shadow: none !important; }
     </style>
     <!-- Supabase: set URL and anon key (e.g. from Vercel env at build, or paste here) -->
     <script>
@@ -1184,6 +1228,7 @@
         <span id="modeBadge" class="bar-mode"></span>
         <div class="bar-clock" id="clock"></div>
         <div class="bar-actions">
+        <button type="button" class="bar-btn" id="minimalThemeBtn" onclick="toggleMinimalTheme()" title="Toggle minimal theme">MIN</button>
         <button class="bar-btn" onclick="enterTV()">⬛ TV</button>
         <button id="exportBtn" class="bar-btn" onclick="exportCSV()">↓ CSV</button>
         <button class="bar-btn warn" onclick="doLogout()">EXIT</button>
@@ -1625,6 +1670,21 @@
         else { last = 0; rafId = requestAnimationFrame(frame); }
     });
     })();
+
+    // ============================================================
+    // THEME: MINIMAL — toggle + persist (localStorage)
+    // ============================================================
+    function applyMinimalThemeFromStorage() {
+    try {
+        if (localStorage.getItem('themeMinimal') === '1') document.body.classList.add('theme-minimal');
+        else document.body.classList.remove('theme-minimal');
+    } catch (e) {}
+    }
+    function toggleMinimalTheme() {
+    document.body.classList.toggle('theme-minimal');
+    try { localStorage.setItem('themeMinimal', document.body.classList.contains('theme-minimal') ? '1' : '0'); } catch (e) {}
+    }
+    applyMinimalThemeFromStorage();
 
     // ============================================================
     // FIELD CONFIG — drives form read/write, eliminates manual mapping
