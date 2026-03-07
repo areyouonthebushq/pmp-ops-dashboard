@@ -1338,6 +1338,19 @@
     .ps-v1-bar { height: 14px; background: var(--b4); border-radius: 7px; overflow: hidden; margin: var(--space-sm) 0; }
     .ps-v1-bar-fill { height: 100%; background: var(--g); border-radius: 7px; transition: width 0.2s; }
     .ps-v1-idle { font-size: clamp(20px, 4vw, 28px); color: var(--d3); font-weight: 600; }
+    .ps-v1-edit {
+    margin-top: var(--space-lg);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--b3);
+    }
+    .ps-v1-edit-label { font-size: 11px; color: var(--d3); letter-spacing: 1px; margin-bottom: var(--space-xs); }
+    .ps-v1-note { width: 100%; max-width: 400px; min-height: 56px; padding: var(--space-sm); background: var(--b3); border: 1px solid var(--b4); color: var(--d); border-radius: var(--radius); font-size: 14px; }
+    .ps-v1-edit-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; margin-top: var(--space-sm); }
+    .ps-v1-hold-btn { padding: var(--space-sm) var(--space-md); font-size: 14px; font-weight: 700; border-radius: var(--radius); cursor: pointer; border: none; }
+    .ps-v1-hold-btn.hold { background: var(--r); color: var(--b); }
+    .ps-v1-hold-btn.resume { background: var(--g); color: var(--b); }
+    .ps-v1-save-note { padding: var(--space-sm) var(--space-md); font-size: 14px; background: var(--b4); color: var(--d); border: 1px solid var(--b5); border-radius: var(--radius); cursor: pointer; }
+    .ps-v1-save-note:hover { background: var(--b5); color: var(--w); }
     .ps-v1-log {
     display: flex;
     flex-wrap: wrap;
@@ -1858,7 +1871,7 @@
     </div>
 
     <!-- ============================================================ SLIDE PANEL — Unified single-scroll form -->
-    <div class="overlay" id="overlay" onclick="overlayClick(event)">
+    <div class="overlay" id="overlay">
     <div class="panel">
         <div class="panel-top">
         <div>
@@ -3333,7 +3346,20 @@
     <div class="ps-v1-remaining">${remaining.toLocaleString()} REMAINING</div>
     <div class="ps-v1-bar"><div class="ps-v1-bar-fill" style="width:${pct}%"></div></div>
     ${blocked.length ? `<div class="ps-v1-blocked">${blocked.join(' · ')}</div>` : ''}
+    <div class="ps-v1-edit">
+        <div class="ps-v1-edit-label">HOLD / NOTE</div>
+        ${job.status === 'hold' ?
+            `<button type="button" class="ps-v1-hold-btn resume" onclick="pressStationResume()">RESUME JOB</button>` :
+            `<button type="button" class="ps-v1-hold-btn hold" onclick="pressStationHold()">HOLD JOB</button>`}
+        <div class="ps-v1-edit-label" style="margin-top:var(--space-md)">Press note</div>
+        <textarea class="ps-v1-note" id="psStationNote" placeholder="Note for this run…"></textarea>
+        <div class="ps-v1-edit-actions">
+            <button type="button" class="ps-v1-save-note" onclick="pressStationSaveNote()">SAVE NOTE</button>
+        </div>
+    </div>
     `;
+    const noteEl = document.getElementById('psStationNote');
+    if (noteEl) noteEl.value = job.notes || '';
 
     logEl.innerHTML = remaining > 0 ? `
     <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(10)">+10</button>
@@ -3355,6 +3381,34 @@
     } else {
         toastError(result.error || 'Log failed');
     }
+    }
+
+    function pressStationHold() {
+    const job = getStationJob();
+    if (!job) return;
+    job.status = 'hold';
+    Storage.saveJob(job);
+    renderPressStationShell();
+    toast('Job on hold');
+    }
+
+    function pressStationResume() {
+    const job = getStationJob();
+    if (!job) return;
+    job.status = 'pressing';
+    Storage.saveJob(job);
+    renderPressStationShell();
+    toast('Job resumed');
+    }
+
+    function pressStationSaveNote() {
+    const job = getStationJob();
+    if (!job) return;
+    const el = document.getElementById('psStationNote');
+    if (el) job.notes = el.value.trim();
+    Storage.saveJob(job);
+    renderPressStationShell();
+    toast('Note saved');
     }
 
     // ============================================================
@@ -4261,7 +4315,6 @@
     }
     }
 
-    function overlayClick(e) { if (e.target === document.getElementById('overlay')) closePanel(); }
     function closePanel() {
     document.getElementById('overlay').classList.remove('open');
     panelOpen = false;
