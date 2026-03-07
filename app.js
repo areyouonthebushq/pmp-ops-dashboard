@@ -171,8 +171,109 @@
     stationType: null,       // 'admin' | 'floor_manager' | 'press' | 'qc'
     stationId: '',
     assignedPressId: null,   // for stationType === 'press'
+    dataChangedWhileEditing: false,
+    offlineMode: false,
     };
     let saveTimer = null;
+
+    const OFFLINE_SNAPSHOT_KEY = 'pmp_offline_snapshot';
+    const OFFLINE_QUEUE_KEY = 'pmp_offline_queue';
+    const OFFLINE_QUEUE_MAX = 100;
+
+    function isOffline() {
+    return !navigator.onLine || S.offlineMode;
+    }
+
+    function getOfflineSnapshot() {
+    try {
+        const raw = localStorage.getItem(OFFLINE_SNAPSHOT_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+    }
+
+    function setOfflineSnapshot(data) {
+    try {
+        if (!data) return;
+        const payload = { jobs: data.jobs || [], presses: data.presses || [], todos: data.todos || null, qcLog: data.qcLog || [], lastReset: data.lastReset || null, fetchedAt: new Date().toISOString() };
+        localStorage.setItem(OFFLINE_SNAPSHOT_KEY, JSON.stringify(payload));
+    } catch {}
+    }
+
+    function getOfflineQueue() {
+    try {
+        const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch { return []; }
+    }
+
+    function setOfflineQueue(queue) {
+    try {
+        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue.slice(-OFFLINE_QUEUE_MAX)));
+    } catch {}
+    }
+
+    function pushToOfflineQueue(type, payload) {
+    const queue = getOfflineQueue();
+    const id = 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+    queue.push({ id, type, payload, createdAt: new Date().toISOString() });
+    setOfflineQueue(queue);
+    updateOfflineBanner();
+    }
+
+    function updateOfflineBanner() {
+    const el = document.getElementById('offlineBanner');
+    const textEl = document.getElementById('offlineBannerText');
+    const queueEl = document.getElementById('offlineBannerQueue');
+    if (!el) return;
+    if (!S.offlineMode) {
+        el.style.display = 'none';
+        return;
+    }
+    el.style.display = 'flex';
+    if (textEl) textEl.textContent = 'Offline — showing cached data.';
+    const q = getOfflineQueue();
+    if (queueEl) queueEl.textContent = q.length ? q.length + ' change(s) queued.' : '';
+    }
+
+    async function replayQueue() {
+    const queue = getOfflineQueue();
+    if (!queue.length || !window.PMP || !window.PMP.Supabase) return;
+    setSyncState('stale');
+    const remaining = [];
+    for (const item of queue) {
+        try {
+        if (item.type === 'progress') {
+            await window.PMP.Supabase.logProgress(item.payload);
+        } else if (item.type === 'qc') {
+            await window.PMP.Supabase.logQC(item.payload);
+        } else if (item.type === 'job_status') {
+            const job = S.jobs.find((j) => j.id === item.payload.jobId);
+            if (job) {
+            job.status = item.payload.status;
+            await window.PMP.Supabase.saveJob(job);
+            }
+        }
+        } catch (e) {
+        console.warn('[PMP] Replay failed for', item.type, e);
+        remaining.push(item);
+        break;
+        }
+    }
+    setOfflineQueue(remaining);
+    if (remaining.length === 0) S.offlineMode = false;
+    updateOfflineBanner();
+    setSyncState('synced');
+    }
+
+    function onOnline() {
+    if (!useSupabase()) return;
+    const appEl = document.getElementById('app');
+    if (appEl && appEl.style.display === 'none') return;
+    if (getOfflineQueue().length > 0 || S.offlineMode) {
+        setSyncState('loading');
+        loadAll().then(() => replayQueue()).then(() => loadAll());
+    }
+    }
     let curAssets = {};
     let panelOpen = false;
 
@@ -263,23 +364,62 @@
     }
 
     // ============================================================
-    // STATION EDIT PERMISSIONS — single source for what each role can edit
+    // AUTH ROLE — from profile when Supabase auth enabled; null in local mode
     // ============================================================
-    /** Returns edit permissions for current context (admin = full; stations = restricted). */
-    function getStationEditPermissions() {
-    const ctx = getStationContext();
-    if (!ctx) {
-        return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+    function getAuthRole() {
+    const p = window.PMP && window.PMP.userProfile;
+    return (p && p.role) ? p.role : null;
     }
-    switch (ctx.stationType) {
+    function getAuthAssignedPressId() {
+    const p = window.PMP && window.PMP.userProfile;
+    return (p && p.assigned_press_id) ? p.assigned_press_id : null;
+    }
+    /** True if current user (by role) may enter this station type. */
+    function mayEnterStation(choice, pressId) {
+    const role = getAuthRole();
+    if (!role) return true; // local mode: allow all
+    if (role === 'admin') return true;
+    if (role === 'floor_manager') return choice === 'floor_manager';
+    if (role === 'press') {
+        const assigned = getAuthAssignedPressId();
+        return choice === 'press' && pressId && (assigned ? pressId === assigned : true);
+    }
+    if (role === 'qc') return choice === 'qc';
+    return false;
+    }
+
+    // ============================================================
+    // STATION EDIT PERMISSIONS — derived from authenticated role when present
+    // When no role (local mode), falls back to station context; DB enforces when Supabase used.
+    // ============================================================
+    function getStationEditPermissions() {
+    const role = getAuthRole();
+    const ctx = getStationContext();
+    const assignedPress = getAuthAssignedPressId();
+
+    if (!role) {
+        if (!ctx) return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+        switch (ctx.stationType) {
+            case 'floor_manager': return { canUseFullPanel: false, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: false, canLogQC: false };
+            case 'press': return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: true, canLogQC: false };
+            case 'qc': return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: false, canLogQC: true };
+            default: return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+        }
+    }
+
+    switch (role) {
+        case 'admin':
+            return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
         case 'floor_manager':
             return { canUseFullPanel: false, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: false, canLogQC: false };
-        case 'press':
-            return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: true, canLogQC: false };
+        case 'press': {
+            const onMyPress = ctx && ctx.stationType === 'press' && (!assignedPress || ctx.assignedPressId === assignedPress);
+            return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: !!onMyPress, canLogQC: false };
+        }
         case 'qc':
             return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: false, canLogQC: true };
         default:
-            return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+            return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: false, canLogQC: false };
     }
     }
 
@@ -331,13 +471,15 @@
     return window.PMP_USE_SUPABASE;
     }
 
-    // Sync state: single place for loading | saving | synced | error | local
+    // Sync state: single place for loading | saving | synced | error | local | offline | stale
     const SYNC_STATES = {
       loading: { text: 'loading', class: 'sync-save' },
       saving: { text: '● SAVING…', class: 'sync-save' },
       synced: { text: '● SYNCED', class: 'sync-ok' },
       error: { text: '● ERR', class: 'sync-err' },
       local: { text: '● LOCAL', class: 'sync-ok' },
+      offline: { text: '● OFFLINE', class: 'sync-err' },
+      stale: { text: '● STALE', class: 'sync-save' },
     };
     function setSyncState(state, opts = {}) {
       const el = document.getElementById('syncStatus');
@@ -377,10 +519,30 @@
         syncJobPressFromPresses();
         checkTodoReset();
         if (S.todos) Storage.saveTodos(S.todos);
+        S.offlineMode = false;
         setSyncState('synced');
+        if (useSupabase()) setOfflineSnapshot(data);
     } catch (e) {
         console.error(e);
+        if (useSupabase()) {
+        const snap = getOfflineSnapshot();
+        if (snap && (snap.jobs || snap.presses)) {
+            if (snap.jobs && snap.jobs.length) S.jobs = snap.jobs;
+            if (snap.presses && snap.presses.length) S.presses = snap.presses;
+            if (snap.todos) S.todos = snap.todos;
+            if (snap.qcLog && snap.qcLog.length) S.qcLog = snap.qcLog;
+            if (snap.lastReset) S._lastReset = snap.lastReset;
+            S.jobs.forEach(ensureJobProgressLog);
+            syncJobPressFromPresses();
+            S.offlineMode = true;
+            setSyncState('offline');
+            updateOfflineBanner();
+        } else {
+            setSyncState('local');
+        }
+        } else {
         setSyncState('local');
+        }
     }
     renderAll();
     }
@@ -428,6 +590,12 @@
       },
       saveJob(job) {
         if (useSupabase()) {
+          if (isOffline()) {
+            pushToOfflineQueue('job_status', { jobId: job.id, status: job.status });
+            S.offlineMode = true;
+            setSyncState('offline');
+            return Promise.resolve();
+          }
           return window.PMP.Supabase.saveJob(job).then(() => setSyncState('synced')).catch((e) => { console.error(e); setSyncState('error', { toast: 'SAVE FAILED' }); });
         }
         scheduleSave();
@@ -459,6 +627,12 @@
       },
       logProgress(entry) {
         if (useSupabase()) {
+          if (isOffline()) {
+            pushToOfflineQueue('progress', entry);
+            S.offlineMode = true;
+            setSyncState('offline');
+            return Promise.resolve();
+          }
           return window.PMP.Supabase.logProgress(entry).then(() => setSyncState('synced')).catch((e) => { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); });
         }
         scheduleSave();
@@ -466,6 +640,12 @@
       },
       logQC(entry) {
         if (useSupabase()) {
+          if (isOffline()) {
+            pushToOfflineQueue('qc', entry);
+            S.offlineMode = true;
+            setSyncState('offline');
+            return Promise.resolve();
+          }
           return window.PMP.Supabase.logQC(entry).then(() => setSyncState('synced')).catch((e) => { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); });
         }
         scheduleSave();
@@ -560,14 +740,75 @@
     return result.ok ? { applied: true } : { applied: false, error: result.error };
     }
 
-    // Smart polling — skip full render if panel is open (prevents focus loss)
+    // Data sync: Supabase Realtime when active, else 15s polling. Single path; no duplicate subscriptions.
     let pollTimer = null;
-    function startPolling() {
+    let realtimeUnsubscribe = null;
+    let realtimeApplyTimeout = null;
+
+    function stopDataSync() {
     clearInterval(pollTimer);
+    pollTimer = null;
+    if (realtimeApplyTimeout) {
+        clearTimeout(realtimeApplyTimeout);
+        realtimeApplyTimeout = null;
+    }
+    if (typeof realtimeUnsubscribe === 'function') {
+        realtimeUnsubscribe();
+        realtimeUnsubscribe = null;
+    }
+    }
+
+    function startRealtime() {
+    if (!window.PMP || !window.PMP.Supabase || !window.PMP.Supabase.subscribeRealtime) return;
+    stopDataSync();
+    realtimeUnsubscribe = window.PMP.Supabase.subscribeRealtime(() => {
+        if (realtimeApplyTimeout) return;
+        realtimeApplyTimeout = setTimeout(() => {
+            realtimeApplyTimeout = null;
+            if (panelOpen) {
+                S.dataChangedWhileEditing = true;
+                showDataChangedNotice();
+            } else {
+                loadAll();
+            }
+        }, 300);
+    });
+    }
+
+    function startPollInterval() {
+    stopDataSync();
     pollTimer = setInterval(async () => {
-        if (panelOpen) return; // don't re-render while user is editing
+        if (panelOpen) return;
         await loadAll();
     }, 15000);
+    }
+
+    function startPolling() {
+    stopDataSync();
+    if (useSupabase()) startRealtime();
+    else startPollInterval();
+    }
+
+    function showDataChangedNotice() {
+    const el = document.getElementById('dataChangedNotice');
+    if (el) el.style.display = 'flex';
+    }
+
+    function hideDataChangedNotice() {
+    const el = document.getElementById('dataChangedNotice');
+    if (el) el.style.display = 'none';
+    S.dataChangedWhileEditing = false;
+    }
+
+    function dismissDataChangedNotice() {
+    loadAll();
+    hideDataChangedNotice();
+    }
+
+    function closePanel() {
+    document.getElementById('overlay').classList.remove('open');
+    panelOpen = false;
+    hideDataChangedNotice();
     }
 
     // ============================================================
@@ -594,8 +835,14 @@
     } catch {}
     }
 
-    /** Enter app from launcher: admin | floor_manager | press | qc. For press, pass pressId (e.g. p1). */
+    /** Enter app from launcher: admin | floor_manager | press | qc. For press, pass pressId (e.g. p1). Role enforced; press role uses assigned_press_id. */
     function enterByLauncher(choice, pressId) {
+    const role = getAuthRole();
+    const effectivePressId = (role === 'press' && getAuthAssignedPressId()) ? getAuthAssignedPressId() : pressId;
+    if (!mayEnterStation(choice, effectivePressId)) {
+        if (typeof toast === 'function') toast('Not allowed for your role.');
+        return;
+    }
     hideLauncherPressPicker();
     document.getElementById('modeScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
@@ -603,23 +850,29 @@
     const badge = document.getElementById('modeBadge');
     if (badge) { badge.textContent = (choice === 'admin' ? 'ADMIN' : 'FLOOR').toUpperCase(); badge.className = 'bar-mode ' + (choice === 'admin' ? 'admin' : 'floor'); }
     const exportBtn = document.getElementById('exportBtn');
+    const backupBtn = document.getElementById('backupBtn');
     if (exportBtn) exportBtn.style.display = choice === 'admin' ? '' : 'none';
+    if (backupBtn) backupBtn.style.display = choice === 'admin' ? '' : 'none';
     updateFAB();
     loadAll();
     startPolling();
 
     if (choice === 'admin') {
         setLastLauncherChoice({ stationType: null });
+        const navAudit = document.getElementById('navAudit');
+        if (navAudit) navAudit.style.display = getAuthRole() === 'admin' ? '' : 'none';
         return;
     }
+    const navAudit = document.getElementById('navAudit');
+    if (navAudit) navAudit.style.display = 'none';
     if (choice === 'floor_manager') {
         setLastLauncherChoice({ stationType: 'floor_manager' });
         openFloorManager();
         return;
     }
-    if (choice === 'press' && pressId) {
-        setLastLauncherChoice({ stationType: 'press', assignedPressId: pressId });
-        openPressStation(pressId);
+    if (choice === 'press' && effectivePressId) {
+        setLastLauncherChoice({ stationType: 'press', assignedPressId: effectivePressId });
+        openPressStation(effectivePressId);
         return;
     }
     if (choice === 'qc') {
@@ -683,7 +936,236 @@
     renderLauncherLast(); // show "Last: …" on load if persisted
 
     // ============================================================
-    // AUTH — enterApp still used internally; launcher is primary entry
+    // AUTH — Supabase email/password; launcher only after login when auth enabled
+    // ============================================================
+    function authRequired() {
+    return !!(window.SUPABASE_URL && window.SUPABASE_ANON_KEY);
+    }
+
+    function getLoginEl() { return document.getElementById('loginScreen'); }
+    function getModeScreenEl() { return document.getElementById('modeScreen'); }
+
+    function showLoginScreen(showLoading) {
+    const login = getLoginEl();
+    const modeScreen = getModeScreenEl();
+    if (login) {
+        login.style.display = 'flex';
+        const form = document.getElementById('loginForm');
+        const err = document.getElementById('loginError');
+        const submitBtn = document.getElementById('loginSubmit');
+        if (form) form.style.display = showLoading ? 'none' : 'block';
+        if (err) { err.style.display = 'none'; err.textContent = ''; }
+        if (submitBtn) submitBtn.disabled = !!showLoading;
+        if (showLoading) {
+        const wrap = login.querySelector('.auth-wrap');
+        const loading = wrap && wrap.querySelector('.auth-loading');
+        if (loading) loading.style.display = 'block';
+        else if (wrap) {
+            const div = document.createElement('div');
+            div.className = 'auth-loading';
+            div.setAttribute('aria-live', 'polite');
+            div.textContent = 'Checking session…';
+            div.style.cssText = 'padding: var(--space-lg); text-align: center; color: var(--d3); font-size: 13px;';
+            wrap.appendChild(div);
+        }
+        } else {
+        const loading = login.querySelector('.auth-loading');
+        if (loading) loading.style.display = 'none';
+        }
+    }
+    if (modeScreen) modeScreen.style.display = 'none';
+    }
+
+    function hideLoginScreen() {
+    const login = getLoginEl();
+    if (login) {
+        login.style.display = 'none';
+        const loading = login.querySelector('.auth-loading');
+        if (loading) loading.style.display = 'none';
+    }
+    }
+
+    function showLauncher() {
+    hideLoginScreen();
+    const banner = document.getElementById('localModeBanner');
+    if (banner) banner.style.display = 'none';
+    const modeScreen = getModeScreenEl();
+    if (modeScreen) modeScreen.style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    applyLauncherByRole();
+    }
+
+    /** Show/hide launcher buttons by authenticated role. No role = show all (local mode). */
+    function applyLauncherByRole() {
+    const role = getAuthRole();
+    const adminBtn = document.querySelector('.launcher-btn.admin');
+    const fmBtn = document.querySelector('.launcher-btn.fm');
+    const pressBtn = document.querySelector('.launcher-btn.press');
+    const pressRow = document.getElementById('launcherPressPicker');
+    const qcBtn = document.querySelector('.launcher-btn.qc');
+    const show = (el, on) => { if (el) el.style.display = on ? '' : 'none'; };
+    const showRow = (el, on) => { if (el) el.style.display = on ? 'flex' : 'none'; };
+    const noRoleEl = document.getElementById('launcherNoRole');
+    if (noRoleEl) noRoleEl.style.display = 'none';
+
+    const hasProfileNoRole = !!(window.PMP && window.PMP.userProfile && window.PMP.userProfile.role == null);
+    if (!role && !hasProfileNoRole) {
+        show(adminBtn, true);
+        show(fmBtn, true);
+        show(pressBtn, true);
+        showRow(pressRow, false);
+        show(qcBtn, true);
+        return;
+    }
+    if (hasProfileNoRole) {
+        show(adminBtn, false);
+        show(fmBtn, false);
+        show(pressBtn, false);
+        showRow(pressRow, false);
+        show(qcBtn, false);
+        if (noRoleEl) noRoleEl.style.display = 'block';
+        return;
+    }
+    switch (role) {
+        case 'admin':
+            show(adminBtn, true);
+            show(fmBtn, true);
+            show(pressBtn, true);
+            if (pressBtn) pressBtn.onclick = toggleLauncherPressPicker;
+            if (pressRow) { pressRow.querySelectorAll('.launcher-press-btn').forEach(b => { b.style.display = ''; }); pressRow.style.display = 'none'; }
+            show(qcBtn, true);
+            break;
+        case 'floor_manager':
+            show(adminBtn, false);
+            show(fmBtn, true);
+            show(pressBtn, false);
+            showRow(pressRow, false);
+            show(qcBtn, false);
+            break;
+        case 'press': {
+            show(adminBtn, false);
+            show(fmBtn, false);
+            show(pressBtn, true);
+            const pid = getAuthAssignedPressId();
+            if (pressBtn) {
+                if (pid) pressBtn.onclick = function () { enterByLauncher('press', pid); };
+                else pressBtn.onclick = toggleLauncherPressPicker;
+            }
+            if (pressRow) {
+                pressRow.querySelectorAll('.launcher-press-btn').forEach(btn => {
+                    const p = btn.getAttribute('onclick') && btn.getAttribute('onclick').match(/enterByLauncher\('press',\s*'([^']+)'\)/);
+                    const bid = p ? p[1] : null;
+                    btn.style.display = (pid && bid === pid) ? '' : 'none';
+                });
+                pressRow.style.display = 'none';
+            }
+            show(qcBtn, false);
+            break;
+        }
+        case 'qc':
+            show(adminBtn, false);
+            show(fmBtn, false);
+            show(pressBtn, false);
+            showRow(pressRow, false);
+            show(qcBtn, true);
+            break;
+        default:
+            show(adminBtn, true);
+            show(fmBtn, true);
+            show(pressBtn, true);
+            showRow(pressRow, false);
+            show(qcBtn, true);
+    }
+    }
+
+    function showLauncherWithLocalBanner() {
+    showLauncher();
+    const banner = document.getElementById('localModeBanner');
+    if (banner) banner.style.display = 'block';
+    if (typeof toast === 'function') toast('Local mode — Supabase unavailable. Data not synced.');
+    }
+
+    async function fetchAndStoreProfile(userId) {
+    if (!window.PMP || !window.PMP.Supabase || !window.PMP.Supabase.getProfile) return;
+    const { data } = await window.PMP.Supabase.getProfile(userId);
+    window.PMP.userProfile = data || null;
+    }
+
+    async function authBootstrap() {
+    if (!authRequired()) {
+        showLauncher();
+        return;
+    }
+    showLoginScreen(true);
+    const inited = window.PMP && window.PMP.Supabase && window.PMP.Supabase.initSupabase();
+    if (!inited) {
+        showLauncherWithLocalBanner();
+        return;
+    }
+    window.PMP.Supabase.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') {
+            window.PMP.userProfile = null;
+            showLoginScreen(false);
+        } else if (event === 'SIGNED_IN' && session) {
+            fetchAndStoreProfile(session.user.id).then(() => showLauncher());
+        }
+    });
+
+    const { data: { session }, error: sessionError } = await window.PMP.Supabase.getSession();
+    if (sessionError) {
+        console.error('[PMP] Auth session check failed:', sessionError);
+        showLoginScreen(false);
+        wireLoginForm();
+        return;
+    }
+    if (session) {
+        await fetchAndStoreProfile(session.user.id);
+        showLauncher();
+        return;
+    }
+    showLoginScreen(false);
+    wireLoginForm();
+    }
+
+    function wireLoginForm() {
+    const form = document.getElementById('loginForm');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const emailEl = document.getElementById('loginEmail');
+        const passwordEl = document.getElementById('loginPassword');
+        const errorEl = document.getElementById('loginError');
+        const submitBtn = document.getElementById('loginSubmit');
+        const email = emailEl && emailEl.value ? emailEl.value.trim() : '';
+        const password = passwordEl ? passwordEl.value : '';
+        if (!email || !password) {
+            if (errorEl) { errorEl.textContent = 'Email and password required.'; errorEl.style.display = 'block'; }
+            return;
+        }
+        if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+            const { data, error } = await window.PMP.Supabase.signInWithPassword(email, password);
+            if (error) throw error;
+            await fetchAndStoreProfile(data.user.id);
+            showLauncher();
+        } catch (err) {
+            if (errorEl) {
+            errorEl.textContent = err && err.message ? err.message : 'Sign in failed.';
+            errorEl.style.display = 'block';
+            }
+            if (submitBtn) submitBtn.disabled = false;
+        }
+        });
+    }
+    }
+
+    authBootstrap();
+
+    window.addEventListener('online', onOnline);
+
+    // ============================================================
+    // APP ENTRY — enterApp still used internally; launcher is primary entry
     // ============================================================
     function enterApp(mode) {
     S.mode = mode;
@@ -692,21 +1174,38 @@
     const badge = document.getElementById('modeBadge');
     badge.textContent = mode.toUpperCase();
     badge.className = 'bar-mode ' + mode;
-    if (mode === 'floor') document.getElementById('exportBtn').style.display = 'none';
+    if (mode === 'floor') {
+        const eb = document.getElementById('exportBtn'); if (eb) eb.style.display = 'none';
+        const bb = document.getElementById('backupBtn'); if (bb) bb.style.display = 'none';
+    }
     updateFAB();
     loadAll();
     startPolling();
     }
 
-    function doLogout() {
+    async function doLogout() {
     setStationContext({});
     hideLauncherPressPicker();
     renderLauncherLast();
-    document.getElementById('modeScreen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
     document.getElementById('fab').style.display = 'none';
     document.body.classList.remove('tv');
-    clearInterval(pollTimer);
+    stopDataSync();
+
+    if (authRequired() && window.PMP && window.PMP.Supabase && window.PMP.Supabase.getClientOrNull) {
+        const client = window.PMP.Supabase.getClientOrNull();
+        if (client) {
+            try {
+                await window.PMP.Supabase.signOut();
+            } catch (e) {
+                console.error('[PMP] Sign out error:', e);
+            }
+            window.PMP.userProfile = null;
+            showLoginScreen(false);
+            return;
+        }
+    }
+    document.getElementById('modeScreen').style.display = 'flex';
     }
 
     // ============================================================
@@ -736,10 +1235,13 @@
     currentPage = id;
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('on'));
     document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
-    document.querySelector(`[data-pg="${id}"]`).classList.add('on');
-    document.getElementById('pg-' + id).classList.add('on');
+    const navEl = document.querySelector(`[data-pg="${id}"]`);
+    if (navEl) navEl.classList.add('on');
+    const pgEl = document.getElementById('pg-' + id);
+    if (pgEl) pgEl.classList.add('on');
     updateFAB();
-    renderAll();
+    if (id === 'audit') loadAuditPage();
+    else renderAll();
     }
 
     // FAB: context-aware visibility and action
@@ -753,8 +1255,9 @@
         fab.style.display = 'flex';
         fab.textContent = '+';
         if (label) { label.textContent = 'NEW JOB [N]'; }
+    } else if (currentPage === 'audit') {
+        fab.style.display = 'none';
     } else {
-        // QC and Todos have their own inline add — hide FAB to avoid confusion
         fab.style.display = 'none';
     }
     }
@@ -763,6 +1266,53 @@
     if (currentPage === 'floor' || currentPage === 'jobs') {
         openPanel(null);
     }
+    }
+
+    // ============================================================
+    // AUDIT PAGE (admin only; RLS enforces)
+    // ============================================================
+    async function loadAuditPage() {
+    const hintEl = document.getElementById('auditHint');
+    const bodyEl = document.getElementById('auditBody');
+    const emptyEl = document.getElementById('auditEmpty');
+    if (!bodyEl) return;
+    if (!useSupabase() || getAuthRole() !== 'admin') {
+        if (hintEl) hintEl.textContent = 'Audit requires Supabase and admin role.';
+        bodyEl.innerHTML = '';
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+    }
+    if (hintEl) hintEl.textContent = 'Loading…';
+    if (emptyEl) emptyEl.style.display = 'none';
+    const limitEl = document.getElementById('auditLimit');
+    const limit = limitEl ? Math.min(500, Math.max(1, parseInt(limitEl.value, 10) || 100)) : 100;
+    try {
+        const rows = await window.PMP.Supabase.getAuditLog({ limit });
+        if (hintEl) hintEl.textContent = rows.length ? `${rows.length} entries` : 'No entries';
+        if (!rows.length) {
+        bodyEl.innerHTML = '';
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+        }
+        emptyEl.style.display = 'none';
+        bodyEl.innerHTML = rows.map(r => {
+        const when = r.occurred_at ? new Date(r.occurred_at).toLocaleString() : '—';
+        const by = r.changed_by ? (r.changed_by).slice(0, 8) + '…' : '—';
+        const fields = (r.changed_fields && r.changed_fields.length) ? r.changed_fields.join(', ') : '—';
+        return `<tr><td>${when}</td><td>${escapeHtml(r.table_name)}</td><td>${escapeHtml(String(r.entity_id))}</td><td>${escapeHtml(r.action)}</td><td>${escapeHtml(by)}</td><td>${escapeHtml(fields)}</td></tr>`;
+        }).join('');
+    } catch (e) {
+        console.error(e);
+        if (hintEl) hintEl.textContent = 'Error: ' + (e.message || 'Failed to load');
+        bodyEl.innerHTML = '';
+        if (emptyEl) { emptyEl.textContent = 'Error loading audit log.'; emptyEl.style.display = 'block'; }
+    }
+    }
+    function escapeHtml(s) {
+    if (s == null) return '';
+    const t = document.createElement('textarea');
+    t.textContent = s;
+    return t.innerHTML;
     }
 
     // ============================================================
@@ -1966,11 +2516,6 @@
     }
     }
 
-    function closePanel() {
-    document.getElementById('overlay').classList.remove('open');
-    panelOpen = false;
-    }
-
     function clearFields() {
     FIELD_MAP.forEach(f => {
         const el = document.getElementById(f.id);
@@ -2217,6 +2762,34 @@
     }
     function closeConfirm() { document.getElementById('confirmWrap').classList.remove('open'); confCb = null; }
     document.getElementById('confOk').addEventListener('click', () => { if (confCb) confCb(); closeConfirm(); });
+
+    // ============================================================
+    // BACKUP EXPORT (admin) — full operational data as JSON
+    // ============================================================
+    function exportBackup() {
+    const progressLogFlat = [];
+    (S.jobs || []).forEach((j) => {
+        (j.progressLog || []).forEach((e) => {
+            progressLogFlat.push({ job_id: j.id, qty: e.qty, stage: e.stage, person: e.person, timestamp: e.timestamp });
+        });
+    });
+    const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        jobs: S.jobs || [],
+        presses: S.presses || [],
+        todos: S.todos || { daily: [], weekly: [], standing: [] },
+        qc_log: S.qcLog || [],
+        progress_log: progressLogFlat,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `pmp-ops-backup_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    if (typeof toast === 'function') toast('BACKUP EXPORTED');
+    }
 
     // ============================================================
     // CSV EXPORT

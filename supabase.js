@@ -108,6 +108,11 @@
     return { id: t.id, category, text: t.text, done: !!t.done, who: t.who || '', sort_order: 0 };
   }
 
+  /** Returns the Supabase client when initialized. Throws if not inited (use after initSupabase() === true). */
+  function getClientOrNull() {
+    return supabase || null;
+  }
+
   window.PMP = window.PMP || {};
   window.PMP.Supabase = {
     initSupabase() {
@@ -124,6 +129,42 @@
       }
       supabase = window.supabase.createClient(url, key);
       return true;
+    },
+
+    /** Auth: get current session. Safe when Supabase not inited (returns null session). */
+    async getSession() {
+      if (!supabase) return { data: { session: null }, error: null };
+      return supabase.auth.getSession();
+    },
+
+    /** Auth: sign in with email/password. Call only when initSupabase() === true. */
+    async signInWithPassword(email, password) {
+      const client = getClient();
+      return client.auth.signInWithPassword({ email, password });
+    },
+
+    /** Auth: sign out. Call only when initSupabase() === true. */
+    async signOut() {
+      const client = getClient();
+      return client.auth.signOut();
+    },
+
+    /** Auth: subscribe to session changes. Call only when initSupabase() === true. */
+    onAuthStateChange(callback) {
+      const client = getClient();
+      return client.auth.onAuthStateChange(callback);
+    },
+
+    /** Fetch profile for user (id = auth.uid()). Includes role and assigned_press_id for RLS/UI. */
+    async getProfile(userId) {
+      if (!supabase) return { data: null, error: new Error('Supabase not initialized') };
+      const { data, error } = await supabase.from('profiles').select('id, email, display_name, role, assigned_press_id').eq('id', userId).maybeSingle();
+      return { data, error };
+    },
+
+    /** Returns the client when inited, null otherwise. Use for auth checks without throwing. */
+    getClientOrNull() {
+      return getClientOrNull();
     },
 
     async loadAllData() {
@@ -225,6 +266,49 @@
       }
       if (state.presses && state.presses.length) await this.savePresses(state.presses);
       if (state.todos) await this.saveTodos(state.todos);
+    },
+
+    /**
+     * Subscribe to Realtime postgres_changes for jobs, presses, todos, progress_log, qc_log.
+     * Callback is invoked when any of these tables change (INSERT/UPDATE/DELETE).
+     * Tables must be in the supabase_realtime publication (see docs).
+     * @param {function()} onChange - Called when a change is received (no payload args; use for refetch).
+     * @returns {function()} unsubscribe - Call to remove the subscription and release the channel.
+     */
+    subscribeRealtime(onChange) {
+      const client = getClient();
+      const channel = client
+        .channel('pmp-ops-data')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs' }, onChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'presses' }, onChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, onChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'progress_log' }, onChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'qc_log' }, onChange)
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR') console.warn('[PMP] Realtime channel error');
+        });
+      return function unsubscribe() {
+        client.removeChannel(channel);
+      };
+    },
+
+    /**
+     * Fetch audit log (admin only; RLS enforces). For minimal UI or export.
+     * @param {Object} opts - { limit?: number, table_name?: string, entity_id?: string, since?: string (ISO date) }
+     */
+    async getAuditLog(opts = {}) {
+      const client = getClient();
+      let q = client
+        .from('audit_log')
+        .select('id, table_name, entity_id, action, changed_by, occurred_at, changed_fields, old_values, new_values')
+        .order('occurred_at', { ascending: false });
+      if (opts.limit != null) q = q.limit(Math.min(Math.max(1, opts.limit), 500));
+      if (opts.table_name) q = q.eq('table_name', opts.table_name);
+      if (opts.entity_id) q = q.eq('entity_id', opts.entity_id);
+      if (opts.since) q = q.gte('occurred_at', opts.since);
+      const { data, error } = await q;
+      if (error) throw error;
+      return data || [];
     },
   };
 })();

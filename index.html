@@ -18,6 +18,29 @@
 
     <canvas id="rain"></canvas>
 
+    <!-- ============================================================ LOGIN (when Supabase auth enabled) -->
+    <div id="loginScreen" class="auth-screen" style="display:none;" aria-live="polite">
+    <div class="auth-wrap">
+        <div class="auth-head">
+        <div class="auth-title">PMP · OPS</div>
+        <div class="auth-sub">Sign in to continue</div>
+        </div>
+        <form id="loginForm" class="auth-form" novalidate>
+        <div class="fg">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" name="email" autocomplete="email" required placeholder="you@example.com">
+        </div>
+        <div class="fg">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" name="password" autocomplete="current-password" required>
+        </div>
+        <div id="loginError" class="auth-error" role="alert" style="display:none;"></div>
+        <button type="submit" class="auth-btn" id="loginSubmit">SIGN IN</button>
+        </form>
+        <div class="auth-footer">Nashville · Press Floor Operations</div>
+    </div>
+    </div>
+
     <!-- ============================================================ STATION LAUNCHER (mode select) -->
     <div id="modeScreen">
     <div class="mode-wrap">
@@ -66,6 +89,8 @@
             <span id="launcherLastLabel">Last: —</span>
             <button type="button" class="btn-open" id="launcherLastOpen" onclick="openLastLauncherChoice()">OPEN</button>
         </div>
+        <div id="localModeBanner" class="local-mode-banner" style="display:none;" role="status">Local mode — Supabase unavailable. Data not synced.</div>
+        <div id="launcherNoRole" class="local-mode-banner" style="display:none;" role="status">No role assigned. Contact an admin.</div>
         </div>
     </div>
     <div class="mode-city">Nashville, TN · physicalmusicproducts.com</div>
@@ -111,6 +136,7 @@
         <button class="bar-btn" onclick="enterTV()">⬛ TV</button>
         <button class="bar-btn" onclick="openQCStation()" title="QC Station — rapid reject logging" style="display:none">QC</button>
         <button id="exportBtn" class="bar-btn" onclick="exportCSV()">↓ CSV</button>
+        <button id="backupBtn" class="bar-btn" onclick="exportBackup()" title="Export full operational backup (JSON)">💾 BACKUP</button>
         <button class="bar-btn warn" onclick="doLogout()">EXIT</button>
         </div>
     </div>
@@ -123,6 +149,7 @@
         <div class="nav-item" data-pg="qc" onclick="goPg('qc')">
         ⚠ QC LOG <span class="badge" id="qcBadge"></span>
         </div>
+        <div class="nav-item" id="navAudit" data-pg="audit" onclick="goPg('audit')" style="display:none">📋 AUDIT</div>
     </div>
 
     <!-- ======= FLOOR PAGE ======= -->
@@ -223,6 +250,30 @@
         <div class="empty">NO REJECTS LOGGED TODAY</div>
         </div>
     </div>
+
+    <!-- ======= AUDIT PAGE (admin only) ======= -->
+    <div class="pg" id="pg-audit">
+        <div class="audit-toolbar">
+        <label>Limit</label>
+        <select id="auditLimit" style="width:auto;padding: var(--space-sm) var(--space-md);font-size:13px;">
+            <option value="50">50</option>
+            <option value="100" selected>100</option>
+            <option value="250">250</option>
+            <option value="500">500</option>
+        </select>
+        <button type="button" class="bar-btn" onclick="loadAuditPage()">LOAD</button>
+        <span class="audit-hint" id="auditHint"></span>
+        </div>
+        <div class="tbl-wrap">
+        <table class="audit-tbl">
+            <thead><tr>
+            <th>WHEN</th><th>TABLE</th><th>ID</th><th>ACTION</th><th>BY</th><th>CHANGED FIELDS</th>
+            </tr></thead>
+            <tbody id="auditBody"></tbody>
+        </table>
+        </div>
+        <div id="auditEmpty" class="empty" style="display:none;">No audit entries. Run "LOAD" or check Supabase admin.</div>
+    </div>
     </div>
 
     <!-- ============================================================ PRESS STATION SHELL (v1) -->
@@ -287,6 +338,12 @@
     <button class="fab" id="fab" onclick="fabAction()" title="New Job">+</button>
     <div class="fab-label" id="fabLabel">NEW JOB [N]</div>
 
+    <!-- OFFLINE BANNER (shown when using cached data + queue) -->
+    <div id="offlineBanner" class="offline-banner" style="display:none;" role="status">
+    <span id="offlineBannerText">Offline — showing cached data.</span>
+    <span id="offlineBannerQueue"></span>
+    </div>
+
     <!-- SYNC BAR -->
     <div class="syncbar">
     <span id="syncStatus" class="sync-ok">● READY</span>
@@ -296,6 +353,9 @@
     <!-- ============================================================ SLIDE PANEL — Unified single-scroll form -->
     <div class="overlay" id="overlay">
     <div class="panel">
+        <div id="dataChangedNotice" class="data-changed-notice" style="display:none;" role="status">
+        Data updated elsewhere. <button type="button" class="data-changed-btn" onclick="dismissDataChangedNotice()">Refresh view</button>
+        </div>
         <div class="panel-top">
         <div>
             <div class="panel-id" id="panelId">NEW JOB</div>
@@ -579,5 +639,10 @@
     </div>
 
     <script src="app.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function() {});
+    }
+    </script>
     </body>
     </html>
