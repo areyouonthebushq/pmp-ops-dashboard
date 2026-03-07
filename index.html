@@ -38,6 +38,7 @@
     --gw:   0 0 8px rgba(255,179,0,0.5);
     --gr:   0 0 8px rgba(255,61,61,0.5);
     --gp:   0 0 8px rgba(224,64,251,0.4);
+    --space-xs: 4px;
     --space-sm: 8px;
     --space-md: 12px;
     --space-lg: 16px;
@@ -85,13 +86,13 @@
     animation: modeIn 0.4s ease;
     }
     @keyframes modeIn {
-    from { opacity:0; transform:translateY(12px); }
+    from { opacity:0; transform:translateY(var(--space-md)); }
     to { opacity:1; transform:none; }
     }
     .mode-head {
     background: var(--g3);
     border-bottom:1px solid var(--g2);
-    padding:32px 28px 22px;
+    padding: calc(2 * var(--space-lg)) calc(2 * var(--space-md)) var(--space-lg);
     text-align:center;
     }
     .mode-title {
@@ -101,13 +102,13 @@
     line-height:1.2;
     }
     .mode-sub {
-    margin-top:8px; font-size:11px; letter-spacing:4px;
+    margin-top: var(--space-sm); font-size:11px; letter-spacing:4px;
     color: var(--d2); text-transform:uppercase;
     }
-    .mode-body { padding:20px; display:flex; flex-direction:column; gap:10px; }
+    .mode-body { padding: var(--space-lg) var(--space-md); display:flex; flex-direction:column; gap: var(--space-md); }
     .mode-btn {
-    display:flex; align-items:center; gap:14px;
-    padding:18px 20px;
+    display:flex; align-items:center; gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
     border:1px solid;
     background:transparent;
     font-family:'Inconsolata',monospace;
@@ -122,7 +123,7 @@
     .mode-btn.admin:hover { background: var(--g3); border-color: var(--g); box-shadow: var(--gg); }
     .mode-btn.floor { border-color: var(--b2); color: var(--d); }
     .mode-btn.floor:hover { background: var(--s2); border-color: var(--d2); }
-    .mode-city { margin-top:20px; font-size:11px; color: var(--d3); letter-spacing:3px; text-align:center; }
+    .mode-city { margin-top: var(--space-lg); font-size:11px; color: var(--d3); letter-spacing:3px; text-align:center; }
 
     /* ============================================================ APP SHELL */
     #app { position:relative; z-index:1; display:none; padding-bottom:56px; }
@@ -132,8 +133,8 @@
     position:sticky; top:0; z-index:200;
     background: var(--s1);
     border-bottom:1px solid var(--b1);
-    padding:0 16px;
-    display:flex; align-items:center; gap:12px;
+    padding: 0 var(--space-lg);
+    display:flex; align-items:center; gap: var(--space-md);
     height:48px;
     }
     .bar-logo {
@@ -149,9 +150,9 @@
     .bar-mode.admin { border-color: var(--w2); color: var(--w); }
     .bar-mode.floor { border-color: var(--b1); color: var(--d2); }
     .bar-clock { font-size:13px; color: var(--d2); letter-spacing:1px; flex:1; text-align:center; }
-    .bar-actions { display:flex; gap:6px; flex-shrink:0; }
+    .bar-actions { display:flex; gap: var(--space-sm); flex-shrink:0; }
     .bar-btn {
-    padding:5px 10px; font-size:11px; letter-spacing:1px;
+    padding: var(--space-xs) var(--space-md); font-size:11px; letter-spacing:1px;
     border:1px solid var(--b2); color: var(--d2);
     background:transparent; cursor:pointer; transition:all 0.15s;
     font-family:'Inconsolata',monospace;
@@ -169,11 +170,11 @@
     }
     .nav::-webkit-scrollbar { display:none; }
     .nav-item {
-    padding:12px 20px;
+    padding: var(--space-md) var(--space-lg);
     font-family:'VT323',monospace; font-size:18px; letter-spacing:2px;
     color: var(--d3); border-bottom:2px solid transparent;
     cursor:pointer; transition:all 0.15s; white-space:nowrap;
-    display:flex; align-items:center; gap:8px;
+    display:flex; align-items:center; gap: var(--space-sm);
     user-select:none;
     }
     .nav-item:hover { color: var(--d2); }
@@ -193,8 +194,8 @@
 
     /* ============================================================ SIGNAL PILLS */
     .pill {
-    display:inline-flex; align-items:center; gap:5px;
-    padding:3px 8px; font-size:11px; letter-spacing:1px;
+    display:inline-flex; align-items:center; gap: var(--space-xs);
+    padding: 3px var(--space-sm); font-size:11px; letter-spacing:1px;
     border:1px solid; font-family:'Inconsolata',monospace; font-weight:600;
     white-space:nowrap;
     }
@@ -208,15 +209,15 @@
 
     /* Tappable status pill — larger touch target for floor workers */
     .status-tap {
-    display:inline-flex; align-items:center; gap:5px;
-    padding:8px 14px; font-size:12px; letter-spacing:1px;
+    display:inline-flex; align-items:center; gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-lg); font-size:12px; letter-spacing:1px;
     border:1px solid; font-family:'Inconsolata',monospace; font-weight:700;
     cursor:pointer; transition:all 0.15s; white-space:nowrap;
     user-select:none; -webkit-user-select:none;
     min-height:36px;
     }
     .status-tap::before { content:'●'; font-size:8px; }
-    .status-tap::after { content:'▸'; font-size:10px; margin-left:4px; opacity:0.4; }
+    .status-tap::after { content:'▸'; font-size:10px; margin-left: var(--space-xs); opacity:0.4; }
     .status-tap:active { transform:scale(0.96); }
     .status-tap.go   { border-color: var(--g2); color: var(--g); background: var(--g3); }
     .status-tap.warn { border-color: var(--w2); color: var(--w); background: var(--w2); }
@@ -236,14 +237,14 @@
     position:relative; flex:1;
     }
     .search-wrap::before {
-    content:'⌕'; position:absolute; left:10px; top:50%; transform:translateY(-50%);
+    content:'⌕'; position:absolute; left: var(--space-md); top:50%; transform:translateY(-50%);
     color: var(--d3); font-size:14px; pointer-events:none; z-index:1;
     }
     .search-input {
     width:100%;
     background: var(--s2); border:1px solid var(--b2);
     color: var(--d); font-family:'Inconsolata',monospace; font-size:14px;
-    padding:9px 12px 9px 32px; outline:none;
+    padding: var(--space-sm) var(--space-md) var(--space-sm) calc(2 * var(--space-lg)); outline:none;
     transition:border-color 0.15s;
     }
     .search-input:focus { border-color: var(--g); }
@@ -265,8 +266,8 @@
     80% of jobs don't need billing fields at creation time. Hiding
     them behind a toggle cuts form visual noise by ~30%. */
     .billing-toggle {
-    display:flex; align-items:center; gap:8px;
-    padding:8px 0; cursor:pointer; user-select:none;
+    display:flex; align-items:center; gap: var(--space-sm);
+    padding: var(--space-sm) 0; cursor:pointer; user-select:none;
     font-size:12px; color: var(--d2); letter-spacing:1px;
     transition:color 0.15s;
     }
@@ -280,6 +281,7 @@
     transition:max-height 0.3s ease;
     }
     .billing-body.open { max-height:400px; }
+    .billing-body .fl { color: var(--d3); }
 
     /* ============================================================ ASSET SUMMARY
     "9/15 received · 3 N/A · 3 remaining" at a glance, no scrolling. */
@@ -309,7 +311,7 @@
     to open the panel directly. No more memorize-catalog-scroll-find. */
     .pc-job-link {
     cursor:pointer; transition:background 0.15s;
-    margin:-4px -8px; padding:4px 8px;
+    margin: calc(-1 * var(--space-xs)) calc(-1 * var(--space-sm)); padding: var(--space-xs) var(--space-sm);
     border:1px solid transparent;
     }
     .pc-job-link:hover {
@@ -319,7 +321,7 @@
     .pc-job-link:active { transform:scale(0.99); }
     .pc-job-hint {
     font-size:10px; color: var(--d3); letter-spacing:1px;
-    margin-top:4px; opacity:0;
+    margin-top: var(--space-xs); opacity:0;
     transition:opacity 0.15s;
     }
     .pc-job-link:hover .pc-job-hint { opacity:1; }
@@ -328,18 +330,18 @@
     When status changes, a brief toast with an UNDO button appears.
     Prevents accidental "Done" from making a job vanish silently. */
     .toast-undo {
-    position:fixed; top:60px; right:16px; z-index:999;
+    position:fixed; top:60px; right: var(--space-lg); z-index:999;
     background: var(--s2); border:1px solid var(--w2);
-    padding:10px 14px; display:flex; align-items:center; gap:12px;
+    padding: var(--space-md) var(--space-lg); display:flex; align-items:center; gap: var(--space-md);
     animation: toastIn 0.2s ease;
     }
     @keyframes toastIn {
-    from { opacity:0; transform:translateY(-8px); }
+    from { opacity:0; transform:translateY(calc(-1 * var(--space-sm))); }
     to { opacity:1; transform:none; }
     }
     .toast-undo .tu-msg { font-size:13px; color: var(--d); letter-spacing:1px; }
     .toast-undo .tu-btn {
-    padding:4px 10px; border:1px solid var(--w2); background:transparent;
+    padding: var(--space-xs) var(--space-md); border:1px solid var(--w2); background:transparent;
     color: var(--w); font-family:'Inconsolata',monospace; font-size:12px;
     font-weight:700; letter-spacing:1px; cursor:pointer;
     transition:all 0.15s;
@@ -354,7 +356,7 @@
     margin-bottom: var(--space-md);
     }
     .qc-date-btn {
-    padding:5px 10px; border:1px solid var(--b2); background:transparent;
+    padding: var(--space-xs) var(--space-md); border:1px solid var(--b2); background:transparent;
     color: var(--d2); font-family:'Inconsolata',monospace; font-size:12px;
     cursor:pointer; transition:all 0.15s;
     }
@@ -364,7 +366,7 @@
     font-weight:600;
     }
     .qc-date-label .qdl-today {
-    font-size:10px; color: var(--g); margin-left:6px;
+    font-size:10px; color: var(--g); margin-left: var(--space-sm);
     letter-spacing:2px;
     }
 
@@ -375,8 +377,8 @@
     margin-top: var(--space-lg);
     }
     .recent-done-item {
-    display:flex; align-items:center; gap:10px;
-    padding:8px 10px; border-bottom:1px solid var(--b1);
+    display:flex; align-items:center; gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md); border-bottom:1px solid var(--b1);
     font-size:13px; color: var(--d3);
     transition:background 0.1s;
     }
@@ -385,7 +387,7 @@
     .recent-done-item .rd-artist { color: var(--d3); flex:1; }
     .recent-done-item .rd-check { color: var(--g); font-size:11px; }
     .recent-done-item .rd-open {
-    padding:3px 8px; border:1px solid var(--b2); background:transparent;
+    padding: 3px var(--space-sm); border:1px solid var(--b2); background:transparent;
     color: var(--d3); font-family:'Inconsolata',monospace; font-size:11px;
     cursor:pointer; transition:all 0.15s;
     }
@@ -412,10 +414,11 @@
     .stat .sv { font-size:28px; color: var(--g); font-weight:700; line-height:1; }
     .stat .sv.warn { color: var(--w); }
     .stat .sv.red  { color: var(--r); }
-    .stat .sl { font-size:10px; color: var(--d2); letter-spacing:2px; margin-top:4px; text-transform:uppercase; }
-    .stat .ss { font-size:11px; color: var(--d3); margin-top:2px; }
+    .stat .sl { font-size:10px; color: var(--d2); letter-spacing:2px; margin-top: var(--space-xs); text-transform:uppercase; }
+    .stat .ss { font-size:11px; color: var(--d3); margin-top: 2px; }
 
-    /* ============================================================ PRESS GRID */
+    /* ============================================================ PRESS GRID
+    Hierarchy: progress (primary), assets (secondary), controls (tertiary). */
     .press-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1px; background: var(--b1); margin-bottom: var(--space-lg); }
     .press-card {
     background: var(--s1); padding: var(--space-lg);
@@ -428,12 +431,12 @@
     .press-card.offline  { border-left-color: var(--r); }
     .press-card.idle     { border-left-color: var(--d3); }
 
-    .pc-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: var(--space-md); }
-    .pc-name { font-family:'Special Elite',cursive; font-size:20px; color: var(--g); }
+    .pc-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: var(--space-sm); }
+    .pc-name { font-family:'Special Elite',cursive; font-size:18px; color: var(--g); letter-spacing:1px; }
     .pc-name.seven { color: var(--p); }
-    .pc-status { display:flex; align-items:center; gap:6px; font-size:11px; letter-spacing:2px; }
+    .pc-status { display:flex; align-items:center; gap: var(--space-xs); font-size:10px; letter-spacing:2px; color: var(--d3); }
     .psdot {
-    width:8px; height:8px; border-radius:50%;
+    width:6px; height:6px; border-radius:50%;
     background: var(--d3);
     }
     .psdot.online   { background: var(--g); box-shadow: var(--gg); animation:blink 2s infinite; }
@@ -441,45 +444,57 @@
     .psdot.warning  { background: var(--w); box-shadow: var(--gw); }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
 
-    .pc-job { font-size:14px; color: var(--d); margin:3px 0; }
+    .pc-job-link { margin-bottom: var(--space-sm); }
+    .pc-job { font-size:13px; color: var(--d); margin: 2px 0; line-height:1.3; }
     .pc-job .job-id { color: var(--w); font-weight:700; }
-    .pc-meta { font-size:12px; color: var(--d2); margin:2px 0; }
-    .pc-due { font-size:12px; margin-top:4px; }
+    .pc-meta { font-size:11px; color: var(--d3); margin: 1px 0; letter-spacing:0.5px; }
+    .pc-due { font-size:11px; margin-top: var(--space-xs); color: var(--d2); }
 
-    .pc-assets { margin-top: var(--space-sm); }
-    .pc-assets-label { font-size:10px; color: var(--d3); letter-spacing:2px; margin-bottom:4px; }
-    .abar { height:6px; background: var(--s3); display:flex; gap:1px; }
-    .abar-seg { flex:1; background: var(--b2); transition:background 0.3s; }
-    .abar-seg.done { background: var(--g); }
-    .abar-seg.warn { background: var(--w); }
-    .abar-thin { height:3px; }
-    .pc-assets-demoted { margin-top:6px; padding-top:4px; border-top:1px solid var(--b1); opacity:0.9; }
-    .pc-assets-demoted .pc-assets-label { font-size:10px; color: var(--d3); letter-spacing:2px; }
-
-    .pc-progress { margin-top: var(--space-sm); padding-top:6px; border-top:1px solid var(--b1); }
-    .pc-progress-label { font-size:10px; color: var(--d3); letter-spacing:2px; margin-bottom:4px; }
-    .pc-progress-num { font-weight:600; color: var(--g); }
-    .pc-progress-bar-outer { height:6px; background: var(--s3); border:1px solid var(--b2); margin:0 0 4px; overflow:hidden; position:relative; }
-    .pc-progress-sub { font-size:11px; color: var(--d3); margin:0; }
-    .pc-progress-over { font-size:9px; color: var(--w); letter-spacing:1px; margin-top:2px; }
+    /* Progress — primary */
+    .pc-progress {
+    margin-top: var(--space-md); padding-top: var(--space-sm);
+    border-top:1px solid var(--b1);
+    }
+    .pc-progress-label { font-size:10px; color: var(--d3); letter-spacing:2px; margin-bottom: var(--space-xs); }
+    .pc-progress-num { font-weight:700; font-size:13px; color: var(--g); letter-spacing:0.5px; }
+    .pc-progress-bar-outer { height:8px; background: var(--s3); border:1px solid var(--b2); margin: var(--space-xs) 0 0; overflow:hidden; position:relative; border-radius:1px; }
+    .pc-progress-sub { font-size:10px; color: var(--d3); margin-top: var(--space-xs); letter-spacing:0.5px; }
+    .pc-progress-over { font-size:9px; color: var(--w); letter-spacing:1px; margin-top: 2px; }
 
     /* Dual-layer progress bar: yellow = pressed, green = QC passed (on top) */
     .dl-bar { position:relative; overflow:hidden; background: var(--s3); border:1px solid var(--b2); }
     .dl-bar-pressed { position:absolute; left:0; top:0; height:100%; background: var(--w); transition:width 0.3s; }
     .dl-bar-qc { position:absolute; left:0; top:0; height:100%; background: var(--g); transition:width 0.3s; }
-    .dl-bar.pc { height:6px; margin:0; }
-    .dl-bar.td { height:4px; margin-top:4px; min-width:48px; }
-    .dl-bar.jc { height:5px; margin-top:6px; }
-    .dl-bar.tv { height:6px; margin-top:4px; }
+    .dl-bar.pc { height:8px; margin:0; border-radius:1px; }
+    .dl-bar.td { height:4px; margin-top: var(--space-xs); min-width:48px; }
+    .dl-bar.jc { height:5px; margin-top: var(--space-sm); }
+    .dl-bar.tv { height:6px; margin-top: var(--space-xs); }
 
-    .pc-controls { margin-top: var(--space-sm); display:flex; gap:6px; flex-wrap:wrap; }
+    /* Assets — secondary */
+    .pc-assets { margin-top: var(--space-md); }
+    .pc-assets-label { font-size:9px; color: var(--d3); letter-spacing:1.5px; margin-bottom: var(--space-xs); opacity:0.9; }
+    .abar { height:5px; background: var(--s3); display:flex; gap:1px; border-radius:1px; }
+    .abar-seg { flex:1; background: var(--b2); transition:background 0.3s; }
+    .abar-seg.done { background: var(--g); }
+    .abar-seg.warn { background: var(--w); }
+    .abar-thin { height:3px; }
+    .pc-assets-demoted { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top:1px solid var(--b1); opacity:0.85; }
+    .pc-assets-demoted .pc-assets-label { font-size:9px; color: var(--d3); letter-spacing:1.5px; }
+
+    /* Controls — tertiary */
+    .pc-controls {
+    margin-top: var(--space-md); padding-top: var(--space-sm);
+    border-top:1px solid var(--b1);
+    display:flex; gap: var(--space-sm); flex-wrap:wrap;
+    }
     .pc-select {
     flex:1; min-width:0;
-    background: var(--s2); border:1px solid var(--b2);
-    color: var(--d); font-family:'Inconsolata',monospace; font-size:12px;
-    padding:5px 8px; outline:none; cursor:pointer;
+    background: var(--s1); border:1px solid var(--b1);
+    color: var(--d2); font-family:'Inconsolata',monospace; font-size:11px;
+    padding: var(--space-xs) var(--space-sm); outline:none; cursor:pointer;
+    letter-spacing:0.5px;
     }
-    .pc-select:focus { border-color: var(--g); }
+    .pc-select:focus { border-color: var(--b2); color: var(--d); }
     .pc-select option { background: var(--s1); }
 
     /* ============================================================ FLOOR TABLE */
@@ -487,13 +502,13 @@
     table { width:100%; border-collapse:collapse; font-size:13px; }
     thead th {
     background: var(--s2); color: var(--d2);
-    padding: var(--space-sm) 10px; text-align:left;
+    padding: var(--space-sm) var(--space-md); text-align:left;
     font-size:10px; letter-spacing:2px; font-weight:600;
     border-bottom:1px solid var(--b2); white-space:nowrap;
     }
     tbody tr { border-bottom:1px solid var(--b1); transition:background 0.1s; }
     tbody tr:hover { background: var(--s2); }
-    tbody td { padding: var(--space-sm) 10px; vertical-align:middle; }
+    tbody td { padding: var(--space-sm) var(--space-md); vertical-align:middle; }
 
     /* Progress column (floor + jobs table) */
     .td-progress { font-size:12px; white-space:nowrap; }
@@ -502,7 +517,7 @@
     .progress-sub { font-size:11px; color: var(--d3); margin-top:2px; }
 
     /* Asset health inline */
-    .ah { display:flex; align-items:center; gap:5px; font-size:12px; white-space:nowrap; }
+    .ah { display:flex; align-items:center; gap: var(--space-xs); font-size:12px; white-space:nowrap; }
     .ah-bar { width:48px; height:4px; background: var(--s3); }
     .ah-fill { height:100%; transition:width 0.3s, background 0.3s; }
     .ah-fill.full { background: var(--g); }
@@ -517,7 +532,7 @@
 
     /* Row open button */
     .open-btn {
-    padding:6px 14px; border:1px solid var(--b2); background:transparent;
+    padding: var(--space-sm) var(--space-lg); border:1px solid var(--b2); background:transparent;
     color: var(--d2); font-family:'Inconsolata',monospace; font-size:12px;
     cursor:pointer; transition:all 0.15s; white-space:nowrap;
     min-height:32px;
@@ -563,10 +578,10 @@
 
     /* Single scrollable form body */
     .panel-body { flex:1; overflow-y:auto; padding: var(--space-lg); }
-    .panel-body::-webkit-scrollbar { width:4px; }
+    .panel-body::-webkit-scrollbar { width: var(--space-xs); }
     .panel-body::-webkit-scrollbar-thumb { background: var(--b2); }
 
-    /* Section dividers in the unified form */
+    /* Section dividers — hierarchy: 1 & 4 primary, 5 & 6 recede, 2 & 3 default */
     .form-section {
     font-family:'Special Elite',cursive;
     font-size:13px; color: var(--d2); letter-spacing:3px;
@@ -582,6 +597,36 @@
     color: var(--g); width:22px; text-align:center;
     }
 
+    /* Primary: Job Details (1) & Progress (4) — most important, easier to scan */
+    .form-section--primary {
+    font-size:15px; color: var(--d); letter-spacing:3px;
+    padding: var(--space-md) 0 var(--space-md);
+    margin-top: var(--space-lg);
+    border-bottom:1px solid var(--b2);
+    }
+    .form-section--primary:first-child { margin-top:0; }
+    .form-section--primary .fs-num { font-size:22px; color: var(--g); width:26px; }
+    .form-section--primary + .frow,
+    .form-section--primary + .hint-block,
+    .form-section--primary + .fg,
+    .form-section--primary + #progressSection { margin-top: var(--space-sm); }
+
+    /* Recede: Notes (5) & Billing (6) — secondary, less visual weight */
+    .form-section--recede {
+    font-size:11px; color: var(--d3); letter-spacing:2px;
+    padding: var(--space-sm) 0 var(--space-xs);
+    margin-top: var(--space-md);
+    border-bottom:1px dashed var(--b1);
+    }
+    .form-section--recede .fs-num { font-size:14px; color: var(--d3); width:18px; }
+    .form-section--recede + .fg,
+    .form-section--recede + .billing-toggle { margin-top: var(--space-xs); }
+    .form-section--recede + .fg .fl { color: var(--d3); }
+    .form-section--recede + .billing-toggle { color: var(--d3); font-size: 11px; }
+
+    /* Progress section: stronger labels for scanability */
+    #progressSection .fl { font-weight: 600; color: var(--d2); }
+
     .panel-foot {
     border-top:1px solid var(--b2); padding: var(--space-md) var(--space-lg);
     display:flex; gap: var(--space-sm); justify-content:flex-end;
@@ -589,12 +634,12 @@
     }
 
     /* ============================================================ FORM SYSTEM */
-    .fg { display:flex; flex-direction:column; gap:5px; margin-bottom: var(--space-md); }
+    .fg { display:flex; flex-direction:column; gap: var(--space-xs); margin-bottom: var(--space-md); }
     .fl { font-size:10px; color: var(--d2); letter-spacing:2px; text-transform:uppercase; }
     .fi, .fs, .fta {
     background: var(--s2); border:1px solid var(--b2);
     color: var(--d); font-family:'Inconsolata',monospace; font-size:14px;
-    padding:8px 10px; outline:none; transition:border-color 0.15s; width:100%;
+    padding: var(--space-sm) var(--space-md); outline:none; transition:border-color 0.15s; width:100%;
     }
     .fi:focus, .fs:focus, .fta:focus { border-color: var(--g); }
     .fs { cursor:pointer; }
@@ -610,7 +655,7 @@
     .asset-row {
     display:grid; align-items:center;
     grid-template-columns:auto 1fr auto auto;
-    gap:10px; padding:10px 12px;
+    gap: var(--space-md); padding: var(--space-md);
     background: var(--s2); border-left:2px solid var(--b2);
     transition:all 0.15s; cursor:pointer;
     }
@@ -632,16 +677,16 @@
     .awho { font-size:11px; color: var(--d3); text-align:right; }
 
     .asset-detail {
-    display:none; padding:8px 12px 10px 40px;
+    display:none; padding: var(--space-sm) var(--space-md) var(--space-md) 40px;
     background:rgba(0,230,118,0.02);
     border-left:2px solid var(--g2);
     border-top:1px solid var(--g3);
     }
-    .asset-detail.open { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .asset-detail.open { display:grid; grid-template-columns:1fr 1fr; gap: var(--space-sm); }
     .asset-detail input, .asset-detail select {
     background: var(--s2); border:1px solid var(--b2);
     color: var(--d); font-family:'Inconsolata',monospace; font-size:12px;
-    padding:5px 8px; outline:none; width:100%;
+    padding: var(--space-xs) var(--space-sm); outline:none; width:100%;
     }
 
     /* Progress section in panel */
@@ -650,21 +695,21 @@
     font-size:11px; color: var(--d2); letter-spacing:1px;
     margin-bottom: var(--space-md);
     }
-    .progress-summary .ps-cell { text-align:center; padding:6px 4px; background: var(--s2); border:1px solid var(--b2); }
+    .progress-summary .ps-cell { text-align:center; padding: var(--space-sm) var(--space-xs); background: var(--s2); border:1px solid var(--b2); }
     .progress-summary .ps-cell .ps-val { font-family:'Inconsolata',monospace; font-size:14px; color: var(--g); display:block; }
     .progress-bar-wrap { margin-bottom: var(--space-md); }
     .progress-bar-outer { height:10px; background: var(--s3); border:1px solid var(--b2); overflow:hidden; }
     .progress-bar-fill { height:100%; background: var(--g); transition:width 0.3s; }
-    .progress-bar-text { font-size:11px; color: var(--d3); letter-spacing:1px; margin-top:6px; }
-    .progress-over-qty { font-size:10px; color: var(--w); letter-spacing:2px; margin-top:4px; }
+    .progress-bar-text { font-size:11px; color: var(--d3); letter-spacing:1px; margin-top: var(--space-sm); }
+    .progress-over-qty { font-size:10px; color: var(--w); letter-spacing:2px; margin-top: var(--space-xs); }
     .progress-log-form.frow.c2 { grid-template-columns:1fr 1fr; align-items:end; }
     @media(max-width:480px) { .progress-log-form.frow.c2 { grid-template-columns:1fr; } .progress-summary { grid-template-columns:repeat(3,1fr); } }
-    .progress-recent { display:flex; flex-direction:column; gap:4px; }
-    .progress-entry { font-size:12px; color: var(--d2); font-family:'Inconsolata',monospace; padding:6px 8px; background: var(--s2); border-left:2px solid var(--b2); }
+    .progress-recent { display:flex; flex-direction:column; gap: var(--space-xs); }
+    .progress-entry { font-size:12px; color: var(--d2); font-family:'Inconsolata',monospace; padding: var(--space-sm); background: var(--s2); border-left:2px solid var(--b2); }
     .progress-entry.pressed { border-left-color: var(--g); }
     .progress-entry.qc_passed { border-left-color: var(--g); }
     .progress-entry.rejected { border-left-color: var(--r); }
-    .progress-empty { font-size:11px; color: var(--d3); font-style:italic; padding:8px 0; }
+    .progress-empty { font-size:11px; color: var(--d3); font-style:italic; padding: var(--space-sm) 0; }
     .asset-detail input:focus, .asset-detail select:focus { border-color: var(--g); }
     .asset-detail .adl { font-size:10px; color: var(--d3); letter-spacing:1px; margin-bottom:3px; }
 
@@ -682,7 +727,7 @@
     .todo-col { background: var(--s1); padding: var(--space-md); }
     .todo-col-head {
     font-family:'Special Elite',cursive; font-size:15px; letter-spacing:3px;
-    color: var(--w); padding-bottom:10px; margin-bottom:10px;
+    color: var(--w); padding-bottom: var(--space-md); margin-bottom: var(--space-md);
     border-bottom:1px solid var(--w2);
     display:flex; justify-content:space-between; align-items:center;
     }
@@ -690,12 +735,12 @@
     .reset-tag { font-size:10px; color: var(--d3); letter-spacing:1px; font-family:'Inconsolata',monospace; }
 
     .todo-item {
-    display:flex; align-items:flex-start; gap:9px;
-    padding:8px 0; border-bottom:1px solid var(--b1); cursor:pointer;
+    display:flex; align-items:flex-start; gap: var(--space-sm);
+    padding: var(--space-sm) 0; border-bottom:1px solid var(--b1); cursor:pointer;
     transition:padding-left 0.1s;
     }
     .todo-item:last-child { border-bottom:none; }
-    .todo-item:hover { padding-left:4px; }
+    .todo-item:hover { padding-left: var(--space-xs); }
 
     .tcheck {
     width:18px; height:18px; min-width:18px; border:1px solid var(--d3);
@@ -707,18 +752,18 @@
 
     .ttext { font-size:13px; color: var(--d); flex:1; line-height:1.3; }
     .twho  { font-size:10px; color: var(--d3); margin-top:2px; letter-spacing:1px; }
-    .tdel  { background:none; border:none; color: var(--d3); cursor:pointer; font-size:14px; padding:0 4px; }
+    .tdel  { background:none; border:none; color: var(--d3); cursor:pointer; font-size:14px; padding:0 var(--space-xs); }
     .tdel:hover { color: var(--r); }
 
-    .todo-add { display:flex; gap:6px; margin-top:12px; }
+    .todo-add { display:flex; gap: var(--space-sm); margin-top: var(--space-md); }
     .todo-add input {
     flex:1; background: var(--s2); border:1px solid var(--b2);
     color: var(--d); font-family:'Inconsolata',monospace; font-size:13px;
-    padding:7px 9px; outline:none;
+    padding: var(--space-sm); outline:none;
     }
     .todo-add input:focus { border-color: var(--g2); }
     .todo-add-btn {
-    padding:7px 14px; background: var(--g3); border:1px solid var(--g2);
+    padding: var(--space-sm) var(--space-lg); background: var(--g3); border:1px solid var(--g2);
     color: var(--g); font-size:18px; cursor:pointer; transition:all 0.15s;
     min-width:40px; display:flex; align-items:center; justify-content:center;
     }
@@ -727,11 +772,11 @@
     /* ============================================================ QC */
     .qc-btns { display:flex; flex-wrap:wrap; gap: var(--space-sm); margin-bottom: var(--space-lg); }
     .qc-btn {
-    padding:12px 16px; border:1px solid var(--b2);
+    padding: var(--space-md) var(--space-lg); border:1px solid var(--b2);
     background: var(--s2); color: var(--d2);
     font-family:'Inconsolata',monospace; font-size:13px; font-weight:700;
     letter-spacing:1px; cursor:pointer; transition:all 0.15s;
-    display:flex; align-items:center; gap:8px;
+    display:flex; align-items:center; gap: var(--space-sm);
     min-height:44px;
     }
     .qc-btn:hover { border-color: var(--w); color: var(--w); background: var(--w2); }
@@ -740,14 +785,14 @@
 
     /* QC job picker */
     .qc-job-picker {
-    display:flex; flex-wrap:wrap; gap:6px; margin-bottom: var(--space-lg);
+    display:flex; flex-wrap:wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border:1px solid var(--b1); background: var(--s1);
     }
     .qc-job-picker-label {
-    font-size:10px; color: var(--d3); letter-spacing:2px; width:100%; margin-bottom:4px;
+    font-size:10px; color: var(--d3); letter-spacing:2px; width:100%; margin-bottom: var(--space-xs);
     }
     .qc-job-btn {
-    padding:6px 12px; border:1px solid var(--b2);
+    padding: var(--space-sm) var(--space-md); border:1px solid var(--b2);
     background: var(--s2); color: var(--d2);
     font-family:'Inconsolata',monospace; font-size:12px;
     cursor:pointer; transition:all 0.15s;
@@ -758,97 +803,119 @@
     .qc-log { }
     .qc-entry {
     display:grid; grid-template-columns:60px 130px 1fr;
-    gap:10px; padding:8px 0; border-bottom:1px solid var(--b1);
+    gap: var(--space-md); padding: var(--space-sm) 0; border-bottom:1px solid var(--b1);
     font-size:13px;
     }
     .qt { color: var(--d3); }
     .qtype { color: var(--r); font-weight:700; }
     .qjob { color: var(--d2); }
 
-    .qc-summary { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+    .qc-summary { display:flex; flex-wrap:wrap; gap: var(--space-sm); margin-bottom: var(--space-lg); }
     .qc-sum-pill {
-    padding:5px 10px; border:1px solid var(--b2); font-size:12px;
-    display:flex; gap:6px; align-items:center;
+    padding: var(--space-xs) var(--space-md); border:1px solid var(--b2); font-size:12px;
+    display:flex; gap: var(--space-sm); align-items:center;
     }
     .qc-sum-pill .qsp-n { color: var(--r); font-weight:700; font-size:18px; }
     .qc-sum-pill .qsp-l { color: var(--d2); }
 
-    /* ============================================================ TV MODE */
+    /* ============================================================ TV MODE — operations board
+    Main signal: production progress (press cards + queue). Secondary info receded. */
     body.tv #app { display:none!important; }
     body.tv #rain { opacity:05; }
     #tv {
     display:none; position:fixed; inset:0; z-index:500;
-    background: var(--bg); flex-direction:column; padding:16px; gap:12px;
+    background: var(--bg); flex-direction:column;
+    padding: var(--space-lg); gap: var(--space-lg);
     }
     body.tv #tv { display:flex; }
 
     .tv-bar {
     display:flex; justify-content:space-between; align-items:center;
-    border-bottom:1px solid var(--g2); padding-bottom:12px; flex-shrink:0;
+    border-bottom:1px solid var(--b2); padding-bottom: var(--space-md); flex-shrink:0;
     }
-    .tv-logo { font-family:'Special Elite',cursive; font-size:28px; color: var(--g); letter-spacing:4px; }
+    .tv-logo { font-family:'Special Elite',cursive; font-size:18px; color: var(--d3); letter-spacing:3px; }
     .tv-logo span { color: var(--p); }
-    .tv-clock { font-size:32px; color: var(--g); font-weight:700; letter-spacing:3px; }
-    .tv-date  { font-size:13px; color: var(--d2); letter-spacing:2px; text-align:right; }
+    .tv-clock { font-size:42px; color: var(--g); font-weight:700; letter-spacing:4px; line-height:1; }
+    .tv-date  { font-size:11px; color: var(--d3); letter-spacing:2px; text-align:right; margin-top: 2px; }
 
-    .tv-presses { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; flex-shrink:0; }
+    .tv-presses { display:grid; grid-template-columns:repeat(4,1fr); gap: var(--space-md); flex-shrink:0; }
     @media(max-width:800px) { .tv-presses { grid-template-columns:repeat(2,1fr); } }
     .tv-press {
     background: var(--s1); border:1px solid var(--b2);
-    border-left:3px solid var(--d3); padding:12px;
+    border-left:4px solid var(--d3); padding: var(--space-md);
     }
     .tv-press.online  { border-left-color: var(--g); }
     .tv-press.warning { border-left-color: var(--w); }
     .tv-press.offline { border-left-color: var(--r); }
-    .tv-pname { font-family:'Special Elite',cursive; font-size:18px; color: var(--g); }
+    .tv-pname { font-family:'Special Elite',cursive; font-size:20px; color: var(--g); letter-spacing:2px; }
     .tv-pname.seven { color: var(--p); }
-    .tv-pjob  { font-size:13px; color: var(--w); font-weight:700; margin:4px 0 2px; }
-    .tv-pmeta { font-size:12px; color: var(--d2); }
-    .tv-progress { margin-top:6px; padding-top:6px; border-top:1px solid var(--b1); }
-    .tv-progress-label { font-size:10px; color: var(--d3); letter-spacing:2px; margin-bottom:4px; }
-    .tv-progress-num { font-weight:600; color: var(--g); }
-    .tv-progress-sub { font-size:11px; color: var(--d3); margin-top:2px; }
-    .tv-progress-over { font-size:9px; color: var(--w); letter-spacing:1px; margin-top:2px; }
-    .tv-assets-demoted { font-size:10px; color: var(--d3); margin-top:4px; opacity:0.88; }
-    .tv-assets { margin-top:8px; height:4px; background: var(--s3); }
+    .tv-pjob  { font-size:16px; color: var(--w); font-weight:700; margin: var(--space-xs) 0 2px; letter-spacing:1px; }
+    .tv-pmeta { font-size:11px; color: var(--d3); letter-spacing:0.5px; margin-top: 2px; }
+
+    /* Progress = primary signal on each press card */
+    .tv-progress { margin-top: var(--space-md); padding-top: var(--space-md); border-top:1px solid var(--b2); }
+    .tv-progress-label { font-size:11px; color: var(--d2); letter-spacing:2px; margin-bottom: var(--space-xs); }
+    .tv-progress-num { font-size:22px; font-weight:700; color: var(--g); letter-spacing:1px; }
+    .tv-dl-bar.dl-bar.tv { height:12px; margin-top: var(--space-xs); border-radius:2px; }
+    .tv-progress-sub { font-size:10px; color: var(--d3); margin-top: var(--space-xs); }
+    .tv-progress-over { font-size:10px; color: var(--w); letter-spacing:1px; margin-top: 2px; }
+    .tv-assets-demoted { font-size:9px; color: var(--d3); margin-top: var(--space-xs); opacity:0.65; letter-spacing:1px; }
+    .tv-assets { margin-top: var(--space-sm); height:4px; background: var(--s3); }
     .tv-assets-fill { height:100%; background: var(--g); transition:width 0.5s; }
 
     .tv-queue { flex:1; min-height:0; overflow:hidden; }
-    .tv-queue-title { font-family:'Special Elite',cursive; font-size:14px; color: var(--d2); letter-spacing:3px; margin-bottom:8px; }
-    .tv-tbl { width:100%; border-collapse:collapse; font-size:14px; }
-    .tv-tbl th { color: var(--d3); font-size:10px; letter-spacing:2px; padding:4px 8px; text-align:left; border-bottom:1px solid var(--b1); }
-    .tv-tbl td { padding:7px 8px; border-bottom:1px solid var(--b1); }
-    .tv-tbl .tc { color: var(--w); font-weight:700; }
-    .tv-tbl .ta { color: var(--g); }
-    .tv-tbl .tb { color: var(--d2); font-size:12px; }
+    .tv-queue-title { font-family:'Special Elite',cursive; font-size:11px; color: var(--d3); letter-spacing:2px; margin-bottom: var(--space-sm); }
+    .tv-tbl { width:100%; border-collapse:collapse; font-size:16px; }
+    .tv-tbl th { color: var(--d3); font-size:10px; letter-spacing:2px; padding: var(--space-xs) var(--space-md); text-align:left; border-bottom:1px solid var(--b2); }
+    .tv-tbl td { padding: var(--space-md); border-bottom:1px solid var(--b1); font-size:16px; }
+    .tv-tbl .tc { color: var(--w); font-weight:700; font-size:17px; }
+    .tv-tbl .ta { color: var(--g); font-size:17px; }
+    .tv-tbl .tb { color: var(--d2); font-size:14px; }
 
     .tv-ticker {
-    font-size:12px; color: var(--d3); border-top:1px solid var(--b1);
-    padding-top:8px; overflow:hidden; white-space:nowrap; flex-shrink:0;
+    font-size:11px; color: var(--d3); border-top:1px solid var(--b1);
+    padding-top: var(--space-sm); overflow:hidden; white-space:nowrap; flex-shrink:0;
+    opacity:0.8;
     }
     .tv-ticker-inner { display:inline-block; animation:tick 40s linear infinite; }
     @keyframes tick { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
 
     .tv-esc {
-    position:fixed; top:12px; right:16px; z-index:600;
-    background:none; border:1px solid var(--b2); color: var(--d3);
-    padding:6px 14px; font-size:12px; cursor:pointer; font-family:'Inconsolata',monospace;
+    position:fixed; top: var(--space-md); right: var(--space-lg); z-index:600;
+    background:none; border:1px solid var(--b1); color: var(--d3);
+    padding: var(--space-xs) var(--space-md); font-size:11px; cursor:pointer; font-family:'Inconsolata',monospace;
+    opacity:0.6;
     }
-    .tv-esc:hover { color: var(--d); border-color: var(--d2); }
+    .tv-esc:hover { opacity:1; color: var(--d); border-color: var(--d2); }
 
-    /* ============================================================ SYNC & FAB */
+    /* ============================================================ SYNC BAR — system status line
+    Integrated instrument strip: status (primary) left, version (secondary) right.
+    Same info and behavior; refined hierarchy and spacing. */
     .syncbar {
     position:fixed; bottom:0; left:0; right:0; z-index:300;
-    background: var(--s2); border-top:1px solid var(--b1);
-    padding:6px 16px; display:flex; justify-content:space-between; align-items:center;
-    font-size:11px; letter-spacing:1px;
+    background: var(--s1);
+    border-top:1px solid var(--b2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+    padding: var(--space-md) var(--space-lg);
+    min-height: 28px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'Inconsolata',monospace;
+    font-size:11px; letter-spacing:2px; font-weight:600;
+    }
+    .syncbar #syncStatus {
+    text-transform:uppercase;
     }
     .sync-ok   { color: var(--g2); }
     .sync-save { color: var(--w); }
     .sync-err  { color: var(--r); }
+    .syncbar-version {
+    font-size:10px; font-weight:400; letter-spacing:2px;
+    color: var(--d3);
+    text-transform:uppercase;
+    }
 
     .fab {
-    position:fixed; bottom:46px; right:16px; z-index:350;
+    position:fixed; bottom:46px; right: var(--space-lg); z-index:350;
     width:52px; height:52px; background: var(--g); border:none;
     color:#000; font-size:26px; cursor:pointer;
     box-shadow: 0 0 20px rgba(0,230,118,0.4);
@@ -862,18 +929,18 @@
     .sec {
     font-family:'Special Elite',cursive; font-size:15px; color: var(--d2);
     letter-spacing:3px; text-transform:uppercase;
-    margin: var(--space-lg) 0 var(--space-md); padding-bottom:6px;
+    margin: var(--space-lg) 0 var(--space-md); padding-bottom: var(--space-sm);
     border-bottom:1px solid var(--b1);
     }
     .jobs-toolbar { display:flex; gap: var(--space-sm); align-items:center; flex-wrap:wrap; margin-bottom: var(--space-md); }
-    .hint-block { font-size:11px; color: var(--d3); letter-spacing:2px; margin-bottom: var(--space-md); padding: var(--space-sm) 10px; border:1px solid var(--b1); background: var(--s1); }
-    .progress-recent-label { font-size:10px; color: var(--d3); letter-spacing:2px; margin-top: var(--space-md); margin-bottom:6px; }
+    .hint-block { font-size:11px; color: var(--d3); letter-spacing:2px; margin-bottom: var(--space-md); padding: var(--space-sm) var(--space-md); border:1px solid var(--b1); background: var(--s1); }
+    .progress-recent-label { font-size:10px; color: var(--d3); letter-spacing:2px; margin-top: var(--space-md); margin-bottom: var(--space-sm); }
     .empty {
-    text-align:center; padding:32px; color: var(--d3); font-size:13px;
+    text-align:center; padding: calc(2 * var(--space-lg)); color: var(--d3); font-size:13px;
     letter-spacing:2px; border:1px dashed var(--b2);
     }
     .btn {
-    padding:9px 18px; font-family:'Inconsolata',monospace; font-size:14px; font-weight:700;
+    padding: var(--space-sm) var(--space-lg); font-family:'Inconsolata',monospace; font-size:14px; font-weight:700;
     letter-spacing:1px; cursor:pointer; transition:all 0.15s; border:1px solid;
     min-height:38px;
     }
@@ -891,34 +958,34 @@
     .confirm-wrap.open { display:flex; }
     .confirm-box {
     background: var(--s1); border:1px solid var(--r);
-    padding:28px 32px; max-width:340px; width:90%; text-align:center;
+    padding: calc(2 * var(--space-md)) calc(2 * var(--space-lg)); max-width:340px; width:90%; text-align:center;
     }
-    .confirm-box h3 { font-family:'Special Elite',cursive; font-size:18px; color: var(--r); margin-bottom:10px; }
-    .confirm-box p  { font-size:13px; color: var(--d2); margin-bottom:20px; }
+    .confirm-box h3 { font-family:'Special Elite',cursive; font-size:18px; color: var(--r); margin-bottom: var(--space-md); }
+    .confirm-box p  { font-size:13px; color: var(--d2); margin-bottom: var(--space-lg); }
 
     .toast {
-    position:fixed; top:60px; right:16px; z-index:999;
+    position:fixed; top:60px; right: var(--space-lg); z-index:999;
     background: var(--s2); border:1px solid var(--g2); color: var(--g);
-    padding:10px 16px; font-size:13px; letter-spacing:1px;
+    padding: var(--space-md) var(--space-lg); font-size:13px; letter-spacing:1px;
     animation:toastAnim 3s forwards;
     pointer-events:none;
     }
     .toast.err { border-color: var(--r); color: var(--r); }
     @keyframes toastAnim {
-    0%{opacity:0;transform:translateY(-8px)} 10%{opacity:1;transform:none}
+    0%{opacity:0;transform:translateY(calc(-1 * var(--space-sm)))} 10%{opacity:1;transform:none}
     80%{opacity:1} 100%{opacity:0}
     }
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar { width: var(--space-xs); height: var(--space-xs); }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--b2); }
 
     /* Mobile tweaks */
     @media(max-width:600px) {
-    .bar { padding:0 10px; gap:8px; }
+    .bar { padding: 0 var(--space-md); gap: var(--space-sm); }
     .bar-clock { display:none; }
-    .nav-item { padding:10px 14px; font-size:16px; }
+    .nav-item { padding: var(--space-md) var(--space-lg); font-size:16px; }
     .press-grid { grid-template-columns:1fr; }
     .stats { grid-template-columns:repeat(3,1fr); }
 
@@ -927,8 +994,8 @@
     #pg-jobs .job-cards { display:flex; }
 
     /* Floor table: tighten but keep visible */
-    #pg-floor thead th { font-size:9px; padding:6px; }
-    #pg-floor tbody td { padding:6px; font-size:12px; }
+    #pg-floor thead th { font-size:9px; padding: var(--space-sm); }
+    #pg-floor tbody td { padding: var(--space-sm); font-size:12px; }
     }
 
     /* Jobs card layout — hidden on desktop, shown on mobile */
@@ -954,18 +1021,18 @@
 
     .jc-top {
     display:flex; justify-content:space-between; align-items:flex-start;
-    margin-bottom:6px;
+    margin-bottom: var(--space-sm);
     }
     .jc-cat { color: var(--w); font-weight:700; font-size:14px; }
     .jc-artist { color: var(--d); font-size:14px; }
     .jc-album { color: var(--d3); font-size:12px; margin-top:1px; }
     .jc-row {
-    display:flex; gap:10px; align-items:center;
-    margin-top:8px; flex-wrap:wrap;
+    display:flex; gap: var(--space-md); align-items:center;
+    margin-top: var(--space-sm); flex-wrap:wrap;
     }
     .jc-detail { font-size:12px; color: var(--d2); }
     .jc-detail span { color: var(--d3); }
-    .jc-progress { margin-top:8px; padding-top:6px; border-top:1px solid var(--b1); display:flex; flex-direction:column; gap:2px; }
+    .jc-progress { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top:1px solid var(--b1); display:flex; flex-direction:column; gap: 2px; }
     .jc-progress-main { font-size:12px; color: var(--g); }
     .jc-progress-sub { font-size:11px; color: var(--d3); }
 
@@ -982,8 +1049,8 @@
     }
     /* Press cards with no job assigned get tighter */
     .press-card .pc-idle-msg {
-    font-size:12px; color: var(--d3); margin-top:4px;
-    font-style:italic;
+    font-size:11px; color: var(--d3); margin-top: var(--space-sm);
+    font-style:italic; letter-spacing:0.5px;
     }
 
     /* Table headers — solid background, no sticky (causes overlap on mobile) */
@@ -1093,10 +1160,10 @@
         <div class="sec">ACTIVE ORDERS</div>
         <div class="search-bar">
         <div class="search-wrap">
-            <input class="search-input" id="floorSearch" placeholder="Filter by catalog, artist, album…" oninput="renderFloor()">
+            <input class="search-input" id="floorSearch" placeholder="FILTER BY CATALOG, ARTIST, ALBUM…" oninput="renderFloor()">
         </div>
         <span class="search-count" id="floorCount"></span>
-        <button type="button" class="bar-btn" onclick="openPanel(null)" style="white-space:nowrap;">+ Add job</button>
+        <button type="button" class="bar-btn" onclick="openPanel(null)" style="white-space:nowrap;">+ ADD JOB</button>
         </div>
         <div class="tbl-wrap">
         <table>
@@ -1113,21 +1180,21 @@
     <!-- ======= JOBS PAGE ======= -->
     <div class="pg" id="pg-jobs">
         <div class="jobs-toolbar">
-        <select id="jobFilter" class="fs" style="width:auto;padding:7px 10px;font-size:13px;" onchange="renderJobs()">
-            <option value="">All Jobs</option>
-            <option value="pressing">Pressing</option>
-            <option value="queue">Queued</option>
-            <option value="assembly">Assembly</option>
-            <option value="hold">On Hold</option>
-            <option value="done">Done</option>
+        <select id="jobFilter" class="fs" style="width:auto;padding: var(--space-sm) var(--space-md);font-size:13px;" onchange="renderJobs()">
+            <option value="">ALL JOBS</option>
+            <option value="pressing">PRESSING</option>
+            <option value="queue">QUEUED</option>
+            <option value="assembly">ASSEMBLY</option>
+            <option value="hold">ON HOLD</option>
+            <option value="done">DONE</option>
         </select>
         <div class="search-wrap" style="min-width:180px">
-            <input class="search-input" id="jobSearch" placeholder="Search jobs…" oninput="renderJobs()">
+            <input class="search-input" id="jobSearch" placeholder="SEARCH JOBS…" oninput="renderJobs()">
         </div>
         <span class="search-count" id="jobCount"></span>
-        <button type="button" class="bar-btn" onclick="openPanel(null)">+ Add job</button>
-        <label class="bar-btn" style="cursor:pointer;border:1px solid var(--b2);padding:7px 12px;">
-            ↑ Import CSV
+        <button type="button" class="bar-btn" onclick="openPanel(null)">+ ADD JOB</button>
+        <label class="bar-btn" style="cursor:pointer;border:1px solid var(--b2);padding: var(--space-sm) var(--space-md);">
+            ↑ IMPORT CSV
             <input type="file" accept=".csv" style="display:none" onchange="importCSV(this)">
         </label>
         </div>
@@ -1156,7 +1223,7 @@
     <div class="pg" id="pg-qc">
         <div class="sec">SELECT JOB</div>
         <div class="qc-job-picker" id="qcJobPicker">
-        <div class="qc-job-picker-label">TAP THE JOB THIS REJECT BELONGS TO</div>
+        <div class="qc-job-picker-label">SELECT JOB FOR THIS REJECT</div>
         </div>
         <div class="sec">LOG REJECT</div>
         <div class="qc-btns">
@@ -1192,7 +1259,7 @@
     <!-- SYNC BAR -->
     <div class="syncbar">
     <span id="syncStatus" class="sync-ok">● READY</span>
-    <span style="color:var(--d3);font-size:10px;letter-spacing:2px;">PMP OPS v7.1</span>
+    <span class="syncbar-version">PMP OPS v7.1</span>
     </div>
 
     <!-- ============================================================ SLIDE PANEL — Unified single-scroll form -->
@@ -1208,7 +1275,7 @@
         <div class="panel-body" id="panelBody">
         <!-- Unified form — all sections in one scrollable view -->
 
-        <div class="form-section"><span class="fs-num">1</span> JOB DETAILS</div>
+        <div class="form-section form-section--primary"><span class="fs-num">1</span> JOB DETAILS</div>
         <div class="frow c2">
             <div class="fg">
             <label class="fl">Catalog / Matrix #</label>
@@ -1377,7 +1444,7 @@
         <div class="hint-block">TAP TO MARK RECEIVED · EXPAND FOR DETAILS · N/A IF NOT APPLICABLE</div>
         <div class="asset-list" id="assetList"></div>
 
-        <div class="form-section"><span class="fs-num">4</span> PROGRESS</div>
+        <div class="form-section form-section--primary"><span class="fs-num">4</span> PROGRESS</div>
         <div id="progressSection">
             <div id="progressSummary" class="progress-summary"></div>
             <div id="progressBarWrap" class="progress-bar-wrap"></div>
@@ -1389,9 +1456,9 @@
             <div class="fg">
                 <label class="fl">Stage</label>
                 <select class="fs" id="progressStage">
-                <option value="pressed">Pressed</option>
-                <option value="qc_passed">QC Passed</option>
-                <option value="rejected">Rejected</option>
+                <option value="pressed">PRESSED</option>
+                <option value="qc_passed">QC PASSED</option>
+                <option value="rejected">REJECTED</option>
                 </select>
             </div>
             <div class="fg">
@@ -1406,7 +1473,7 @@
             <div id="progressRecent" class="progress-recent"></div>
         </div>
 
-        <div class="form-section"><span class="fs-num">5</span> NOTES</div>
+        <div class="form-section form-section--recede"><span class="fs-num">5</span> NOTES</div>
         <div class="fg">
             <label class="fl">Production Notes</label>
             <textarea class="fta" id="jNotes" placeholder="Assembly notes, special instructions, client requests..."></textarea>
@@ -1416,14 +1483,14 @@
             <textarea class="fta" id="jAssembly" placeholder="Rack bay, row, staging, assembly details..."></textarea>
         </div>
 
-        <div class="form-section"><span class="fs-num">6</span> BILLING</div>
+        <div class="form-section form-section--recede"><span class="fs-num">6</span> BILLING</div>
         <div class="billing-toggle" id="billingToggle" onclick="toggleBilling()">
             <span class="bt-arrow">▸</span>
-            <span>Invoice &amp; Payment Details</span>
-            <span style="font-size:10px;color:var(--d3)">(expand)</span>
+            <span>INVOICE &amp; PAYMENT DETAILS</span>
+            <span style="font-size:10px;color:var(--d3);letter-spacing:1px">(EXPAND)</span>
         </div>
         <div class="billing-body" id="billingBody">
-            <div class="frow c2" style="margin-top:10px">
+            <div class="frow c2" style="margin-top: var(--space-md)">
             <div class="fg">
                 <label class="fl">Invoice Date Sent</label>
                 <input class="fi" type="date" id="jInvDate">
@@ -1446,9 +1513,9 @@
         </div>
         </div>
         <div class="panel-foot">
-        <button class="btn ghost" onclick="closePanel()">Cancel</button>
-        <button class="btn del" id="delBtn" onclick="confirmDel()" style="display:none">Delete Job</button>
-        <button class="btn go" onclick="saveJob()">Save Job</button>
+        <button class="btn ghost" onclick="closePanel()">CANCEL</button>
+        <button class="btn del" id="delBtn" onclick="confirmDel()" style="display:none">DELETE JOB</button>
+        <button class="btn go" onclick="saveJob()">SAVE JOB</button>
         </div>
     </div>
     </div>
@@ -1458,9 +1525,9 @@
     <div class="confirm-box">
         <h3 id="confTitle"></h3>
         <p id="confMsg"></p>
-        <div style="display:flex;gap:8px;justify-content:center">
-        <button class="btn ghost" onclick="closeConfirm()">Cancel</button>
-        <button class="btn del" id="confOk">Confirm</button>
+        <div style="display:flex;gap: var(--space-sm);justify-content:center">
+        <button class="btn ghost" onclick="closeConfirm()">CANCEL</button>
+        <button class="btn del" id="confOk">CONFIRM</button>
         </div>
     </div>
     </div>
@@ -2052,7 +2119,7 @@
     const job = S.jobs.find(j => j.id === jobId);
     if (!job) return { ok: false, error: 'Job not found' };
     ensureJobProgressLog(job);
-    if (!PROGRESS_STAGES.includes(stage)) return { ok: false, error: 'Invalid stage' };
+    if (!PROGRESS_STAGES.includes(stage)) return { ok: false, error: 'INVALID STAGE' };
     const q = parseInt(qty, 10);
     if (!Number.isInteger(q) || q < 1) return { ok: false, error: 'qty must be a positive integer' };
     const cur = getJobProgress(job);
@@ -2061,7 +2128,7 @@
         const newRej = cur.rejected + (stage === 'rejected' ? q : 0);
         if (newQC + newRej > cur.pressed) return { ok: false, error: 'qc_passed + rejected cannot exceed pressed' };
     }
-    const personVal = (person != null && String(person).trim()) ? String(person).trim() : 'Unknown';
+    const personVal = (person != null && String(person).trim()) ? String(person).trim() : 'UNKNOWN';
     const timestamp = new Date().toISOString();
     job.progressLog.push({ qty: q, stage, person: personVal, timestamp });
     Storage.logProgress({ job_id: jobId, qty: q, stage, person: personVal, timestamp });
@@ -2074,8 +2141,8 @@
     const main = `${p.pressed.toLocaleString()} / ${ordered.toLocaleString()}`;
     const parts = [];
     parts.push(p.qcPassed.toLocaleString() + ' QC passed');
-    if (p.rejected > 0) parts.push(p.rejected.toLocaleString() + ' rej');
-    if (p.pendingQC > 0) parts.push(p.pendingQC.toLocaleString() + ' pending');
+    if (p.rejected > 0) parts.push(p.rejected.toLocaleString() + ' REJ');
+    if (p.pendingQC > 0) parts.push(p.pendingQC.toLocaleString() + ' PENDING');
     const sub = parts.length === 1 && p.qcPassed === 0 ? '0 QC passed' : parts.join(' · ');
     const pressedPct = ordered ? Math.min(100, (p.pressed / ordered) * 100) : 0;
     const qcPassedPct = ordered ? Math.min(100, (p.qcPassed / ordered) * 100) : 0;
@@ -2310,11 +2377,11 @@
                 <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
                 <div class="abar abar-thin">${segs}</div>
             </div>
-            ` : `<div class="pc-idle-msg">No job assigned</div>`}
+            ` : `<div class="pc-idle-msg">NO JOB ASSIGNED</div>`}
             ${isAdmin ? `
             <div class="pc-controls">
                 <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
-                <option value="">— Assign Job</option>
+                <option value="">— ASSIGN JOB</option>
                 ${S.jobs.filter(j => j.status !== 'done').map(j => `<option value="${j.id}" ${p.job === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
                 </select>
                 <select class="pc-select" style="max-width:110px" onchange="setPressStatus('${p.id}',this.value)">
@@ -2405,7 +2472,7 @@
     }
 
     if (!jobs.length) {
-        el.innerHTML = `<tr><td colspan="9" class="empty">${q ? 'No matches for "' + q + '"' : 'No active jobs'}</td></tr>`;
+        el.innerHTML = `<tr><td colspan="9" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
     el.innerHTML = jobs.map(j => {
@@ -2578,7 +2645,7 @@
     if (!jobs.length) {
         if (tbody) tbody.innerHTML = '';
         if (cards) cards.innerHTML = '';
-        if (empty) { empty.style.display = 'block'; empty.textContent = q ? `No matches for "${q}"` : 'NO JOBS IN SYSTEM · TAP + TO ADD'; }
+        if (empty) { empty.style.display = 'block'; empty.textContent = q ? `NO MATCHES FOR "${q}"` : 'NO JOBS IN SYSTEM · TAP + TO ADD'; }
         return;
     }
     if (empty) empty.style.display = 'none';
@@ -2679,7 +2746,7 @@
             </div>
             `).join('')}
             <div class="todo-add">
-            <input id="ta-${c.key}" placeholder="Add task…" onkeydown="if(event.key==='Enter')addTodo('${c.key}')">
+            <input id="ta-${c.key}" placeholder="ADD TASK…" onkeydown="if(event.key==='Enter')addTodo('${c.key}')">
             <button class="todo-add-btn" onclick="addTodo('${c.key}')">+</button>
             </div>
         </div>
@@ -2733,7 +2800,7 @@
     Storage.logQC({ time, type, job, date });
     const progressResult = tryAddQCRejectToProgress(jobId);
     if (!progressResult.applied && progressResult.error) {
-        toast('Defect logged. Rejected count not updated (check pressed total).');
+        toast('DEFECT LOGGED. REJECTED COUNT NOT UPDATED (CHECK PRESSED TOTAL).');
     } else {
         toast(`${type} → ${job}`);
     }
@@ -2792,12 +2859,12 @@
     if (picker) {
         const pressing = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
         picker.innerHTML = `
-        <div class="qc-job-picker-label">TAP THE JOB THIS REJECT BELONGS TO</div>
+        <div class="qc-job-picker-label">SELECT JOB FOR THIS REJECT</div>
         ${pressing.length ? pressing.map(j => `
             <button class="qc-job-btn ${S.qcSelectedJob === j.id ? 'active' : ''}" onclick="selectQCJob('${j.id}')">
             ${j.catalog || '—'} · ${j.artist || '—'}
             </button>
-        `).join('') : '<span style="color:var(--d3);font-size:12px">No jobs currently pressing</span>'}
+        `).join('') : '<span style="color:var(--d3);font-size:12px">NO JOBS PRESSING</span>'}
         `;
     }
 
@@ -2807,13 +2874,13 @@
         const counts = {};
         viewLog.forEach(e => counts[e.type] = (counts[e.type] || 0) + 1);
         const totalRejects = viewLog.length;
-        sumEl.innerHTML = (totalRejects ? `<span style="color:var(--d2);font-size:12px;margin-right:8px">${totalRejects} total</span>` : '') +
+        sumEl.innerHTML = (totalRejects ? `<span style="color:var(--d2);font-size:12px;margin-right: var(--space-sm)">${totalRejects} total</span>` : '') +
         Object.entries(counts).map(([t, n]) => `
             <div class="qc-sum-pill">
             <span class="qsp-n">${n}</span>
             <span class="qsp-l">${t}</span>
             </div>
-        `).join('') || '<span style="color:var(--d3);font-size:12px">No rejects this day</span>';
+        `).join('') || '<span style="color:var(--d3);font-size:12px">NO REJECTS THIS DAY</span>';
     }
 
     // Date label
@@ -2868,7 +2935,7 @@
                 ${prog.overQty ? '<div class="tv-progress-over">OVER QTY</div>' : ''}
             </div>
             <div class="tv-assets-demoted">Assets ${ah.done}/${ah.total}</div>
-            ` : `<div class="tv-pmeta" style="color:var(--d3);margin-top:4px">Idle</div>`}
+            ` : `<div class="tv-pmeta" style="color:var(--d3);margin-top: var(--space-xs)">Idle</div>`}
         </div>
         `;
     }).join('');
@@ -3003,7 +3070,7 @@
             <div class="acheck">${d.received ? '✓' : ''}</div>
             <div class="aname">${a.label}</div>
             <div class="adate">${d.date || ''}</div>
-            <div style="display:flex;gap:6px;align-items:center">
+            <div style="display:flex;gap: var(--space-sm);align-items:center">
                 <div class="awho">${d.person || ''}</div>
                 <button class="na-btn" onclick="event.stopPropagation();toggleNA('${a.key}')">${d.na ? 'RESTORE' : 'N/A'}</button>
                 ${d.received ? `<button class="na-btn" onclick="event.stopPropagation();toggleDetail('${a.key}')">▾</button>` : ''}
@@ -3063,7 +3130,7 @@
     if (!summaryEl || !barEl || !recentEl) return;
 
     if (!S.editId) {
-        summaryEl.innerHTML = '<div class="progress-empty" style="grid-column:1/-1">Save job first to log progress.</div>';
+        summaryEl.innerHTML = '<div class="progress-empty" style="grid-column:1/-1">SAVE JOB FIRST TO LOG PROGRESS.</div>';
         barEl.innerHTML = '';
         recentEl.innerHTML = '';
         if (form) form.style.display = 'none';
@@ -3084,11 +3151,11 @@
     const pendingQC = p.pendingQC;
 
     summaryEl.innerHTML = `
-        <div class="ps-cell"><span class="ps-val">${ordered.toLocaleString()}</span>Ordered</div>
-        <div class="ps-cell"><span class="ps-val">${pressed.toLocaleString()}</span>Pressed</div>
-        <div class="ps-cell"><span class="ps-val">${qcPassed.toLocaleString()}</span>QC Passed</div>
-        <div class="ps-cell"><span class="ps-val">${rejected.toLocaleString()}</span>Rejected</div>
-        <div class="ps-cell"><span class="ps-val">${pendingQC.toLocaleString()}</span>Pending QC</div>
+        <div class="ps-cell"><span class="ps-val">${ordered.toLocaleString()}</span>ORDERED</div>
+        <div class="ps-cell"><span class="ps-val">${pressed.toLocaleString()}</span>PRESSED</div>
+        <div class="ps-cell"><span class="ps-val">${qcPassed.toLocaleString()}</span>QC PASSED</div>
+        <div class="ps-cell"><span class="ps-val">${rejected.toLocaleString()}</span>REJECTED</div>
+        <div class="ps-cell"><span class="ps-val">${pendingQC.toLocaleString()}</span>PENDING QC</div>
     `;
 
     const completionRatio = ordered > 0 ? Math.min(1, qcPassed / ordered) : 0;
@@ -3098,19 +3165,19 @@
         <div class="progress-bar-outer">
         <div class="progress-bar-fill" style="width:${barPct}%"></div>
         </div>
-        <div class="progress-bar-text">QC: ${qcPassed.toLocaleString()} / ${ordered.toLocaleString()} ordered · Pressed: ${pressed.toLocaleString()}</div>
+        <div class="progress-bar-text">QC: ${qcPassed.toLocaleString()} / ${ordered.toLocaleString()} ORDERED · PRESSED: ${pressed.toLocaleString()}</div>
         ${overQty ? '<div class="progress-over-qty">OVER QTY</div>' : ''}
     `;
 
     ensureJobProgressLog(job);
     const log = (job.progressLog || []).slice().reverse();
     if (!log.length) {
-        recentEl.innerHTML = '<div class="progress-empty">No entries yet.</div>';
+        recentEl.innerHTML = '<div class="progress-empty">NO ENTRIES YET.</div>';
     } else {
         recentEl.innerHTML = log.slice(0, 20).map(e => {
         const time = new Date(e.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
         const stageLabel = (e.stage === 'pressed' ? 'PRESSED' : e.stage === 'qc_passed' ? 'QC PASSED' : 'REJECTED');
-        return `<div class="progress-entry ${e.stage}">+${e.qty} ${stageLabel} · ${(e.person || 'Unknown')} · ${time}</div>`;
+        return `<div class="progress-entry ${e.stage}">+${e.qty} ${stageLabel} · ${(e.person || 'UNKNOWN')} · ${time}</div>`;
         }).join('');
     }
     }
@@ -3186,7 +3253,7 @@
     let confCb = null;
     function confirmDel() {
     const j = S.jobs.find(x => x.id === S.editId);
-    openConfirm('Delete Job?', `Remove ${j?.catalog || 'this job'} — ${j?.artist || ''}? Cannot be undone.`, async () => {
+    openConfirm('DELETE JOB?', `REMOVE ${j?.catalog || 'this job'} — ${j?.artist || ''}? CANNOT BE UNDONE.`, async () => {
         const id = S.editId;
         releasePressByJob(id);
         S.jobs = S.jobs.filter(x => x.id !== id);
@@ -3254,7 +3321,7 @@
           .then(() => { renderAll(); toast(`${n} JOBS IMPORTED`); })
           .catch((e) => {
             console.error('CSV import save failed', e);
-            const msg = (e && (e.message || e.error?.message)) ? String(e.message || e.error.message) : 'Save failed';
+            const msg = (e && (e.message || e.error?.message)) ? String(e.message || e.error.message) : 'SAVE FAILED';
             setSyncState('error', { toast: 'IMPORT FAILED: ' + msg.slice(0, 40) });
             renderAll();
           });
