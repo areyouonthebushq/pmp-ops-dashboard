@@ -1443,6 +1443,7 @@
     border-top: 1px solid var(--b1);
     flex-shrink: 0;
     }
+    .ps-v1-log:empty { border-top: none; padding-top: 0; }
     .ps-v1-log-btns { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; }
     .ps-v1-log-btn {
     min-width: 72px;
@@ -1910,11 +1911,11 @@
             <button type="button" class="qcs-v1-back" onclick="exitQCStation()">← BACK</button>
         </header>
         <div class="qcs-v1-current" id="qcStationCurrent"></div>
+        <div class="qcs-v1-summary-label">TODAY</div>
+        <div class="qcs-v1-summary" id="qcStationSummary"></div>
         <div class="qcs-v1-jobs" id="qcStationJobs"></div>
         <div class="qcs-v1-reject-label">LOG REJECT</div>
         <div class="qcs-v1-btns" id="qcStationRejectBtns"></div>
-        <div class="qcs-v1-summary-label">TODAY</div>
-        <div class="qcs-v1-summary" id="qcStationSummary"></div>
         <div class="qcs-v1-log-label">RECENT</div>
         <div class="qcs-v1-log" id="qcStationLog"></div>
     </div>
@@ -3319,11 +3320,11 @@
         <div class="progress-sub">${prog.sub}</div>
     </td>
     <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
-    <td><button class="open-btn" onclick="openPanel('${j.id}')">OPEN →</button></td>
+    <td><button class="open-btn" onclick="openPanel('${j.id}')">${(opts && opts.openBtnLabel) || 'OPEN →'}</button></td>
     </tr>`;
     }
 
-    /** One press card HTML. linkTo: 'panel' | 'floorCard'. showControls: show assign/status/STATION (admin only). */
+    /** One press card HTML. linkTo: 'panel' | 'floorCard' | 'pressStation'. showControls: show assign/status/STATION (admin only). */
     function buildPressCardHTML(p, linkTo, showControls) {
     const job = p.job ? S.jobs.find(j => j.id === p.job) : null;
     const ah = job ? assetHealth(job) : { done: 0, total: 0, pct: 0 };
@@ -3332,12 +3333,14 @@
         const got = job && job.assets && job.assets[a.key]?.received;
         return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
     }).join('');
-    const onClick = linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : `openPanel('${job?.id}')`;
-    const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : 'TAP TO OPEN →';
+    const isPressStation = linkTo === 'pressStation';
+    const onClick = linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : linkTo === 'pressStation' ? `openPressStation('${p.id}')` : `openPanel('${job?.id}')`;
+    const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : linkTo === 'pressStation' ? 'TAP → STATION' : 'TAP TO OPEN →';
+    const nameClick = isPressStation ? ` onclick="openPressStation('${p.id}')" style="cursor:pointer" title="Open Press Station"` : '';
     return `
     <div class="press-card ${p.status}">
         <div class="pc-head">
-        <div class="pc-name ${p.type === '7"' ? 'seven' : ''}">${p.name}</div>
+        <div class="pc-name ${p.type === '7"' ? 'seven' : ''}"${nameClick}>${p.name}</div>
         <div class="pc-status">
             <div class="psdot ${p.status}"></div>
             <span style="color:${p.status === 'online' ? 'var(--g)' : p.status === 'warning' ? 'var(--w)' : 'var(--r)'}">${p.status.toUpperCase()}</span>
@@ -3361,9 +3364,9 @@
             <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
             <div class="abar abar-thin">${segs}</div>
         </div>
-        ` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>'}
+        ` : (isPressStation ? `<div class="pc-job-link" onclick="openPressStation('${p.id}')" title="Open Press Station" style="cursor:pointer"><div class="pc-idle-msg">NO JOB ASSIGNED</div></div>` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>')}
         ${showControls ? `
-        <div class="pc-controls">
+        <div class="pc-controls" onclick="event.stopPropagation()">
             <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
             <option value="">— ASSIGN JOB</option>
             ${S.jobs.filter(j => j.status !== 'done').map(j => `<option value="${j.id}" ${p.job === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
@@ -3458,6 +3461,7 @@
     if (job.status === 'hold') blocked.push('Job on hold');
     if (remaining <= 0 && ordered > 0) blocked.push('Order complete');
 
+    /* Order: JOB → PROGRESS → LOG PRESSED (primary action) → CONTROLS (hold/note secondary) */
     contentEl.innerHTML = `
     <div class="ps-v1-sec">JOB</div>
     <div class="ps-v1-job-title">${(job.catalog || '—')} · ${(job.artist || '—')}</div>
@@ -3472,6 +3476,15 @@
         <div class="ps-v1-bar"><div class="ps-v1-bar-fill" style="width:${pct}%"></div></div>
         ${blocked.length ? `<div class="ps-v1-blocked">${blocked.join(' · ')}</div>` : ''}
     </div>
+    ${remaining > 0 ? `
+    <div class="ps-v1-sec">LOG PRESSED</div>
+    <div class="ps-v1-log-btns">
+        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(10)">+10</button>
+        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(25)">+25</button>
+        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(50)">+50</button>
+        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(100)">+100</button>
+    </div>
+    ` : ''}
     <div class="ps-v1-sec">CONTROLS</div>
     <div class="ps-v1-edit">
         <div class="ps-v1-edit-label">HOLD / NOTE</div>
@@ -3488,15 +3501,7 @@
     const noteEl = document.getElementById('psStationNote');
     if (noteEl) noteEl.value = job.notes || '';
 
-    logEl.innerHTML = remaining > 0 ? `
-    <div class="ps-v1-sec">LOG PRESSED</div>
-    <div class="ps-v1-log-btns">
-        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(10)">+10</button>
-        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(25)">+25</button>
-        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(50)">+50</button>
-        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(100)">+100</button>
-    </div>
-    ` : '';
+    logEl.innerHTML = '';
     }
 
     function pressStationLogPressed(qty) {
@@ -3648,7 +3653,7 @@
         bodyEl.innerHTML = `<tr><td colspan="9" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
-    bodyEl.innerHTML = jobs.map(j => floorTableRowHTML(j)).join('');
+    bodyEl.innerHTML = jobs.map(j => floorTableRowHTML(j, { openBtnLabel: 'EDIT' })).join('');
     }
 
     // ============================================================
@@ -3674,7 +3679,7 @@
     const el = document.getElementById('pressGrid');
     if (!el) return;
     const isAdmin = S.mode === 'admin';
-    el.innerHTML = S.presses.map(p => buildPressCardHTML(p, 'panel', isAdmin)).join('');
+    el.innerHTML = S.presses.map(p => buildPressCardHTML(p, isAdmin ? 'pressStation' : 'panel', isAdmin)).join('');
     }
 
     function assignJob(pid, jid) {
