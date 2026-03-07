@@ -1699,7 +1699,7 @@
                 <div class="mb-sub">Full edit · assign · export</div>
                 </div>
             </button>
-            <button type="button" class="launcher-btn fm" onclick="enterByLauncher('floor_manager')">
+            <button type="button" class="launcher-btn fm" onclick="enterByLauncher('floor_manager')" style="display:none">
                 <span class="mb-icon">▶</span>
                 <div>
                 <div class="mb-label">Floor Manager</div>
@@ -1775,7 +1775,6 @@
         <button type="button" class="bar-btn" id="minimalThemeBtn" onclick="toggleMinimalTheme()" title="Toggle minimal theme">MIN</button>
         <button class="bar-btn" onclick="enterTV()">⬛ TV</button>
         <button class="bar-btn" onclick="openQCStation()" title="QC Station — rapid reject logging">QC</button>
-        <button class="bar-btn" onclick="openFloorManager()" title="Floor Manager — operations overview">FLOOR MGR</button>
         <button id="exportBtn" class="bar-btn" onclick="exportCSV()">↓ CSV</button>
         <button class="bar-btn warn" onclick="doLogout()">EXIT</button>
         </div>
