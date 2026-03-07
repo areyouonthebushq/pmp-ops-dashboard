@@ -1523,7 +1523,7 @@ const FIELD_MAP = [
   { id:'jLabel',       key:'labelType',   type:'select' },
   { id:'jSleeve',      key:'sleeve',      type:'select' },
   { id:'jJacket',      key:'jacket',      type:'select' },
-  { id:'jOuter',       key:'outer',       type:'select' },
+  { id:'jOuter',       key:'outer_pkg',       type:'select' },
   { id:'jCPL',         key:'cpl',         type:'text' },
   { id:'jNotes',       key:'notes',       type:'text' },
   { id:'jAssembly',    key:'assembly',    type:'text' },
@@ -1551,7 +1551,7 @@ const ASSET_DEFS = [
   {key:'dlCard',       label:'Download Card'},
   {key:'mktSticker',   label:'Marketing Sticker'},
   {key:'upcSticker',   label:'UPC Sticker'},
-  {key:'outerPkg',     label:'Outer Packaging'},
+  {key:'outer_pkg',     label:'Outer Packaging'},
 ];
 
 const DEFAULT_PRESSES = [
@@ -1597,7 +1597,7 @@ const SAMPLE_JOBS = [
     client:'Lunar Records', email:'orders@lunarrecords.com', location:'Bay 3 Row 2',
     format:'1LP', vinylType:'Color', qty:'500', weight:'180g',
     color:'Dark Purple / Natty Swirl', specialty:'Swirl', labelType:'CMYK',
-    sleeve:'Printed', jacket:'Gatefold', outer:'Shrink',
+    sleeve:'Printed', jacket:'Gatefold', outer_pkg:'Shrink',
     notes:'Client wants swirl heavy on A-side. Test press approved 2/28.',
     assembly:'Gatefold inserts on pallet Bay 3',
     assets:{
@@ -1615,7 +1615,7 @@ const SAMPLE_JOBS = [
       dlCard:{received:true, date:'2026-03-02', person:'Alex', na:false, note:''},
       mktSticker:{received:false, date:'', person:'', na:false, note:''},
       upcSticker:{received:true, date:'2026-03-01', person:'Floor', na:false, note:''},
-      outerPkg:{received:true, date:'2026-03-03', person:'Floor', na:false, note:'Shrink wrap ready'},
+      outer_pkg:{received:true, date:'2026-03-03', person:'Floor', na:false, note:'Shrink wrap ready'},
     },
     progressLog:[
       {qty:25, stage:'pressed', person:'Colby', timestamp:'2026-03-04T09:15:00Z'},
@@ -1641,7 +1641,7 @@ const SAMPLE_JOBS = [
     client:'Broken Arrow Music', email:'press@brokenarrow.co', location:'Bay 1 Row 4',
     format:'2LP', vinylType:'Color', qty:'1000', weight:'150g',
     color:'Smoke Gray / Black Marble', specialty:'Marble', labelType:'CMYK',
-    sleeve:'Printed', jacket:'Gatefold', outer:'Shrink',
+    sleeve:'Printed', jacket:'Gatefold', outer_pkg:'Shrink',
     notes:'Double LP — discs A/B and C/D. Marble pattern should be subtle.',
     assembly:'',
     assets:{
@@ -1659,7 +1659,7 @@ const SAMPLE_JOBS = [
       dlCard:{received:false, date:'', person:'', na:true, note:''},
       mktSticker:{received:false, date:'', person:'', na:true, note:''},
       upcSticker:{received:false, date:'', person:'', na:false, note:''},
-      outerPkg:{received:false, date:'', person:'', na:false, note:''},
+      outer_pkg:{received:false, date:'', person:'', na:false, note:''},
     },
     progressLog:[
       {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-05T13:00:00Z'},
@@ -1674,7 +1674,7 @@ const SAMPLE_JOBS = [
     client:'Recluse Records', email:'info@recluserecs.com', location:'Bay 5 Row 1',
     format:'7"', vinylType:'Color', qty:'300', weight:'140g',
     color:'Translucent Red', specialty:'', labelType:'1-Color',
-    sleeve:'Printed', jacket:'None', outer:'Polybag',
+    sleeve:'Printed', jacket:'None', outer_pkg:'Polybag',
     notes:'Rush order — client needs for SXSW merch table.',
     assembly:'Pressed, waiting on sleeves for assembly. Polybags on shelf B5.',
     assets:{
@@ -1692,7 +1692,7 @@ const SAMPLE_JOBS = [
       dlCard:{received:false, date:'', person:'', na:true, note:''},
       mktSticker:{received:false, date:'', person:'', na:true, note:''},
       upcSticker:{received:true, date:'2026-03-03', person:'Floor', na:false, note:''},
-      outerPkg:{received:true, date:'2026-03-04', person:'Floor', na:false, note:'Polybags ready'},
+      outer_pkg:{received:true, date:'2026-03-04', person:'Floor', na:false, note:'Polybags ready'},
     },
     progressLog:[
       {qty:50, stage:'pressed', person:'Colby', timestamp:'2026-03-03T09:00:00Z'},
@@ -1719,7 +1719,7 @@ const SAMPLE_JOBS = [
     client:'Honeybee Collective', email:'vinyl@honeybeecollective.com', location:'',
     format:'1LP', vinylType:'Color', qty:'750', weight:'180g',
     color:'Honey Gold', specialty:'', labelType:'CMYK',
-    sleeve:'Printed', jacket:'Standard', outer:'Shrink',
+    sleeve:'Printed', jacket:'Standard', outer_pkg:'Shrink',
     notes:'Waiting on stampers from cutting house. ETA 3/10.',
     assembly:'',
     assets:{
@@ -1737,7 +1737,7 @@ const SAMPLE_JOBS = [
       dlCard:{received:false, date:'', person:'', na:false, note:''},
       mktSticker:{received:false, date:'', person:'', na:false, note:''},
       upcSticker:{received:false, date:'', person:'', na:false, note:''},
-      outerPkg:{received:false, date:'', person:'', na:false, note:''},
+      outer_pkg:{received:false, date:'', person:'', na:false, note:''},
     },
     progressLog:[],
   },
@@ -1747,7 +1747,7 @@ const SAMPLE_JOBS = [
     client:'Dust & Static', email:'releases@duststatic.com', location:'Shipping Bay',
     format:'1LP', vinylType:'Black', qty:'500', weight:'180g',
     color:'Black', specialty:'', labelType:'2-Color',
-    sleeve:'Printed', jacket:'Standard', outer:'Shrink',
+    sleeve:'Printed', jacket:'Standard', outer_pkg:'Shrink',
     notes:'Completed. 525 units pressed (includes overage). Boxed and ready to ship.',
     assembly:'Boxed on pallet, shipping bay. Pickup scheduled 3/7.',
     invDate:'2026-01-15', deposit:'2026-01-20', inv2:'2026-02-28', pay2:'2026-03-04',
@@ -1766,7 +1766,7 @@ const SAMPLE_JOBS = [
       dlCard:{received:true, date:'2026-02-18', person:'Alex', na:false, note:''},
       mktSticker:{received:true, date:'2026-02-20', person:'Floor', na:false, note:''},
       upcSticker:{received:true, date:'2026-02-20', person:'Floor', na:false, note:''},
-      outerPkg:{received:true, date:'2026-02-22', person:'Floor', na:false, note:''},
+      outer_pkg:{received:true, date:'2026-02-22', person:'Floor', na:false, note:''},
     },
     progressLog:[
       {qty:100, stage:'pressed', person:'Colby', timestamp:'2026-02-24T09:00:00Z'},
