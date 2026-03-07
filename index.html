@@ -481,21 +481,22 @@
     .pc-assets-demoted { margin-top: var(--space-sm); padding-top: var(--space-sm); border-top:1px solid var(--b1); opacity:0.85; }
     .pc-assets-demoted .pc-assets-label { font-size:9px; color: var(--d3); letter-spacing:1.5px; }
 
-    /* Controls — tertiary */
+    /* Controls — tertiary; integrated strip, subordinate to progress/assets */
     .pc-controls {
-    margin-top: var(--space-md); padding-top: var(--space-sm);
+    margin-top: var(--space-lg); padding-top: var(--space-sm);
     border-top:1px solid var(--b1);
-    display:flex; gap: var(--space-sm); flex-wrap:wrap;
+    display:flex; align-items:center; gap: var(--space-sm); flex-wrap:wrap;
     }
     .pc-select {
-    flex:1; min-width:0;
-    background: var(--s1); border:1px solid var(--b1);
-    color: var(--d2); font-family:'Inconsolata',monospace; font-size:11px;
+    flex:1; min-width:0; min-height:28px;
+    background: transparent; border:1px solid var(--b1);
+    color: var(--d3); font-family:'Inconsolata',monospace; font-size:10px;
     padding: var(--space-xs) var(--space-sm); outline:none; cursor:pointer;
-    letter-spacing:0.5px;
+    letter-spacing:0.5px; border-radius:1px;
     }
+    .pc-select:hover { border-color: var(--b2); color: var(--d2); }
     .pc-select:focus { border-color: var(--b2); color: var(--d); }
-    .pc-select option { background: var(--s1); }
+    .pc-select option { background: var(--s1); color: var(--d); }
 
     /* ============================================================ FLOOR TABLE */
     .tbl-wrap { overflow-x:auto; }
@@ -606,23 +607,50 @@
     }
     .form-section--primary:first-child { margin-top:0; }
     .form-section--primary .fs-num { font-size:22px; color: var(--g); width:26px; }
+    .form-section--primary + .job-details-primary,
     .form-section--primary + .frow,
     .form-section--primary + .hint-block,
     .form-section--primary + .fg,
     .form-section--primary + #progressSection { margin-top: var(--space-sm); }
 
-    /* Recede: Notes (5) & Billing (6) — secondary, less visual weight */
+    /* Job Details (Section 1): primary vs secondary grouping for scanability */
+    .job-details-primary {
+    display:flex; flex-direction:column; gap: var(--space-md);
+    }
+    .job-details-primary .fg { margin-bottom: 0; }
+    .job-details-primary .fl { color: var(--d); font-weight: 600; }
+    .job-details-secondary {
+    margin-top: var(--space-lg); padding-top: var(--space-md); border-top:1px solid var(--b1);
+    }
+    .job-details-secondary .fg { margin-bottom: var(--space-sm); }
+    .job-details-secondary .fl { color: var(--d3); font-weight: 400; }
+
+    /* Recede: Notes (5) & Billing (6) — quieter, optional, lower visual temperature */
     .form-section--recede {
-    font-size:11px; color: var(--d3); letter-spacing:2px;
-    padding: var(--space-sm) 0 var(--space-xs);
-    margin-top: var(--space-md);
+    font-size:10px; color: var(--d3); letter-spacing:1.5px;
+    padding: var(--space-xs) 0;
+    margin-top: var(--space-lg);
     border-bottom:1px dashed var(--b1);
     }
-    .form-section--recede .fs-num { font-size:14px; color: var(--d3); width:18px; }
-    .form-section--recede + .fg,
+    .form-section--recede .fs-num { font-size:12px; color: var(--d3); width:16px; opacity:0.9; }
+    .form-section--recede + .panel-notes,
     .form-section--recede + .billing-toggle { margin-top: var(--space-xs); }
-    .form-section--recede + .fg .fl { color: var(--d3); }
-    .form-section--recede + .billing-toggle { color: var(--d3); font-size: 11px; }
+    .form-section--recede + .panel-notes .fl { color: var(--d3); }
+    .form-section--recede + .billing-toggle { color: var(--d3); font-size: 10px; }
+
+    .panel-notes .fg { margin-bottom: var(--space-sm); }
+    .panel-notes .fl { font-size:9px; color: var(--d3); letter-spacing:1.5px; }
+    .panel-notes .fta { background: var(--s1); border-color: var(--b1); font-size:13px; color: var(--d2); min-height:56px; }
+    .panel-notes .fta::placeholder { color: var(--d3); }
+    .panel-notes .fta:focus { border-color: var(--b2); }
+
+    .billing-toggle { font-size:10px; color: var(--d3); letter-spacing:1px; padding: var(--space-xs) 0; }
+    .billing-toggle:hover { color: var(--d2); }
+    .billing-toggle .bt-arrow { font-size:9px; opacity:0.8; }
+    .billing-toggle-hint { font-size:9px; color: var(--d3); letter-spacing:1px; }
+    .billing-body .fl { color: var(--d3); font-size:9px; }
+    .billing-body .fi, .billing-body .fs { background: var(--s1); border-color: var(--b1); font-size:13px; }
+    .billing-body .fi:focus, .billing-body .fs:focus { border-color: var(--b2); }
 
     /* Progress section: stronger labels for scanability */
     #progressSection .fl { font-weight: 600; color: var(--d2); }
@@ -821,7 +849,8 @@
     /* ============================================================ TV MODE — operations board
     Main signal: production progress (press cards + queue). Secondary info receded. */
     body.tv #app { display:none!important; }
-    body.tv #rain { opacity:05; }
+    body.tv #rain { opacity:.3; }
+    
     #tv {
     display:none; position:fixed; inset:0; z-index:500;
     background: var(--bg); flex-direction:column;
@@ -1276,6 +1305,7 @@
         <!-- Unified form — all sections in one scrollable view -->
 
         <div class="form-section form-section--primary"><span class="fs-num">1</span> JOB DETAILS</div>
+        <div class="job-details-primary">
         <div class="frow c2">
             <div class="fg">
             <label class="fl">Catalog / Matrix #</label>
@@ -1322,6 +1352,8 @@
             </select>
             </div>
         </div>
+        </div>
+        <div class="job-details-secondary">
         <div class="frow c2">
             <div class="fg">
             <label class="fl">Client / Label</label>
@@ -1341,6 +1373,7 @@
             <label class="fl">Last Contact</label>
             <input class="fi" type="date" id="jLastContact">
             </div>
+        </div>
         </div>
 
         <div class="form-section"><span class="fs-num">2</span> FORMAT &amp; SPEC</div>
@@ -1474,6 +1507,7 @@
         </div>
 
         <div class="form-section form-section--recede"><span class="fs-num">5</span> NOTES</div>
+        <div class="panel-notes">
         <div class="fg">
             <label class="fl">Production Notes</label>
             <textarea class="fta" id="jNotes" placeholder="Assembly notes, special instructions, client requests..."></textarea>
@@ -1482,12 +1516,13 @@
             <label class="fl">Assembly / Location Notes</label>
             <textarea class="fta" id="jAssembly" placeholder="Rack bay, row, staging, assembly details..."></textarea>
         </div>
+        </div>
 
         <div class="form-section form-section--recede"><span class="fs-num">6</span> BILLING</div>
         <div class="billing-toggle" id="billingToggle" onclick="toggleBilling()">
             <span class="bt-arrow">▸</span>
             <span>INVOICE &amp; PAYMENT DETAILS</span>
-            <span style="font-size:10px;color:var(--d3);letter-spacing:1px">(EXPAND)</span>
+            <span class="billing-toggle-hint">(EXPAND)</span>
         </div>
         <div class="billing-body" id="billingBody">
             <div class="frow c2" style="margin-top: var(--space-md)">
