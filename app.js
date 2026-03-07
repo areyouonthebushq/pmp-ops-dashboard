@@ -173,6 +173,7 @@
     assignedPressId: null,   // for stationType === 'press'
     dataChangedWhileEditing: false,
     offlineMode: false,
+    lastLocalWriteAt: 0,
     };
     let saveTimer = null;
 
@@ -507,6 +508,7 @@
     }
 
     async function loadAll() {
+    console.log('[PMP] loadAll start');
     setSyncState('loading');
     try {
         const data = await Storage.loadAllData();
@@ -534,8 +536,9 @@
         S.offlineMode = false;
         setSyncState('synced');
         if (useSupabase()) setOfflineSnapshot(data);
+        console.log('[PMP] loadAll finish (synced)');
     } catch (e) {
-        console.error(e);
+        console.error('[PMP] loadAll error', e);
         if (useSupabase()) {
         const snap = getOfflineSnapshot();
         if (snap && (snap.jobs || snap.presses)) {
@@ -560,6 +563,10 @@
         }
     }
     renderAll();
+    const syncEl = document.getElementById('syncStatus');
+    if (syncEl && syncEl.textContent === 'loading') {
+        setSyncState('synced');
+    }
     }
 
     function scheduleSave() {
@@ -611,7 +618,7 @@
             setSyncState('offline');
             return Promise.resolve();
           }
-          return window.PMP.Supabase.saveJob(job).then(() => setSyncState('synced')).catch((e) => { console.error(e); setSyncState('error', { toast: 'SAVE FAILED' }); });
+          return window.PMP.Supabase.saveJob(job).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch((e) => { console.error(e); setSyncState('error', { toast: 'SAVE FAILED' }); });
         }
         scheduleSave();
         return Promise.resolve();
@@ -620,7 +627,7 @@
         if (useSupabase()) {
           return window.PMP.Supabase.deleteJob(id)
             .then(() => window.PMP.Supabase.savePresses(S.presses))
-            .then(() => setSyncState('synced'))
+            .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
             .catch((e) => { console.error(e); setSyncState('error', { toast: 'DELETE FAILED' }); });
         }
         scheduleSave();
@@ -628,14 +635,14 @@
       },
       savePresses(presses) {
         if (useSupabase()) {
-          return window.PMP.Supabase.savePresses(presses).then(() => setSyncState('synced')).catch(() => setSyncState('error'));
+          return window.PMP.Supabase.savePresses(presses).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch(() => setSyncState('error'));
         }
         scheduleSave();
         return Promise.resolve();
       },
       saveTodos(todos) {
         if (useSupabase()) {
-          return window.PMP.Supabase.saveTodos(todos).then(() => setSyncState('synced')).catch(() => setSyncState('error'));
+          return window.PMP.Supabase.saveTodos(todos).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch(() => setSyncState('error'));
         }
         scheduleSave();
         return Promise.resolve();
@@ -648,7 +655,7 @@
             setSyncState('offline');
             return Promise.resolve();
           }
-          return window.PMP.Supabase.logProgress(entry).then(() => setSyncState('synced')).catch((e) => { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); });
+          return window.PMP.Supabase.logProgress(entry).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch((e) => { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); });
         }
         scheduleSave();
         return Promise.resolve();
@@ -661,7 +668,7 @@
             setSyncState('offline');
             return Promise.resolve();
           }
-          return window.PMP.Supabase.logQC(entry).then(() => setSyncState('synced')).catch((e) => { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); });
+          return window.PMP.Supabase.logQC(entry).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch((e) => { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); });
         }
         scheduleSave();
         return Promise.resolve();
@@ -671,7 +678,7 @@
       },
       saveJobs(jobs) {
         if (useSupabase()) {
-          return Promise.all(jobs.map((j) => window.PMP.Supabase.saveJob(j))).then(() => setSyncState('synced'));
+          return Promise.all(jobs.map((j) => window.PMP.Supabase.saveJob(j))).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); });
         }
         scheduleSave();
         return Promise.resolve();
@@ -770,6 +777,7 @@
     if (typeof realtimeUnsubscribe === 'function') {
         realtimeUnsubscribe();
         realtimeUnsubscribe = null;
+        console.log('[PMP] Realtime unsubscribed');
     }
     }
 
@@ -777,18 +785,25 @@
     if (!window.PMP || !window.PMP.Supabase || !window.PMP.Supabase.subscribeRealtime) return;
     stopDataSync();
     realtimeUnsubscribe = window.PMP.Supabase.subscribeRealtime(() => {
+        console.log('[PMP] Realtime event received');
         if (realtimeApplyTimeout) return;
         realtimeApplyTimeout = setTimeout(() => {
             realtimeApplyTimeout = null;
             if (panelOpen) {
+                if (Date.now() - (S.lastLocalWriteAt || 0) < 1000) {
+                return;
+                }
                 S.dataChangedWhileEditing = true;
+                console.log('[PMP] showDataChangedNotice (panel open, external change)');
                 showDataChangedNotice();
             } else {
                 loadAll();
             }
         }, 300);
     });
+    console.log('[PMP] Realtime started');
     }
+
 
     function startPollInterval() {
     stopDataSync();
@@ -805,6 +820,7 @@
     }
 
     function showDataChangedNotice() {
+    console.log('[PMP] showDataChangedNotice');
     const el = document.getElementById('dataChangedNotice');
     if (el) el.style.display = 'flex';
     }
