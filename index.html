@@ -54,8 +54,8 @@
     overflow-x: hidden;
     }
 
-    /* Scanlines */
-    body::after {
+    /* Scanlines — TV only */
+    body.tv::after {
     content:'';
     position:fixed; inset:0; z-index:9998; pointer-events:none;
     background: repeating-linear-gradient(
@@ -64,10 +64,10 @@
     );
     }
 
-    /* Matrix rain */
+    /* Matrix rain — TV only (shown via body.tv #rain below) */
     #rain {
     position:fixed; inset:0; z-index:0; pointer-events:none;
-    opacity:0.04;
+    opacity:0;
     }
 
     /* ============================================================ MODE SELECT (was "Login") */
@@ -775,7 +775,7 @@
 
     /* ============================================================ TV MODE */
     body.tv #app { display:none!important; }
-    body.tv #rain { opacity:0.05; }
+    body.tv #rain { opacity:0.5; }
     #tv {
     display:none; position:fixed; inset:0; z-index:500;
     background: var(--bg); flex-direction:column; padding:16px; gap:12px;
