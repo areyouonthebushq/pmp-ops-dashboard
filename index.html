@@ -1152,6 +1152,87 @@
     body.theme-minimal.tv.tv-party #rain { opacity: 0.08 !important; }
     body.theme-minimal.tv.tv-party::after { background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px) !important; }
     body.theme-minimal.tv.tv-party #tv { box-shadow: none !important; }
+
+    /* Floor card — full-screen statboard overlay */
+    .floor-card-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 450;
+    background: rgba(0,0,0,0.75);
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    }
+    .floor-card-overlay.on { display: flex; }
+    .floor-card {
+    position: relative;
+    width: 100%;
+    max-width: 900px;
+    max-height: 95vh;
+    overflow-y: auto;
+    background: var(--b2);
+    border: 1px solid var(--b4);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    padding-bottom: 56px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .floor-card-close {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: var(--b4);
+    color: var(--d);
+    border-radius: var(--radius);
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    }
+    .floor-card-close:hover { background: var(--b5); color: var(--d2); }
+    .floor-card-quick-edit {
+    position: absolute;
+    bottom: var(--space-md);
+    right: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--g);
+    color: var(--b);
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 700;
+    cursor: pointer;
+    }
+    .floor-card-quick-edit:hover { filter: brightness(1.1); }
+    .floor-card-quick-edit.edit-mode { background: var(--w); color: var(--b); }
+    .fc-header { margin-bottom: var(--space-lg); }
+    .fc-header .fc-catalog { font-size: 14px; color: var(--w); font-weight: 700; margin-bottom: var(--space-xs); }
+    .fc-header .fc-artist { font-size: 28px; color: var(--d); font-weight: 800; line-height: 1.2; }
+    .fc-header .fc-album { font-size: 20px; color: var(--d3); margin-top: var(--space-xs); }
+    .fc-strip { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-md); align-items: center; }
+    .fc-strip .fc-status { font-size: 18px; font-weight: 700; }
+    .fc-strip .fc-press { font-size: 16px; color: var(--w); }
+    .fc-strip .fc-due { font-size: 16px; }
+    .fc-strip .fc-loc { font-size: 16px; color: var(--d2); }
+    .fc-qty-strip { display: flex; flex-wrap: wrap; gap: var(--space-lg); margin-bottom: var(--space-md); font-size: 18px; }
+    .fc-qty-strip span { color: var(--d2); }
+    .fc-qty-strip strong { color: var(--d); }
+    .fc-progress-bar { margin-bottom: var(--space-md); }
+    .fc-progress-bar .bar-wrap { height: 12px; border-radius: 6px; background: var(--b4); overflow: hidden; }
+    .fc-progress-bar .bar-fill { height: 100%; border-radius: 6px; background: var(--g); transition: width 0.2s; }
+    .fc-progress-bar .bar-label { font-size: 14px; color: var(--d3); margin-top: var(--space-xs); }
+    .fc-asset { margin-bottom: var(--space-md); font-size: 15px; }
+    .fc-secondary { font-size: 14px; color: var(--d3); margin-bottom: var(--space-md); }
+    .fc-notes { font-size: 14px; color: var(--d2); background: var(--b3); padding: var(--space-sm); border-radius: var(--radius); margin-top: var(--space-md); }
+    .fc-notes:empty { display: none; }
+    .floor-card-trigger { cursor: pointer; padding: 2px 0; }
+    .floor-card-trigger:hover { color: var(--w); }
+    .fc-edit-row { margin-bottom: var(--space-sm); }
+    .fc-edit-row label { display: block; font-size: 12px; color: var(--d3); margin-bottom: 2px; }
+    .fc-edit-row input, .fc-edit-row select, .fc-edit-row textarea { width: 100%; max-width: 320px; padding: 6px 8px; background: var(--b3); border: 1px solid var(--b5); color: var(--d); border-radius: var(--radius); }
+    .fc-edit-actions { margin-top: var(--space-md); }
     </style>
     <!-- Supabase: set URL and anon key (e.g. from Vercel env at build, or paste here) -->
     <script>
@@ -1631,6 +1712,15 @@
     </div>
     </div>
 
+    <!-- FLOOR CARD — full-screen job statboard (triggered from Floor Active Orders artist/album) -->
+    <div class="floor-card-overlay" id="floorCardOverlay" onclick="if(event.target===this)closeFloorCard()">
+    <div class="floor-card" onclick="event.stopPropagation()">
+        <button type="button" class="floor-card-close" onclick="closeFloorCard()" aria-label="Close">✕</button>
+        <div id="floorCardContent"></div>
+        <button type="button" class="floor-card-quick-edit" id="floorCardQuickEditBtn" onclick="toggleFloorCardEdit()">QUICK EDIT</button>
+    </div>
+    </div>
+
     <script>
     // ============================================================
     // MATRIX RAIN — Uses requestAnimationFrame, auto-pauses when hidden
@@ -2011,6 +2101,8 @@
     mode: 'floor',
     editId: null,
     qcSelectedJob: null,
+    floorCardJobId: null,
+    floorCardEditMode: false,
     };
     let saveTimer = null;
     let curAssets = {};
@@ -2594,7 +2686,7 @@
         return `
         <tr>
         <td style="color:var(--w);font-weight:700">${j.catalog || '—'}</td>
-        <td>
+        <td class="floor-card-trigger" onclick="openFloorCard('${j.id}')" title="Open floor statboard">
             <div style="color:var(--d)">${j.artist || '—'}</div>
             <div style="color:var(--d3);font-size:11px">${j.album || ''}</div>
         </td>
@@ -2637,6 +2729,151 @@
         doneEl.innerHTML = '';
         }
     }
+    }
+
+    // ============================================================
+    // FLOOR CARD — full-screen statboard (artist/album click on Floor)
+    // ============================================================
+    const PRESS_OPTS = ['', 'PRESS 1', 'PRESS 2', 'PRESS 3', '7" PRESS'];
+    const STATUS_OPTS = [
+        { v: 'queue', l: 'Queued' },
+        { v: 'pressing', l: 'Pressing' },
+        { v: 'assembly', l: 'Assembly' },
+        { v: 'hold', l: 'On Hold' },
+        { v: 'done', l: 'Done' },
+    ];
+
+    function openFloorCard(jobId) {
+    S.floorCardJobId = jobId;
+    S.floorCardEditMode = false;
+    const ov = document.getElementById('floorCardOverlay');
+    if (ov) ov.classList.add('on');
+    renderFloorCard();
+    }
+
+    function closeFloorCard() {
+    S.floorCardJobId = null;
+    S.floorCardEditMode = false;
+    const ov = document.getElementById('floorCardOverlay');
+    if (ov) ov.classList.remove('on');
+    const btn = document.getElementById('floorCardQuickEditBtn');
+    if (btn) { btn.textContent = 'QUICK EDIT'; btn.classList.remove('edit-mode'); }
+    }
+
+    function toggleFloorCardEdit() {
+    S.floorCardEditMode = !S.floorCardEditMode;
+    const btn = document.getElementById('floorCardQuickEditBtn');
+    if (btn) {
+        btn.textContent = S.floorCardEditMode ? 'DONE' : 'QUICK EDIT';
+        btn.classList.toggle('edit-mode', S.floorCardEditMode);
+    }
+    renderFloorCard();
+    }
+
+    function saveFloorCardQuickEdit() {
+    const j = S.jobs.find(x => x.id === S.floorCardJobId);
+    if (!j) return;
+    const get = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+    j.status = get('fcStatus') || j.status;
+    j.press = get('fcPress') || j.press;
+    j.location = get('fcLocation') || j.location;
+    j.due = get('fcDue') || j.due;
+    j.notes = get('fcNotes') || j.notes;
+    j.assembly = get('fcAssembly') || j.assembly;
+    Storage.saveJob(j);
+    S.floorCardEditMode = false;
+    const btn = document.getElementById('floorCardQuickEditBtn');
+    if (btn) { btn.textContent = 'QUICK EDIT'; btn.classList.remove('edit-mode'); }
+    renderFloorCard();
+    renderFloor();
+    renderPresses();
+    }
+
+    function renderFloorCard() {
+    const content = document.getElementById('floorCardContent');
+    if (!content) return;
+    const j = S.jobs.find(x => x.id === S.floorCardJobId);
+    if (!j) {
+        content.innerHTML = '<p>Job not found.</p>';
+        return;
+    }
+    const prog = progressDisplay(j);
+    const ah = assetHealth(j);
+    const edit = S.floorCardEditMode;
+
+    if (edit) {
+        content.innerHTML = `
+        <div class="fc-header">
+            <div class="fc-catalog">${(j.catalog || j.matrix || '—')}</div>
+            <div class="fc-artist">${(j.artist || '—')}</div>
+            <div class="fc-album">${j.album || ''}</div>
+        </div>
+        <div class="fc-edit-row">
+            <label>Status</label>
+            <select id="fcStatus">${STATUS_OPTS.map(o => `<option value="${o.v}" ${j.status === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>
+        </div>
+        <div class="fc-edit-row">
+            <label>Press assigned</label>
+            <select id="fcPress">${PRESS_OPTS.map(o => `<option value="${o}" ${(j.press || '') === o ? 'selected' : ''}>${o || '— Unassigned'}</option>`).join('')}</select>
+        </div>
+        <div class="fc-edit-row">
+            <label>Location</label>
+            <input type="text" id="fcLocation" value="${(j.location || '').replace(/"/g, '&quot;')}" placeholder="Rack, bay...">
+        </div>
+        <div class="fc-edit-row">
+            <label>Due date</label>
+            <input type="date" id="fcDue" value="${j.due || ''}">
+        </div>
+        <div class="fc-edit-row">
+            <label>Production notes</label>
+            <textarea id="fcNotes" rows="3">${(j.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+        </div>
+        <div class="fc-edit-row">
+            <label>Assembly / location notes</label>
+            <textarea id="fcAssembly" rows="2">${(j.assembly || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+        </div>
+        <div class="fc-edit-actions">
+            <button type="button" class="btn go" onclick="saveFloorCardQuickEdit()">SAVE</button>
+            <button type="button" class="btn ghost" onclick="toggleFloorCardEdit()">CANCEL</button>
+        </div>
+        `;
+        return;
+    }
+
+    const sec = [];
+    if (j.format) sec.push(j.format);
+    if (j.vinylType || j.color || j.weight) sec.push([j.vinylType, j.color, j.weight].filter(Boolean).join(' · '));
+    if (j.client || j.label) sec.push((j.client || '') + (j.label ? ' · ' + j.label : ''));
+    const secLine = sec.length ? sec.join(' · ') : '—';
+    const notes = [j.notes, j.assembly].filter(Boolean).join('\n');
+
+    content.innerHTML = `
+    <div class="fc-header">
+        <div class="fc-catalog">${(j.catalog || j.matrix || '—')}</div>
+        <div class="fc-artist">${(j.artist || '—')}</div>
+        <div class="fc-album">${j.album || ''}</div>
+    </div>
+    <div class="fc-strip">
+        <span class="fc-status">${statusPill(j.status)}</span>
+        <span class="fc-press">${j.press ? j.press : '—'}</span>
+        <span class="fc-due ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
+        <span class="fc-loc">${j.location ? '📍 ' + j.location : '—'}</span>
+    </div>
+    <div class="fc-qty-strip">
+        <span>Ordered: <strong>${(prog.p.ordered || 0).toLocaleString()}</strong></span>
+        <span>Pressed: <strong>${(prog.p.pressed || 0).toLocaleString()}</strong></span>
+        <span>QC passed: <strong>${(prog.p.qcPassed || 0).toLocaleString()}</strong></span>
+        <span>Rejected: <strong>${(prog.p.rejected || 0).toLocaleString()}</strong></span>
+        <span>Pending QC: <strong>${(prog.p.pendingQC || 0).toLocaleString()}</strong></span>
+    </div>
+    <div class="fc-progress-bar">
+        <div class="bar-wrap"><div class="bar-fill" style="width:${prog.pressedPct}%"></div></div>
+        <div class="bar-label">${prog.main} pressed · ${prog.sub}</div>
+    </div>
+    <div class="fc-asset">Assets: ${ah.done}/${ah.total} ${ah.total ? (ah.pct >= 1 ? '✓' : '') : ''}</div>
+    <div class="fc-secondary">${secLine}</div>
+    ${notes ? `<div class="fc-notes">${notes.replace(/\n/g, '<br>').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ''}
+    `;
     }
 
     // Tap-to-cycle with undo support
