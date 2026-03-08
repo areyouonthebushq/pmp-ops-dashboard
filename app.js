@@ -896,9 +896,31 @@
     document.getElementById('assetsOverlay').classList.add('on');
     }
     function closeAssetsOverlay() {
+    if (assetsOverlayState) {
+        flushAssetsOverlayInputs();
+        const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
+        if (job) {
+            job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+            Storage.saveJob(job);
+            renderAll();
+        }
+    }
     assetsOverlayState = null;
     const el = document.getElementById('assetsOverlay');
     if (el) el.classList.remove('on');
+    }
+    /** Read current values from open asset-detail inputs into state (so re-render or close doesn't lose edits). */
+    function flushAssetsOverlayInputs() {
+    if (!assetsOverlayState) return;
+    ASSET_DEFS.forEach(a => {
+        const detailEl = document.getElementById('ado-' + a.key);
+        if (!detailEl || !detailEl.classList.contains('open')) return;
+        const inputs = detailEl.querySelectorAll('input[type="date"], input[type="text"]');
+        if (!assetsOverlayState.data[a.key]) assetsOverlayState.data[a.key] = { received: false, date: '', person: '', na: false, note: '' };
+        if (inputs.length >= 1) assetsOverlayState.data[a.key].date = (inputs[0].value || '').trim();
+        if (inputs.length >= 2) assetsOverlayState.data[a.key].person = (inputs[1].value || '').trim();
+        if (inputs.length >= 3) assetsOverlayState.data[a.key].note = (inputs[2].value || '').trim();
+    });
     }
     function renderAssetsOverlay() {
     if (!assetsOverlayState) return;
@@ -950,6 +972,7 @@
     }
     function toggleAssetsOverlayReceived(key) {
     if (!assetsOverlayState) return;
+    flushAssetsOverlayInputs();
     const d = assetsOverlayState.data[key] || { received: false, date: '', person: '', na: false, note: '' };
     assetsOverlayState.data[key] = { ...d, received: !d.received, na: d.na ? false : d.na };
     if (assetsOverlayState.data[key].received && !assetsOverlayState.data[key].date)
@@ -958,6 +981,7 @@
     }
     function toggleAssetsOverlayNA(key) {
     if (!assetsOverlayState) return;
+    flushAssetsOverlayInputs();
     const d = assetsOverlayState.data[key] || { received: false, date: '', person: '', na: false, note: '' };
     assetsOverlayState.data[key] = { ...d, na: !d.na, received: d.na ? d.received : false };
     renderAssetsOverlay();
@@ -973,6 +997,7 @@
     }
     function saveAssetsOverlay() {
     if (!assetsOverlayState) return;
+    flushAssetsOverlayInputs();
     const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
     if (!job) { closeAssetsOverlay(); return; }
     job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
@@ -1161,7 +1186,7 @@
     history.pushState({ station: choice }, '', '');
     S.mode = choice === 'admin' ? 'admin' : 'floor';
     const badge = document.getElementById('modeBadge');
-    if (badge) { badge.textContent = (choice === 'admin' ? 'ADMIN' : 'FLOOR').toUpperCase(); badge.className = 'bar-mode ' + (choice === 'admin' ? 'admin' : 'floor'); }
+    if (badge) { badge.textContent = (choice === 'admin' ? 'ADMIN' : 'OPERATOR'); badge.className = 'bar-mode ' + (choice === 'admin' ? 'admin' : 'floor'); }
     const exportBtn = document.getElementById('exportBtn');
     const backupBtn = document.getElementById('backupBtn');
     if (exportBtn) exportBtn.style.display = choice === 'admin' ? '' : 'none';
@@ -1494,7 +1519,7 @@
     document.getElementById('modeScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     const badge = document.getElementById('modeBadge');
-    badge.textContent = mode.toUpperCase();
+    badge.textContent = mode === 'admin' ? 'ADMIN' : 'OPERATOR';
     badge.className = 'bar-mode ' + mode;
     if (mode === 'floor') {
         const eb = document.getElementById('exportBtn'); if (eb) eb.style.display = 'none';
@@ -1877,7 +1902,7 @@
     }
 
     function exitPressStation() {
-    returnToAdmin();
+    doLogout();
     }
 
     function renderPressStationShell() {
@@ -2002,7 +2027,7 @@
     }
 
     function exitQCStation() {
-    returnToAdmin();
+    doLogout();
     }
 
     function renderQCStationShell() {
@@ -2072,7 +2097,7 @@
     }
 
     function exitFloorManager() {
-    returnToAdmin();
+    doLogout();
     }
 
     function renderFloorManagerShell() {
@@ -2584,7 +2609,7 @@
     function toggleTodo(key, idx) {
     const t = S.todos[key][idx];
     t.done = !t.done;
-    t.who = t.done ? (S.mode === 'admin' ? 'Admin' : 'Floor') : '';
+    t.who = t.done ? (S.mode === 'admin' ? 'Admin' : 'Operator') : '';
     Storage.saveTodos(S.todos);
     renderTodos();
     }
@@ -3120,7 +3145,7 @@
     const text = el && el.value ? el.value.trim() : '';
     if (!text) return;
     ensureNotesLog(job);
-    const person = S.mode === 'admin' ? 'Admin' : 'Floor';
+    const person = S.mode === 'admin' ? 'Admin' : 'Operator';
     job.notesLog.push({ text, person, timestamp: new Date().toISOString() });
     job.notes = text;
     if (el) el.value = '';
@@ -3135,7 +3160,7 @@
     const text = el && el.value ? el.value.trim() : '';
     if (!text) return;
     ensureNotesLog(job);
-    const person = S.mode === 'admin' ? 'Admin' : 'Floor';
+    const person = S.mode === 'admin' ? 'Admin' : 'Operator';
     job.assemblyLog.push({ text, person, timestamp: new Date().toISOString() });
     job.assembly = text;
     if (el) el.value = '';
@@ -3440,9 +3465,9 @@
     const stationVisible = isStationShellVisible();
 
     if (e.key === 'Escape') {
-        // When a station shell is open, Escape returns to admin; don't run admin UI handlers
+        // When a station shell is open, Escape returns to role select (launcher)
         if (stationVisible) {
-        returnToAdmin();
+        doLogout();
         e.preventDefault();
         return;
         }
