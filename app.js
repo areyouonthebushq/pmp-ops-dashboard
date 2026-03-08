@@ -1870,10 +1870,10 @@
         { key: 'catalog', label: 'CATALOG' },
         { key: 'artistAlbum', label: 'ARTIST / ALBUM' },
         { key: 'format', label: 'FORMAT' },
-        { key: 'status', label: 'STATUS' },
-        { key: 'due', label: 'DUE' },
         { key: 'color', label: 'COLOR' },
         { key: 'qty', label: 'QTY' },
+        { key: 'status', label: 'STATUS' },
+        { key: 'due', label: 'DUE' },
     ];
     function getFloorSortValue(j, key) {
         if (key === 'catalog') return (j.catalog || '').toLowerCase();
@@ -1922,14 +1922,14 @@
         <div style="color:var(--d3);font-size:11px">${j.album || ''}</div>
     </td>
     <td>${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
+    <td>${j.color ? `<span style="color:var(--d2)">${escapeHtml(j.color)}</span>` : '—'}</td>
+    <td>${j.qty ? parseInt(j.qty, 10).toLocaleString() : '—'}</td>
     <td>
         <div class="status-tap ${statusTapClass(j.status)}"${statusId} onclick="cycleStatus('${j.id}')" title="Tap to change status">
         ${(j.status || 'queue').toUpperCase()}
         </div>
     </td>
     <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
-    <td>${j.color ? `<span style="color:var(--d2)">${escapeHtml(j.color)}</span>` : '—'}</td>
-    <td>${j.qty ? parseInt(j.qty, 10).toLocaleString() : '—'}</td>
     </tr>`;
     }
 
