@@ -78,8 +78,6 @@
     { id:'jJacket',      key:'jacket',      type:'select' },
     { id:'jOuter',       key:'outer_pkg',       type:'select' },
     { id:'jCPL',         key:'cpl',         type:'text' },
-    { id:'jNotes',       key:'notes',       type:'text' },
-    { id:'jAssembly',    key:'assembly',    type:'text' },
     { id:'jInvDate',     key:'invDate',     type:'date' },
     { id:'jDep',         key:'deposit',     type:'date' },
     { id:'jInv2',        key:'inv2',        type:'date' },
@@ -288,6 +286,7 @@
     }
     let curAssets = {};
     let panelOpen = false;
+    let panelEditMode = false;
 
     // ============================================================
     // STATION CONTEXT — helpers for future station-specific shells.
@@ -392,10 +391,7 @@
     if (!role) return true; // local mode: allow all
     if (role === 'admin') return true;
     if (role === 'floor_manager') return choice === 'floor_manager';
-    if (role === 'press') {
-        const assigned = getAuthAssignedPressId();
-        return choice === 'press' && pressId && (assigned ? pressId === assigned : true);
-    }
+    if (role === 'press') return choice === 'press' && !!pressId;
     if (role === 'qc') return choice === 'qc';
     return false;
     }
@@ -425,8 +421,8 @@
         case 'floor_manager':
             return { canUseFullPanel: false, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: false, canLogQC: false };
         case 'press': {
-            const onMyPress = ctx && ctx.stationType === 'press' && (!assignedPress || ctx.assignedPressId === assignedPress);
-            return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: !!onMyPress, canLogQC: false };
+            const inPressStation = ctx && ctx.stationType === 'press';
+            return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: !!inPressStation, canLogQC: false };
         }
         case 'qc':
             return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: false, canLogQC: true };
@@ -844,6 +840,56 @@
     hideDataChangedNotice();
     }
 
+    function setPanelEditMode(enabled) {
+    panelEditMode = enabled;
+    const body = document.getElementById('panelBody');
+    if (!body) return;
+
+    body.querySelectorAll('input, select, textarea').forEach(el => {
+        if (enabled) {
+        el.removeAttribute('disabled');
+        el.style.opacity = '';
+        el.style.pointerEvents = '';
+        } else {
+        el.setAttribute('disabled', 'true');
+        el.style.opacity = '0.8';
+        el.style.pointerEvents = 'none';
+        }
+    });
+
+    const foot = document.querySelector('.panel-foot');
+    if (foot) foot.style.display = enabled ? 'flex' : 'none';
+
+    const editBtn = document.getElementById('panelEditBtn');
+    if (editBtn) editBtn.textContent = enabled ? 'VIEWING' : 'EDIT';
+
+    if (!enabled) {
+        const progressForm = body.querySelector('.progress-log-form');
+        if (progressForm) {
+        progressForm.querySelectorAll('input, select, button').forEach(el => {
+            el.removeAttribute('disabled');
+            el.style.opacity = '';
+            el.style.pointerEvents = '';
+        });
+        }
+        const assetList = document.getElementById('assetList');
+        if (assetList) {
+        assetList.querySelectorAll('.asset-row, .na-btn').forEach(el => {
+            el.style.pointerEvents = 'none';
+            el.style.opacity = '0.8';
+        });
+        }
+    } else {
+        const assetList = document.getElementById('assetList');
+        if (assetList) {
+        assetList.querySelectorAll('.asset-row, .na-btn').forEach(el => {
+            el.style.pointerEvents = '';
+            el.style.opacity = '';
+        });
+        }
+    }
+    }
+
     // ============================================================
     // STATION LAUNCHER — single entry point, persist last choice
     // ============================================================
@@ -871,7 +917,7 @@
     /** Enter app from launcher: admin | floor_manager | press | qc. For press, pass pressId (e.g. p1). Role enforced; press role uses assigned_press_id. */
     function enterByLauncher(choice, pressId) {
     const role = getAuthRole();
-    const effectivePressId = (role === 'press' && getAuthAssignedPressId()) ? getAuthAssignedPressId() : pressId;
+    const effectivePressId = (role === 'press' && choice === 'press') ? pressId : (role === 'press' ? getAuthAssignedPressId() : pressId);
     if (!mayEnterStation(choice, effectivePressId)) {
         if (typeof toast === 'function') toast('Not allowed for your role.');
         return;
@@ -879,6 +925,7 @@
     hideLauncherPressPicker();
     document.getElementById('modeScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    history.pushState({ station: choice }, '', '');
     S.mode = choice === 'admin' ? 'admin' : 'floor';
     const badge = document.getElementById('modeBadge');
     if (badge) { badge.textContent = (choice === 'admin' ? 'ADMIN' : 'FLOOR').toUpperCase(); badge.className = 'bar-mode ' + (choice === 'admin' ? 'admin' : 'floor'); }
@@ -1079,17 +1126,9 @@
             show(adminBtn, false);
             show(fmBtn, false);
             show(pressBtn, true);
-            const pid = getAuthAssignedPressId();
-            if (pressBtn) {
-                if (pid) pressBtn.onclick = function () { enterByLauncher('press', pid); };
-                else pressBtn.onclick = toggleLauncherPressPicker;
-            }
+            if (pressBtn) pressBtn.onclick = toggleLauncherPressPicker;
             if (pressRow) {
-                pressRow.querySelectorAll('.launcher-press-btn').forEach(btn => {
-                    const p = btn.getAttribute('onclick') && btn.getAttribute('onclick').match(/enterByLauncher\('press',\s*'([^']+)'\)/);
-                    const bid = p ? p[1] : null;
-                    btn.style.display = (pid && bid === pid) ? '' : 'none';
-                });
+                pressRow.querySelectorAll('.launcher-press-btn').forEach(btn => { btn.style.display = ''; });
                 pressRow.style.display = 'none';
             }
             show(qcBtn, false);
@@ -1195,7 +1234,24 @@
 
     authBootstrap();
 
+    function enterGuestDemo() {
+    window.PMP_GUEST_MODE = true;
+    window.PMP = window.PMP || {};
+    window.PMP.userProfile = { role: 'admin' };
+    showLauncher();
+    }
+
     window.addEventListener('online', onOnline);
+
+    window.addEventListener('popstate', () => {
+    if (document.body.classList.contains('tv')) {
+        exitTV();
+        return;
+    }
+    if (document.getElementById('app').style.display === 'block' || isStationShellVisible()) {
+        doLogout();
+    }
+    });
 
     // ============================================================
     // APP ENTRY — enterApp still used internally; launcher is primary entry
@@ -1216,7 +1272,8 @@
     startPolling();
     }
 
-    async function doLogout() {
+    /** Exit station: return to launcher. Does NOT clear auth session. */
+    function doLogout() {
     setStationContext({});
     hideLauncherPressPicker();
     renderLauncherLast();
@@ -1224,21 +1281,40 @@
     document.getElementById('fab').style.display = 'none';
     document.body.classList.remove('tv');
     stopDataSync();
-
-    if (authRequired() && window.PMP && window.PMP.Supabase && window.PMP.Supabase.getClientOrNull) {
-        const client = window.PMP.Supabase.getClientOrNull();
-        if (client) {
-            try {
-                await window.PMP.Supabase.signOut();
-            } catch (e) {
-                console.error('[PMP] Sign out error:', e);
-            }
-            window.PMP.userProfile = null;
-            showLoginScreen(false);
-            return;
-        }
+    showLauncher();
     }
-    document.getElementById('modeScreen').style.display = 'flex';
+
+    /** Sign out of auth entirely: clear session. onAuthStateChange(SIGNED_OUT) will show login. Call from launcher only. */
+    async function signOutFully() {
+    if (window.PMP_GUEST_MODE) {
+        window.PMP_GUEST_MODE = false;
+        window.PMP.userProfile = null;
+        setStationContext({});
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('fab').style.display = 'none';
+        document.body.classList.remove('tv');
+        stopDataSync();
+        showLoginScreen(false);
+        return;
+    }
+    setStationContext({});
+    hideLauncherPressPicker();
+    renderLauncherLast();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('fab').style.display = 'none';
+    document.body.classList.remove('tv');
+    stopDataSync();
+    if (window.PMP?.Supabase?.getClientOrNull?.()) {
+        try {
+            await window.PMP.Supabase.signOut();
+        } catch (e) {
+            console.error('[PMP] Sign out error:', e);
+        }
+        window.PMP.userProfile = null;
+        showLoginScreen(false);
+    } else {
+        showLauncher();
+    }
     }
 
     // ============================================================
@@ -2431,6 +2507,7 @@
     // TV MODE
     // ============================================================
     function enterTV() {
+    history.pushState({ tv: true }, '', '');
     document.body.classList.add('tv');
     if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('tvParty') === '1') document.body.classList.add('tv-party');
     renderTV();
@@ -2501,6 +2578,7 @@
     const ov = document.getElementById('overlay');
     ov.classList.add('open');
     panelOpen = true;
+    panelEditMode = false;
     S.editId = id && id !== 'null' ? id : null;
     curAssets = {};
 
@@ -2532,6 +2610,19 @@
     }
     buildAssetList();
     renderProgressSection();
+    if (S.editId) {
+        const j = S.jobs.find(x => x.id === S.editId);
+        if (j) { ensureNotesLog(j); renderNotesSection(); }
+    } else {
+        const notesLogList = document.getElementById('notesLogList');
+        const assemblyLogList = document.getElementById('assemblyLogList');
+        if (notesLogList) notesLogList.innerHTML = '<div class="progress-empty">No notes yet.</div>';
+        if (assemblyLogList) assemblyLogList.innerHTML = '<div class="progress-empty">No notes yet.</div>';
+        const jNotesInput = document.getElementById('jNotesInput');
+        const jAssemblyInput = document.getElementById('jAssemblyInput');
+        if (jNotesInput) jNotesInput.value = '';
+        if (jAssemblyInput) jAssemblyInput.value = '';
+    }
 
     // Scroll to top
     document.getElementById('panelBody').scrollTop = 0;
@@ -2546,6 +2637,16 @@
         // Defer so field values are populated first
         requestAnimationFrame(checkBillingExpand);
         }
+    }
+
+    if (!S.editId) {
+        setPanelEditMode(true);
+        const editBtn = document.getElementById('panelEditBtn');
+        if (editBtn) editBtn.style.display = 'none';
+    } else {
+        setPanelEditMode(false);
+        const editBtn = document.getElementById('panelEditBtn');
+        if (editBtn) editBtn.style.display = '';
     }
     }
 
@@ -2724,12 +2825,101 @@
     }
 
     // ============================================================
+    // NOTES SECTION — append-only production & assembly logs
+    // ============================================================
+    function ensureNotesLog(job) {
+    if (!job) return;
+    if (!Array.isArray(job.notesLog)) job.notesLog = [];
+    if (!Array.isArray(job.assemblyLog)) job.assemblyLog = [];
+    if (job.notes && job.notesLog.length === 0) {
+        job.notesLog.push({ text: job.notes, person: 'Migrated', timestamp: new Date().toISOString() });
+    }
+    if (job.assembly && job.assemblyLog.length === 0) {
+        job.assemblyLog.push({ text: job.assembly, person: 'Migrated', timestamp: new Date().toISOString() });
+    }
+    }
+    function renderNotesSection() {
+    const job = S.jobs.find(j => j.id === S.editId);
+    if (!job) return;
+    ensureNotesLog(job);
+    const prodEl = document.getElementById('notesLogList');
+    if (prodEl) {
+        prodEl.innerHTML = (job.notesLog || []).slice().reverse().map(e => {
+            const time = new Date(e.timestamp).toLocaleString();
+            return `<div class="progress-entry"><strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
+        }).join('') || '<div class="progress-empty">No notes yet.</div>';
+    }
+    const asmEl = document.getElementById('assemblyLogList');
+    if (asmEl) {
+        asmEl.innerHTML = (job.assemblyLog || []).slice().reverse().map(e => {
+            const time = new Date(e.timestamp).toLocaleString();
+            return `<div class="progress-entry"><strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
+        }).join('') || '<div class="progress-empty">No notes yet.</div>';
+    }
+    }
+    function addProductionNote() {
+    const job = S.jobs.find(j => j.id === S.editId);
+    if (!job) return;
+    const el = document.getElementById('jNotesInput');
+    const text = el && el.value ? el.value.trim() : '';
+    if (!text) return;
+    ensureNotesLog(job);
+    const person = S.mode === 'admin' ? 'Admin' : 'Floor';
+    job.notesLog.push({ text, person, timestamp: new Date().toISOString() });
+    job.notes = text;
+    if (el) el.value = '';
+    Storage.saveJob(job);
+    renderNotesSection();
+    toast('NOTE LOGGED');
+    }
+    function addAssemblyNote() {
+    const job = S.jobs.find(j => j.id === S.editId);
+    if (!job) return;
+    const el = document.getElementById('jAssemblyInput');
+    const text = el && el.value ? el.value.trim() : '';
+    if (!text) return;
+    ensureNotesLog(job);
+    const person = S.mode === 'admin' ? 'Admin' : 'Floor';
+    job.assemblyLog.push({ text, person, timestamp: new Date().toISOString() });
+    job.assembly = text;
+    if (el) el.value = '';
+    Storage.saveJob(job);
+    renderNotesSection();
+    toast('NOTE LOGGED');
+    }
+
+    // ============================================================
     // SAVE JOB — data-driven from FIELD_MAP
     // ============================================================
     function saveJob() {
     const cat = document.getElementById('jCat').value.trim().toUpperCase();
     const artist = document.getElementById('jArtist').value.trim();
+    const album = document.getElementById('jAlbum') ? document.getElementById('jAlbum').value.trim() : '';
     if (!cat && !artist) { toast('CATALOG # OR ARTIST REQUIRED'); return; }
+
+    if (!S.editId) {
+        const dupes = S.jobs.filter(j => {
+            if (cat && j.catalog && j.catalog.toUpperCase() === cat) return true;
+            if (artist && album && j.artist && j.album &&
+                j.artist.toLowerCase() === artist.toLowerCase() &&
+                j.album.toLowerCase() === album.toLowerCase()) return true;
+            return false;
+        });
+        if (dupes.length > 0) {
+            const existing = dupes[0];
+            openConfirm(
+                'JOB ALREADY EXISTS',
+                `${existing.catalog || ''} · ${existing.artist || ''} · ${existing.album || ''} is already in the system (status: ${(existing.status || 'unknown').toUpperCase()}).`,
+                () => {
+                    closeConfirm();
+                    openPanel(existing.id);
+                }
+            );
+            const confOk = document.getElementById('confOk');
+            if (confOk) confOk.textContent = 'OPEN EXISTING';
+            return;
+        }
+    }
 
     const job = { id: S.editId || 'j' + Date.now() };
 
@@ -2748,10 +2938,16 @@
     if (S.editId) {
         const existing = S.jobs.find(j => j.id === S.editId);
         job.progressLog = (existing && Array.isArray(existing.progressLog)) ? existing.progressLog : [];
+        job.notes = existing && existing.notes != null ? existing.notes : job.notes;
+        job.assembly = existing && existing.assembly != null ? existing.assembly : job.assembly;
+        job.notesLog = (existing && Array.isArray(existing.notesLog)) ? existing.notesLog : [];
+        job.assemblyLog = (existing && Array.isArray(existing.assemblyLog)) ? existing.assemblyLog : [];
         const i = S.jobs.findIndex(j => j.id === S.editId);
         if (i >= 0) S.jobs[i] = job;
     } else {
         job.progressLog = [];
+        job.notesLog = [];
+        job.assemblyLog = [];
         S.jobs.unshift(job);
     }
     ensureJobProgressLog(job);
@@ -2793,7 +2989,12 @@
     confCb = cb;
     document.getElementById('confirmWrap').classList.add('open');
     }
-    function closeConfirm() { document.getElementById('confirmWrap').classList.remove('open'); confCb = null; }
+    function closeConfirm() {
+    document.getElementById('confirmWrap').classList.remove('open');
+    confCb = null;
+    const confOk = document.getElementById('confOk');
+    if (confOk) confOk.textContent = 'CONFIRM';
+    }
     document.getElementById('confOk').addEventListener('click', () => { if (confCb) confCb(); closeConfirm(); });
 
     // ============================================================
@@ -2858,6 +3059,11 @@
         const row = {};
         hdrs.forEach((h, i) => row[h] = (vals[i] || '').trim());
         if (row.catalog || row.artist) {
+            const existingCat = row.catalog ? S.jobs.find(j => j.catalog && j.catalog.toUpperCase() === (row.catalog || '').toUpperCase()) : null;
+            if (existingCat) {
+            console.warn('[PMP] CSV import skipped duplicate:', row.catalog);
+            return;
+            }
             S.jobs.push({
             id: baseId + '_' + idx + '_' + Math.random().toString(36).slice(2, 8),
             ...row,

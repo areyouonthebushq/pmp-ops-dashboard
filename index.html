@@ -36,6 +36,7 @@
         </div>
         <div id="loginError" class="auth-error" role="alert" style="display:none;"></div>
         <button type="submit" class="auth-btn" id="loginSubmit">SIGN IN</button>
+        <button type="button" class="auth-ghost" id="guestDemoBtn" onclick="enterGuestDemo()" style="margin-top:var(--space-md);border:1px solid var(--b2);color:var(--d3);background:transparent;padding:var(--space-sm) var(--space-md);font-size:11px;letter-spacing:1px;cursor:pointer;font-family:inherit;">GUEST DEMO · NO LOGIN REQUIRED</button>
         </form>
         <div class="auth-footer">Nashville · Press Floor Operations</div>
     </div>
@@ -93,7 +94,10 @@
         <div id="launcherNoRole" class="local-mode-banner" style="display:none;" role="status">No role assigned. Contact an admin.</div>
         </div>
     </div>
-    <div class="mode-city">Nashville, TN · physicalmusicproducts.com</div>
+    <div class="mode-city">Nashville, TN · physicalmusicproducts.com
+        <br>
+        <button type="button" onclick="signOutFully()" style="background:none;border:none;color:var(--d3);font-size:10px;letter-spacing:2px;cursor:pointer;margin-top:8px;font-family:'Inconsolata',monospace;">SIGN OUT</button>
+    </div>
     </div>
 
     <!-- ============================================================ TV VIEW -->
@@ -361,7 +365,10 @@
             <div class="panel-id" id="panelId">NEW JOB</div>
             <div class="panel-sub" id="panelSub"></div>
         </div>
-        <button class="panel-close" onclick="closePanel()">✕</button>
+        <div style="display:flex;gap:var(--space-sm);">
+            <button class="panel-close" id="panelEditBtn" onclick="setPanelEditMode(!panelEditMode)" title="Toggle edit mode">EDIT</button>
+            <button class="panel-close" onclick="closePanel()">✕</button>
+        </div>
         </div>
         <div class="panel-body" id="panelBody">
         <!-- Unified form — all sections in one scrollable view -->
@@ -572,11 +579,15 @@
         <div class="panel-notes">
         <div class="fg">
             <label class="fl">Production Notes</label>
-            <textarea class="fta" id="jNotes" placeholder="Assembly notes, special instructions, client requests..."></textarea>
+            <div id="notesLogList" class="progress-recent" style="max-height:200px;overflow-y:auto;margin-bottom:8px;"></div>
+            <textarea class="fta" id="jNotesInput" placeholder="Add a production note..."></textarea>
+            <button type="button" class="btn go" onclick="addProductionNote()" style="margin-top:4px;">+ LOG NOTE</button>
         </div>
         <div class="fg">
             <label class="fl">Assembly / Location Notes</label>
-            <textarea class="fta" id="jAssembly" placeholder="Rack bay, row, staging, assembly details..."></textarea>
+            <div id="assemblyLogList" class="progress-recent" style="max-height:200px;overflow-y:auto;margin-bottom:8px;"></div>
+            <textarea class="fta" id="jAssemblyInput" placeholder="Add an assembly/location note..."></textarea>
+            <button type="button" class="btn go" onclick="addAssemblyNote()" style="margin-top:4px;">+ LOG NOTE</button>
         </div>
         </div>
 

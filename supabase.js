@@ -41,6 +41,8 @@
       cpl: job.cpl || null,
       notes: job.notes || null,
       assembly: job.assembly || null,
+      notes_log: job.notesLog || [],
+      assembly_log: job.assemblyLog || [],
       inv_date: job.invDate || null,
       deposit: job.deposit || null,
       inv2: job.inv2 || null,
@@ -77,6 +79,8 @@
       cpl: row.cpl,
       notes: row.notes,
       assembly: row.assembly,
+      notesLog: Array.isArray(row.notes_log) ? row.notes_log : [],
+      assemblyLog: Array.isArray(row.assembly_log) ? row.assembly_log : [],
       invDate: row.inv_date,
       deposit: row.deposit,
       inv2: row.inv2,
@@ -133,30 +137,35 @@
 
     /** Auth: get current session. Safe when Supabase not inited (returns null session). */
     async getSession() {
+      if (window.PMP_GUEST_MODE) return { data: { session: null }, error: null };
       if (!supabase) return { data: { session: null }, error: null };
       return supabase.auth.getSession();
     },
 
     /** Auth: sign in with email/password. Call only when initSupabase() === true. */
     async signInWithPassword(email, password) {
+      if (window.PMP_GUEST_MODE) return { data: { user: null, session: null }, error: null };
       const client = getClient();
       return client.auth.signInWithPassword({ email, password });
     },
 
     /** Auth: sign out. Call only when initSupabase() === true. */
     async signOut() {
+      if (window.PMP_GUEST_MODE) return;
       const client = getClient();
       return client.auth.signOut();
     },
 
     /** Auth: subscribe to session changes. Call only when initSupabase() === true. */
     onAuthStateChange(callback) {
+      if (window.PMP_GUEST_MODE) return;
       const client = getClient();
       return client.auth.onAuthStateChange(callback);
     },
 
     /** Fetch profile for user (id = auth.uid()). Includes role and assigned_press_id for RLS/UI. */
     async getProfile(userId) {
+      if (window.PMP_GUEST_MODE) return { data: null, error: null };
       if (!supabase) return { data: null, error: new Error('Supabase not initialized') };
       const { data, error } = await supabase.from('profiles').select('id, email, display_name, role, assigned_press_id').eq('id', userId).maybeSingle();
       return { data, error };
