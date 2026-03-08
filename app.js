@@ -1165,7 +1165,7 @@
     const exportBtn = document.getElementById('exportBtn');
     const backupBtn = document.getElementById('backupBtn');
     if (exportBtn) exportBtn.style.display = choice === 'admin' ? '' : 'none';
-    if (backupBtn) backupBtn.style.display = choice === 'admin' ? '' : 'none';
+    if (backupBtn) backupBtn.style.display = 'none';
     updateFAB();
     loadAll();
     startPolling();
@@ -1361,13 +1361,7 @@
             show(adminBtn, false);
             show(fmBtn, false);
             show(pressBtn, true);
-            if (pressBtn) {
-                pressBtn.onclick = function () {
-                    const assigned = getAuthAssignedPressId();
-                    if (assigned) enterByLauncher('press', assigned);
-                    else { if (typeof toast === 'function') toast('No press assigned. Contact an admin.'); }
-                };
-            }
+            if (pressBtn) pressBtn.onclick = toggleLauncherPressPicker;
             if (pressRow) {
                 pressRow.querySelectorAll('.launcher-press-btn').forEach(btn => { btn.style.display = ''; });
                 pressRow.style.display = 'none';
