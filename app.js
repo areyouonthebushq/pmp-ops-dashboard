@@ -1545,8 +1545,9 @@
         return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
     }).join('');
     const isPressStation = linkTo === 'pressStation';
-    const onClick = linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : linkTo === 'pressStation' ? `openPressStation('${p.id}')` : `openPanel('${job?.id}')`;
-    const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : linkTo === 'pressStation' ? 'TAP → STATION' : 'TAP TO OPEN →';
+    // Admin: press name → station; job/band block → job panel. Else: one action for whole card.
+    const jobBlockClick = (isPressStation && showControls && job) ? `openPanel('${job.id}')` : (linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : linkTo === 'pressStation' ? `openPressStation('${p.id}')` : `openPanel('${job?.id}')`);
+    const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : linkTo === 'pressStation' ? (showControls ? 'TAP → JOB PANEL' : 'TAP → STATION') : 'TAP TO OPEN →';
     const nameClick = isPressStation ? ` onclick="openPressStation('${p.id}')" style="cursor:pointer" title="Open Press Station"` : '';
     return `
     <div class="press-card ${p.status}">
@@ -1558,7 +1559,7 @@
         </div>
         </div>
         ${job ? `
-        <div class="pc-job-link" onclick="${onClick}" title="${linkTo === 'floorCard' ? 'Open statboard' : 'Open job'}">
+        <div class="pc-job-link" onclick="${jobBlockClick}" title="${linkTo === 'floorCard' ? 'Open statboard' : (isPressStation && showControls ? 'Open job panel' : 'Open job')}">
             <div class="pc-job"><span class="job-id">${job.catalog || '—'}</span> — ${job.artist || ''}</div>
             <div class="pc-meta">${job.format || ''} · ${job.color || 'Black'} · ${job.weight || ''}</div>
             <div class="pc-meta">Qty: ${job.qty ? parseInt(job.qty).toLocaleString() : '—'}</div>
