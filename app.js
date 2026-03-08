@@ -836,10 +836,15 @@
     const q = parseInt(qty, 10);
     if (!Number.isInteger(q) || q < 1) return { ok: false, error: 'qty must be a positive integer' };
     const cur = getJobProgress(job);
-    if (stage === 'qc_passed' || stage === 'rejected') {
-        const newQC = cur.qcPassed + (stage === 'qc_passed' ? q : 0);
-        const newRej = cur.rejected + (stage === 'rejected' ? q : 0);
-        if (newQC + newRej > cur.pressed) return { ok: false, error: 'qc_passed + rejected cannot exceed pressed' };
+    const ordered = cur.ordered;
+    if (stage === 'qc_passed') {
+        const newQC = cur.qcPassed + q;
+        if (newQC + cur.rejected > cur.pressed) return { ok: false, error: 'qc_passed + rejected cannot exceed pressed' };
+    }
+    if (stage === 'rejected') {
+        const newRej = cur.rejected + q;
+        if (newRej > ordered) return { ok: false, error: 'rejected cannot exceed ordered' };
+        // Allow QC to log rejects even when pressed is 0 (defect logged before pressed count entered).
     }
     const personVal = (person != null && String(person).trim()) ? String(person).trim() : 'UNKNOWN';
     const timestamp = new Date().toISOString();
@@ -888,12 +893,12 @@
     document.getElementById('progressDetailPct').textContent = `${completePct}% COMPLETE`;
     const pctBreakdown = document.getElementById('progressDetailPctBreakdown');
     if (pctBreakdown) pctBreakdown.textContent = `Pressed ${yPct}% · QC ${gPct}% · Rejected ${rPct}% · Remaining ${remPct}%`;
-    // Bar segments left-to-right: QC (green), pressed (yellow), remaining (grey), rejected (red) — same origin as press status bar
+    // Bar segments left-to-right: QC (green), pressed (yellow), rejected (red), remaining (grey) — all from left
     document.getElementById('progressDetailBar').innerHTML = [
         qcPct > 0 ? `<div class="pd-seg qc" style="width:${qcPct}%" title="QC passed: ${p.qcPassed.toLocaleString()}"></div>` : '',
         pendingPct > 0 ? `<div class="pd-seg pressed" style="width:${pendingPct}%" title="Pending QC: ${p.pendingQC.toLocaleString()}"></div>` : '',
-        remainingPct > 0 ? `<div class="pd-seg remaining" style="width:${remainingPct}%"></div>` : '',
         rejectedPct > 0 ? `<div class="pd-seg rejected" style="width:${rejectedPct}%" title="Rejected: ${p.rejected.toLocaleString()}"></div>` : '',
+        remainingPct > 0 ? `<div class="pd-seg remaining" style="width:${remainingPct}%"></div>` : '',
     ].filter(Boolean).join('') || '<div class="pd-seg remaining" style="width:100%"></div>';
     document.getElementById('progressDetailLegend').innerHTML = [
         `<span><span class="pd-dot pressed"></span> Pressed (pending QC): ${p.pendingQC.toLocaleString()} (${yPct}%)</span>`,
@@ -1899,7 +1904,6 @@
             <option value="offline" ${p.status === 'offline' ? 'selected' : ''}>Offline</option>
             <option value="idle"    ${p.status === 'idle'    ? 'selected' : ''}>Idle</option>
             </select>
-            <button type="button" class="pc-station-btn" onclick="openPressStation('${p.id}')" title="Open as Press Station (single-press view)">STATION</button>
         </div>
         ` : ''}
     </div>`;
@@ -1950,7 +1954,8 @@
     }
 
     function exitPressStation() {
-    doLogout();
+    if (getAuthRole() === 'admin' || S.mode === 'admin') returnToAdmin();
+    else doLogout();
     }
 
     function renderPressStationShell() {
@@ -2075,7 +2080,8 @@
     }
 
     function exitQCStation() {
-    doLogout();
+    if (getAuthRole() === 'admin' || S.mode === 'admin') returnToAdmin();
+    else doLogout();
     }
 
     function renderQCStationShell() {
@@ -2145,7 +2151,8 @@
     }
 
     function exitFloorManager() {
-    doLogout();
+    if (getAuthRole() === 'admin' || S.mode === 'admin') returnToAdmin();
+    else doLogout();
     }
 
     function renderFloorManagerShell() {
