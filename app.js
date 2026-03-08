@@ -1264,7 +1264,10 @@
     }
     if (choice === 'qc') {
         setLastLauncherChoice({ stationType: 'qc' });
-        openQCStation();
+        setStationContext({});
+        hideAllShells();
+        goPg('qc');
+        renderAll();
         return;
     }
     }
@@ -1913,10 +1916,6 @@
         renderPressStationShell();
         return;
     }
-    if (ctx && isStationType('qc')) {
-        renderQCStationShell();
-        return;
-    }
     if (ctx && isStationType('floor_manager')) {
         renderFloorManagerShell();
         return;
@@ -2068,10 +2067,10 @@
     // ============================================================
     // QC STATION SHELL (v1) — rapid reject logging
     // ============================================================
-    /** Open the QC Station view. Call from bar (e.g. QC button). */
+    /** Open the QC Log page (same as Admin QC Log). Used by bar QC button and launcher QC Station. */
     function openQCStation() {
-    setStationContext({ stationType: 'qc', stationId: 'qc1', assignedPressId: null });
-    showShell('qcStationShell');
+    hideAllShells();
+    goPg('qc');
     renderAll();
     }
 
@@ -2132,7 +2131,7 @@
 
     function qcStationLogReject(type) {
     logQC(type);
-    if (getStationContext() && isStationType('qc')) renderQCStationShell();
+    renderQC();
     }
 
     // ============================================================
@@ -2707,14 +2706,12 @@
         toast(`${type} → ${job}`);
     }
     qcViewDate = date;
-    if (getStationContext() && isStationType('qc')) renderQCStationShell();
-    else renderQC();
+    renderQC();
     }
 
     function selectQCJob(jid) {
     S.qcSelectedJob = S.qcSelectedJob === jid ? null : jid;
-    if (getStationContext() && isStationType('qc')) renderQCStationShell();
-    else renderQC();
+    renderQC();
     }
 
     // Get all unique dates in the QC log, sorted newest first
