@@ -1,3 +1,13 @@
+    // Global error handler — catches unhandled errors and logs to Sentry
+    window.addEventListener('error', function (event) {
+      console.error('[PMP] Unhandled error:', event.error);
+      if (typeof toastError === 'function') toastError('Something went wrong. Error logged.');
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      console.error('[PMP] Unhandled promise rejection:', event.reason);
+      if (typeof toastError === 'function') toastError('Sync error. Will retry.');
+    });
+
     // ============================================================
     // MATRIX RAIN — Uses requestAnimationFrame, auto-pauses when hidden
     // ============================================================
@@ -429,6 +439,14 @@
     const p = window.PMP && window.PMP.userProfile;
     return (p && p.assigned_press_id) ? p.assigned_press_id : null;
     }
+    function updateSentryUserTag() {
+    try {
+        if (window.Sentry) {
+        const role = getAuthRole();
+        if (role) Sentry.setTag('user.role', role);
+        }
+    } catch (e) {}
+    }
     /** True if current user (by role) may enter this station type. */
     function mayEnterStation(choice, pressId) {
     const role = getAuthRole();
@@ -549,6 +567,7 @@
 
     async function loadAll() {
     console.log('[PMP] loadAll start');
+    if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'loadAll', level: 'info' });
     setSyncState('loading');
     try {
         const data = await Storage.loadAllData();
@@ -688,6 +707,7 @@
         };
       },
       saveJob(job) {
+        if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'saveJob: ' + job.id, level: 'info' });
         pendingWrites.set(job.id, { timestamp: Date.now(), hash: jobFieldsHash(job) });
         if (useSupabase()) {
           if (isOffline()) {
@@ -779,6 +799,7 @@
         return Promise.resolve();
       },
       logProgress(entry) {
+        if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'logProgress: ' + (entry.job_id || '?'), level: 'info' });
         if (useSupabase()) {
           if (isOffline()) {
             pushToOfflineQueue('progress', entry);
@@ -796,6 +817,7 @@
         return Promise.resolve();
       },
       logQC(entry) {
+        if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'logQC: ' + (entry.job || '?'), level: 'info' });
         if (useSupabase()) {
           if (isOffline()) {
             pushToOfflineQueue('qc', entry);
@@ -1505,6 +1527,7 @@
     if (!window.PMP || !window.PMP.Supabase || !window.PMP.Supabase.getProfile) return;
     const { data } = await window.PMP.Supabase.getProfile(userId);
     window.PMP.userProfile = data || null;
+    updateSentryUserTag();
     }
 
     async function authBootstrap() {
@@ -1521,6 +1544,7 @@
     window.PMP.Supabase.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT') {
             window.PMP.userProfile = null;
+            updateSentryUserTag();
             showLoginScreen(false);
         } else if (event === 'SIGNED_IN' && session) {
             fetchAndStoreProfile(session.user.id).then(() => showLauncher());
@@ -1582,6 +1606,7 @@
     window.PMP_GUEST_MODE = true;
     window.PMP = window.PMP || {};
     window.PMP.userProfile = { role: 'admin' };
+    updateSentryUserTag();
     showLauncher();
     }
 

@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PMP · OPS</title>
     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=VT323&family=Inconsolata:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://browser.sentry-cdn.com/8.0.0/bundle.min.js" crossorigin="anonymous"></script>
+    <script>
+    if (window.Sentry) {
+      Sentry.init({
+        dsn: 'YOUR_DSN_HERE',
+        environment: window.location.hostname === 'localhost' ? 'development' : 'production',
+        release: 'pmp-ops@7.1',
+        allowUrls: [window.location.origin],
+        sampleRate: 1.0,
+        tracesSampleRate: 0.1,
+        beforeSend(event) {
+          if (event.message) {
+            event.message = event.message.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+          }
+          return event;
+        },
+      });
+      try {
+        const role = window.PMP?.userProfile?.role;
+        if (role) Sentry.setTag('user.role', role);
+      } catch (e) {}
+    }
+    </script>
     <link rel="stylesheet" href="styles.css">
     <!-- Supabase: set URL and anon key (e.g. from Vercel env at build, or paste here) -->
     <script>

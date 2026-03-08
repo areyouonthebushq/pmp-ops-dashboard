@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - run: npm test
+        env:
+          CI: true
+
+  # Vercel auto-deploys from GitHub; this job just gates on tests passing.
+  # If you want to block deploys on test failure, configure Vercel to use
+  # GitHub Deployment Protection Rules (Settings → Git → Deploy Hooks).
