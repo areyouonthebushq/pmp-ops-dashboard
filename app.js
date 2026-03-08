@@ -1408,7 +1408,7 @@
     const hasProfileNoRole = !!(window.PMP && window.PMP.userProfile && window.PMP.userProfile.role == null);
     if (!role && !hasProfileNoRole) {
         show(adminBtn, true);
-        show(fmBtn, true);
+        show(fmBtn, false);
         show(pressBtn, true);
         showRow(pressRow, false);
         show(qcBtn, true);
@@ -1426,18 +1426,18 @@
     switch (role) {
         case 'admin':
             show(adminBtn, true);
-            show(fmBtn, true);
+            show(fmBtn, false);
             show(pressBtn, true);
             if (pressBtn) pressBtn.onclick = toggleLauncherPressPicker;
             if (pressRow) { pressRow.querySelectorAll('.launcher-press-btn').forEach(b => { b.style.display = ''; }); pressRow.style.display = 'none'; }
             show(qcBtn, true);
             break;
         case 'floor_manager':
-            show(adminBtn, false);
-            show(fmBtn, true);
-            show(pressBtn, false);
+            show(adminBtn, true);
+            show(fmBtn, false);
+            show(pressBtn, true);
             showRow(pressRow, false);
-            show(qcBtn, false);
+            show(qcBtn, true);
             break;
         case 'press': {
             show(adminBtn, false);
@@ -1460,7 +1460,7 @@
             break;
         default:
             show(adminBtn, true);
-            show(fmBtn, true);
+            show(fmBtn, false);
             show(pressBtn, true);
             showRow(pressRow, false);
             show(qcBtn, true);
