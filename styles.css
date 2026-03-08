@@ -300,6 +300,24 @@
     transition: all 0.15s;
     }
     .launcher-last-row .btn-open:hover { background: var(--g); color: #000; box-shadow: var(--gg); }
+    .launcher-signout-row {
+    margin-top: var(--space-md);
+    padding-top: var(--space-sm);
+    display: flex;
+    justify-content: center;
+    }
+    .launcher-signout-row .btn-signout {
+    padding: var(--space-sm) var(--space-lg);
+    font-family: 'Inconsolata', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--d3);
+    background: transparent;
+    border: 1px solid var(--b2);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+    }
+    .launcher-signout-row .btn-signout:hover { color: var(--d); border-color: var(--d3); }
     .local-mode-banner {
     margin-top: var(--space-sm);
     padding: var(--space-sm) var(--space-md);
@@ -653,6 +671,10 @@
     .dl-bar-qc { position:absolute; left:0; top:0; height:100%; background: var(--g); transition:width 0.3s; }
     .dl-bar.pc { height:8px; margin:0; border-radius:1px; }
     .dl-bar.td { height:4px; margin-top: var(--space-xs); min-width:48px; }
+    .td-progress.progress-tap { cursor: pointer; }
+    .td-progress.progress-tap:hover .progress-main { color: var(--g); }
+    .td.assets-tap { cursor: pointer; }
+    .td.assets-tap:hover .ah { color: var(--g); }
     .dl-bar.jc { height:5px; margin-top: var(--space-sm); }
     .dl-bar.tv { height:6px; margin-top: var(--space-xs); }
 
@@ -1443,6 +1465,152 @@
     .fc-edit-row input, .fc-edit-row select, .fc-edit-row textarea { width: 100%; max-width: 320px; padding: 6px 8px; background: var(--b3); border: 1px solid var(--b5); color: var(--d); border-radius: var(--radius); }
     .fc-edit-actions { margin-top: var(--space-md); }
 
+    /* Assets overlay — editable asset checklist (press status / floor table) */
+    .assets-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 455;
+    background: rgba(0,0,0,0.75);
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    }
+    .assets-overlay.on { display: flex; }
+    .assets-overlay-box {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--b2);
+    border: 1px solid var(--b4);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .assets-overlay-close {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--b4);
+    color: var(--d);
+    border-radius: var(--radius);
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+    }
+    .assets-overlay-close:hover { background: var(--b5); color: var(--d2); }
+    .assets-overlay-title {
+    font-family: 'Inconsolata', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--d);
+    margin-bottom: var(--space-xs);
+    }
+    .assets-overlay-hint {
+    font-size: 11px;
+    color: var(--d3);
+    letter-spacing: 1px;
+    margin-bottom: var(--space-md);
+    }
+    .assets-overlay-list {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: var(--space-md);
+    }
+    .assets-overlay-list .asset-summary { margin-bottom: var(--space-sm); }
+    .assets-overlay-list .asset-row { cursor: pointer; }
+    .assets-overlay-actions { display: flex; gap: var(--space-sm); flex-shrink: 0; }
+
+    /* Progress detail overlay — job progress breakdown (press status / floor table) */
+    .progress-detail-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 460;
+    background: rgba(0,0,0,0.75);
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    }
+    .progress-detail-overlay.on { display: flex; }
+    .progress-detail-box {
+    position: relative;
+    width: 100%;
+    max-width: 480px;
+    background: var(--b2);
+    border: 1px solid var(--b4);
+    border-radius: var(--radius);
+    padding: var(--space-lg);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .progress-detail-close {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--b4);
+    color: var(--d);
+    border-radius: var(--radius);
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+    }
+    .progress-detail-close:hover { background: var(--b5); color: var(--d2); }
+    .progress-detail-title {
+    font-family: 'Inconsolata', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--d);
+    margin-bottom: var(--space-xs);
+    }
+    .progress-detail-pct {
+    font-family: 'Special Elite', cursive;
+    font-size: 28px;
+    color: var(--g);
+    letter-spacing: 2px;
+    margin-bottom: var(--space-md);
+    }
+    .progress-detail-bar-wrap {
+    display: flex;
+    height: 24px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--s3);
+    border: 1px solid var(--b2);
+    margin-bottom: var(--space-md);
+    }
+    .progress-detail-bar-wrap .pd-seg {
+    height: 100%;
+    min-width: 0;
+    transition: width 0.2s;
+    }
+    .progress-detail-bar-wrap .pd-seg.rejected { background: var(--r); }
+    .progress-detail-bar-wrap .pd-seg.qc { background: var(--g); }
+    .progress-detail-bar-wrap .pd-seg.pressed { background: var(--w); }
+    .progress-detail-bar-wrap .pd-seg.remaining { background: var(--s3); }
+    .progress-detail-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    font-size: 12px;
+    font-family: 'Inconsolata', monospace;
+    color: var(--d2);
+    }
+    .progress-detail-legend span { display: inline-flex; align-items: center; gap: 6px; }
+    .progress-detail-legend .pd-dot { width: 10px; height: 10px; border-radius: 1px; }
+    .progress-detail-legend .pd-dot.rejected { background: var(--r); }
+    .progress-detail-legend .pd-dot.qc { background: var(--g); }
+    .progress-detail-legend .pd-dot.pressed { background: var(--w); }
+    .progress-detail-legend .pd-dot.remaining { background: var(--s3); }
+
     /* ============================================================ STATION COMPONENTS — shared across all station shells */
     .station-shell {
     display: none;
@@ -1607,73 +1775,72 @@
     }
     .pc-station-btn:hover { border-color: var(--g); color: var(--g); }
 
-    /* QC Station v1 — rapid reject logging */
+    /* QC Station v1 — rapid reject logging; matches Press Station / Floor Manager aesthetic */
     .qc-station-shell.station-shell { background: var(--b1); }
-    .qcs-v1.station-inner { padding: var(--space-lg); }
-    .qcs-v1-header.station-header { margin-bottom: var(--space-md); }
-    .qcs-v1-title.station-name { font-size: clamp(20px, 4vw, 28px); font-weight: 800; letter-spacing: 2px; }
-    .qcs-v1-back.station-back { padding: var(--space-sm) var(--space-md); font-size: 16px; background: var(--b3); border-color: var(--b4); border-radius: var(--radius); }
-    .qcs-v1-back.station-back:hover { background: var(--b4); color: var(--d); }
+    .qcs-v1.station-inner { padding: var(--space-md) var(--space-lg); }
+    .qcs-v1-header.station-header { margin-bottom: var(--space-sm); }
+    .qcs-v1-title.station-name { font-size: 18px; letter-spacing: 2px; }
     .qcs-v1-current {
-    font-size: clamp(18px, 3.5vw, 24px);
+    font-size: 15px;
     font-weight: 700;
-    color: var(--g);
-    margin-bottom: var(--space-md);
-    padding: var(--space-sm) 0;
-    border-bottom: 1px solid var(--b3);
+    color: var(--d);
+    margin-bottom: var(--space-sm);
+    font-family: 'Inconsolata', monospace;
     }
     .qcs-v1-current .none { color: var(--d3); font-weight: 600; }
     .qcs-v1-jobs {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-md);
     }
     .qcs-v1-job-btn {
     padding: var(--space-sm) var(--space-md);
-    font-size: clamp(14px, 2vw, 16px);
+    font-size: 13px;
     font-weight: 600;
-    background: var(--b3);
-    border: 2px solid var(--b4);
+    font-family: 'Inconsolata', monospace;
+    letter-spacing: 0.5px;
+    background: transparent;
+    border: 1px solid var(--b2);
     color: var(--d2);
-    border-radius: var(--radius);
     cursor: pointer;
+    transition: all 0.15s;
     }
-    .qcs-v1-job-btn:hover { background: var(--b4); color: var(--d); }
-    .qcs-v1-job-btn.active { border-color: var(--g); color: var(--g); background: rgba(0,230,118,0.08); }
-    .qcs-v1-reject-label, .qcs-v1-summary-label, .qcs-v1-log-label {
-    font-size: 11px; color: var(--d3); letter-spacing: 2px; margin-bottom: var(--space-xs);
-    }
+    .qcs-v1-job-btn:hover { border-color: var(--g); color: var(--g); }
+    .qcs-v1-job-btn.active { border-color: var(--g); color: var(--g); background: var(--g3); }
     .qcs-v1-btns {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-md);
-    margin-bottom: var(--space-lg);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
     }
     .qcs-v1-reject-btn {
-    min-width: 120px;
-    min-height: 64px;
-    padding: var(--space-md) var(--space-lg);
-    font-size: clamp(14px, 2.5vw, 18px);
+    min-width: 100px;
+    min-height: 44px;
+    padding: var(--space-sm) var(--space-md);
+    font-size: 13px;
     font-weight: 700;
-    background: var(--b3);
-    border: 2px solid var(--b5);
-    color: var(--d);
-    border-radius: var(--radius);
+    font-family: 'Inconsolata', monospace;
+    letter-spacing: 1px;
+    background: transparent;
+    border: 1px solid var(--b2);
+    color: var(--d2);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 2px;
+    transition: all 0.15s;
     }
-    .qcs-v1-reject-btn:hover { background: var(--b4); border-color: var(--w); color: var(--w); }
-    .qcs-v1-reject-btn .qi { font-size: 1.2em; }
+    .qcs-v1-reject-btn:hover { border-color: var(--w); color: var(--w); }
+    .qcs-v1-reject-btn .qi { font-size: 1.1em; }
     .qcs-v1-summary {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-sm);
     align-items: center;
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-md);
     min-height: 36px;
     }
     .qcs-v1-sum-pill {
@@ -1681,25 +1848,29 @@
     align-items: center;
     gap: 4px;
     padding: 4px 10px;
-    background: var(--b3);
-    border-radius: var(--radius);
-    font-size: 14px;
+    background: var(--s1);
+    border: 1px solid var(--b1);
+    font-size: 13px;
+    font-family: 'Inconsolata', monospace;
     }
-    .qcs-v1-sum-pill .n { font-weight: 800; color: var(--w); }
-    .qcs-v1-sum-pill .l { color: var(--d3); }
+    .qcs-v1-sum-pill .n { font-weight: 700; color: var(--g); }
+    .qcs-v1-sum-pill .l { color: var(--d3); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
     .qcs-v1-log {
     flex: 1;
-    min-height: 120px;
-    font-size: 14px;
+    min-height: 100px;
+    font-size: 13px;
     color: var(--d2);
+    font-family: 'Inconsolata', monospace;
+    padding-top: var(--space-xs);
     }
     .qcs-v1-entry {
     display: flex;
     gap: var(--space-md);
     padding: var(--space-xs) 0;
     border-bottom: 1px solid var(--b2);
+    font-size: 13px;
     }
-    .qcs-v1-entry .t { color: var(--d3); min-width: 64px; }
+    .qcs-v1-entry .t { color: var(--d3); min-width: 56px; font-size: 11px; }
     .qcs-v1-entry .type { font-weight: 700; color: var(--d); }
     .qcs-v1-entry .job { color: var(--d2); }
 

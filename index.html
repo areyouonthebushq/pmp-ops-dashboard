@@ -90,6 +90,9 @@
             <span id="launcherLastLabel">Last: —</span>
             <button type="button" class="btn-open" id="launcherLastOpen" onclick="openLastLauncherChoice()">OPEN</button>
         </div>
+        <div class="launcher-signout-row">
+            <button type="button" class="btn-signout" onclick="signOutFully()">SIGN OUT</button>
+        </div>
         <div id="localModeBanner" class="local-mode-banner" style="display:none;" role="status">Local mode — Supabase unavailable. Data not synced.</div>
         <div id="launcherNoRole" class="local-mode-banner" style="display:none;" role="status">No role assigned. Contact an admin.</div>
         </div>
@@ -140,7 +143,7 @@
         <button class="bar-btn" onclick="enterTV()">⬛ TV</button>
         <button class="bar-btn" onclick="openQCStation()" title="QC Station — rapid reject logging" style="display:none">QC</button>
         <button id="exportBtn" class="bar-btn" onclick="exportCSV()">↓ CSV</button>
-        <button id="backupBtn" class="bar-btn" onclick="exportBackup()" title="Export full operational backup (JSON)">💾 BACKUP</button>
+        <button id="backupBtn" class="bar-btn" onclick="exportBackup()" title="Export full operational backup (JSON)" style="display:none">💾 BACKUP</button>
         <button class="bar-btn warn" onclick="doLogout()">EXIT</button>
         </div>
     </div>
@@ -297,15 +300,17 @@
     <div class="qcs-v1 station-inner">
         <header class="qcs-v1-header station-header">
             <span class="qcs-v1-title station-name warn">QC STATION</span>
-            <button type="button" class="qcs-v1-back station-back" onclick="exitQCStation()">← BACK</button>
+            <button type="button" class="station-back" onclick="exitQCStation()">← BACK</button>
         </header>
+        <div class="qcs-v1-sec station-sec">CURRENT JOB</div>
         <div class="qcs-v1-current" id="qcStationCurrent"></div>
-        <div class="qcs-v1-summary-label">TODAY</div>
+        <div class="qcs-v1-sec station-sec">TODAY</div>
         <div class="qcs-v1-summary" id="qcStationSummary"></div>
+        <div class="qcs-v1-sec station-sec">SELECT JOB</div>
         <div class="qcs-v1-jobs" id="qcStationJobs"></div>
-        <div class="qcs-v1-reject-label">LOG REJECT</div>
+        <div class="qcs-v1-sec station-sec">LOG REJECT</div>
         <div class="qcs-v1-btns" id="qcStationRejectBtns"></div>
-        <div class="qcs-v1-log-label">RECENT</div>
+        <div class="qcs-v1-sec station-sec">RECENT</div>
         <div class="qcs-v1-log" id="qcStationLog"></div>
     </div>
     </div>
@@ -637,6 +642,31 @@
         <button class="btn ghost" onclick="closeConfirm()">CANCEL</button>
         <button class="btn del" id="confOk">CONFIRM</button>
         </div>
+    </div>
+    </div>
+
+    <!-- ASSETS DETAIL — editable asset checklist (triggered from Assets on press cards or floor table) -->
+    <div class="assets-overlay" id="assetsOverlay" onclick="if(event.target===this)closeAssetsOverlay()">
+    <div class="assets-overlay-box" onclick="event.stopPropagation()">
+        <button type="button" class="assets-overlay-close" onclick="closeAssetsOverlay()" aria-label="Close">✕</button>
+        <div class="assets-overlay-title" id="assetsOverlayTitle"></div>
+        <div class="assets-overlay-hint">Tap to mark received · Expand for details · N/A if not applicable</div>
+        <div class="assets-overlay-list" id="assetsOverlayList"></div>
+        <div class="assets-overlay-actions">
+            <button type="button" class="btn go" onclick="saveAssetsOverlay()">SAVE & CLOSE</button>
+            <button type="button" class="btn ghost" onclick="closeAssetsOverlay()">CANCEL</button>
+        </div>
+    </div>
+    </div>
+
+    <!-- PROGRESS DETAIL — job progress breakdown (triggered from Progress on press cards or floor table) -->
+    <div class="progress-detail-overlay" id="progressDetailOverlay" onclick="if(event.target===this)closeProgressDetail()">
+    <div class="progress-detail-box" onclick="event.stopPropagation()">
+        <button type="button" class="progress-detail-close" onclick="closeProgressDetail()" aria-label="Close">✕</button>
+        <div class="progress-detail-title" id="progressDetailTitle"></div>
+        <div class="progress-detail-pct" id="progressDetailPct"></div>
+        <div class="progress-detail-bar-wrap" id="progressDetailBar"></div>
+        <div class="progress-detail-legend" id="progressDetailLegend"></div>
     </div>
     </div>
 

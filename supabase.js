@@ -308,8 +308,8 @@
     async getAuditLog(opts = {}) {
       const client = getClient();
       let q = client
-        .from('audit_log')
-        .select('id, table_name, entity_id, action, changed_by, occurred_at, changed_fields, old_values, new_values')
+        .from('audit_log_with_actor')
+        .select('id, table_name, entity_id, action, changed_by, changed_by_email, changed_by_display_name, occurred_at, changed_fields, old_values, new_values')
         .order('occurred_at', { ascending: false });
       if (opts.limit != null) q = q.limit(Math.min(Math.max(1, opts.limit), 500));
       if (opts.table_name) q = q.eq('table_name', opts.table_name);

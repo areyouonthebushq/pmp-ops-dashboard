@@ -846,6 +846,142 @@
     return `<div class="dl-bar-pressed" style="width:${pressedPct}%"></div><div class="dl-bar-qc" style="width:${qcPassedPct}%"></div>`;
     }
 
+    /** Progress detail overlay: open for job, show % complete and segmented bar (rejected / qc / pending / remaining). */
+    function openProgressDetail(jobId) {
+    const job = S.jobs.find(j => j.id === jobId);
+    if (!job) return;
+    const el = document.getElementById('progressDetailOverlay');
+    if (!el) return;
+    const p = getJobProgress(job);
+    const ordered = p.ordered;
+    const completePct = ordered ? Math.round((p.qcPassed / ordered) * 100) : 0;
+    const rejectedPct = ordered ? (p.rejected / ordered) * 100 : 0;
+    const qcPct = ordered ? (p.qcPassed / ordered) * 100 : 0;
+    const pendingPct = ordered ? (p.pendingQC / ordered) * 100 : 0;
+    const remainingPct = ordered ? Math.max(0, (ordered - p.pressed) / ordered) * 100 : 100;
+
+    document.getElementById('progressDetailTitle').textContent = `${job.catalog || '—'} · ${job.artist || '—'}`;
+    document.getElementById('progressDetailPct').textContent = `${completePct}% COMPLETE`;
+    document.getElementById('progressDetailBar').innerHTML = [
+        remainingPct > 0 ? `<div class="pd-seg remaining" style="width:${remainingPct}%"></div>` : '',
+        pendingPct > 0 ? `<div class="pd-seg pressed" style="width:${pendingPct}%" title="Pending QC: ${p.pendingQC.toLocaleString()}"></div>` : '',
+        qcPct > 0 ? `<div class="pd-seg qc" style="width:${qcPct}%" title="QC passed: ${p.qcPassed.toLocaleString()}"></div>` : '',
+        rejectedPct > 0 ? `<div class="pd-seg rejected" style="width:${rejectedPct}%" title="Rejected: ${p.rejected.toLocaleString()}"></div>` : '',
+    ].filter(Boolean).join('') || '<div class="pd-seg remaining" style="width:100%"></div>';
+    const rPct = ordered ? Math.round((p.rejected / ordered) * 100) : 0;
+    const gPct = ordered ? Math.round((p.qcPassed / ordered) * 100) : 0;
+    const yPct = ordered ? Math.round((p.pendingQC / ordered) * 100) : 0;
+    const remPct = ordered ? Math.round(((ordered - p.pressed) / ordered) * 100) : 100;
+    document.getElementById('progressDetailLegend').innerHTML = [
+        `<span><span class="pd-dot pressed"></span> Pressed (pending QC): ${p.pendingQC.toLocaleString()} (${yPct}%)</span>`,
+        `<span><span class="pd-dot qc"></span> QC passed: ${p.qcPassed.toLocaleString()} (${gPct}%)</span>`,
+        `<span><span class="pd-dot rejected"></span> Rejected: ${p.rejected.toLocaleString()} (${rPct}%)</span>`,
+        `<span><span class="pd-dot remaining"></span> Remaining: ${(ordered - p.pressed).toLocaleString()} (${remPct}%)</span>`,
+    ].join('');
+    el.classList.add('on');
+    }
+    function closeProgressDetail() {
+    const el = document.getElementById('progressDetailOverlay');
+    if (el) el.classList.remove('on');
+    }
+
+    /** Assets overlay: editable checklist; syncs to job on SAVE. */
+    let assetsOverlayState = null;
+    function openAssetsOverlay(jobId) {
+    const job = S.jobs.find(j => j.id === jobId);
+    if (!job) return;
+    assetsOverlayState = { jobId, data: JSON.parse(JSON.stringify(job.assets || {})) };
+    document.getElementById('assetsOverlayTitle').textContent = `${job.catalog || '—'} · ${job.artist || '—'}`;
+    renderAssetsOverlay();
+    document.getElementById('assetsOverlay').classList.add('on');
+    }
+    function closeAssetsOverlay() {
+    assetsOverlayState = null;
+    const el = document.getElementById('assetsOverlay');
+    if (el) el.classList.remove('on');
+    }
+    function renderAssetsOverlay() {
+    if (!assetsOverlayState) return;
+    const data = assetsOverlayState.data;
+    const received = ASSET_DEFS.filter(a => data[a.key]?.received).length;
+    const na = ASSET_DEFS.filter(a => data[a.key]?.na).length;
+    const remaining = ASSET_DEFS.length - received - na;
+    const allDone = remaining === 0;
+    let summaryHTML = `<div class="asset-summary">
+        <span class="as-received"><span class="as-num">${received}</span> received</span>
+        <span class="as-na"><span class="as-num">${na}</span> N/A</span>
+        <span class="as-remaining"><span class="as-num">${remaining}</span> remaining</span>
+        ${allDone ? '<span class="as-complete">✓ ALL ASSETS READY</span>' : ''}
+    </div>`;
+    const listEl = document.getElementById('assetsOverlayList');
+    if (!listEl) return;
+    listEl.innerHTML = summaryHTML + ASSET_DEFS.map(a => {
+        const d = data[a.key] || { received: false, date: '', person: '', note: '', na: false };
+        return `
+        <div>
+            <div class="asset-row ${d.received ? 'got' : ''} ${d.na ? 'na' : ''}"
+                onclick="${d.na ? '' : "toggleAssetsOverlayReceived('" + a.key + "')"}">
+            <div class="acheck">${d.received ? '✓' : ''}</div>
+            <div class="aname">${a.label}</div>
+            <div class="adate">${d.date || ''}</div>
+            <div style="display:flex;gap: var(--space-sm);align-items:center">
+                <div class="awho">${d.person || ''}</div>
+                <button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayNA('${a.key}')">${d.na ? 'RESTORE' : 'N/A'}</button>
+                ${d.received ? `<button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayDetail('${a.key}')">▾</button>` : ''}
+            </div>
+            </div>
+            <div class="asset-detail" id="ado-${a.key}">
+            <div>
+                <div class="adl">DATE RECEIVED</div>
+                <input type="date" value="${d.date || ''}" onchange="updateAssetsOverlay('${a.key}','date',this.value)">
+            </div>
+            <div>
+                <div class="adl">RECEIVED BY</div>
+                <input type="text" value="${escapeHtml(d.person || '')}" placeholder="Name" onchange="updateAssetsOverlay('${a.key}','person',this.value)">
+            </div>
+            <div style="grid-column:1/-1">
+                <div class="adl">NOTE</div>
+                <input type="text" value="${escapeHtml(d.note || '')}" placeholder="Note…" onchange="updateAssetsOverlay('${a.key}','note',this.value)">
+            </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+    }
+    function toggleAssetsOverlayReceived(key) {
+    if (!assetsOverlayState) return;
+    const d = assetsOverlayState.data[key] || { received: false, date: '', person: '', na: false, note: '' };
+    assetsOverlayState.data[key] = { ...d, received: !d.received, na: d.na ? false : d.na };
+    if (assetsOverlayState.data[key].received && !assetsOverlayState.data[key].date)
+        assetsOverlayState.data[key].date = new Date().toISOString().split('T')[0];
+    renderAssetsOverlay();
+    }
+    function toggleAssetsOverlayNA(key) {
+    if (!assetsOverlayState) return;
+    const d = assetsOverlayState.data[key] || { received: false, date: '', person: '', na: false, note: '' };
+    assetsOverlayState.data[key] = { ...d, na: !d.na, received: d.na ? d.received : false };
+    renderAssetsOverlay();
+    }
+    function toggleAssetsOverlayDetail(key) {
+    const el = document.getElementById('ado-' + key);
+    if (el) el.classList.toggle('open');
+    }
+    function updateAssetsOverlay(key, field, val) {
+    if (!assetsOverlayState) return;
+    if (!assetsOverlayState.data[key]) assetsOverlayState.data[key] = { received: false, date: '', person: '', na: false, note: '' };
+    assetsOverlayState.data[key][field] = val;
+    }
+    function saveAssetsOverlay() {
+    if (!assetsOverlayState) return;
+    const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
+    if (!job) { closeAssetsOverlay(); return; }
+    job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+    Storage.saveJob(job);
+    closeAssetsOverlay();
+    renderAll();
+    if (typeof toast === 'function') toast('ASSETS SAVED');
+    }
+
     // Link QC reject to production progress: 1 defect log = 1 rejected unit when possible.
     // Keeps displayed rejected totals aligned with QC log without breaking progress rules.
     function tryAddQCRejectToProgress(jobId) {
@@ -1061,12 +1197,14 @@
 
     function toggleLauncherPressPicker() {
     const el = document.getElementById('launcherPressPicker');
-    if (el) el.classList.toggle('on');
+    if (!el) return;
+    el.classList.toggle('on');
+    el.style.display = el.classList.contains('on') ? 'flex' : 'none';
     }
 
     function hideLauncherPressPicker() {
     const el = document.getElementById('launcherPressPicker');
-    if (el) el.classList.remove('on');
+    if (el) { el.classList.remove('on'); el.style.display = 'none'; }
     }
 
     function openLastLauncherChoice() {
@@ -1349,11 +1487,9 @@
     window.addEventListener('popstate', () => {
     if (document.body.classList.contains('tv')) {
         exitTV();
-        return;
     }
-    if (document.getElementById('app').style.display === 'block' || isStationShellVisible()) {
-        doLogout();
-    }
+    // Do not reset to station-select on popstate: switching tabs / refocusing can fire popstate
+    // on some browsers and would incorrectly send the user back to the launcher.
     });
 
     // ============================================================
@@ -1509,7 +1645,7 @@
         emptyEl.style.display = 'none';
         bodyEl.innerHTML = rows.map(r => {
         const when = r.occurred_at ? new Date(r.occurred_at).toLocaleString() : '—';
-        const by = r.changed_by ? (r.changed_by).slice(0, 8) + '…' : '—';
+        const by = (r.changed_by_display_name || r.changed_by_email || (r.changed_by ? (r.changed_by).slice(0, 8) + '…' : '')).trim() || '—';
         const fields = (r.changed_fields && r.changed_fields.length) ? r.changed_fields.join(', ') : '—';
         return `<tr><td>${when}</td><td>${escapeHtml(r.table_name)}</td><td>${escapeHtml(String(r.entity_id))}</td><td>${escapeHtml(r.action)}</td><td>${escapeHtml(by)}</td><td>${escapeHtml(fields)}</td></tr>`;
         }).join('');
@@ -1627,8 +1763,8 @@
         </div>
     </td>
     <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
-    <td>${ahHTML(j)}</td>
-    <td class="td-progress">
+    <td class="assets-tap" onclick="openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
+    <td class="td-progress progress-tap" onclick="openProgressDetail('${j.id}')" title="View progress breakdown">
         <div class="progress-main">${prog.main}</div>
         <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
         <div class="progress-sub">${prog.sub}</div>
@@ -1669,13 +1805,13 @@
             <div class="pc-due ${dueClass(job.due)}">${dueLabel(job.due)}</div>
             <div class="pc-job-hint">${hint}</div>
         </div>
-        <div class="pc-progress">
+        <div class="pc-progress" onclick="event.stopPropagation(); openProgressDetail('${job.id}')" style="cursor:pointer" title="View progress breakdown">
             <div class="pc-progress-label">PROGRESS <span class="pc-progress-num">${prog.main}</span></div>
             <div class="pc-progress-bar-outer dl-bar pc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
             <div class="pc-progress-sub">${prog.sub}</div>
             ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
         </div>
-        <div class="pc-assets pc-assets-demoted">
+        <div class="pc-assets pc-assets-demoted" onclick="event.stopPropagation(); openAssetsOverlay('${job.id}')" style="cursor:pointer" title="View and edit assets">
             <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
             <div class="abar abar-thin">${segs}</div>
         </div>
@@ -2363,8 +2499,8 @@
             <td>${statusPill(j.status)}</td>
             <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
             <td style="color:var(--d3);font-size:12px">${j.press || '—'}</td>
-            <td>${ahHTML(j)}</td>
-            <td class="td-progress">
+            <td class="assets-tap" onclick="event.stopPropagation(); openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
+            <td class="td-progress progress-tap" onclick="event.stopPropagation(); openProgressDetail('${j.id}')" title="View progress breakdown">
             <div class="progress-main">${prog.main}</div>
             <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
             <div class="progress-sub">${prog.sub}</div>
@@ -2615,8 +2751,30 @@
     document.body.classList.add('tv');
     if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('tvParty') === '1') document.body.classList.add('tv-party');
     renderTV();
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     }
-    function exitTV() { document.body.classList.remove('tv'); document.body.classList.remove('tv-party'); }
+    function exitTV() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }
+    document.body.classList.remove('tv');
+    document.body.classList.remove('tv-party');
+    }
+    document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && document.body.classList.contains('tv')) {
+        document.body.classList.remove('tv');
+        document.body.classList.remove('tv-party');
+    }
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && document.body.classList.contains('tv')) {
+        document.body.classList.remove('tv');
+        document.body.classList.remove('tv-party');
+    }
+    });
     function toggleTVParty() {
     document.body.classList.toggle('tv-party');
     try { sessionStorage.setItem('tvParty', document.body.classList.contains('tv-party') ? '1' : '0'); } catch (e) {}
@@ -3133,13 +3291,18 @@
     // CSV EXPORT
     // ============================================================
     function exportCSV() {
-    const h = ['CATALOG','ARTIST','ALBUM','FORMAT','COLOR','WEIGHT','QTY','OVERAGE_10PCT','STATUS','PRESS','LOCATION','DUE','INVOICE','CLIENT','SPECIALTY','NOTES'];
-    const rows = S.jobs.map(j => [
-        j.catalog, j.artist, j.album, j.format, j.color, j.weight, j.qty,
-        j.qty ? Math.ceil(parseInt(j.qty) * 1.1) : '',
-        j.status, j.press, j.location, j.due, j.invoice, j.client, j.specialty,
-        (j.notes || '').replace(/"/g, '""')
-    ].map(v => `"${v || ''}"`).join(','));
+    const h = ['CATALOG','ARTIST','ALBUM','FORMAT','COLOR','WEIGHT','QTY','OVERAGE_10PCT','STATUS','PRESS','LOCATION','DUE','PRESSED','QC_PASSED','REJECTED','INVOICE','CLIENT','SPECIALTY','NOTES'];
+    const rows = S.jobs.map(j => {
+        const p = getJobProgress(j);
+        return [
+            j.catalog, j.artist, j.album, j.format, j.color, j.weight, j.qty,
+            j.qty ? Math.ceil(parseInt(j.qty) * 1.1) : '',
+            j.status, j.press, j.location, j.due,
+            p.pressed, p.qcPassed, p.rejected,
+            j.invoice, j.client, j.specialty,
+            (j.notes || '').replace(/"/g, '""')
+        ].map(v => `"${v || ''}"`).join(',');
+    });
     const csv = [h.join(','), ...rows].join('\n');
     const a = document.createElement('a');
     a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
