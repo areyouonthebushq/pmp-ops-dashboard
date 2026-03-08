@@ -342,10 +342,31 @@ function renderPressStationShell() {
   const noteEl = document.getElementById('psStationNote');
   if (noteEl) noteEl.value = job.notes || '';
 
-  psNumpadValue = '0';
-  requestAnimationFrame(() => psNumpadUpdateDisplay());
-
   logEl.innerHTML = '';
+  requestAnimationFrame(() => {
+    if (typeof psNumpadUpdateDisplay === 'function') psNumpadUpdateDisplay();
+  });
+}
+
+/** Update only the progress numbers on the press station without rebuilding the numpad. */
+function updatePressStationProgress() {
+  const job = getStationJob();
+  if (!job) return;
+  const prog = getJobProgress(job);
+  const ordered = prog.ordered;
+  const pressed = prog.pressed;
+  const remaining = Math.max(0, ordered - pressed);
+  const pct = ordered ? Math.min(100, (pressed / ordered) * 100) : 0;
+
+  const statBlock = document.querySelector('.ps-v1-stat-block');
+  if (!statBlock) return;
+  const nums = statBlock.querySelectorAll('.ps-v1-stat .num');
+  if (nums[0]) nums[0].textContent = ordered.toLocaleString();
+  if (nums[1]) nums[1].textContent = pressed.toLocaleString();
+  const remainEl = statBlock.querySelector('.ps-v1-remaining');
+  if (remainEl) remainEl.textContent = `${remaining.toLocaleString()} REMAINING`;
+  const barFill = statBlock.querySelector('.ps-v1-bar-fill');
+  if (barFill) barFill.style.width = `${pct}%`;
 }
 
 function pressStationLogPressed(qty) {

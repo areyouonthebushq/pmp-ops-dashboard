@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { getJobProgress, jobFieldsHash, findDuplicateJob, assetHealth, nextStatus, STATUS_ORDER } from '../lib/core.js';
+import '../core.js';
+
+const { getJobProgress, jobFieldsHash, findDuplicateJob, assetHealth, nextStatus, STATUS_ORDER } = globalThis.__PMP_CORE__;
 
 describe('getJobProgress', () => {
   it('returns zeros for empty job', () => {

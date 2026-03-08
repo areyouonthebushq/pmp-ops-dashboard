@@ -217,10 +217,11 @@ function findDuplicateJob(jobs, catalog, artist, album, excludeId) {
   });
 }
 
-function assetHealth(job) {
-  const applicable = ASSET_DEFS.filter(a => !job.assets || job.assets[a.key]?.na !== true);
+function assetHealth(job, assetDefs) {
+  const defs = assetDefs != null ? assetDefs : ASSET_DEFS;
+  const applicable = defs.filter(a => !job.assets || job.assets[a.key]?.na !== true);
   const done = applicable.filter(a => job.assets && job.assets[a.key]?.received);
-  return {done:done.length, total:applicable.length, pct:applicable.length ? done.length / applicable.length : 0};
+  return { done: done.length, total: applicable.length, pct: applicable.length ? done.length / applicable.length : 0 };
 }
 
 function ahHTML(job) {
@@ -356,4 +357,17 @@ function parseCSVLines(text) {
   row.push(field);
   if (row.some(f => f.trim())) lines.push(row);
   return lines;
+}
+
+// Expose for Vitest (no-op in browser). Single source of truth: this file.
+if (typeof globalThis !== 'undefined' && typeof document === 'undefined') {
+  globalThis.__PMP_CORE__ = {
+    getJobProgress,
+    jobFieldsHash,
+    findDuplicateJob,
+    assetHealth,
+    STATUS_ORDER,
+    nextStatus,
+    ASSET_DEFS,
+  };
 }

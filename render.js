@@ -139,11 +139,18 @@ function buildPressCardHTML(p, linkTo, showControls) {
 function renderAll() {
   const ctx = getStationContext();
   if (ctx && isStationType('press')) {
+    if (typeof psNumpadValue !== 'undefined' && psNumpadValue !== '0') {
+      if (typeof updatePressStationProgress === 'function') updatePressStationProgress();
+      return;
+    }
     renderPressStationShell();
     return;
   }
   if (ctx && isStationType('floor_manager')) {
     renderFloorManagerShell();
+    return;
+  }
+  if (typeof currentPage !== 'undefined' && currentPage === 'qc' && typeof qcNumpadValue !== 'undefined' && qcNumpadValue !== '0') {
     return;
   }
   renderAdminShell();
@@ -1001,6 +1008,9 @@ function renderQC() {
   if (!logEl) return;
   if (!viewLog.length) {
     logEl.innerHTML = `<div class="empty">No rejects logged ${isToday ? 'today' : 'on this date'}</div>`;
+    requestAnimationFrame(() => {
+      if (typeof qcNumpadUpdateDisplay === 'function') qcNumpadUpdateDisplay();
+    });
     return;
   }
   logEl.innerHTML = viewLog.map(e => `
@@ -1010,6 +1020,9 @@ function renderQC() {
     <span class="qjob">${e.job}</span>
     </div>
   `).join('');
+  requestAnimationFrame(() => {
+    if (typeof qcNumpadUpdateDisplay === 'function') qcNumpadUpdateDisplay();
+  });
 }
 
 // ============================================================

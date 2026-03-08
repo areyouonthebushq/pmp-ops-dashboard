@@ -263,6 +263,10 @@ function startRealtime() {
         S.dataChangedWhileEditing = true;
         console.log('[PMP] Realtime event → showDataChangedNotice');
         showDataChangedNotice();
+      } else if ((typeof psNumpadValue !== 'undefined' && psNumpadValue !== '0') ||
+                 (typeof qcNumpadValue !== 'undefined' && qcNumpadValue !== '0')) {
+        console.log('[PMP] Realtime event → loadAll (numpad active, renderAll will skip re-render)');
+        loadAll();
       } else {
         console.log('[PMP] Realtime event → loadAll');
         loadAll();
