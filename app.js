@@ -1846,7 +1846,6 @@
         <div class="progress-sub">${prog.sub}</div>
     </td>
     <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
-    <td><button class="open-btn" onclick="openPanel('${j.id}')">${(opts && opts.openBtnLabel) || 'OPEN →'}</button></td>
     </tr>`;
     }
 
@@ -2033,7 +2032,7 @@
     if (!job) return;
     const result = logJobProgress(job.id, 'pressed', qty, 'Press Station');
     if (result.ok) {
-        Storage.saveJob(job); // persist updated progressLog (Supabase or local)
+        // Progress is persisted via Storage.logProgress (progress_log table). No job upsert needed for count.
         renderPressStationShell();
         toast(`+${qty} logged`);
     } else {
@@ -2175,7 +2174,7 @@
     pressEl.innerHTML = S.presses.map(p => buildPressCardHTML(p, 'floorCard', false)).join('');
 
     if (!jobs.length) {
-        bodyEl.innerHTML = `<tr><td colspan="9" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
+        bodyEl.innerHTML = `<tr><td colspan="8" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
     bodyEl.innerHTML = jobs.map(j => floorTableRowHTML(j, { openBtnLabel: 'EDIT' })).join('');
@@ -2267,7 +2266,7 @@
     if (countEl) countEl.textContent = q ? `${jobs.length} of ${total}` : `${total} jobs`;
 
     if (!jobs.length) {
-        el.innerHTML = `<tr><td colspan="9" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
+        el.innerHTML = `<tr><td colspan="8" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
     el.innerHTML = jobs.map(j => floorTableRowHTML(j, { statusCellId: true })).join('');
@@ -2721,6 +2720,27 @@
     renderQC();
     }
 
+    /** Log QC passed (manual qty). Uses selected job. Persists via progress_log only. */
+    function logQCPassed() {
+    if (!getStationEditPermissions().canLogQC) return;
+    const jobId = S.qcSelectedJob || (S.jobs.filter(j => ['pressing','assembly'].includes(j.status))[0]?.id);
+    if (!jobId) {
+        toastError('Select a job first');
+        return;
+    }
+    const input = document.getElementById('qcPassedQty');
+    const qty = input ? Math.max(1, parseInt(input.value, 10) || 1) : 1;
+    const job = S.jobs.find(j => j.id === jobId);
+    const result = logJobProgress(jobId, 'qc_passed', qty, 'QC');
+    if (result.ok) {
+        if (input) input.value = '1';
+        renderQC();
+        toast(`${qty} QC passed → ${job ? (job.catalog || job.artist || '—') : ''}`);
+    } else {
+        toastError(result.error || 'Log failed');
+    }
+    }
+
     // Get all unique dates in the QC log, sorted newest first
     function getQCDates() {
     const dates = [...new Set(S.qcLog.map(e => e.date))];
@@ -2774,7 +2794,7 @@
         });
         const selectedId = S.qcSelectedJob || '';
         picker.innerHTML = `
-        <div class="qc-job-picker-label">SELECT JOB FOR THIS REJECT</div>
+        <div class="qc-job-picker-label">SELECT JOB</div>
         <select class="qc-job-select" onchange="selectQCJob(this.value || null)">
         <option value="">— Select job —</option>
         ${allJobs.map(j => `
@@ -2782,6 +2802,13 @@
         `).join('')}
         </select>
         `;
+    }
+
+    // QC passed block — show selected job for primary action
+    const passedJobLabel = document.getElementById('qcPassedJobLabel');
+    if (passedJobLabel) {
+        const sel = S.qcSelectedJob ? S.jobs.find(j => j.id === S.qcSelectedJob) : null;
+        passedJobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
     }
 
     // Summary — shows viewed date's data

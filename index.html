@@ -176,7 +176,7 @@
         <table>
             <thead><tr>
             <th>CATALOG</th><th>ARTIST / ALBUM</th><th>FORMAT</th>
-            <th>STATUS</th><th>DUE</th><th>ASSETS</th><th>PROGRESS</th><th>LOCATION</th><th></th>
+            <th>STATUS</th><th>DUE</th><th>ASSETS</th><th>PROGRESS</th><th>LOCATION</th>
             </tr></thead>
             <tbody id="floorBody"></tbody>
         </table>
@@ -229,10 +229,16 @@
     <!-- ======= QC PAGE ======= -->
     <div class="pg" id="pg-qc">
         <div class="sec">SELECT JOB</div>
-        <div class="qc-job-picker" id="qcJobPicker">
-        <div class="qc-job-picker-label">SELECT JOB FOR THIS REJECT</div>
+        <div class="qc-job-picker" id="qcJobPicker"></div>
+        <div class="sec qc-primary-sec">LOG QC PASSED</div>
+        <div class="qc-passed-block" id="qcPassedBlock">
+        <div class="qc-passed-job" id="qcPassedJobLabel">Select a job above</div>
+        <div class="qc-passed-row">
+            <input type="number" id="qcPassedQty" class="qc-passed-input" min="1" step="1" placeholder="Qty" value="1" title="Number passed">
+            <button type="button" class="qc-btn qc-btn-primary" onclick="logQCPassed()">LOG PASSED</button>
         </div>
-        <div class="sec">LOG REJECT</div>
+        </div>
+        <div class="sec qc-secondary-sec">LOG REJECT</div>
         <div class="qc-btns">
         <button class="qc-btn" onclick="logQC('FLASH')"><span class="qc-key">1</span><span class="qi">⚡</span>FLASH</button>
         <button class="qc-btn" onclick="logQC('BLEMISH')"><span class="qc-key">2</span><span class="qi">◉</span>BLEMISH</button>
