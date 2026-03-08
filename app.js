@@ -176,6 +176,7 @@
     floorSortDir: 'asc',
     jobsSortBy: 'catalog',
     jobsSortDir: 'asc',
+    floorStatFilter: null,  // 'presses' | 'active' | 'queued' | 'overdue' | 'total' — click stat to filter Active Orders
     };
     let saveTimer = null;
 
@@ -1817,25 +1818,36 @@
     // SHARED DATA & RENDER HELPERS — single source for floor/stats/press
     // All shells (Admin, Floor Manager, Press, QC) use these; no forked logic.
     // ============================================================
-    /** Returns the five floor stats (presses, active, queued, overdue, total). */
+    /** Returns the five floor stats (presses, active, queued, overdue, total). Each has key for click-to-filter. */
     function getFloorStats() {
     const active = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
     const overdue = S.jobs.filter(j => j.due && j.status !== 'done' && new Date(j.due) < Date.now());
     const online = S.presses.filter(p => p.status === 'online').length;
+    const onPress = S.presses.filter(p => p.job_id).map(p => p.job_id);
     return [
-        { v: `${online}/${S.presses.length}`, l: 'PRESSES', s: 'online', c: online < S.presses.length ? 'warn' : '' },
-        { v: active.length, l: 'ACTIVE', s: 'pressing/assembly', c: '' },
-        { v: S.jobs.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
-        { v: overdue.length, l: 'OVERDUE', s: 'past due date', c: overdue.length ? 'red' : '' },
-        { v: S.jobs.filter(j => j.status !== 'done').length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
+        { key: 'presses', v: `${online}/${S.presses.length}`, l: 'PRESSES', s: 'online', c: online < S.presses.length ? 'warn' : '' },
+        { key: 'active', v: active.length, l: 'ACTIVE', s: 'pressing/assembly', c: '' },
+        { key: 'queued', v: S.jobs.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
+        { key: 'overdue', v: overdue.length, l: 'OVERDUE', s: 'past due date', c: overdue.length ? 'red' : '' },
+        { key: 'total', v: S.jobs.filter(j => j.status !== 'done').length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
     ];
     }
 
-    /** Active jobs (not done), optionally filtered by query. Returns { jobs, total }. */
-    function getFloorJobs(query) {
+    /** Active jobs (not done), optionally filtered by query and by stat (clicked stat). Returns { jobs, total }. */
+    function getFloorJobs(query, statFilter) {
     const q = (query || '').toLowerCase().trim();
     const total = S.jobs.filter(j => j.status !== 'done').length;
     let jobs = S.jobs.filter(j => j.status !== 'done');
+    if (statFilter === 'presses') {
+        const onPress = S.presses.filter(p => p.job_id).map(p => p.job_id);
+        jobs = jobs.filter(j => onPress.includes(j.id));
+    } else if (statFilter === 'active') {
+        jobs = jobs.filter(j => ['pressing','assembly'].includes(j.status));
+    } else if (statFilter === 'queued') {
+        jobs = jobs.filter(j => j.status === 'queue');
+    } else if (statFilter === 'overdue') {
+        jobs = jobs.filter(j => j.due && j.status !== 'done' && new Date(j.due) < Date.now());
+    }
     if (q) {
         jobs = jobs.filter(j =>
             (j.catalog || '').toLowerCase().includes(q) ||
@@ -1847,12 +1859,21 @@
     return { jobs, total };
     }
 
+    function setFloorStatFilter(key) {
+    if (key == null || key === '') S.floorStatFilter = null;
+    else S.floorStatFilter = S.floorStatFilter === key ? null : key;
+    renderStats();
+    renderFloor();
+    }
+
     const FLOOR_COLUMNS = [
         { key: 'catalog', label: 'CATALOG' },
         { key: 'artistAlbum', label: 'ARTIST / ALBUM' },
         { key: 'format', label: 'FORMAT' },
         { key: 'status', label: 'STATUS' },
         { key: 'due', label: 'DUE' },
+        { key: 'color', label: 'COLOR' },
+        { key: 'qty', label: 'QTY' },
     ];
     function getFloorSortValue(j, key) {
         if (key === 'catalog') return (j.catalog || '').toLowerCase();
@@ -1860,6 +1881,8 @@
         if (key === 'format') return (j.format || '').toLowerCase();
         if (key === 'status') return (j.status || '').toLowerCase();
         if (key === 'due') return (j.due || '') ? String(j.due) : '\uffff';
+        if (key === 'color') return (j.color || '').toLowerCase();
+        if (key === 'qty') return parseInt(j.qty, 10) || 0;
         return '';
     }
     function sortFloorJobs(jobs) {
@@ -1888,7 +1911,7 @@
         }).join('');
     }
 
-    /** One active-orders table row (lean: catalog, artist/album, format, status, due). Full details in job panel. */
+    /** One active-orders table row (catalog, artist/album, format, status, due, color, qty). Full details in job panel. */
     function floorTableRowHTML(j, opts) {
     const statusId = (opts && opts.statusCellId) ? ` id="st-${j.id}"` : '';
     return `
@@ -1905,6 +1928,8 @@
         </div>
     </td>
     <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
+    <td>${j.color ? `<span style="color:var(--d2)">${escapeHtml(j.color)}</span>` : '—'}</td>
+    <td>${j.qty ? parseInt(j.qty, 10).toLocaleString() : '—'}</td>
     </tr>`;
     }
 
@@ -2233,7 +2258,7 @@
     pressEl.innerHTML = S.presses.map(p => buildPressCardHTML(p, 'floorCard', false)).join('');
 
     if (!jobs.length) {
-        bodyEl.innerHTML = `<tr><td colspan="5" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
+        bodyEl.innerHTML = `<tr><td colspan="7" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
     bodyEl.innerHTML = jobs.map(j => floorTableRowHTML(j, { openBtnLabel: 'EDIT' })).join('');
@@ -2246,13 +2271,27 @@
     const el = document.getElementById('statsRow');
     if (!el) return;
     const items = getFloorStats();
-    el.innerHTML = items.map(i => `
-        <div class="stat">
+    const activeKey = S.floorStatFilter;
+    el.innerHTML = items.map(i => {
+        const isActive = activeKey === i.key;
+        return `<div class="stat stat-clickable ${isActive ? 'stat-active' : ''}" onclick="setFloorStatFilter('${i.key}')" title="Show jobs: ${i.s}">
         <div class="sv ${i.c}">${i.v}</div>
         <div class="sl">${i.l}</div>
         <div class="ss">${i.s}</div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
+    // Show "Showing: X [clear]" when a stat filter is active
+    const filterHint = document.getElementById('floorStatFilterHint');
+    if (filterHint) {
+        const label = { presses: 'On press', active: 'Active', queued: 'Queued', overdue: 'Overdue', total: 'Total open' }[activeKey];
+        if (activeKey && label) {
+            filterHint.innerHTML = `Showing: <strong>${label}</strong> <button type="button" class="floor-filter-clear" onclick="setFloorStatFilter(null)">clear</button>`;
+            filterHint.style.display = '';
+        } else {
+            filterHint.innerHTML = '';
+            filterHint.style.display = 'none';
+        }
+    }
     }
 
     // ============================================================
@@ -2320,10 +2359,11 @@
     const el = document.getElementById('floorBody');
     if (!el) return;
     const q = document.getElementById('floorSearch')?.value || '';
-    const { jobs: rawJobs, total } = getFloorJobs(q);
+    const { jobs: rawJobs, total } = getFloorJobs(q, S.floorStatFilter);
     const jobs = sortFloorJobs(rawJobs);
     const countEl = document.getElementById('floorCount');
-    if (countEl) countEl.textContent = q ? `${jobs.length} of ${total}` : `${total} jobs`;
+    const statFilterLabel = { presses: 'On press', active: 'Active', queued: 'Queued', overdue: 'Overdue', total: 'Total open' }[S.floorStatFilter] || '';
+    if (countEl) countEl.textContent = statFilterLabel && !q ? `${jobs.length} ${statFilterLabel.toLowerCase()}` : q ? `${jobs.length} of ${total}` : `${total} jobs`;
 
     ensureFloorSortColumn();
     const table = el.closest('table');
@@ -2333,7 +2373,7 @@
     }
 
     if (!jobs.length) {
-        el.innerHTML = `<tr><td colspan="5" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
+        el.innerHTML = `<tr><td colspan="7" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
     el.innerHTML = jobs.map(j => floorTableRowHTML(j, { statusCellId: true })).join('');
