@@ -2066,6 +2066,53 @@
     else doLogout();
     }
 
+    // Press Station numpad state and handlers (microwave-simple: big display, big buttons, one action)
+    let psNumpadValue = '0';
+
+    function psNumpadTap(digit) {
+    if (psNumpadValue === '0') psNumpadValue = digit;
+    else if (psNumpadValue.length < 5) psNumpadValue += digit;
+    psNumpadUpdateDisplay();
+    }
+
+    function psNumpadClear() {
+    psNumpadValue = '0';
+    psNumpadUpdateDisplay();
+    }
+
+    function psNumpadBack() {
+    psNumpadValue = psNumpadValue.length > 1 ? psNumpadValue.slice(0, -1) : '0';
+    psNumpadUpdateDisplay();
+    }
+
+    function psNumpadSet(n) {
+    psNumpadValue = String(n);
+    psNumpadUpdateDisplay();
+    }
+
+    function psNumpadUpdateDisplay() {
+    const el = document.getElementById('psNumpadDisplay');
+    if (el) {
+        const n = parseInt(psNumpadValue, 10) || 0;
+        el.textContent = n.toLocaleString();
+        el.classList.toggle('has-value', n > 0);
+    }
+    const btn = document.getElementById('psNumpadLog');
+    if (btn) {
+        const n = parseInt(psNumpadValue, 10) || 0;
+        btn.disabled = n === 0;
+        btn.textContent = n > 0 ? `LOG +${n.toLocaleString()} PRESSED` : 'LOG PRESSED';
+    }
+    }
+
+    function psNumpadSubmit() {
+    const n = parseInt(psNumpadValue, 10) || 0;
+    if (n < 1) return;
+    pressStationLogPressed(n);
+    psNumpadValue = '0';
+    psNumpadUpdateDisplay();
+    }
+
     function renderPressStationShell() {
     const press = getStationPress();
     const job = getStationJob();
@@ -2108,14 +2155,33 @@
         ${blocked.length ? `<div class="ps-v1-blocked">${blocked.join(' · ')}</div>` : ''}
     </div>
     ${remaining > 0 ? `
-    <div class="ps-v1-sec">LOG PRESSED</div>
-    <div class="ps-v1-log-btns">
-        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(10)">+10</button>
-        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(25)">+25</button>
-        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(50)">+50</button>
-        <button type="button" class="ps-v1-log-btn" onclick="pressStationLogPressed(100)">+100</button>
+<div class="ps-v1-sec">LOG PRESSED</div>
+<div class="ps-numpad">
+    <div class="ps-numpad-display" id="psNumpadDisplay">0</div>
+    <div class="ps-numpad-grid">
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('7')">7</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('8')">8</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('9')">9</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('4')">4</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('5')">5</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('6')">6</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('1')">1</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('2')">2</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('3')">3</button>
+        <button type="button" class="ps-numpad-btn ps-numpad-clear" onclick="psNumpadClear()">C</button>
+        <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('0')">0</button>
+        <button type="button" class="ps-numpad-btn ps-numpad-back" onclick="psNumpadBack()">←</button>
     </div>
-    ` : ''}
+    <div class="ps-numpad-presets">
+        <button type="button" class="ps-numpad-preset" onclick="psNumpadSet(25)">25</button>
+        <button type="button" class="ps-numpad-preset" onclick="psNumpadSet(50)">50</button>
+        <button type="button" class="ps-numpad-preset" onclick="psNumpadSet(100)">100</button>
+    </div>
+    <button type="button" class="ps-numpad-log" id="psNumpadLog" onclick="psNumpadSubmit()">
+        LOG PRESSED
+    </button>
+</div>
+` : ''}
     <div class="ps-v1-sec">CONTROLS</div>
     <div class="ps-v1-edit">
         <div class="ps-v1-edit-label">HOLD / NOTE</div>
@@ -2131,6 +2197,9 @@
     `;
     const noteEl = document.getElementById('psStationNote');
     if (noteEl) noteEl.value = job.notes || '';
+
+    psNumpadValue = '0';
+    requestAnimationFrame(() => psNumpadUpdateDisplay());
 
     logEl.innerHTML = '';
     }
