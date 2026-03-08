@@ -172,6 +172,10 @@
     dataChangedWhileEditing: false,
     offlineMode: false,
     lastLocalWriteAt: 0,
+    floorSortBy: 'catalog',
+    floorSortDir: 'asc',
+    jobsSortBy: 'catalog',
+    jobsSortDir: 'asc',
     };
     let saveTimer = null;
 
@@ -1821,6 +1825,50 @@
     return { jobs, total };
     }
 
+    const FLOOR_COLUMNS = [
+        { key: 'catalog', label: 'CATALOG' },
+        { key: 'artistAlbum', label: 'ARTIST / ALBUM' },
+        { key: 'format', label: 'FORMAT' },
+        { key: 'status', label: 'STATUS' },
+        { key: 'due', label: 'DUE' },
+        { key: 'assets', label: 'ASSETS' },
+        { key: 'progress', label: 'PROGRESS' },
+        { key: 'location', label: 'LOCATION' },
+    ];
+    function getFloorSortValue(j, key) {
+        if (key === 'catalog') return (j.catalog || '').toLowerCase();
+        if (key === 'artistAlbum') return ((j.artist || '') + ' ' + (j.album || '')).toLowerCase();
+        if (key === 'format') return (j.format || '').toLowerCase();
+        if (key === 'status') return (j.status || '').toLowerCase();
+        if (key === 'due') return (j.due || '') ? String(j.due) : '\uffff';
+        if (key === 'assets') return (assetHealth(j).done || 0);
+        if (key === 'progress') return getJobProgress(j).pressed || 0;
+        if (key === 'location') return (j.location || '').toLowerCase();
+        return '';
+    }
+    function sortFloorJobs(jobs) {
+        const by = S.floorSortBy;
+        const dir = S.floorSortDir === 'desc' ? -1 : 1;
+        return jobs.slice().sort((a, b) => {
+            const va = getFloorSortValue(a, by);
+            const vb = getFloorSortValue(b, by);
+            const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb), undefined, { numeric: true });
+            return dir * (cmp || 0);
+        });
+    }
+    function setFloorSort(key) {
+        if (S.floorSortBy === key) S.floorSortDir = S.floorSortDir === 'asc' ? 'desc' : 'asc';
+        else { S.floorSortBy = key; S.floorSortDir = 'asc'; }
+        renderFloor();
+    }
+    function floorTableHeaderHTML() {
+        return FLOOR_COLUMNS.map(c => {
+            const active = S.floorSortBy === c.key;
+            const arrow = active ? (S.floorSortDir === 'asc' ? ' ▲' : ' ▼') : '';
+            return `<th class="sortable-th ${active ? 'sort-' + S.floorSortDir : ''}" onclick="setFloorSort('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow}</th>`;
+        }).join('');
+    }
+
     /** One active-orders table row. Uses progressDisplay, dueClass, dueLabel, ahHTML, statusTapClass. */
     function floorTableRowHTML(j, opts) {
     const prog = progressDisplay(j);
@@ -2261,9 +2309,16 @@
     const el = document.getElementById('floorBody');
     if (!el) return;
     const q = document.getElementById('floorSearch')?.value || '';
-    const { jobs, total } = getFloorJobs(q);
+    const { jobs: rawJobs, total } = getFloorJobs(q);
+    const jobs = sortFloorJobs(rawJobs);
     const countEl = document.getElementById('floorCount');
     if (countEl) countEl.textContent = q ? `${jobs.length} of ${total}` : `${total} jobs`;
+
+    const table = el.closest('table');
+    if (table) {
+        const theadTr = table.querySelector('thead tr');
+        if (theadTr) theadTr.innerHTML = floorTableHeaderHTML();
+    }
 
     if (!jobs.length) {
         el.innerHTML = `<tr><td colspan="8" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
@@ -2522,6 +2577,61 @@
     // ============================================================
     // JOBS PAGE
     // ============================================================
+    const JOBS_COLUMNS = [
+        { key: 'catalog', label: 'CATALOG' },
+        { key: 'artist', label: 'ARTIST' },
+        { key: 'album', label: 'ALBUM' },
+        { key: 'format', label: 'FORMAT' },
+        { key: 'colorWt', label: 'COLOR / WT' },
+        { key: 'qty', label: 'QTY' },
+        { key: 'plus10', label: '+10%' },
+        { key: 'status', label: 'STATUS' },
+        { key: 'due', label: 'DUE' },
+        { key: 'press', label: 'PRESS' },
+        { key: 'assets', label: 'ASSETS' },
+        { key: 'progress', label: 'PROGRESS' },
+        { key: 'location', label: 'LOCATION' },
+    ];
+    function getJobsSortValue(j, key) {
+        if (key === 'catalog') return (j.catalog || '').toLowerCase();
+        if (key === 'artist') return (j.artist || '').toLowerCase();
+        if (key === 'album') return (j.album || '').toLowerCase();
+        if (key === 'format') return (j.format || '').toLowerCase();
+        if (key === 'colorWt') return ((j.color || '') + ' ' + (j.weight || '')).toLowerCase();
+        if (key === 'qty') return parseInt(j.qty, 10) || 0;
+        if (key === 'plus10') return j.qty ? Math.ceil(parseInt(j.qty, 10) * 1.1) : 0;
+        if (key === 'status') return (j.status || '').toLowerCase();
+        if (key === 'due') return (j.due || '') ? String(j.due) : '\uffff';
+        if (key === 'press') return (j.press || '').toLowerCase();
+        if (key === 'assets') return (assetHealth(j).done || 0);
+        if (key === 'progress') return getJobProgress(j).pressed || 0;
+        if (key === 'location') return (j.location || '').toLowerCase();
+        return '';
+    }
+    function sortJobsList(jobs) {
+        const by = S.jobsSortBy;
+        const dir = S.jobsSortDir === 'desc' ? -1 : 1;
+        return jobs.slice().sort((a, b) => {
+            const va = getJobsSortValue(a, by);
+            const vb = getJobsSortValue(b, by);
+            const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb), undefined, { numeric: true });
+            return dir * (cmp || 0);
+        });
+    }
+    function setJobsSort(key) {
+        if (S.jobsSortBy === key) S.jobsSortDir = S.jobsSortDir === 'asc' ? 'desc' : 'asc';
+        else { S.jobsSortBy = key; S.jobsSortDir = 'asc'; }
+        renderJobs();
+    }
+    function jobsTableHeaderHTML() {
+        const ths = JOBS_COLUMNS.map(c => {
+            const active = S.jobsSortBy === c.key;
+            const arrow = active ? (S.jobsSortDir === 'asc' ? ' ▲' : ' ▼') : '';
+            return `<th class="sortable-th ${active ? 'sort-' + S.jobsSortDir : ''}" onclick="setJobsSort('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow}</th>`;
+        }).join('');
+        return ths + '<th></th>';
+    }
+
     function renderJobs() {
     const filter = document.getElementById('jobFilter')?.value || '';
     const q = (document.getElementById('jobSearch')?.value || '').toLowerCase().trim();
@@ -2539,6 +2649,8 @@
         );
     }
 
+    jobs = sortJobsList(jobs);
+
     // Update count
     const countEl = document.getElementById('jobCount');
     if (countEl) {
@@ -2555,6 +2667,12 @@
         return;
     }
     if (empty) empty.style.display = 'none';
+
+    const jobsTable = document.getElementById('jobsTbl');
+    if (jobsTable) {
+        const theadTr = jobsTable.querySelector('thead tr');
+        if (theadTr) theadTr.innerHTML = jobsTableHeaderHTML();
+    }
 
     // Desktop table
     if (tbody) {
@@ -2689,17 +2807,15 @@
 
     function logQC(type) {
     if (!getStationEditPermissions().canLogQC) return;
+    if (!S.qcSelectedJob) {
+        toastError('Select a job first');
+        return;
+    }
+    const jobId = S.qcSelectedJob;
+    const j = S.jobs.find(x => x.id === jobId);
+    const job = j ? (j.catalog || j.artist || '—') : '—';
     const time = new Date().toLocaleTimeString('en-US', {hour12:false});
     const date = new Date().toDateString();
-
-    // Resolve job for this reject: selected job or first pressing/assembly job
-    const active = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
-    const jobId = S.qcSelectedJob || (active.length ? active[0].id : null);
-    let job = '—';
-    if (jobId) {
-        const j = S.jobs.find(x => x.id === jobId);
-        if (j) job = j.catalog || j.artist || '—';
-    }
 
     S.qcLog.unshift({time, type, job, date});
     if (S.qcLog.length > 1000) S.qcLog.splice(1000);
@@ -2720,14 +2836,14 @@
     renderQC();
     }
 
-    /** Log QC passed (manual qty). Uses selected job. Persists via progress_log only. */
+    /** Log QC passed (manual qty). Requires a job to be selected. Persists via progress_log only. */
     function logQCPassed() {
     if (!getStationEditPermissions().canLogQC) return;
-    const jobId = S.qcSelectedJob || (S.jobs.filter(j => ['pressing','assembly'].includes(j.status))[0]?.id);
-    if (!jobId) {
+    if (!S.qcSelectedJob) {
         toastError('Select a job first');
         return;
     }
+    const jobId = S.qcSelectedJob;
     const input = document.getElementById('qcPassedQty');
     const qty = input ? Math.max(1, parseInt(input.value, 10) || 1) : 1;
     const job = S.jobs.find(j => j.id === jobId);
@@ -2810,6 +2926,15 @@
         const sel = S.qcSelectedJob ? S.jobs.find(j => j.id === S.qcSelectedJob) : null;
         passedJobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
     }
+
+    // Disable pass/reject logging when no job selected
+    const hasJob = !!S.qcSelectedJob;
+    const qcPassedQtyEl = document.getElementById('qcPassedQty');
+    const qcPassedBtn = document.querySelector('.qc-btn-primary');
+    const qcRejectBtns = document.querySelectorAll('.qc-btns .qc-btn');
+    if (qcPassedQtyEl) qcPassedQtyEl.disabled = !hasJob;
+    if (qcPassedBtn) qcPassedBtn.disabled = !hasJob;
+    qcRejectBtns.forEach(btn => { btn.disabled = !hasJob; });
 
     // Summary — shows viewed date's data
     const sumEl = document.getElementById('qcSummary');
