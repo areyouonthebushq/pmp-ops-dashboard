@@ -224,6 +224,14 @@
       if (error) throw error;
     },
 
+    /** Update only the assets column for a job (avoids full-row upsert / schema mismatch). */
+    async updateJobAssets(jobId, assets) {
+      const client = getClient();
+      const payload = assets && typeof assets === 'object' ? assets : {};
+      const { error } = await client.from('jobs').update({ assets: payload }).eq('id', jobId);
+      if (error) throw error;
+    },
+
     async deleteJob(id) {
       const client = getClient();
       const { error } = await client.from('jobs').delete().eq('id', id);

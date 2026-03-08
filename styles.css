@@ -1576,6 +1576,13 @@
     font-size: 28px;
     color: var(--g);
     letter-spacing: 2px;
+    margin-bottom: var(--space-xs);
+    }
+    .progress-detail-pct-breakdown {
+    font-size: 13px;
+    font-family: 'Inconsolata', monospace;
+    color: var(--d2);
+    letter-spacing: 0.5px;
     margin-bottom: var(--space-md);
     }
     .progress-detail-bar-wrap {

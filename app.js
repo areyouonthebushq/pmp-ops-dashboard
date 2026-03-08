@@ -690,6 +690,26 @@
         scheduleSave();
         return Promise.resolve();
       },
+      /** Update only job assets (used by assets overlay to avoid full-row upsert). */
+      updateJobAssets(jobId, assets) {
+        if (useSupabase()) {
+          if (isOffline()) {
+            pushToOfflineQueue('job_assets', { jobId, assets });
+            S.offlineMode = true;
+            setSyncState('offline');
+            return Promise.resolve();
+          }
+          return window.PMP.Supabase.updateJobAssets(jobId, assets)
+            .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+            .catch((e) => {
+              console.error('Assets save failed', e);
+              setSyncState('error', { toast: 'SAVE FAILED' });
+              return Promise.reject(e);
+            });
+        }
+        scheduleSave();
+        return Promise.resolve();
+      },
       deleteJob(id) {
         if (useSupabase()) {
           saveInFlight = true;
@@ -846,7 +866,7 @@
     return `<div class="dl-bar-pressed" style="width:${pressedPct}%"></div><div class="dl-bar-qc" style="width:${qcPassedPct}%"></div>`;
     }
 
-    /** Progress detail overlay: open for job, show % complete and segmented bar (rejected / qc / pending / remaining). */
+    /** Progress detail overlay: bar from left (QC · pressed · remaining · rejected), same as press status bar. */
     function openProgressDetail(jobId) {
     const job = S.jobs.find(j => j.id === jobId);
     if (!job) return;
@@ -861,17 +881,20 @@
     const remainingPct = ordered ? Math.max(0, (ordered - p.pressed) / ordered) * 100 : 100;
 
     document.getElementById('progressDetailTitle').textContent = `${job.catalog || '—'} · ${job.artist || '—'}`;
-    document.getElementById('progressDetailPct').textContent = `${completePct}% COMPLETE`;
-    document.getElementById('progressDetailBar').innerHTML = [
-        remainingPct > 0 ? `<div class="pd-seg remaining" style="width:${remainingPct}%"></div>` : '',
-        pendingPct > 0 ? `<div class="pd-seg pressed" style="width:${pendingPct}%" title="Pending QC: ${p.pendingQC.toLocaleString()}"></div>` : '',
-        qcPct > 0 ? `<div class="pd-seg qc" style="width:${qcPct}%" title="QC passed: ${p.qcPassed.toLocaleString()}"></div>` : '',
-        rejectedPct > 0 ? `<div class="pd-seg rejected" style="width:${rejectedPct}%" title="Rejected: ${p.rejected.toLocaleString()}"></div>` : '',
-    ].filter(Boolean).join('') || '<div class="pd-seg remaining" style="width:100%"></div>';
     const rPct = ordered ? Math.round((p.rejected / ordered) * 100) : 0;
     const gPct = ordered ? Math.round((p.qcPassed / ordered) * 100) : 0;
     const yPct = ordered ? Math.round((p.pendingQC / ordered) * 100) : 0;
     const remPct = ordered ? Math.round(((ordered - p.pressed) / ordered) * 100) : 100;
+    document.getElementById('progressDetailPct').textContent = `${completePct}% COMPLETE`;
+    const pctBreakdown = document.getElementById('progressDetailPctBreakdown');
+    if (pctBreakdown) pctBreakdown.textContent = `Pressed ${yPct}% · QC ${gPct}% · Rejected ${rPct}% · Remaining ${remPct}%`;
+    // Bar segments left-to-right: QC (green), pressed (yellow), remaining (grey), rejected (red) — same origin as press status bar
+    document.getElementById('progressDetailBar').innerHTML = [
+        qcPct > 0 ? `<div class="pd-seg qc" style="width:${qcPct}%" title="QC passed: ${p.qcPassed.toLocaleString()}"></div>` : '',
+        pendingPct > 0 ? `<div class="pd-seg pressed" style="width:${pendingPct}%" title="Pending QC: ${p.pendingQC.toLocaleString()}"></div>` : '',
+        remainingPct > 0 ? `<div class="pd-seg remaining" style="width:${remainingPct}%"></div>` : '',
+        rejectedPct > 0 ? `<div class="pd-seg rejected" style="width:${rejectedPct}%" title="Rejected: ${p.rejected.toLocaleString()}"></div>` : '',
+    ].filter(Boolean).join('') || '<div class="pd-seg remaining" style="width:100%"></div>';
     document.getElementById('progressDetailLegend').innerHTML = [
         `<span><span class="pd-dot pressed"></span> Pressed (pending QC): ${p.pendingQC.toLocaleString()} (${yPct}%)</span>`,
         `<span><span class="pd-dot qc"></span> QC passed: ${p.qcPassed.toLocaleString()} (${gPct}%)</span>`,
@@ -895,20 +918,38 @@
     renderAssetsOverlay();
     document.getElementById('assetsOverlay').classList.add('on');
     }
-    function closeAssetsOverlay() {
-    if (assetsOverlayState) {
-        flushAssetsOverlayInputs();
-        const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
-        if (job) {
-            job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
-            Storage.saveJob(job);
-            renderAll();
-        }
+    function closeAssetsOverlay(skipSave) {
+    if (!assetsOverlayState) {
+      assetsOverlayState = null;
+      const el = document.getElementById('assetsOverlay');
+      if (el) el.classList.remove('on');
+      return;
     }
-    assetsOverlayState = null;
-    const el = document.getElementById('assetsOverlay');
-    if (el) el.classList.remove('on');
+    flushAssetsOverlayInputs();
+    const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
+    if (!job) {
+      assetsOverlayState = null;
+      const el = document.getElementById('assetsOverlay');
+      if (el) el.classList.remove('on');
+      return;
     }
+    job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+    if (skipSave) {
+      assetsOverlayState = null;
+      const el = document.getElementById('assetsOverlay');
+      if (el) el.classList.remove('on');
+      renderAll();
+      return;
+    }
+    Storage.updateJobAssets(job.id, job.assets)
+      .then(() => {
+        assetsOverlayState = null;
+        const el = document.getElementById('assetsOverlay');
+        if (el) el.classList.remove('on');
+        renderAll();
+      })
+      .catch(() => { /* toast already shown by Storage */ });
+  }
     /** Read current values from open asset-detail inputs into state (so re-render or close doesn't lose edits). */
     function flushAssetsOverlayInputs() {
     if (!assetsOverlayState) return;
@@ -999,13 +1040,18 @@
     if (!assetsOverlayState) return;
     flushAssetsOverlayInputs();
     const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
-    if (!job) { closeAssetsOverlay(); return; }
+    if (!job) { closeAssetsOverlay(true); return; }
     job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
-    Storage.saveJob(job);
-    closeAssetsOverlay();
-    renderAll();
-    if (typeof toast === 'function') toast('ASSETS SAVED');
-    }
+    Storage.updateJobAssets(job.id, job.assets)
+      .then(() => {
+        assetsOverlayState = null;
+        const el = document.getElementById('assetsOverlay');
+        if (el) el.classList.remove('on');
+        renderAll();
+        if (typeof toast === 'function') toast('ASSETS SAVED');
+      })
+      .catch(() => { /* toast already shown by Storage */ });
+  }
 
     // Link QC reject to production progress: 1 defect log = 1 rejected unit when possible.
     // Keeps displayed rejected totals aligned with QC log without breaking progress rules.
@@ -1182,7 +1228,6 @@
     }
     hideLauncherPressPicker();
     document.getElementById('modeScreen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
     history.pushState({ station: choice }, '', '');
     S.mode = choice === 'admin' ? 'admin' : 'floor';
     const badge = document.getElementById('modeBadge');
@@ -1196,11 +1241,15 @@
     startPolling();
 
     if (choice === 'admin') {
+        setStationContext({});
+        hideAllShells();
         setLastLauncherChoice({ stationType: null });
         const navAudit = document.getElementById('navAudit');
         if (navAudit) navAudit.style.display = getAuthRole() === 'admin' ? '' : 'none';
+        renderAll();
         return;
     }
+    document.getElementById('app').style.display = 'block';
     const navAudit = document.getElementById('navAudit');
     if (navAudit) navAudit.style.display = 'none';
     if (choice === 'floor_manager') {
