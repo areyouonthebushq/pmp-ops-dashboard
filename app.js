@@ -287,6 +287,25 @@
     let curAssets = {};
     let panelOpen = false;
     let panelEditMode = false;
+    // Conflict detection: track jobs/presses modified locally since last poll
+    const pendingWrites = new Map();
+    const pendingPressWrites = new Map();
+    const CONFLICT_WINDOW_MS = 10000;
+    let saveInFlight = false;
+
+    function jobFieldsHash(job) {
+    const parts = [
+        (job.status || ''),
+        (job.press || ''),
+        (job.qty || ''),
+        (job.notes || ''),
+        (job.assembly || ''),
+        (job.location || ''),
+        (job.due || ''),
+        ((job.progressLog || []).length).toString(),
+    ];
+    return parts.join('|');
+    }
 
     // ============================================================
     // STATION CONTEXT — helpers for future station-specific shells.
@@ -509,12 +528,49 @@
     try {
         const data = await Storage.loadAllData();
         if (data.presses) normalizeLegacyPresses(data.presses);
+
         if (data.jobs && data.jobs.length > 0) {
+        const now = Date.now();
+        const conflicts = [];
+        data.jobs.forEach(serverJob => {
+            const pending = pendingWrites.get(serverJob.id);
+            if (!pending) return;
+            if (now - pending.timestamp > CONFLICT_WINDOW_MS) {
+            pendingWrites.delete(serverJob.id);
+            return;
+            }
+            const serverHash = jobFieldsHash(serverJob);
+            if (serverHash !== pending.hash) {
+            conflicts.push({ id: serverJob.id, catalog: serverJob.catalog || serverJob.artist || serverJob.id });
+            }
+        });
+        if (conflicts.length > 0) {
+            const names = conflicts.map(c => c.catalog).join(', ');
+            if (typeof toast === 'function') toast(`⚠ ${conflicts.length === 1 ? names + ' was' : names + ' were'} updated on another device`);
+            console.warn('[PMP] Conflict detected:', conflicts);
+            conflicts.forEach(c => pendingWrites.delete(c.id));
+        }
         S.jobs = data.jobs;
         } else if (S.jobs.length === 0 && data.jobs) {
         S.jobs = data.jobs;
         }
+
+        if (data.presses && data.presses.length > 0) {
+        const now = Date.now();
+        data.presses.forEach(sp => {
+            const pending = pendingPressWrites.get(sp.id);
+            if (pending && now - pending.timestamp < CONFLICT_WINDOW_MS) {
+            if (sp.job_id !== pending.job_id || sp.status !== pending.status) {
+                console.warn('[PMP] Press conflict:', sp.name, '— server:', sp.job_id, sp.status, '— local:', pending.job_id, pending.status);
+            }
+            }
+        });
+        pendingPressWrites.clear();
+        S.presses = data.presses;
+        } else {
+        pendingPressWrites.clear();
         S.presses = data.presses && data.presses.length > 0 ? data.presses : JSON.parse(JSON.stringify(DEFAULT_PRESSES));
+        }
         S.todos = data.todos || S.todos;
         if (data.qcLog && data.qcLog.length > 0) {
         S.qcLog = data.qcLog;
@@ -607,32 +663,64 @@
         };
       },
       saveJob(job) {
+        pendingWrites.set(job.id, { timestamp: Date.now(), hash: jobFieldsHash(job) });
         if (useSupabase()) {
           if (isOffline()) {
             pushToOfflineQueue('job_status', { jobId: job.id, status: job.status });
             S.offlineMode = true;
             setSyncState('offline');
+            pendingWrites.delete(job.id);
             return Promise.resolve();
           }
-          return window.PMP.Supabase.saveJob(job).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch((e) => { console.error(e); setSyncState('error', { toast: 'SAVE FAILED' }); });
+          saveInFlight = true;
+          return window.PMP.Supabase.saveJob(job)
+            .then(() => {
+              S.lastLocalWriteAt = Date.now();
+              setSyncState('synced');
+              setTimeout(() => pendingWrites.delete(job.id), 6000);
+            })
+            .catch((e) => {
+              console.error(e);
+              pendingWrites.delete(job.id);
+              setSyncState('error', { toast: 'SAVE FAILED' });
+            })
+            .finally(() => { saveInFlight = false; });
         }
+        pendingWrites.delete(job.id);
         scheduleSave();
         return Promise.resolve();
       },
       deleteJob(id) {
         if (useSupabase()) {
+          saveInFlight = true;
           return window.PMP.Supabase.deleteJob(id)
             .then(() => window.PMP.Supabase.savePresses(S.presses))
             .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-            .catch((e) => { console.error(e); setSyncState('error', { toast: 'DELETE FAILED' }); });
+            .catch((e) => { console.error(e); setSyncState('error', { toast: 'DELETE FAILED' }); })
+            .finally(() => { saveInFlight = false; });
         }
         scheduleSave();
         return Promise.resolve();
       },
       savePresses(presses) {
+        presses.forEach(p => {
+          pendingPressWrites.set(p.id, { timestamp: Date.now(), job_id: p.job_id, status: p.status });
+        });
         if (useSupabase()) {
-          return window.PMP.Supabase.savePresses(presses).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch(() => setSyncState('error'));
+          saveInFlight = true;
+          return window.PMP.Supabase.savePresses(presses)
+            .then(() => {
+              S.lastLocalWriteAt = Date.now();
+              setSyncState('synced');
+              setTimeout(() => pendingPressWrites.clear(), 6000);
+            })
+            .catch(() => {
+              pendingPressWrites.clear();
+              setSyncState('error');
+            })
+            .finally(() => { saveInFlight = false; });
         }
+        pendingPressWrites.clear();
         scheduleSave();
         return Promise.resolve();
       },
@@ -651,7 +739,11 @@
             setSyncState('offline');
             return Promise.resolve();
           }
-          return window.PMP.Supabase.logProgress(entry).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch((e) => { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); });
+          saveInFlight = true;
+          return window.PMP.Supabase.logProgress(entry)
+            .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+            .catch((e) => { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); })
+            .finally(() => { saveInFlight = false; });
         }
         scheduleSave();
         return Promise.resolve();
@@ -664,7 +756,11 @@
             setSyncState('offline');
             return Promise.resolve();
           }
-          return window.PMP.Supabase.logQC(entry).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch((e) => { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); });
+          saveInFlight = true;
+          return window.PMP.Supabase.logQC(entry)
+            .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+            .catch((e) => { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); })
+            .finally(() => { saveInFlight = false; });
         }
         scheduleSave();
         return Promise.resolve();
@@ -807,8 +903,9 @@
     stopDataSync();
     pollTimer = setInterval(async () => {
         if (panelOpen) return;
+        if (saveInFlight) return;
         await loadAll();
-    }, 15000);
+    }, 5000);
     }
 
     function startPolling() {
@@ -1126,7 +1223,13 @@
             show(adminBtn, false);
             show(fmBtn, false);
             show(pressBtn, true);
-            if (pressBtn) pressBtn.onclick = toggleLauncherPressPicker;
+            if (pressBtn) {
+                pressBtn.onclick = function () {
+                    const assigned = getAuthAssignedPressId();
+                    if (assigned) enterByLauncher('press', assigned);
+                    else { if (typeof toast === 'function') toast('No press assigned. Contact an admin.'); }
+                };
+            }
             if (pressRow) {
                 pressRow.querySelectorAll('.launcher-press-btn').forEach(btn => { btn.style.display = ''; });
                 pressRow.style.display = 'none';
