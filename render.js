@@ -67,8 +67,8 @@ function floorTableRowHTML(j, opts) {
   <td>${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
   <td>${j.color ? `<span style="color:var(--d2)">${escapeHtml(j.color)}</span>` : '—'}</td>
   <td>${j.qty ? parseInt(j.qty, 10).toLocaleString() : '—'}</td>
-  <td>
-    <div class="status-tap ${statusTapClass(j.status)}"${statusId} onclick="cycleStatus('${j.id}')" title="Tap to change status">
+  <td class="panel-trigger" onclick="openPanel('${j.id}')" title="Open job to change status" style="cursor:pointer">
+    <div class="status-pill-readonly ${statusTapClass(j.status)}"${statusId}>
     ${(j.status || 'queue').toUpperCase()}
     </div>
   </td>
@@ -604,7 +604,7 @@ function jobsTableHeaderHTML() {
     const arrow = active ? (S.jobsSortDir === 'asc' ? ' ▲' : ' ▼') : '';
     return `<th class="sortable-th ${active ? 'sort-' + S.jobsSortDir : ''}" onclick="setJobsSort('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow}</th>`;
   }).join('');
-  return ths + '<th></th>';
+  return ths;
 }
 
 function renderJobs() {
@@ -669,7 +669,6 @@ function renderJobs() {
         <div class="progress-sub">${prog.sub}</div>
         </td>
         <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
-        <td><button class="open-btn" onclick="openPanel('${j.id}')">OPEN</button></td>
       </tr>`;
     }).join('');
   }

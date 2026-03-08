@@ -223,6 +223,15 @@ function logJobProgress(jobId, stage, qty, person) {
   const timestamp = new Date().toISOString();
   job.progressLog.push({ qty: q, stage, person: personVal, timestamp });
   Storage.logProgress({ job_id: jobId, qty: q, stage, person: personVal, timestamp });
+
+  const isAssigned = S.presses.some(p => p.job_id === jobId);
+  const suggestion = suggestedStatus(job, isAssigned);
+  if (suggestion && (suggestion.suggested === 'pressing' || suggestion.suggested === 'done')) {
+    const prev = job.status;
+    job.status = suggestion.suggested;
+    Storage.saveJob(job);
+    if (prev !== suggestion.suggested) toast(`Status set to ${suggestion.suggested.toUpperCase()}`);
+  }
   return { ok: true };
 }
 
@@ -977,6 +986,25 @@ function openPanel(id) {
   renderProgressSection();
   if (S.editId) {
     const j = S.jobs.find(x => x.id === S.editId);
+    const suggestionEl = document.getElementById('panelStatusSuggestion');
+    if (j && suggestionEl) {
+      const isAssigned = S.presses.some(p => p.job_id === j.id);
+      const suggestion = suggestedStatus(j, isAssigned);
+      const cur = (j.status || 'queue').toLowerCase();
+      if (suggestion && suggestion.suggested !== cur) {
+        suggestionEl.style.display = '';
+        suggestionEl.innerHTML = `<span class="panel-status-suggestion-text">Suggested: <strong>${suggestion.suggested.toUpperCase()}</strong> — ${suggestion.reason}</span> <button type="button" class="btn ghost panel-status-apply" onclick="applySuggestedStatus('${j.id}')">Apply</button>`;
+      } else {
+        suggestionEl.style.display = 'none';
+        suggestionEl.innerHTML = '';
+      }
+    } else if (suggestionEl) {
+      suggestionEl.style.display = 'none';
+      suggestionEl.innerHTML = '';
+    }
+  }
+  if (S.editId) {
+    const j = S.jobs.find(x => x.id === S.editId);
     if (j) { ensureNotesLog(j); renderNotesSection(); }
   } else {
     const notesLogList = document.getElementById('notesLogList');
@@ -1132,6 +1160,25 @@ function closeConfirm() {
 document.getElementById('confOk').addEventListener('click', () => { if (confCb) confCb(); closeConfirm(); });
 
 // ============================================================
+// SUGGESTED STATUS — from progress; apply in panel
+// ============================================================
+function applySuggestedStatus(jobId) {
+  const j = S.jobs.find(x => x.id === jobId);
+  if (!j) return;
+  const isAssigned = S.presses.some(p => p.job_id === j.id);
+  const suggestion = suggestedStatus(j, isAssigned);
+  if (!suggestion) return;
+  j.status = suggestion.suggested;
+  Storage.saveJob(j);
+  const sel = document.getElementById('jStat');
+  if (sel) sel.value = suggestion.suggested;
+  const suggestionEl = document.getElementById('panelStatusSuggestion');
+  if (suggestionEl) { suggestionEl.style.display = 'none'; suggestionEl.innerHTML = ''; }
+  renderAll();
+  toast(`Status set to ${suggestion.suggested.toUpperCase()}`);
+}
+
+// ============================================================
 // CYCLE STATUS — use nextStatus from core
 // ============================================================
 let undoTimer = null;
@@ -1142,7 +1189,23 @@ function cycleStatus(jid) {
   const j = S.jobs.find(x => x.id === jid);
   if (!j) return;
   const prevStatus = j.status;
-  j.status = nextStatus(j.status);
+  const next = nextStatus(j.status);
+
+  if (next === 'done') {
+    const prog = getJobProgress(j);
+    const incomplete = prog.ordered > 0 && (prog.pressed < prog.ordered || prog.qcPassed < prog.ordered);
+    if (incomplete) {
+      const msg = `Progress: ${prog.pressed.toLocaleString()}/${prog.ordered.toLocaleString()} pressed, ${prog.qcPassed.toLocaleString()} QC passed. Mark as DONE anyway?`;
+      openConfirm('Mark as DONE?', msg, () => applyStatusCycle(j, prevStatus, next, jid));
+      return;
+    }
+  }
+
+  applyStatusCycle(j, prevStatus, next, jid);
+}
+
+function applyStatusCycle(j, prevStatus, next, jid) {
+  j.status = next;
 
   if (prevStatus === 'pressing' && j.status !== 'pressing') {
     releasePressByJob(j.id);

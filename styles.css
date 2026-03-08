@@ -429,6 +429,23 @@
     .status-tap.queue{ border-color: var(--b2); color: var(--d2); background: var(--s2); }
     .status-tap.done { border-color: var(--d3); color: var(--d3); background:transparent; }
 
+    /* Read-only status on floor (open job to change); same colors, no tap/arrow */
+    .status-pill-readonly {
+    display:inline-flex; align-items:center; gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-lg); font-size:12px; letter-spacing:1px;
+    border:1px solid; font-family:'Inconsolata',monospace; font-weight:700;
+    cursor:inherit; transition:all 0.15s; white-space:nowrap;
+    user-select:none; -webkit-user-select:none;
+    min-height:36px;
+    }
+    .status-pill-readonly::before { content:'●'; font-size:8px; }
+    .status-pill-readonly.go   { border-color: var(--g2); color: var(--g); background: var(--g3); }
+    .status-pill-readonly.warn { border-color: var(--w2); color: var(--w); background: var(--w2); }
+    .status-pill-readonly.red  { border-color: var(--r2); color: var(--r); background: var(--r2); }
+    .status-pill-readonly.queue{ border-color: var(--b2); color: var(--d2); background: var(--s2); }
+    .status-pill-readonly.done { border-color: var(--d3); color: var(--d3); background:transparent; }
+    .status-pill-readonly.flash { animation: statusFlash 0.3s ease; }
+
     /* ============================================================ SEARCH / FILTER BAR
     When you have 30+ jobs, type to narrow instantly.
     Keyboard-first, one line, always visible on floor/jobs pages.
@@ -815,6 +832,15 @@
     .panel-body { flex:1; overflow-y:auto; padding: var(--space-lg); }
     .panel-body::-webkit-scrollbar { width: var(--space-xs); }
     .panel-body::-webkit-scrollbar-thumb { background: var(--b2); }
+
+    .panel-status-suggestion {
+    display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap;
+    margin-top: var(--space-sm); padding: var(--space-sm) var(--space-md);
+    background: var(--s2); border: 1px solid var(--b2); border-radius: 4px;
+    font-size: 12px; color: var(--d2);
+    }
+    .panel-status-suggestion-text { flex: 1; }
+    .panel-status-suggestion .panel-status-apply { flex-shrink: 0; }
 
     /* Section dividers — hierarchy: 1 & 4 primary, 5 & 6 recede, 2 & 3 default */
     .form-section {

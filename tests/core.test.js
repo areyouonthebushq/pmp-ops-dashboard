@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import '../core.js';
 
-const { getJobProgress, jobFieldsHash, findDuplicateJob, assetHealth, nextStatus, STATUS_ORDER } = globalThis.__PMP_CORE__;
+const { getJobProgress, jobFieldsHash, findDuplicateJob, assetHealth, nextStatus, suggestedStatus, STATUS_ORDER } = globalThis.__PMP_CORE__;
 
 describe('getJobProgress', () => {
   it('returns zeros for empty job', () => {
@@ -103,6 +103,33 @@ describe('nextStatus', () => {
     expect(nextStatus('assembly')).toBe('hold');
     expect(nextStatus('hold')).toBe('done');
     expect(nextStatus('done')).toBe('queue');
+  });
+});
+
+describe('suggestedStatus', () => {
+  it('returns null for hold', () => {
+    expect(suggestedStatus({ status: 'hold', progressLog: [], qty: '100' }, true)).toBeNull();
+  });
+  it('suggests done when at qty', () => {
+    const j = { status: 'assembly', qty: '100', progressLog: [
+      { qty: 100, stage: 'pressed' },
+      { qty: 100, stage: 'qc_passed' },
+    ] };
+    const r = suggestedStatus(j, false);
+    expect(r).toEqual({ suggested: 'done', reason: expect.any(String) });
+  });
+  it('suggests pressing when on press with progress and queued', () => {
+    const j = { status: 'queue', qty: '100', progressLog: [{ qty: 25, stage: 'pressed' }] };
+    const r = suggestedStatus(j, true);
+    expect(r).toEqual({ suggested: 'pressing', reason: expect.any(String) });
+  });
+  it('suggests assembly when off press at qty with QC pending', () => {
+    const j = { status: 'pressing', qty: '100', progressLog: [
+      { qty: 100, stage: 'pressed' },
+      { qty: 50, stage: 'qc_passed' },
+    ] };
+    const r = suggestedStatus(j, false);
+    expect(r).toEqual({ suggested: 'assembly', reason: expect.any(String) });
   });
 });
 

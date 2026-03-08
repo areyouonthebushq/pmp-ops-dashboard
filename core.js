@@ -275,6 +275,31 @@ function nextStatus(current) {
   return STATUS_ORDER[(cur + 1) % STATUS_ORDER.length];
 }
 
+/**
+ * Suggest a status based on progress and whether the job is assigned to a press.
+ * @param {object} job - Job with progressLog, qty, status
+ * @param {boolean} isAssignedToPress - True if any press has job_id === job.id
+ * @returns {{ suggested: string, reason: string } | null} - Suggested status and short reason, or null
+ */
+function suggestedStatus(job, isAssignedToPress) {
+  if (!job) return null;
+  if ((job.status || '').toLowerCase() === 'hold') return null;
+  ensureJobProgressLog(job);
+  const p = getJobProgress(job);
+  const cur = (job.status || 'queue').toLowerCase();
+  const { ordered, pressed, qcPassed } = p;
+
+  if (ordered > 0 && pressed >= ordered && qcPassed >= ordered && cur !== 'done')
+    return { suggested: 'done', reason: 'Order complete (pressed & QC at qty)' };
+  if (pressed >= ordered && qcPassed < ordered && cur !== 'assembly')
+    return { suggested: 'assembly', reason: 'Off press at qty; QC pending' };
+  if (pressed > 0 && !isAssignedToPress && cur === 'pressing')
+    return { suggested: 'assembly', reason: 'No longer on press' };
+  if (pressed > 0 && isAssignedToPress && (cur === 'queue' || cur === 'assembly'))
+    return { suggested: 'pressing', reason: 'On press with progress' };
+  return null;
+}
+
 function getFloorSortValue(j, key) {
   if (key === 'catalog') return (j.catalog || '').toLowerCase();
   if (key === 'artistAlbum') return ((j.artist || '') + ' ' + (j.album || '')).toLowerCase();
@@ -368,6 +393,7 @@ if (typeof globalThis !== 'undefined' && typeof document === 'undefined') {
     assetHealth,
     STATUS_ORDER,
     nextStatus,
+    suggestedStatus,
     ASSET_DEFS,
   };
 }
