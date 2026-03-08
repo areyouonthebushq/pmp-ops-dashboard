@@ -179,6 +179,26 @@
     };
     let saveTimer = null;
 
+    /** Debounce fn (no args) for use with search inputs — reduces re-renders on mobile. */
+    function debounce(fn, ms) {
+    let t = null;
+    return function () {
+        if (t) clearTimeout(t);
+        t = setTimeout(function () { t = null; fn(); }, ms);
+    };
+    }
+
+    /** Run a Supabase write once; on failure retry once after delay (helps flaky mobile networks). */
+    function supabaseWithRetry(fn, retryMs) {
+    retryMs = retryMs || 1500;
+    return fn().catch(function (e) {
+        console.warn('[PMP] Write failed, retrying in ' + retryMs + 'ms…', e);
+        return new Promise(function (resolve, reject) {
+        setTimeout(function () { fn().then(resolve).catch(reject); }, retryMs);
+        });
+    });
+    }
+
     const OFFLINE_SNAPSHOT_KEY = 'pmp_offline_snapshot';
     const OFFLINE_QUEUE_KEY = 'pmp_offline_queue';
     const OFFLINE_QUEUE_MAX = 100;
@@ -677,18 +697,18 @@
             return Promise.resolve();
           }
           saveInFlight = true;
-          return window.PMP.Supabase.saveJob(job)
-            .then(() => {
+          return supabaseWithRetry(function () { return window.PMP.Supabase.saveJob(job); })
+            .then(function () {
               S.lastLocalWriteAt = Date.now();
               setSyncState('synced');
-              setTimeout(() => pendingWrites.delete(job.id), 6000);
+              setTimeout(function () { pendingWrites.delete(job.id); }, 6000);
             })
-            .catch((e) => {
+            .catch(function (e) {
               console.error(e);
               pendingWrites.delete(job.id);
               setSyncState('error', { toast: 'SAVE FAILED' });
             })
-            .finally(() => { saveInFlight = false; });
+            .finally(function () { saveInFlight = false; });
         }
         pendingWrites.delete(job.id);
         scheduleSave();
@@ -703,9 +723,9 @@
             setSyncState('offline');
             return Promise.resolve();
           }
-          return window.PMP.Supabase.updateJobAssets(jobId, assets)
-            .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-            .catch((e) => {
+          return supabaseWithRetry(function () { return window.PMP.Supabase.updateJobAssets(jobId, assets); })
+            .then(function () { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+            .catch(function (e) {
               console.error('Assets save failed', e);
               setSyncState('error', { toast: 'SAVE FAILED' });
               return Promise.reject(e);
@@ -717,11 +737,13 @@
       deleteJob(id) {
         if (useSupabase()) {
           saveInFlight = true;
-          return window.PMP.Supabase.deleteJob(id)
-            .then(() => window.PMP.Supabase.savePresses(S.presses))
-            .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-            .catch((e) => { console.error(e); setSyncState('error', { toast: 'DELETE FAILED' }); })
-            .finally(() => { saveInFlight = false; });
+          var deleteChain = function () {
+            return window.PMP.Supabase.deleteJob(id).then(function () { return window.PMP.Supabase.savePresses(S.presses); });
+          };
+          return supabaseWithRetry(deleteChain)
+            .then(function () { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+            .catch(function (e) { console.error(e); setSyncState('error', { toast: 'DELETE FAILED' }); })
+            .finally(function () { saveInFlight = false; });
         }
         scheduleSave();
         return Promise.resolve();
@@ -732,17 +754,17 @@
         });
         if (useSupabase()) {
           saveInFlight = true;
-          return window.PMP.Supabase.savePresses(presses)
-            .then(() => {
+          return supabaseWithRetry(function () { return window.PMP.Supabase.savePresses(presses); })
+            .then(function () {
               S.lastLocalWriteAt = Date.now();
               setSyncState('synced');
-              setTimeout(() => pendingPressWrites.clear(), 6000);
+              setTimeout(function () { pendingPressWrites.clear(); }, 6000);
             })
-            .catch(() => {
+            .catch(function () {
               pendingPressWrites.clear();
               setSyncState('error');
             })
-            .finally(() => { saveInFlight = false; });
+            .finally(function () { saveInFlight = false; });
         }
         pendingPressWrites.clear();
         scheduleSave();
@@ -764,10 +786,10 @@
             return Promise.resolve();
           }
           saveInFlight = true;
-          return window.PMP.Supabase.logProgress(entry)
-            .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-            .catch((e) => { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); })
-            .finally(() => { saveInFlight = false; });
+          return supabaseWithRetry(function () { return window.PMP.Supabase.logProgress(entry); })
+            .then(function () { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+            .catch(function (e) { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); })
+            .finally(function () { saveInFlight = false; });
         }
         scheduleSave();
         return Promise.resolve();
@@ -781,10 +803,10 @@
             return Promise.resolve();
           }
           saveInFlight = true;
-          return window.PMP.Supabase.logQC(entry)
-            .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-            .catch((e) => { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); })
-            .finally(() => { saveInFlight = false; });
+          return supabaseWithRetry(function () { return window.PMP.Supabase.logQC(entry); })
+            .then(function () { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+            .catch(function (e) { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); })
+            .finally(function () { saveInFlight = false; });
         }
         scheduleSave();
         return Promise.resolve();
@@ -1831,9 +1853,6 @@
         { key: 'format', label: 'FORMAT' },
         { key: 'status', label: 'STATUS' },
         { key: 'due', label: 'DUE' },
-        { key: 'assets', label: 'ASSETS' },
-        { key: 'progress', label: 'PROGRESS' },
-        { key: 'location', label: 'LOCATION' },
     ];
     function getFloorSortValue(j, key) {
         if (key === 'catalog') return (j.catalog || '').toLowerCase();
@@ -1841,9 +1860,6 @@
         if (key === 'format') return (j.format || '').toLowerCase();
         if (key === 'status') return (j.status || '').toLowerCase();
         if (key === 'due') return (j.due || '') ? String(j.due) : '\uffff';
-        if (key === 'assets') return (assetHealth(j).done || 0);
-        if (key === 'progress') return getJobProgress(j).pressed || 0;
-        if (key === 'location') return (j.location || '').toLowerCase();
         return '';
     }
     function sortFloorJobs(jobs) {
@@ -3726,3 +3742,13 @@
         }
     }
     });
+
+    // Debounced search — reduces lag on mobile (avoid re-render on every keystroke)
+    (function attachDebouncedSearch() {
+    var floorEl = document.getElementById('floorSearch');
+    if (floorEl) floorEl.addEventListener('input', debounce(renderFloor, 280));
+    var jobEl = document.getElementById('jobSearch');
+    if (jobEl) jobEl.addEventListener('input', debounce(renderJobs, 280));
+    var fmEl = document.getElementById('fmFloorSearch');
+    if (fmEl) fmEl.addEventListener('input', debounce(renderFloorManagerShell, 280));
+    })();
