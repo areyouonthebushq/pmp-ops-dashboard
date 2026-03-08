@@ -254,15 +254,48 @@
     <div class="pg" id="pg-qc">
         <div class="sec">SELECT JOB</div>
         <div class="qc-job-picker" id="qcJobPicker"></div>
-        <div class="sec qc-primary-sec">LOG QC PASSED</div>
-        <div class="qc-passed-block" id="qcPassedBlock">
-        <div class="qc-passed-job" id="qcPassedJobLabel">Select a job above</div>
-        <div class="qc-passed-row">
-            <input type="number" id="qcPassedQty" class="qc-passed-input" min="1" step="1" placeholder="Qty" value="1" title="Number passed">
-            <button type="button" class="qc-btn qc-btn-primary" onclick="logQCPassed()">LOG PASSED</button>
+        <div class="sec qc-primary-sec">LOG QC</div>
+        <div class="qc-numpad-block" id="qcNumpadBlock">
+            <div class="qc-numpad-job" id="qcNumpadJobLabel">Select a job above</div>
+            <div class="qc-numpad">
+                <div class="qc-numpad-display" id="qcNumpadDisplay">0</div>
+                <div class="qc-numpad-grid">
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('7')">7</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('8')">8</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('9')">9</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('4')">4</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('5')">5</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('6')">6</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('1')">1</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('2')">2</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('3')">3</button>
+                    <button type="button" class="ps-numpad-btn ps-numpad-clear" onclick="qcNumpadClear()">C</button>
+                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('0')">0</button>
+                    <button type="button" class="ps-numpad-btn ps-numpad-back" onclick="qcNumpadBack()">←</button>
+                </div>
+                <div class="qc-numpad-actions">
+                    <button type="button" class="qc-numpad-pass" id="qcNumpadPass" onclick="qcNumpadPass()" disabled>
+                        ✓ QC PASSED
+                    </button>
+                    <button type="button" class="qc-numpad-reject" id="qcNumpadReject" onclick="qcNumpadShowRejectPicker()" disabled>
+                        ✕ REJECT
+                    </button>
+                </div>
+            </div>
         </div>
+        <div class="qc-reject-picker" id="qcRejectPicker" style="display:none">
+            <div class="qc-reject-picker-title" id="qcRejectPickerTitle">REJECT — SELECT DEFECT TYPE</div>
+            <div class="qc-reject-picker-btns">
+                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('FLASH')">⚡ FLASH</button>
+                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('BLEMISH')">◉ BLEMISH</button>
+                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('OFF-CENTER')">⊕ OFF-CENTER</button>
+                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('AUDIO')">♫ AUDIO</button>
+                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('UNTRIMMED')">⬡ UNTRIMMED</button>
+                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('BISCUIT/FLASH')">✕ BISCUIT/FLASH</button>
+            </div>
+            <button type="button" class="qc-reject-cancel" onclick="qcNumpadHideRejectPicker()">CANCEL</button>
         </div>
-        <div class="sec qc-secondary-sec">LOG REJECT</div>
+        <div class="sec qc-secondary-sec">QUICK REJECT (1 EACH)</div>
         <div class="qc-btns">
         <button class="qc-btn" onclick="logQC('FLASH')"><span class="qc-key">1</span><span class="qi">⚡</span>FLASH</button>
         <button class="qc-btn" onclick="logQC('BLEMISH')"><span class="qc-key">2</span><span class="qi">◉</span>BLEMISH</button>
@@ -710,6 +743,10 @@
     </div>
     </div>
 
+    <script src="core.js"></script>
+    <script src="storage.js"></script>
+    <script src="render.js"></script>
+    <script src="stations.js"></script>
     <script src="app.js"></script>
     <script>
     if ('serviceWorker' in navigator) {

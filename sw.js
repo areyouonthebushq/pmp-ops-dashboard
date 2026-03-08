@@ -3,7 +3,7 @@
  * Caches app shell only; no data. Scope: production-sane, narrow.
  */
 const CACHE_NAME = 'pmp-ops-shell-v1';
-const SHELL_URLS = ['/index.html', '/styles.css', '/app.js', '/supabase.js'];
+const SHELL_URLS = ['/index.html', '/styles.css', '/core.js', '/storage.js', '/render.js', '/stations.js', '/app.js', '/supabase.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

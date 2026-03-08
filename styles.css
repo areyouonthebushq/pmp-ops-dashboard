@@ -1086,6 +1086,115 @@
     .qc-btn-primary:hover { background: var(--g); color: var(--b1); }
     .qc-passed-input:disabled, .qc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .qc-btns .qc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* QC Numpad — reuses .ps-numpad-btn from press station */
+    .qc-numpad-block { max-width: 360px; margin-bottom: var(--space-lg); }
+    .qc-numpad-job { font-size: 14px; color: var(--d2); margin-bottom: var(--space-sm); font-family: 'Inconsolata', monospace; }
+    .qc-numpad { max-width: 320px; }
+    .qc-numpad-display {
+        font-family: 'Inconsolata', monospace;
+        font-size: 48px;
+        font-weight: 700;
+        color: var(--d3);
+        text-align: right;
+        padding: var(--space-md) var(--space-lg);
+        background: var(--s1);
+        border: 1px solid var(--b2);
+        margin-bottom: var(--space-sm);
+        min-height: 72px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        letter-spacing: 2px;
+    }
+    .qc-numpad-display.has-value { color: var(--d); }
+    .qc-numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: var(--space-sm); }
+    .qc-numpad-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .qc-numpad-pass {
+        min-height: 56px;
+        font-family: 'Inconsolata', monospace;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: var(--g);
+        background: var(--g3);
+        border: 2px solid var(--g2);
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .qc-numpad-pass:hover:not(:disabled) { background: var(--g); color: #000; box-shadow: var(--gg); }
+    .qc-numpad-pass:disabled { opacity: 0.3; cursor: not-allowed; }
+    .qc-numpad-reject {
+        min-height: 56px;
+        font-family: 'Inconsolata', monospace;
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: var(--r);
+        background: var(--r2);
+        border: 2px solid var(--r);
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .qc-numpad-reject:hover:not(:disabled) { background: var(--r); color: #fff; box-shadow: var(--gr); }
+    .qc-numpad-reject:disabled { opacity: 0.3; cursor: not-allowed; }
+    .qc-reject-picker {
+        padding: var(--space-md);
+        background: var(--s1);
+        border: 2px solid var(--r);
+        margin-bottom: var(--space-md);
+    }
+    .qc-reject-picker-title {
+        font-family: 'Inconsolata', monospace;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--r);
+        letter-spacing: 1px;
+        margin-bottom: var(--space-md);
+    }
+    .qc-reject-picker-btns {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+        margin-bottom: var(--space-md);
+    }
+    .qc-reject-type-btn {
+        min-height: 56px;
+        font-family: 'Inconsolata', monospace;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: var(--d);
+        background: var(--s2);
+        border: 1px solid var(--b2);
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-sm);
+    }
+    .qc-reject-type-btn:hover { border-color: var(--r); color: var(--r); background: var(--r2); }
+    .qc-reject-type-btn:active { transform: scale(0.97); }
+    .qc-reject-cancel {
+        width: 100%;
+        min-height: 40px;
+        font-family: 'Inconsolata', monospace;
+        font-size: 12px;
+        letter-spacing: 1px;
+        color: var(--d3);
+        background: transparent;
+        border: 1px solid var(--b2);
+        cursor: pointer;
+    }
+    .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
+    @media (max-width: 600px) {
+        .qc-numpad { max-width: 100%; }
+        .qc-numpad-display { font-size: 56px; min-height: 80px; }
+        .qc-numpad-pass, .qc-numpad-reject { min-height: 64px; font-size: 18px; }
+        .qc-reject-type-btn { min-height: 64px; }
+    }
     .qc-secondary-sec { font-size: 11px; color: var(--d3); letter-spacing: 1.5px; margin-top: var(--space-lg); }
 
     .qc-log { }

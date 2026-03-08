@@ -1,0 +1,1230 @@
+// ============================================================
+// SHARED DATA & RENDER HELPERS — single source for floor/stats/press
+// ============================================================
+function getFloorStats() {
+  const active = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
+  const overdue = S.jobs.filter(j => j.due && j.status !== 'done' && new Date(j.due) < Date.now());
+  const online = S.presses.filter(p => p.status === 'online').length;
+  const onPress = S.presses.filter(p => p.job_id).map(p => p.job_id);
+  return [
+    { key: 'presses', v: `${online}/${S.presses.length}`, l: 'PRESSES', s: 'online', c: online < S.presses.length ? 'warn' : '' },
+    { key: 'active', v: active.length, l: 'ACTIVE', s: 'pressing/assembly', c: '' },
+    { key: 'queued', v: S.jobs.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
+    { key: 'overdue', v: overdue.length, l: 'OVERDUE', s: 'past due date', c: overdue.length ? 'red' : '' },
+    { key: 'total', v: S.jobs.filter(j => j.status !== 'done').length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
+  ];
+}
+
+function getFloorJobs(query, statFilter) {
+  const q = (query || '').toLowerCase().trim();
+  const total = S.jobs.filter(j => j.status !== 'done').length;
+  let jobs = S.jobs.filter(j => j.status !== 'done');
+  if (statFilter === 'presses') {
+    const onPress = S.presses.filter(p => p.job_id).map(p => p.job_id);
+    jobs = jobs.filter(j => onPress.includes(j.id));
+  } else if (statFilter === 'active') {
+    jobs = jobs.filter(j => ['pressing','assembly'].includes(j.status));
+  } else if (statFilter === 'queued') {
+    jobs = jobs.filter(j => j.status === 'queue');
+  } else if (statFilter === 'overdue') {
+    jobs = jobs.filter(j => j.due && j.status !== 'done' && new Date(j.due) < Date.now());
+  }
+  if (q) {
+    jobs = jobs.filter(j =>
+      (j.catalog || '').toLowerCase().includes(q) ||
+      (j.artist || '').toLowerCase().includes(q) ||
+      (j.album || '').toLowerCase().includes(q) ||
+      (j.location || '').toLowerCase().includes(q)
+    );
+  }
+  return { jobs, total };
+}
+
+function setFloorStatFilter(key) {
+  if (key == null || key === '') S.floorStatFilter = null;
+  else S.floorStatFilter = S.floorStatFilter === key ? null : key;
+  renderStats();
+  renderFloor();
+}
+
+function floorTableHeaderHTML() {
+  return FLOOR_COLUMNS.map(c => {
+    const active = S.floorSortBy === c.key;
+    const arrow = active ? (S.floorSortDir === 'asc' ? ' ▲' : ' ▼') : '';
+    return `<th class="sortable-th ${active ? 'sort-' + S.floorSortDir : ''}" onclick="setFloorSort('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow}</th>`;
+  }).join('');
+}
+
+function floorTableRowHTML(j, opts) {
+  const statusId = (opts && opts.statusCellId) ? ` id="st-${j.id}"` : '';
+  return `
+  <tr>
+  <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
+  <td class="panel-trigger" onclick="openPanel('${j.id}')" title="Open job" style="cursor:pointer">
+    <div style="color:var(--d)">${j.artist || '—'}</div>
+    <div style="color:var(--d3);font-size:11px">${j.album || ''}</div>
+  </td>
+  <td>${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
+  <td>${j.color ? `<span style="color:var(--d2)">${escapeHtml(j.color)}</span>` : '—'}</td>
+  <td>${j.qty ? parseInt(j.qty, 10).toLocaleString() : '—'}</td>
+  <td>
+    <div class="status-tap ${statusTapClass(j.status)}"${statusId} onclick="cycleStatus('${j.id}')" title="Tap to change status">
+    ${(j.status || 'queue').toUpperCase()}
+    </div>
+  </td>
+  <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
+  </tr>`;
+}
+
+function buildPressCardHTML(p, linkTo, showControls) {
+  const job = p.job_id ? S.jobs.find(j => j.id === p.job_id) : null;
+  const ah = job ? assetHealth(job) : { done: 0, total: 0, pct: 0 };
+  const prog = job ? progressDisplay(job) : null;
+  const segs = ASSET_DEFS.slice(0, 8).map(a => {
+    const got = job && job.assets && job.assets[a.key]?.received;
+    return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
+  }).join('');
+  const isPressStation = linkTo === 'pressStation';
+  const jobBlockClick = (isPressStation && showControls && job) ? `openPanel('${job.id}')` : (linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : linkTo === 'pressStation' ? `openPressStation('${p.id}')` : `openPanel('${job?.id}')`);
+  const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : linkTo === 'pressStation' ? (showControls ? 'TAP → JOB PANEL' : 'TAP → STATION') : 'TAP TO OPEN →';
+  const nameClick = isPressStation ? ` onclick="openPressStation('${p.id}')" style="cursor:pointer" title="Open Press Station"` : '';
+  return `
+  <div class="press-card ${p.status}">
+    <div class="pc-head">
+    <div class="pc-name ${p.type === '7"' ? 'seven' : ''}"${nameClick}>${p.name}</div>
+    <div class="pc-status">
+      <div class="psdot ${p.status}"></div>
+      <span style="color:${p.status === 'online' ? 'var(--g)' : p.status === 'warning' ? 'var(--w)' : 'var(--r)'}">${p.status.toUpperCase()}</span>
+    </div>
+    </div>
+    ${job ? `
+    <div class="pc-job-link" onclick="${jobBlockClick}" title="${linkTo === 'floorCard' ? 'Open statboard' : (isPressStation && showControls ? 'Open job panel' : 'Open job')}">
+      <div class="pc-job"><span class="job-id">${job.catalog || '—'}</span> — ${job.artist || ''}</div>
+      <div class="pc-meta">${job.format || ''} · ${job.color || 'Black'} · ${job.weight || ''}</div>
+      <div class="pc-meta">Qty: ${job.qty ? parseInt(job.qty).toLocaleString() : '—'}</div>
+      <div class="pc-due ${dueClass(job.due)}">${dueLabel(job.due)}</div>
+      <div class="pc-job-hint">${hint}</div>
+    </div>
+    <div class="pc-progress" onclick="event.stopPropagation(); openProgressDetail('${job.id}')" style="cursor:pointer" title="View progress breakdown">
+      <div class="pc-progress-label">PROGRESS <span class="pc-progress-num">${prog.main}</span></div>
+      <div class="pc-progress-bar-outer dl-bar pc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+      <div class="pc-progress-sub">${prog.sub}</div>
+      ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
+    </div>
+    <div class="pc-assets pc-assets-demoted" onclick="event.stopPropagation(); openAssetsOverlay('${job.id}')" style="cursor:pointer" title="View and edit assets">
+      <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
+      <div class="abar abar-thin">${segs}</div>
+    </div>
+    ` : (isPressStation ? `<div class="pc-job-link" onclick="openPressStation('${p.id}')" title="Open Press Station" style="cursor:pointer"><div class="pc-idle-msg">NO JOB ASSIGNED</div></div>` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>')}
+    ${showControls ? `
+    <div class="pc-controls" onclick="event.stopPropagation()">
+      <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
+      <option value="">— ASSIGN JOB</option>
+      ${S.jobs.filter(j => j.status !== 'done').map(j => `<option value="${j.id}" ${p.job_id === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
+      </select>
+      <select class="pc-select" style="max-width:110px" onchange="setPressStatus('${p.id}',this.value)">
+      <option value="online"  ${p.status === 'online'  ? 'selected' : ''}>Online</option>
+      <option value="warning" ${p.status === 'warning' ? 'selected' : ''}>Warning</option>
+      <option value="offline" ${p.status === 'offline' ? 'selected' : ''}>Offline</option>
+      <option value="idle"    ${p.status === 'idle'    ? 'selected' : ''}>Idle</option>
+      </select>
+    </div>
+    ` : ''}
+  </div>`;
+}
+
+// ============================================================
+// RENDER ALL — single entry; all shells read from S and shared helpers
+// ============================================================
+function renderAll() {
+  const ctx = getStationContext();
+  if (ctx && isStationType('press')) {
+    renderPressStationShell();
+    return;
+  }
+  if (ctx && isStationType('floor_manager')) {
+    renderFloorManagerShell();
+    return;
+  }
+  renderAdminShell();
+}
+
+function renderAdminShell() {
+  renderStats();
+  renderPresses();
+  renderFloor();
+  renderJobs();
+  renderTodos();
+  renderQC();
+  renderTV();
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function renderStats() {
+  const el = document.getElementById('statsRow');
+  if (!el) return;
+  const items = getFloorStats();
+  const activeKey = S.floorStatFilter;
+  el.innerHTML = items.map(i => {
+    const isActive = activeKey === i.key;
+    return `<div class="stat stat-clickable ${isActive ? 'stat-active' : ''}" onclick="setFloorStatFilter('${i.key}')" title="Show jobs: ${i.s}">
+    <div class="sv ${i.c}">${i.v}</div>
+    <div class="sl">${i.l}</div>
+    <div class="ss">${i.s}</div>
+    </div>`;
+  }).join('');
+  const filterHint = document.getElementById('floorStatFilterHint');
+  if (filterHint) {
+    const label = { presses: 'On press', active: 'Active', queued: 'Queued', overdue: 'Overdue', total: 'Total open' }[activeKey];
+    if (activeKey && label) {
+      filterHint.innerHTML = `Showing: <strong>${label}</strong> <button type="button" class="floor-filter-clear" onclick="setFloorStatFilter(null)">clear</button>`;
+      filterHint.style.display = '';
+    } else {
+      filterHint.innerHTML = '';
+      filterHint.style.display = 'none';
+    }
+  }
+}
+
+// ============================================================
+// PRESSES
+// ============================================================
+function renderPresses() {
+  const el = document.getElementById('pressGrid');
+  if (!el) return;
+  const isAdmin = S.mode === 'admin';
+  el.innerHTML = S.presses.map(p => buildPressCardHTML(p, isAdmin ? 'pressStation' : 'panel', isAdmin)).join('');
+}
+
+// ============================================================
+// FLOOR TABLE
+// ============================================================
+function renderFloor() {
+  const el = document.getElementById('floorBody');
+  if (!el) return;
+  const q = document.getElementById('floorSearch')?.value || '';
+  const { jobs: rawJobs, total } = getFloorJobs(q, S.floorStatFilter);
+  const jobs = sortFloorJobs(rawJobs);
+  const countEl = document.getElementById('floorCount');
+  const statFilterLabel = { presses: 'On press', active: 'Active', queued: 'Queued', overdue: 'Overdue', total: 'Total open' }[S.floorStatFilter] || '';
+  if (countEl) countEl.textContent = statFilterLabel && !q ? `${jobs.length} ${statFilterLabel.toLowerCase()}` : q ? `${jobs.length} of ${total}` : `${total} jobs`;
+
+  ensureFloorSortColumn();
+  const table = el.closest('table');
+  if (table) {
+    const theadTr = table.querySelector('thead tr');
+    if (theadTr) theadTr.innerHTML = floorTableHeaderHTML();
+  }
+
+  if (!jobs.length) {
+    el.innerHTML = `<tr><td colspan="7" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
+    return;
+  }
+  el.innerHTML = jobs.map(j => floorTableRowHTML(j, { statusCellId: true })).join('');
+
+  const doneEl = document.getElementById('recentDone');
+  if (doneEl) {
+    const doneJobs = S.jobs.filter(j => j.status === 'done').slice(0, 5);
+    if (doneJobs.length) {
+      doneEl.innerHTML = `
+        <div class="sec" style="color:var(--d3)">RECENTLY COMPLETED</div>
+        ${doneJobs.map(j => `
+        <div class="recent-done-item">
+          <span class="rd-check">✓</span>
+          <span class="rd-cat">${j.catalog || '—'}</span>
+          <span class="rd-artist">${j.artist || '—'} · ${j.album || ''}</span>
+          <button class="rd-open" onclick="openPanel('${j.id}')">VIEW</button>
+        </div>
+        `).join('')}
+      `;
+    } else {
+      doneEl.innerHTML = '';
+    }
+  }
+}
+
+// ============================================================
+// FLOOR CARD — full-screen statboard
+// ============================================================
+function openFloorCard(jobId) {
+  S.floorCardJobId = jobId;
+  S.floorCardEditMode = false;
+  const ov = document.getElementById('floorCardOverlay');
+  if (ov) ov.classList.add('on');
+  renderFloorCard();
+}
+
+function closeFloorCard() {
+  S.floorCardJobId = null;
+  S.floorCardEditMode = false;
+  const ov = document.getElementById('floorCardOverlay');
+  if (ov) ov.classList.remove('on');
+  const btn = document.getElementById('floorCardQuickEditBtn');
+  if (btn) { btn.textContent = 'QUICK EDIT'; btn.classList.remove('edit-mode'); }
+}
+
+function toggleFloorCardEdit() {
+  S.floorCardEditMode = !S.floorCardEditMode;
+  const btn = document.getElementById('floorCardQuickEditBtn');
+  if (btn) {
+    btn.textContent = S.floorCardEditMode ? 'DONE' : 'QUICK EDIT';
+    btn.classList.toggle('edit-mode', S.floorCardEditMode);
+  }
+  renderFloorCard();
+}
+
+function saveFloorCardQuickEdit() {
+  const j = S.jobs.find(x => x.id === S.floorCardJobId);
+  if (!j) return;
+  const get = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+  if (canEditField('status')) j.status = get('fcStatus') || j.status;
+  if (canEditField('press')) j.press = get('fcPress') || j.press;
+  if (canEditField('location')) j.location = get('fcLocation') || j.location;
+  if (canEditField('due')) j.due = get('fcDue') || j.due;
+  if (canEditField('notes')) j.notes = get('fcNotes') || j.notes;
+  if (canEditField('assembly')) j.assembly = get('fcAssembly') || j.assembly;
+  Storage.saveJob(j);
+  S.floorCardEditMode = false;
+  const btn = document.getElementById('floorCardQuickEditBtn');
+  if (btn) { btn.textContent = 'QUICK EDIT'; btn.classList.remove('edit-mode'); }
+  renderFloorCard();
+  if (getStationContext() && isStationType('floor_manager')) renderFloorManagerShell();
+  else { renderFloor(); renderPresses(); }
+}
+
+function renderFloorCard() {
+  const content = document.getElementById('floorCardContent');
+  if (!content) return;
+  const j = S.jobs.find(x => x.id === S.floorCardJobId);
+  if (!j) {
+    content.innerHTML = '<p>Job not found.</p>';
+    return;
+  }
+  const prog = progressDisplay(j);
+  const ah = assetHealth(j);
+  const edit = S.floorCardEditMode;
+
+  if (edit) {
+    const perm = getStationEditPermissions();
+    const getRow = (field, label, html) => canEditField(field) ? `<div class="fc-edit-row">${label}${html}</div>` : '';
+    const rows = [
+      getRow('status', '<label>Status</label>', `<select id="fcStatus">${STATUS_OPTS.map(o => `<option value="${o.v}" ${j.status === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
+      getRow('press', '<label>Press assigned</label>', `<select id="fcPress">${PRESS_OPTS.map(o => `<option value="${o}" ${(j.press || '') === o ? 'selected' : ''}>${o || '— Unassigned'}</option>`).join('')}</select>`),
+      getRow('location', '<label>Location</label>', `<input type="text" id="fcLocation" value="${(j.location || '').replace(/"/g, '&quot;')}" placeholder="Rack, bay...">`),
+      getRow('due', '<label>Due date</label>', `<input type="date" id="fcDue" value="${j.due || ''}">`),
+      getRow('notes', '<label>Production notes</label>', `<textarea id="fcNotes" rows="3">${(j.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
+      getRow('assembly', '<label>Assembly / location notes</label>', `<textarea id="fcAssembly" rows="2">${(j.assembly || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
+    ].join('');
+    content.innerHTML = `
+    <div class="fc-header">
+      <div class="fc-catalog">${(j.catalog || j.matrix || '—')}</div>
+      <div class="fc-artist">${(j.artist || '—')}</div>
+      <div class="fc-album">${j.album || ''}</div>
+    </div>
+    ${rows}
+    ${perm.canUseFloorCard ? `<div class="fc-edit-actions">
+      <button type="button" class="btn go" onclick="saveFloorCardQuickEdit()">SAVE</button>
+      <button type="button" class="btn ghost" onclick="toggleFloorCardEdit()">CANCEL</button>
+    </div>` : ''}
+    `;
+    const qeBtn = document.getElementById('floorCardQuickEditBtn');
+    if (qeBtn) qeBtn.style.display = perm.canUseFloorCard ? '' : 'none';
+    return;
+  }
+
+  const sec = [];
+  if (j.format) sec.push(j.format);
+  if (j.vinylType || j.color || j.weight) sec.push([j.vinylType, j.color, j.weight].filter(Boolean).join(' · '));
+  if (j.client || j.label) sec.push((j.client || '') + (j.label ? ' · ' + j.label : ''));
+  const secLine = sec.length ? sec.join(' · ') : '—';
+  const notes = [j.notes, j.assembly].filter(Boolean).join('\n');
+
+  content.innerHTML = `
+  <div class="fc-header">
+    <div class="fc-catalog">${(j.catalog || j.matrix || '—')}</div>
+    <div class="fc-artist">${(j.artist || '—')}</div>
+    <div class="fc-album">${j.album || ''}</div>
+  </div>
+  <div class="fc-strip">
+    <span class="fc-status">${statusPill(j.status)}</span>
+    <span class="fc-press">${j.press ? j.press : '—'}</span>
+    <span class="fc-due ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
+    <span class="fc-loc">${j.location ? '📍 ' + j.location : '—'}</span>
+  </div>
+  <div class="fc-qty-strip">
+    <span>Ordered: <strong>${(prog.p.ordered || 0).toLocaleString()}</strong></span>
+    <span>Pressed: <strong>${(prog.p.pressed || 0).toLocaleString()}</strong></span>
+    <span>QC passed: <strong>${(prog.p.qcPassed || 0).toLocaleString()}</strong></span>
+    <span>Rejected: <strong>${(prog.p.rejected || 0).toLocaleString()}</strong></span>
+    <span>Pending QC: <strong>${(prog.p.pendingQC || 0).toLocaleString()}</strong></span>
+  </div>
+  <div class="fc-progress-bar">
+    <div class="bar-wrap"><div class="bar-fill" style="width:${prog.pressedPct}%"></div></div>
+    <div class="bar-label">${prog.main} pressed · ${prog.sub}</div>
+  </div>
+  <div class="fc-asset">Assets: ${ah.done}/${ah.total} ${ah.total ? (ah.pct >= 1 ? '✓' : '') : ''}</div>
+  <div class="fc-secondary">${secLine}</div>
+  ${notes ? `<div class="fc-notes">${notes.replace(/\n/g, '<br>').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>` : ''}
+  `;
+  const perm = getStationEditPermissions();
+  const qeBtn = document.getElementById('floorCardQuickEditBtn');
+  if (qeBtn) qeBtn.style.display = perm.canUseFloorCard ? '' : 'none';
+}
+
+// ============================================================
+// PROGRESS DETAIL OVERLAY
+// ============================================================
+function openProgressDetail(jobId) {
+  const job = S.jobs.find(j => j.id === jobId);
+  if (!job) return;
+  const el = document.getElementById('progressDetailOverlay');
+  if (!el) return;
+  const p = getJobProgress(job);
+  const ordered = p.ordered;
+  const completePct = ordered ? Math.round((p.qcPassed / ordered) * 100) : 0;
+  const rejectedPct = ordered ? (p.rejected / ordered) * 100 : 0;
+  const qcPct = ordered ? (p.qcPassed / ordered) * 100 : 0;
+  const pendingPct = ordered ? (p.pendingQC / ordered) * 100 : 0;
+  const remainingPct = ordered ? Math.max(0, (ordered - p.pressed) / ordered) * 100 : 100;
+
+  document.getElementById('progressDetailTitle').textContent = `${job.catalog || '—'} · ${job.artist || '—'}`;
+  const rPct = ordered ? Math.round((p.rejected / ordered) * 100) : 0;
+  const gPct = ordered ? Math.round((p.qcPassed / ordered) * 100) : 0;
+  const yPct = ordered ? Math.round((p.pendingQC / ordered) * 100) : 0;
+  const remPct = ordered ? Math.round(((ordered - p.pressed) / ordered) * 100) : 100;
+  document.getElementById('progressDetailPct').textContent = `${completePct}% COMPLETE`;
+  const pctBreakdown = document.getElementById('progressDetailPctBreakdown');
+  if (pctBreakdown) pctBreakdown.textContent = `Pressed ${yPct}% · QC ${gPct}% · Rejected ${rPct}% · Remaining ${remPct}%`;
+  document.getElementById('progressDetailBar').innerHTML = [
+    qcPct > 0 ? `<div class="pd-seg qc" style="width:${qcPct}%" title="QC passed: ${p.qcPassed.toLocaleString()}"></div>` : '',
+    pendingPct > 0 ? `<div class="pd-seg pressed" style="width:${pendingPct}%" title="Pending QC: ${p.pendingQC.toLocaleString()}"></div>` : '',
+    rejectedPct > 0 ? `<div class="pd-seg rejected" style="width:${rejectedPct}%" title="Rejected: ${p.rejected.toLocaleString()}"></div>` : '',
+    remainingPct > 0 ? `<div class="pd-seg remaining" style="width:${remainingPct}%"></div>` : '',
+  ].filter(Boolean).join('') || '<div class="pd-seg remaining" style="width:100%"></div>';
+  document.getElementById('progressDetailLegend').innerHTML = [
+    `<span><span class="pd-dot pressed"></span> Pressed (pending QC): ${p.pendingQC.toLocaleString()} (${yPct}%)</span>`,
+    `<span><span class="pd-dot qc"></span> QC passed: ${p.qcPassed.toLocaleString()} (${gPct}%)</span>`,
+    `<span><span class="pd-dot rejected"></span> Rejected: ${p.rejected.toLocaleString()} (${rPct}%)</span>`,
+    `<span><span class="pd-dot remaining"></span> Remaining: ${(ordered - p.pressed).toLocaleString()} (${remPct}%)</span>`,
+  ].join('');
+  el.classList.add('on');
+}
+
+function closeProgressDetail() {
+  const el = document.getElementById('progressDetailOverlay');
+  if (el) el.classList.remove('on');
+}
+
+// ============================================================
+// ASSETS OVERLAY (standalone modal)
+// ============================================================
+let assetsOverlayState = null;
+
+function openAssetsOverlay(jobId) {
+  const job = S.jobs.find(j => j.id === jobId);
+  if (!job) return;
+  assetsOverlayState = { jobId, data: JSON.parse(JSON.stringify(job.assets || {})) };
+  document.getElementById('assetsOverlayTitle').textContent = `${job.catalog || '—'} · ${job.artist || '—'}`;
+  renderAssetsOverlay();
+  document.getElementById('assetsOverlay').classList.add('on');
+}
+
+function closeAssetsOverlay(skipSave) {
+  if (!assetsOverlayState) {
+    assetsOverlayState = null;
+    const el = document.getElementById('assetsOverlay');
+    if (el) el.classList.remove('on');
+    return;
+  }
+  flushAssetsOverlayInputs();
+  const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
+  if (!job) {
+    assetsOverlayState = null;
+    const el = document.getElementById('assetsOverlay');
+    if (el) el.classList.remove('on');
+    return;
+  }
+  job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+  if (skipSave) {
+    assetsOverlayState = null;
+    const el = document.getElementById('assetsOverlay');
+    if (el) el.classList.remove('on');
+    renderAll();
+    return;
+  }
+  Storage.updateJobAssets(job.id, job.assets)
+    .then(() => {
+      assetsOverlayState = null;
+      const el = document.getElementById('assetsOverlay');
+      if (el) el.classList.remove('on');
+      renderAll();
+    })
+    .catch(() => {});
+}
+
+function flushAssetsOverlayInputs() {
+  if (!assetsOverlayState) return;
+  ASSET_DEFS.forEach(a => {
+    const detailEl = document.getElementById('ado-' + a.key);
+    if (!detailEl || !detailEl.classList.contains('open')) return;
+    const inputs = detailEl.querySelectorAll('input[type="date"], input[type="text"]');
+    if (!assetsOverlayState.data[a.key]) assetsOverlayState.data[a.key] = { received: false, date: '', person: '', na: false, note: '' };
+    if (inputs.length >= 1) assetsOverlayState.data[a.key].date = (inputs[0].value || '').trim();
+    if (inputs.length >= 2) assetsOverlayState.data[a.key].person = (inputs[1].value || '').trim();
+    if (inputs.length >= 3) assetsOverlayState.data[a.key].note = (inputs[2].value || '').trim();
+  });
+}
+
+function renderAssetsOverlay() {
+  if (!assetsOverlayState) return;
+  const data = assetsOverlayState.data;
+  const received = ASSET_DEFS.filter(a => data[a.key]?.received).length;
+  const na = ASSET_DEFS.filter(a => data[a.key]?.na).length;
+  const remaining = ASSET_DEFS.length - received - na;
+  const allDone = remaining === 0;
+  let summaryHTML = `<div class="asset-summary">
+    <span class="as-received"><span class="as-num">${received}</span> received</span>
+    <span class="as-na"><span class="as-num">${na}</span> N/A</span>
+    <span class="as-remaining"><span class="as-num">${remaining}</span> remaining</span>
+    ${allDone ? '<span class="as-complete">✓ ALL ASSETS READY</span>' : ''}
+  </div>`;
+  const listEl = document.getElementById('assetsOverlayList');
+  if (!listEl) return;
+  listEl.innerHTML = summaryHTML + ASSET_DEFS.map(a => {
+    const d = data[a.key] || { received: false, date: '', person: '', note: '', na: false };
+    return `
+    <div>
+      <div class="asset-row ${d.received ? 'got' : ''} ${d.na ? 'na' : ''}"
+          onclick="${d.na ? '' : "toggleAssetsOverlayReceived('" + a.key + "')"}">
+      <div class="acheck">${d.received ? '✓' : ''}</div>
+      <div class="aname">${a.label}</div>
+      <div class="adate">${d.date || ''}</div>
+      <div style="display:flex;gap: var(--space-sm);align-items:center">
+        <div class="awho">${d.person || ''}</div>
+        <button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayNA('${a.key}')">${d.na ? 'RESTORE' : 'N/A'}</button>
+        ${d.received ? `<button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayDetail('${a.key}')">▾</button>` : ''}
+      </div>
+      </div>
+      <div class="asset-detail" id="ado-${a.key}">
+      <div>
+        <div class="adl">DATE RECEIVED</div>
+        <input type="date" value="${d.date || ''}" onchange="updateAssetsOverlay('${a.key}','date',this.value)">
+      </div>
+      <div>
+        <div class="adl">RECEIVED BY</div>
+        <input type="text" value="${escapeHtml(d.person || '')}" placeholder="Name" onchange="updateAssetsOverlay('${a.key}','person',this.value)">
+      </div>
+      <div style="grid-column:1/-1">
+        <div class="adl">NOTE</div>
+        <input type="text" value="${escapeHtml(d.note || '')}" placeholder="Note…" onchange="updateAssetsOverlay('${a.key}','note',this.value)">
+      </div>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function toggleAssetsOverlayReceived(key) {
+  if (!assetsOverlayState) return;
+  flushAssetsOverlayInputs();
+  const d = assetsOverlayState.data[key] || { received: false, date: '', person: '', na: false };
+  assetsOverlayState.data[key] = { ...d, received: !d.received, na: d.na ? false : d.na };
+  if (assetsOverlayState.data[key].received && !assetsOverlayState.data[key].date)
+    assetsOverlayState.data[key].date = new Date().toISOString().split('T')[0];
+  renderAssetsOverlay();
+}
+
+function toggleAssetsOverlayNA(key) {
+  if (!assetsOverlayState) return;
+  flushAssetsOverlayInputs();
+  const d = assetsOverlayState.data[key] || { received: false, date: '', person: '', na: false, note: '' };
+  assetsOverlayState.data[key] = { ...d, na: !d.na, received: d.na ? d.received : false };
+  renderAssetsOverlay();
+}
+
+function toggleAssetsOverlayDetail(key) {
+  const el = document.getElementById('ado-' + key);
+  if (el) el.classList.toggle('open');
+}
+
+function updateAssetsOverlay(key, field, val) {
+  if (!assetsOverlayState) return;
+  if (!assetsOverlayState.data[key]) assetsOverlayState.data[key] = { received: false, date: '', person: '', na: false, note: '' };
+  assetsOverlayState.data[key][field] = val;
+}
+
+function saveAssetsOverlay() {
+  if (!assetsOverlayState) return;
+  flushAssetsOverlayInputs();
+  const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
+  if (!job) { closeAssetsOverlay(true); return; }
+  job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+  Storage.updateJobAssets(job.id, job.assets)
+    .then(() => {
+      assetsOverlayState = null;
+      const el = document.getElementById('assetsOverlay');
+      if (el) el.classList.remove('on');
+      renderAll();
+      if (typeof toast === 'function') toast('ASSETS SAVED');
+    })
+    .catch(() => {});
+}
+
+// ============================================================
+// JOBS PAGE
+// ============================================================
+function ensureFloorSortColumn() {
+  if (!FLOOR_COLUMNS.some(c => c.key === S.floorSortBy)) S.floorSortBy = 'catalog';
+}
+
+function setFloorSort(key) {
+  if (S.floorSortBy === key) S.floorSortDir = S.floorSortDir === 'asc' ? 'desc' : 'asc';
+  else { S.floorSortBy = key; S.floorSortDir = 'asc'; }
+  renderFloor();
+}
+
+function setJobsSort(key) {
+  if (S.jobsSortBy === key) S.jobsSortDir = S.jobsSortDir === 'asc' ? 'desc' : 'asc';
+  else { S.jobsSortBy = key; S.jobsSortDir = 'asc'; }
+  renderJobs();
+}
+
+function jobsTableHeaderHTML() {
+  const ths = JOBS_COLUMNS.map(c => {
+    const active = S.jobsSortBy === c.key;
+    const arrow = active ? (S.jobsSortDir === 'asc' ? ' ▲' : ' ▼') : '';
+    return `<th class="sortable-th ${active ? 'sort-' + S.jobsSortDir : ''}" onclick="setJobsSort('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow}</th>`;
+  }).join('');
+  return ths + '<th></th>';
+}
+
+function renderJobs() {
+  const filter = document.getElementById('jobFilter')?.value || '';
+  const q = (document.getElementById('jobSearch')?.value || '').toLowerCase().trim();
+  let jobs = filter ? S.jobs.filter(j => j.status === filter) : S.jobs;
+
+  if (q) {
+    jobs = jobs.filter(j =>
+      (j.catalog || '').toLowerCase().includes(q) ||
+      (j.artist || '').toLowerCase().includes(q) ||
+      (j.album || '').toLowerCase().includes(q) ||
+      (j.color || '').toLowerCase().includes(q) ||
+      (j.client || '').toLowerCase().includes(q) ||
+      (j.location || '').toLowerCase().includes(q)
+    );
+  }
+
+  jobs = sortJobsList(jobs);
+
+  const countEl = document.getElementById('jobCount');
+  if (countEl) {
+    countEl.textContent = `${jobs.length} of ${S.jobs.length}`;
+  }
+
+  const tbody = document.getElementById('jobsBody');
+  const cards = document.getElementById('jobCards');
+  const empty = document.getElementById('jobsEmpty');
+  if (!jobs.length) {
+    if (tbody) tbody.innerHTML = '';
+    if (cards) cards.innerHTML = '';
+    if (empty) { empty.style.display = 'block'; empty.textContent = q ? `NO MATCHES FOR "${q}"` : 'NO JOBS IN SYSTEM · TAP + TO ADD'; }
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  const jobsTable = document.getElementById('jobsTbl');
+  if (jobsTable) {
+    const theadTr = jobsTable.querySelector('thead tr');
+    if (theadTr) theadTr.innerHTML = jobsTableHeaderHTML();
+  }
+
+  if (tbody) {
+    tbody.innerHTML = jobs.map(j => {
+      const ah = assetHealth(j);
+      const prog = progressDisplay(j);
+      return `<tr>
+        <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
+        <td class="panel-trigger" style="color:var(--d);cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.artist || '—'}</td>
+        <td class="panel-trigger" style="color:var(--d2);font-size:12px;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.album || '—'}</td>
+        <td>${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
+        <td><span style="color:var(--d)">${j.color || 'Black'}</span> ${j.weight ? `<span style="color:var(--d3)">${j.weight}</span>` : ''}</td>
+        <td>${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
+        <td style="color:var(--d3)">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
+        <td>${statusPill(j.status)}</td>
+        <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
+        <td style="color:var(--d3);font-size:12px">${j.press || '—'}</td>
+        <td class="assets-tap" onclick="event.stopPropagation(); openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
+        <td class="td-progress progress-tap" onclick="event.stopPropagation(); openProgressDetail('${j.id}')" title="View progress breakdown">
+        <div class="progress-main">${prog.main}</div>
+        <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+        <div class="progress-sub">${prog.sub}</div>
+        </td>
+        <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
+        <td><button class="open-btn" onclick="openPanel('${j.id}')">OPEN</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  if (cards) {
+    cards.innerHTML = jobs.map(j => {
+      const ah = assetHealth(j);
+      const prog = progressDisplay(j);
+      return `
+        <div class="job-card st-${j.status}" onclick="openPanel('${j.id}')">
+        <div class="jc-top">
+          <div>
+          <div class="jc-cat">${j.catalog || '—'}</div>
+          <div class="jc-artist">${j.artist || '—'}</div>
+          <div class="jc-album">${j.album || ''}</div>
+          </div>
+          ${statusPill(j.status)}
+        </div>
+        <div class="jc-row">
+          ${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : ''}
+          <span class="jc-detail">${j.color || 'Black'} <span>${j.weight || ''}</span></span>
+          <span class="jc-detail">Qty: ${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</span>
+        </div>
+        <div class="jc-row">
+          <span class="jc-detail ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
+          ${ahHTML(j)}
+          ${j.press ? `<span class="jc-detail">⬡ ${j.press}</span>` : ''}
+          ${j.location ? `<span class="loc">${j.location}</span>` : ''}
+        </div>
+        <div class="jc-progress">
+          <span class="jc-progress-main">Progress: ${prog.main}</span>
+          <div class="dl-bar jc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+          <span class="jc-progress-sub">${prog.sub}</span>
+        </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+// ============================================================
+// TODOS
+// ============================================================
+function renderTodos() {
+  const el = document.getElementById('todoCols');
+  if (!el) return;
+  const cols = [
+    {key:'daily',   label:'DAILY TASKS',  sub:'Resets midnight',        cls:''},
+    {key:'weekly',  label:'WEEKLY TASKS', sub:'Resets Monday',          cls:''},
+    {key:'standing',label:'STANDING',     sub:'Persistent reminders',   cls:'standing'},
+  ];
+  el.innerHTML = cols.map(c => {
+    const todos = S.todos[c.key] || [];
+    const done = todos.filter(t => t.done).length;
+    return `
+    <div class="todo-col">
+      <div class="todo-col-head ${c.cls}">
+      <span>${c.label} <span style="font-size:13px;color:var(--d3)">(${done}/${todos.length})</span></span>
+      <span class="reset-tag">${c.sub}</span>
+      </div>
+      ${todos.map((t, i) => `
+      <div class="todo-item ${t.done ? 'done' : ''}" onclick="toggleTodo('${c.key}',${i})">
+        <div class="tcheck">${t.done ? '✓' : ''}</div>
+        <div style="flex:1">
+        <div class="ttext">${t.text}</div>
+        ${t.who ? `<div class="twho">— ${t.who}</div>` : ''}
+        </div>
+        ${S.mode === 'admin' ? `<button class="tdel" onclick="event.stopPropagation();removeTodo('${c.key}',${i})">✕</button>` : ''}
+      </div>
+      `).join('')}
+      <div class="todo-add">
+      <input id="ta-${c.key}" placeholder="ADD TASK…" onkeydown="if(event.key==='Enter')addTodo('${c.key}')">
+      <button class="todo-add-btn" onclick="addTodo('${c.key}')">+</button>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function toggleTodo(key, idx) {
+  const t = S.todos[key][idx];
+  t.done = !t.done;
+  t.who = t.done ? (S.mode === 'admin' ? 'Admin' : 'Operator') : '';
+  Storage.saveTodos(S.todos);
+  renderTodos();
+}
+
+function removeTodo(key, idx) {
+  S.todos[key].splice(idx, 1);
+  Storage.saveTodos(S.todos);
+  renderTodos();
+}
+
+function addTodo(key) {
+  const el = document.getElementById('ta-' + key);
+  const text = el.value.trim();
+  if (!text) return;
+  S.todos[key].push({id:'u' + Date.now(), text, done:false, who:''});
+  el.value = '';
+  Storage.saveTodos(S.todos);
+  renderTodos();
+}
+
+// ============================================================
+// QC — job picker + date-navigable history
+// ============================================================
+let qcViewDate = new Date().toDateString();
+
+function tryAddQCRejectToProgress(jobId) {
+  if (!jobId) return { applied: false };
+  const result = logJobProgress(jobId, 'rejected', 1, 'QC');
+  return result.ok ? { applied: true } : { applied: false, error: result.error };
+}
+
+// QC Numpad — microwave-simple: display, digits, pass (green), reject (red → defect picker)
+let qcNumpadValue = '0';
+
+function qcNumpadTap(digit) {
+  if (qcNumpadValue === '0') qcNumpadValue = digit;
+  else if (qcNumpadValue.length < 5) qcNumpadValue += digit;
+  qcNumpadUpdateDisplay();
+}
+function qcNumpadClear() { qcNumpadValue = '0'; qcNumpadUpdateDisplay(); }
+function qcNumpadBack() { qcNumpadValue = qcNumpadValue.length > 1 ? qcNumpadValue.slice(0, -1) : '0'; qcNumpadUpdateDisplay(); }
+
+function qcNumpadUpdateDisplay() {
+  const n = parseInt(qcNumpadValue, 10) || 0;
+  const el = document.getElementById('qcNumpadDisplay');
+  if (el) { el.textContent = n.toLocaleString(); el.classList.toggle('has-value', n > 0); }
+  const passBtn = document.getElementById('qcNumpadPass');
+  const rejBtn = document.getElementById('qcNumpadReject');
+  const hasJob = !!S.qcSelectedJob;
+  if (passBtn) { passBtn.disabled = n === 0 || !hasJob; passBtn.textContent = n > 0 ? `✓ ${n.toLocaleString()} QC PASSED` : '✓ QC PASSED'; }
+  if (rejBtn) { rejBtn.disabled = n === 0 || !hasJob; rejBtn.textContent = n > 0 ? `✕ REJECT ${n.toLocaleString()}` : '✕ REJECT'; }
+}
+
+function qcNumpadPass() {
+  if (!getStationEditPermissions().canLogQC) return;
+  const n = parseInt(qcNumpadValue, 10) || 0;
+  if (n < 1 || !S.qcSelectedJob) return;
+  const job = S.jobs.find(j => j.id === S.qcSelectedJob);
+  const result = logJobProgress(S.qcSelectedJob, 'qc_passed', n, 'QC');
+  if (result.ok) {
+    toast(`${n.toLocaleString()} QC passed → ${job ? (job.catalog || job.artist || '—') : '—'}`);
+    qcNumpadValue = '0';
+    qcNumpadUpdateDisplay();
+    renderQC();
+  } else {
+    toastError(result.error || 'Log failed');
+  }
+}
+
+function qcNumpadShowRejectPicker() {
+  if (!getStationEditPermissions().canLogQC) return;
+  const n = parseInt(qcNumpadValue, 10) || 0;
+  if (n < 1 || !S.qcSelectedJob) return;
+  const titleEl = document.getElementById('qcRejectPickerTitle');
+  if (titleEl) titleEl.textContent = `REJECT ${n.toLocaleString()} — SELECT DEFECT TYPE`;
+  document.getElementById('qcRejectPicker').style.display = 'block';
+}
+
+function qcNumpadHideRejectPicker() {
+  document.getElementById('qcRejectPicker').style.display = 'none';
+}
+
+function qcNumpadReject(defectType) {
+  if (!getStationEditPermissions().canLogQC) return;
+  const n = parseInt(qcNumpadValue, 10) || 0;
+  if (n < 1 || !S.qcSelectedJob) return;
+  const job = S.jobs.find(j => j.id === S.qcSelectedJob);
+  const jobName = job ? (job.catalog || job.artist || '—') : '—';
+
+  const result = logJobProgress(S.qcSelectedJob, 'rejected', n, 'QC');
+  if (!result.ok) {
+    toastError(result.error || 'Reject log failed');
+    qcNumpadHideRejectPicker();
+    return;
+  }
+
+  const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const date = new Date().toDateString();
+  S.qcLog.unshift({ time, type: defectType, job: n > 1 ? `${jobName} (x${n})` : jobName, date });
+  if (S.qcLog.length > 1000) S.qcLog.splice(1000);
+  Storage.logQC({ time, type: defectType, job: n > 1 ? `${jobName} (x${n})` : jobName, date });
+
+  toast(`${n.toLocaleString()} ${defectType} → ${jobName}`);
+  qcNumpadValue = '0';
+  qcNumpadHideRejectPicker();
+  qcNumpadUpdateDisplay();
+  renderQC();
+}
+
+function logQC(type) {
+  if (!getStationEditPermissions().canLogQC) return;
+  if (!S.qcSelectedJob) {
+    toastError('Select a job first');
+    return;
+  }
+  const jobId = S.qcSelectedJob;
+  const j = S.jobs.find(x => x.id === jobId);
+  const job = j ? (j.catalog || j.artist || '—') : '—';
+  const time = new Date().toLocaleTimeString('en-US', {hour12:false});
+  const date = new Date().toDateString();
+
+  S.qcLog.unshift({time, type, job, date});
+  if (S.qcLog.length > 1000) S.qcLog.splice(1000);
+
+  Storage.logQC({ time, type, job, date });
+  const progressResult = tryAddQCRejectToProgress(jobId);
+  if (!progressResult.applied && progressResult.error) {
+    toast('DEFECT LOGGED. REJECTED COUNT NOT UPDATED (CHECK PRESSED TOTAL).');
+  } else {
+    toast(`${type} → ${job}`);
+  }
+  qcViewDate = date;
+  renderQC();
+}
+
+function selectQCJob(jid) {
+  S.qcSelectedJob = (jid && String(jid).trim()) ? jid : null;
+  renderQC();
+}
+
+function logQCPassed() {
+  if (!getStationEditPermissions().canLogQC) return;
+  if (!S.qcSelectedJob) {
+    toastError('Select a job first');
+    return;
+  }
+  const jobId = S.qcSelectedJob;
+  const input = document.getElementById('qcPassedQty');
+  const qty = input ? Math.max(1, parseInt(input.value, 10) || 1) : 1;
+  const job = S.jobs.find(j => j.id === jobId);
+  const result = logJobProgress(jobId, 'qc_passed', qty, 'QC');
+  if (result.ok) {
+    if (input) input.value = '1';
+    renderQC();
+    toast(`${qty} QC passed → ${job ? (job.catalog || job.artist || '—') : ''}`);
+  } else {
+    toastError(result.error || 'Log failed');
+  }
+}
+
+function getQCDates() {
+  const dates = [...new Set(S.qcLog.map(e => e.date))];
+  dates.sort((a, b) => new Date(b) - new Date(a));
+  return dates;
+}
+
+function qcDateStep(dir) {
+  const dates = getQCDates();
+  if (!dates.length) return;
+  const curIdx = dates.indexOf(qcViewDate);
+  if (curIdx === -1) {
+    qcViewDate = dates[0];
+  } else {
+    const newIdx = curIdx - dir;
+    if (newIdx >= 0 && newIdx < dates.length) {
+      qcViewDate = dates[newIdx];
+    }
+  }
+  renderQC();
+}
+
+function qcDateToday() {
+  qcViewDate = new Date().toDateString();
+  renderQC();
+}
+
+function renderQC() {
+  const today = new Date().toDateString();
+  const isToday = qcViewDate === today;
+  const viewLog = S.qcLog.filter(e => e.date === qcViewDate);
+  const todayLog = isToday ? viewLog : S.qcLog.filter(e => e.date === today);
+
+  const badge = document.getElementById('qcBadge');
+  if (badge) {
+    badge.textContent = todayLog.length;
+    badge.classList.toggle('show', todayLog.length > 0);
+  }
+
+  const picker = document.getElementById('qcJobPicker');
+  if (picker) {
+    const allJobs = S.jobs.slice().sort((a, b) => {
+      const statusOrder = { queue: 0, pressing: 1, assembly: 2, hold: 3, done: 4 };
+      const sa = statusOrder[a.status] ?? 5;
+      const sb = statusOrder[b.status] ?? 5;
+      if (sa !== sb) return sa - sb;
+      return (a.catalog || '').localeCompare(b.catalog || '');
+    });
+    const selectedId = S.qcSelectedJob || '';
+    picker.innerHTML = `
+    <div class="qc-job-picker-label">SELECT JOB</div>
+    <select class="qc-job-select" onchange="selectQCJob(this.value || null)">
+    <option value="">— Select job —</option>
+    ${allJobs.map(j => `
+      <option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'} ${j.status ? '(' + j.status + ')' : ''}</option>
+    `).join('')}
+    </select>
+    `;
+  }
+
+  const qcNumpadJobLabel = document.getElementById('qcNumpadJobLabel');
+  if (qcNumpadJobLabel) {
+    const sel = S.qcSelectedJob ? S.jobs.find(j => j.id === S.qcSelectedJob) : null;
+    qcNumpadJobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
+  }
+  if (typeof qcNumpadUpdateDisplay === 'function') qcNumpadUpdateDisplay();
+
+  const hasJob = !!S.qcSelectedJob;
+  const qcRejectBtns = document.querySelectorAll('.qc-btns .qc-btn');
+  qcRejectBtns.forEach(btn => { btn.disabled = !hasJob; });
+
+  const sumEl = document.getElementById('qcSummary');
+  if (sumEl) {
+    const counts = {};
+    viewLog.forEach(e => counts[e.type] = (counts[e.type] || 0) + 1);
+    const totalRejects = viewLog.length;
+    sumEl.innerHTML = (totalRejects ? `<span style="color:var(--d2);font-size:12px;margin-right: var(--space-sm)">${totalRejects} total</span>` : '') +
+    Object.entries(counts).map(([t, n]) => `
+      <div class="qc-sum-pill">
+      <span class="qsp-n">${n}</span>
+      <span class="qsp-l">${t}</span>
+      </div>
+    `).join('') || '<span style="color:var(--d3);font-size:12px">NO REJECTS THIS DAY</span>';
+  }
+
+  const dateLabel = document.getElementById('qcDateLabel');
+  if (dateLabel) {
+    const d = new Date(qcViewDate);
+    const formatted = d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+    dateLabel.innerHTML = formatted + (isToday ? '<span class="qdl-today">TODAY</span>' : '');
+  }
+
+  const logEl = document.getElementById('qcLog');
+  if (!logEl) return;
+  if (!viewLog.length) {
+    logEl.innerHTML = `<div class="empty">No rejects logged ${isToday ? 'today' : 'on this date'}</div>`;
+    return;
+  }
+  logEl.innerHTML = viewLog.map(e => `
+    <div class="qc-entry">
+    <span class="qt">${e.time}</span>
+    <span class="qtype">${e.type}</span>
+    <span class="qjob">${e.job}</span>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// TV MODE
+// ============================================================
+function renderTV() {
+  const pe = document.getElementById('tvPresses');
+  if (pe) pe.innerHTML = S.presses.map(p => {
+    const j = p.job_id ? S.jobs.find(x => x.id === p.job_id) : null;
+    const ah = j ? assetHealth(j) : {done:0, total:0, pct:0};
+    const prog = j ? progressDisplay(j) : null;
+    return `
+    <div class="tv-press ${p.status}">
+      <div class="tv-pname ${p.type === '7"' ? 'seven' : ''}">${p.name}</div>
+      ${j ? `
+      <div class="tv-pjob">${j.catalog || '—'} · ${j.artist || ''}</div>
+      <div class="tv-pmeta">${j.format || ''} · ${j.color || 'Black'} · Qty ${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</div>
+      <div class="tv-progress">
+        <div class="tv-progress-label">PROGRESS <span class="tv-progress-num">${prog.main}</span></div>
+        <div class="tv-dl-bar dl-bar tv">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
+        <div class="tv-progress-sub">${prog.sub}</div>
+        ${prog.overQty ? '<div class="tv-progress-over">OVER QTY</div>' : ''}
+      </div>
+      <div class="tv-assets-demoted">Assets ${ah.done}/${ah.total}</div>
+      ` : `<div class="tv-pmeta" style="color:var(--d3);margin-top: var(--space-xs)">Idle</div>`}
+    </div>
+    `;
+  }).join('');
+
+  const qe = document.getElementById('tvBody');
+  if (qe) {
+    const active = S.jobs.filter(j => j.status !== 'done');
+    qe.innerHTML = active.map(j => {
+      const ah = assetHealth(j);
+      return `<tr>
+        <td class="tc">${j.catalog || '—'}</td>
+        <td class="ta">${j.artist || '—'}</td>
+        <td>${j.format || '—'}</td>
+        <td>${statusPill(j.status)}</td>
+        <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
+        <td style="color:${ah.pct >= 1 ? 'var(--g)' : ah.pct >= 0.5 ? 'var(--w)' : 'var(--r)'}">${ah.done}/${ah.total}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const ti = document.getElementById('tvTicker');
+  if (ti) {
+    const parts = S.jobs.filter(j => j.status !== 'done')
+      .map(j => `★ ${j.catalog || '—'} · ${j.artist || ''} · ${j.format || ''} · Due: ${j.due || 'TBD'}`);
+    ti.textContent = parts.join('    ') || '★ NO ACTIVE JOBS ★';
+  }
+}
+
+// ============================================================
+// PANEL: ASSET LIST (in job form)
+// ============================================================
+function buildAssetList() {
+  const el = document.getElementById('assetList');
+  if (!el) return;
+
+  const received = ASSET_DEFS.filter(a => curAssets[a.key]?.received).length;
+  const na = ASSET_DEFS.filter(a => curAssets[a.key]?.na).length;
+  const remaining = ASSET_DEFS.length - received - na;
+  const allDone = remaining === 0;
+
+  let summaryHTML = `<div class="asset-summary">
+    <span class="as-received"><span class="as-num">${received}</span> received</span>
+    <span class="as-na"><span class="as-num">${na}</span> N/A</span>
+    <span class="as-remaining"><span class="as-num">${remaining}</span> remaining</span>
+    ${allDone ? '<span class="as-complete">✓ ALL ASSETS READY</span>' : ''}
+  </div>`;
+
+  el.innerHTML = summaryHTML + ASSET_DEFS.map(a => {
+    const d = curAssets[a.key] || {received:false, date:'', person:'', note:'', na:false};
+    return `
+    <div>
+      <div class="asset-row ${d.received ? 'got' : ''} ${d.na ? 'na' : ''}" id="ar-${a.key}"
+          onclick="${d.na ? '' : "toggleAsset('" + a.key + "')"}">
+      <div class="acheck">${d.received ? '✓' : ''}</div>
+      <div class="aname">${a.label}</div>
+      <div class="adate">${d.date || ''}</div>
+      <div style="display:flex;gap: var(--space-sm);align-items:center">
+        <div class="awho">${d.person || ''}</div>
+        <button class="na-btn" onclick="event.stopPropagation();toggleNA('${a.key}')">${d.na ? 'RESTORE' : 'N/A'}</button>
+        ${d.received ? `<button class="na-btn" onclick="event.stopPropagation();toggleDetail('${a.key}')">▾</button>` : ''}
+      </div>
+      </div>
+      <div class="asset-detail" id="ad-${a.key}">
+      <div>
+        <div class="adl">DATE RECEIVED</div>
+        <input type="date" value="${d.date || ''}" onchange="updateAsset('${a.key}','date',this.value)">
+      </div>
+      <div>
+        <div class="adl">RECEIVED BY</div>
+        <input type="text" value="${d.person || ''}" placeholder="Name" onchange="updateAsset('${a.key}','person',this.value)">
+      </div>
+      <div style="grid-column:1/-1">
+        <div class="adl">NOTE</div>
+        <input type="text" value="${d.note || ''}" placeholder="Note…" onchange="updateAsset('${a.key}','note',this.value)">
+      </div>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function toggleAsset(key) {
+  if (!curAssets[key]) curAssets[key] = {received:false, date:'', person:'', na:false, note:''};
+  curAssets[key].received = !curAssets[key].received;
+  if (curAssets[key].received && !curAssets[key].date)
+    curAssets[key].date = new Date().toISOString().split('T')[0];
+  buildAssetList();
+}
+
+function toggleNA(key) {
+  if (!curAssets[key]) curAssets[key] = {received:false, date:'', person:'', na:false, note:''};
+  curAssets[key].na = !curAssets[key].na;
+  if (curAssets[key].na) curAssets[key].received = false;
+  buildAssetList();
+}
+
+function toggleDetail(key) {
+  const el = document.getElementById('ad-' + key);
+  if (el) el.classList.toggle('open');
+}
+
+function updateAsset(key, field, val) {
+  if (!curAssets[key]) curAssets[key] = {received:false, date:'', person:'', na:false, note:''};
+  curAssets[key][field] = val;
+}
+
+// ============================================================
+// PROGRESS SECTION (job panel only)
+// ============================================================
+function renderProgressSection() {
+  const summaryEl = document.getElementById('progressSummary');
+  const barEl = document.getElementById('progressBarWrap');
+  const recentEl = document.getElementById('progressRecent');
+  const section = document.getElementById('progressSection');
+  const form = section ? section.querySelector('.progress-log-form') : null;
+  const logBtn = document.getElementById('progressLogBtn');
+  if (!summaryEl || !barEl || !recentEl) return;
+
+  if (!S.editId) {
+    summaryEl.innerHTML = '<div class="progress-empty" style="grid-column:1/-1">SAVE JOB FIRST TO LOG PROGRESS.</div>';
+    barEl.innerHTML = '';
+    recentEl.innerHTML = '';
+    if (form) form.style.display = 'none';
+    if (logBtn) logBtn.disabled = true;
+    return;
+  }
+
+  const job = S.jobs.find(j => j.id === S.editId);
+  if (!job) return;
+  if (form) form.style.display = '';
+  if (logBtn) logBtn.disabled = false;
+
+  const p = getJobProgress(job);
+  const ordered = p.ordered;
+  const pressed = p.pressed;
+  const qcPassed = p.qcPassed;
+  const rejected = p.rejected;
+  const pendingQC = p.pendingQC;
+
+  summaryEl.innerHTML = `
+    <div class="ps-cell"><span class="ps-val">${ordered.toLocaleString()}</span>ORDERED</div>
+    <div class="ps-cell"><span class="ps-val">${pressed.toLocaleString()}</span>PRESSED</div>
+    <div class="ps-cell"><span class="ps-val">${qcPassed.toLocaleString()}</span>QC PASSED</div>
+    <div class="ps-cell"><span class="ps-val">${rejected.toLocaleString()}</span>REJECTED</div>
+    <div class="ps-cell"><span class="ps-val">${pendingQC.toLocaleString()}</span>PENDING QC</div>
+  `;
+
+  const completionRatio = ordered > 0 ? Math.min(1, qcPassed / ordered) : 0;
+  const barPct = Math.round(completionRatio * 100);
+  const overQty = pressed > ordered;
+  barEl.innerHTML = `
+    <div class="progress-bar-outer">
+    <div class="progress-bar-fill" style="width:${barPct}%"></div>
+    </div>
+    <div class="progress-bar-text">QC: ${qcPassed.toLocaleString()} / ${ordered.toLocaleString()} ORDERED · PRESSED: ${pressed.toLocaleString()}</div>
+    ${overQty ? '<div class="progress-over-qty">OVER QTY</div>' : ''}
+  `;
+
+  ensureJobProgressLog(job);
+  const log = (job.progressLog || []).slice().reverse();
+  if (!log.length) {
+    recentEl.innerHTML = '<div class="progress-empty">NO ENTRIES YET.</div>';
+  } else {
+    recentEl.innerHTML = log.slice(0, 20).map(e => {
+      const time = new Date(e.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+      const stageLabel = (e.stage === 'pressed' ? 'PRESSED' : e.stage === 'qc_passed' ? 'QC PASSED' : 'REJECTED');
+      return `<div class="progress-entry ${e.stage}">+${e.qty} ${stageLabel} · ${(e.person || 'UNKNOWN')} · ${time}</div>`;
+    }).join('');
+  }
+}
+
+// ============================================================
+// NOTES SECTION — append-only production & assembly logs
+// ============================================================
+function renderNotesSection() {
+  const job = S.jobs.find(j => j.id === S.editId);
+  if (!job) return;
+  ensureNotesLog(job);
+  const prodEl = document.getElementById('notesLogList');
+  if (prodEl) {
+    prodEl.innerHTML = (job.notesLog || []).slice().reverse().map(e => {
+      const time = new Date(e.timestamp).toLocaleString();
+      return `<div class="progress-entry"><strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
+    }).join('') || '<div class="progress-empty">No notes yet.</div>';
+  }
+  const asmEl = document.getElementById('assemblyLogList');
+  if (asmEl) {
+    asmEl.innerHTML = (job.assemblyLog || []).slice().reverse().map(e => {
+      const time = new Date(e.timestamp).toLocaleString();
+      return `<div class="progress-entry"><strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
+    }).join('') || '<div class="progress-empty">No notes yet.</div>';
+  }
+}
