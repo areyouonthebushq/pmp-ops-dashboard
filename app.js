@@ -1877,6 +1877,9 @@
         else { S.floorSortBy = key; S.floorSortDir = 'asc'; }
         renderFloor();
     }
+    function ensureFloorSortColumn() {
+        if (!FLOOR_COLUMNS.some(c => c.key === S.floorSortBy)) S.floorSortBy = 'catalog';
+    }
     function floorTableHeaderHTML() {
         return FLOOR_COLUMNS.map(c => {
             const active = S.floorSortBy === c.key;
@@ -1885,9 +1888,8 @@
         }).join('');
     }
 
-    /** One active-orders table row. Uses progressDisplay, dueClass, dueLabel, ahHTML, statusTapClass. */
+    /** One active-orders table row (lean: catalog, artist/album, format, status, due). Full details in job panel. */
     function floorTableRowHTML(j, opts) {
-    const prog = progressDisplay(j);
     const statusId = (opts && opts.statusCellId) ? ` id="st-${j.id}"` : '';
     return `
     <tr>
@@ -1903,13 +1905,6 @@
         </div>
     </td>
     <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
-    <td class="assets-tap" onclick="openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
-    <td class="td-progress progress-tap" onclick="openProgressDetail('${j.id}')" title="View progress breakdown">
-        <div class="progress-main">${prog.main}</div>
-        <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
-        <div class="progress-sub">${prog.sub}</div>
-    </td>
-    <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
     </tr>`;
     }
 
@@ -2238,7 +2233,7 @@
     pressEl.innerHTML = S.presses.map(p => buildPressCardHTML(p, 'floorCard', false)).join('');
 
     if (!jobs.length) {
-        bodyEl.innerHTML = `<tr><td colspan="8" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
+        bodyEl.innerHTML = `<tr><td colspan="5" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
     bodyEl.innerHTML = jobs.map(j => floorTableRowHTML(j, { openBtnLabel: 'EDIT' })).join('');
@@ -2330,6 +2325,7 @@
     const countEl = document.getElementById('floorCount');
     if (countEl) countEl.textContent = q ? `${jobs.length} of ${total}` : `${total} jobs`;
 
+    ensureFloorSortColumn();
     const table = el.closest('table');
     if (table) {
         const theadTr = table.querySelector('thead tr');
@@ -2337,7 +2333,7 @@
     }
 
     if (!jobs.length) {
-        el.innerHTML = `<tr><td colspan="8" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
+        el.innerHTML = `<tr><td colspan="5" class="empty">${q ? 'NO MATCHES FOR "' + q + '"' : 'NO ACTIVE JOBS'}</td></tr>`;
         return;
     }
     el.innerHTML = jobs.map(j => floorTableRowHTML(j, { statusCellId: true })).join('');
