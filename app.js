@@ -1827,8 +1827,8 @@
     const statusId = (opts && opts.statusCellId) ? ` id="st-${j.id}"` : '';
     return `
     <tr>
-    <td style="color:var(--w);font-weight:700">${j.catalog || '—'}</td>
-    <td class="floor-card-trigger" onclick="openFloorCard('${j.id}')" title="Open floor statboard">
+    <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
+    <td class="panel-trigger" onclick="openPanel('${j.id}')" title="Open job" style="cursor:pointer">
         <div style="color:var(--d)">${j.artist || '—'}</div>
         <div style="color:var(--d3);font-size:11px">${j.album || ''}</div>
     </td>
@@ -2563,9 +2563,9 @@
         const ah = assetHealth(j);
         const prog = progressDisplay(j);
         return `<tr>
-            <td style="color:var(--w);font-weight:700">${j.catalog || '—'}</td>
-            <td style="color:var(--d)">${j.artist || '—'}</td>
-            <td style="color:var(--d2);font-size:12px">${j.album || '—'}</td>
+            <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
+            <td class="panel-trigger" style="color:var(--d);cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.artist || '—'}</td>
+            <td class="panel-trigger" style="color:var(--d2);font-size:12px;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.album || '—'}</td>
             <td>${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
             <td><span style="color:var(--d)">${j.color || 'Black'}</span> ${j.weight ? `<span style="color:var(--d3)">${j.weight}</span>` : ''}</td>
             <td>${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
@@ -2717,7 +2717,7 @@
     }
 
     function selectQCJob(jid) {
-    S.qcSelectedJob = S.qcSelectedJob === jid ? null : jid;
+    S.qcSelectedJob = (jid && String(jid).trim()) ? jid : null;
     renderQC();
     }
 
@@ -2762,17 +2762,25 @@
         badge.classList.toggle('show', todayLog.length > 0);
     }
 
-    // Job picker
+    // Job picker — dropdown of all jobs
     const picker = document.getElementById('qcJobPicker');
     if (picker) {
-        const pressing = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
+        const allJobs = S.jobs.slice().sort((a, b) => {
+            const statusOrder = { queue: 0, pressing: 1, assembly: 2, hold: 3, done: 4 };
+            const sa = statusOrder[a.status] ?? 5;
+            const sb = statusOrder[b.status] ?? 5;
+            if (sa !== sb) return sa - sb;
+            return (a.catalog || '').localeCompare(b.catalog || '');
+        });
+        const selectedId = S.qcSelectedJob || '';
         picker.innerHTML = `
         <div class="qc-job-picker-label">SELECT JOB FOR THIS REJECT</div>
-        ${pressing.length ? pressing.map(j => `
-            <button class="qc-job-btn ${S.qcSelectedJob === j.id ? 'active' : ''}" onclick="selectQCJob('${j.id}')">
-            ${j.catalog || '—'} · ${j.artist || '—'}
-            </button>
-        `).join('') : '<span style="color:var(--d3);font-size:12px">NO JOBS PRESSING</span>'}
+        <select class="qc-job-select" onchange="selectQCJob(this.value || null)">
+        <option value="">— Select job —</option>
+        ${allJobs.map(j => `
+            <option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'} ${j.status ? '(' + j.status + ')' : ''}</option>
+        `).join('')}
+        </select>
         `;
     }
 

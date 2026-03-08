@@ -1051,6 +1051,13 @@
     }
     .qc-job-btn:hover { border-color: var(--w); color: var(--w); }
     .qc-job-btn.active { border-color: var(--g); color: var(--g); background: var(--g3); }
+    .qc-job-select {
+    width: 100%; max-width: 420px;
+    padding: var(--space-sm) var(--space-md); border: 1px solid var(--b2);
+    background: var(--s2); color: var(--d2);
+    font-family: 'Inconsolata', monospace; font-size: 13px;
+    }
+    .qc-job-select:focus { outline: none; border-color: var(--g); }
 
     .qc-log { }
     .qc-entry {
