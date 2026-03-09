@@ -80,6 +80,7 @@ let S = {
   dataChangedWhileEditing: false,
   offlineMode: false,
   lastLocalWriteAt: 0,
+  panelOpenedAt: 0,
   floorSortBy: 'catalog',
   floorSortDir: 'asc',
   jobsSortBy: 'catalog',
@@ -269,6 +270,11 @@ function startRealtime() {
         return;
       }
       if (panelOpen) {
+        const panelJustOpened = Date.now() - (S.panelOpenedAt || 0) < 2500;
+        if (panelJustOpened) {
+          console.log('[PMP] Realtime event ignored (panel just opened)');
+          return;
+        }
         S.dataChangedWhileEditing = true;
         console.log('[PMP] Realtime event → showDataChangedNotice');
         showDataChangedNotice();
@@ -954,6 +960,8 @@ function openPanel(id) {
   const ov = document.getElementById('overlay');
   ov.classList.add('open');
   panelOpen = true;
+  S.panelOpenedAt = Date.now();
+  hideDataChangedNotice();
   panelEditMode = false;
   S.editId = id && id !== 'null' ? id : null;
   curAssets = {};
