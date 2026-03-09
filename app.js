@@ -975,14 +975,20 @@ function openPanel(id) {
 
     FIELD_MAP.forEach(f => {
       const el = document.getElementById(f.id);
-      if (el && j[f.key] != null) el.value = j[f.key];
+      if (!el) return;
+      const val = j[f.key];
+      el.value = (val != null && val !== '') ? String(val) : '';
     });
     const pressEl = document.getElementById('jPress');
-    if (pressEl && j.press && j.press.includes(',')) {
-      const first = j.press.split(',')[0].trim();
-      if (first) pressEl.value = first;
+    if (pressEl) {
+      if (j.press && String(j.press).includes(',')) {
+        const first = j.press.split(',')[0].trim();
+        pressEl.value = first || '';
+      } else {
+        pressEl.value = (j.press != null && j.press !== '') ? String(j.press) : '';
+      }
     }
-    document.getElementById('jOv').value = j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '';
+    document.getElementById('jOv').value = j.qty ? Math.ceil(parseInt(j.qty, 10) * 1.1).toLocaleString() : '';
     curAssets = j.assets ? JSON.parse(JSON.stringify(j.assets)) : {};
   } else {
     document.getElementById('panelId').textContent = 'NEW JOB';
@@ -1127,10 +1133,15 @@ async function saveJob() {
     releasePressByJob(job.id);
   }
 
-  await Promise.all([Storage.savePresses(S.presses), Storage.saveJob(job)]);
-  closePanel();
-  renderAll();
-  toast(S.editId ? 'JOB UPDATED' : 'JOB ADDED');
+  try {
+    await Promise.all([Storage.savePresses(S.presses), Storage.saveJob(job)]);
+    closePanel();
+    renderAll();
+    toast(S.editId ? 'JOB UPDATED' : 'JOB ADDED');
+  } catch (e) {
+    if (typeof toastError === 'function') toastError(e && (e.message || e.error) ? String(e.message || e.error) : 'Save failed');
+    else toast('Save failed');
+  }
 }
 
 // ============================================================

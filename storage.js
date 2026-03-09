@@ -222,12 +222,12 @@ const Storage = {
           console.error(e);
           pendingWrites.delete(job.id);
           setSyncState('error', { toast: 'SAVE FAILED' });
+          return Promise.reject(e);
         })
         .finally(function () { saveInFlight = false; });
     }
     pendingWrites.delete(job.id);
-    scheduleSave();
-    return Promise.resolve();
+    return flushLocalSave();
   },
   updateJobAssets(jobId, assets) {
     if (useSupabase()) {
@@ -256,11 +256,10 @@ const Storage = {
       };
       return supabaseWithRetry(deleteChain)
         .then(function () { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-        .catch(function (e) { console.error(e); setSyncState('error', { toast: 'DELETE FAILED' }); })
+        .catch(function (e) { console.error(e); setSyncState('error', { toast: 'DELETE FAILED' }); return Promise.reject(e); })
         .finally(function () { saveInFlight = false; });
     }
-    scheduleSave();
-    return Promise.resolve();
+    return flushLocalSave();
   },
   savePresses(presses) {
     presses.forEach(p => {
@@ -274,22 +273,23 @@ const Storage = {
           setSyncState('synced');
           setTimeout(function () { pendingPressWrites.clear(); }, 6000);
         })
-        .catch(function () {
+        .catch(function (e) {
           pendingPressWrites.clear();
-          setSyncState('error');
+          setSyncState('error', { toast: 'SAVE FAILED' });
+          return Promise.reject(e);
         })
         .finally(function () { saveInFlight = false; });
     }
     pendingPressWrites.clear();
-    scheduleSave();
-    return Promise.resolve();
+    return flushLocalSave();
   },
   saveTodos(todos) {
     if (useSupabase()) {
-      return window.PMP.Supabase.saveTodos(todos).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); }).catch(() => setSyncState('error'));
+      return window.PMP.Supabase.saveTodos(todos)
+        .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+        .catch((e) => { setSyncState('error'); return Promise.reject(e); });
     }
-    scheduleSave();
-    return Promise.resolve();
+    return flushLocalSave();
   },
   logProgress(entry) {
     if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'logProgress: ' + (entry.job_id || '?'), level: 'info' });
@@ -303,11 +303,10 @@ const Storage = {
       saveInFlight = true;
       return supabaseWithRetry(function () { return window.PMP.Supabase.logProgress(entry); })
         .then(function () { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-        .catch(function (e) { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); })
+        .catch(function (e) { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); return Promise.reject(e); })
         .finally(function () { saveInFlight = false; });
     }
-    scheduleSave();
-    return Promise.resolve();
+    return flushLocalSave();
   },
   logQC(entry) {
     if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'logQC: ' + (entry.job || '?'), level: 'info' });
@@ -321,23 +320,38 @@ const Storage = {
       saveInFlight = true;
       return supabaseWithRetry(function () { return window.PMP.Supabase.logQC(entry); })
         .then(function () { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-        .catch(function (e) { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); })
+        .catch(function (e) { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); return Promise.reject(e); })
         .finally(function () { saveInFlight = false; });
     }
-    scheduleSave();
-    return Promise.resolve();
+    return flushLocalSave();
   },
   saveSnapshot() {
     if (!useSupabase()) scheduleSave();
   },
   saveJobs(jobs) {
     if (useSupabase()) {
-      return Promise.all(jobs.map((j) => window.PMP.Supabase.saveJob(j))).then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); });
+      return Promise.all(jobs.map((j) => window.PMP.Supabase.saveJob(j)))
+        .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
+        .catch((e) => { setSyncState('error'); return Promise.reject(e); });
     }
-    scheduleSave();
-    return Promise.resolve();
+    return flushLocalSave();
   },
 };
+
+function flushLocalSave() {
+  if (useSupabase()) return Promise.resolve();
+  setSyncState('saving');
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  const payload = {
+    jobs: S.jobs,
+    presses: S.presses,
+    todos: S.todos,
+    qcLog: S.qcLog,
+    lastReset: S._lastReset || new Date().toDateString(),
+  };
+  return safeSet(STORE_KEY, payload).then(() => setSyncState('synced'));
+}
 
 function scheduleSave() {
   if (useSupabase()) return;
