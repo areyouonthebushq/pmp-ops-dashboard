@@ -424,6 +424,8 @@ function enterByLauncher(choice, pressId) {
   loadAll();
   startPolling();
 
+  document.getElementById('app').style.display = 'block';
+
   if (choice === 'admin') {
     setStationContext({});
     hideAllShells();
