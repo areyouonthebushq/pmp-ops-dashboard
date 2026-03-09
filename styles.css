@@ -1319,6 +1319,31 @@
         cursor: pointer;
     }
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
+
+    /* Press Log — same design language as QC; single primary action */
+    .pl-job-picker {
+    display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
+    padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
+    }
+    #pg-presslog .qc-numpad-actions { grid-template-columns: 1fr; }
+    .pl-numpad-log {
+    min-height: 56px;
+    font-family: 'Inconsolata', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--g);
+    background: var(--g3);
+    border: 2px solid var(--g2);
+    cursor: pointer;
+    transition: all 0.15s;
+    }
+    .pl-numpad-log:hover:not(:disabled) { background: var(--g); color: #000; box-shadow: var(--gg); }
+    .pl-numpad-log:disabled { opacity: 0.3; cursor: not-allowed; }
+    .pl-recent { margin-bottom: var(--space-lg); }
+    .pl-recent .progress-entry { padding: var(--space-xs) 0; border-bottom: 1px solid var(--b1); font-size: 12px; color: var(--d2); }
+    .pl-recent .progress-entry.pressed { color: var(--g); }
+
     @media (max-width: 600px) {
         .qc-numpad { max-width: 100%; }
         .qc-numpad-display { font-size: 56px; min-height: 80px; }

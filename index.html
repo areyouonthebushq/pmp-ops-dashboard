@@ -176,6 +176,7 @@
         <div class="nav-item on" data-pg="floor" onclick="goPg('floor')">⬡ FLOOR</div>
         <div class="nav-item" data-pg="jobs" onclick="goPg('jobs')">▶ JOBS</div>
         <div class="nav-item" id="navTodos" data-pg="todos" onclick="goPg('todos')" style="display:none">✓ TODOS</div>
+        <div class="nav-item" data-pg="presslog" onclick="goPg('presslog')">⬡ PRESS LOG</div>
         <div class="nav-item" data-pg="qc" onclick="goPg('qc')">
         ⚠ QC LOG <span class="badge" id="qcBadge"></span>
         </div>
@@ -248,6 +249,38 @@
     <!-- ======= TODOS PAGE ======= -->
     <div class="pg" id="pg-todos">
         <div class="todo-cols" id="todoCols"></div>
+    </div>
+
+    <!-- ======= PRESS LOG PAGE ======= -->
+    <div class="pg" id="pg-presslog">
+        <div class="sec">SELECT JOB</div>
+        <div class="pl-job-picker" id="plJobPicker"></div>
+        <div class="sec qc-primary-sec">LOG PRESSED</div>
+        <div class="qc-numpad-block" id="plNumpadBlock">
+            <div class="qc-numpad-job" id="plNumpadJobLabel">Select a job above</div>
+            <div class="qc-numpad">
+                <div class="qc-numpad-display" id="plNumpadDisplay">0</div>
+                <div class="qc-numpad-grid">
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('7')">7</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('8')">8</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('9')">9</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('4')">4</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('5')">5</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('6')">6</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('1')">1</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('2')">2</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('3')">3</button>
+                    <button type="button" class="ps-numpad-btn ps-numpad-clear" onclick="plNumpadClear()">C</button>
+                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('0')">0</button>
+                    <button type="button" class="ps-numpad-btn ps-numpad-back" onclick="plNumpadBack()">←</button>
+                </div>
+                <div class="qc-numpad-actions">
+                    <button type="button" class="pl-numpad-log" id="plNumpadLogBtn" onclick="plNumpadSubmit()" disabled>LOG PRESSED</button>
+                </div>
+            </div>
+        </div>
+        <div class="sec">RECENT</div>
+        <div class="pl-recent" id="plRecent"></div>
     </div>
 
     <!-- ======= QC PAGE ======= -->

@@ -72,6 +72,7 @@ let S = {
   mode: 'floor',
   editId: null,
   qcSelectedJob: null,
+  pressLogSelectedJob: null,
   floorCardJobId: null,
   floorCardEditMode: false,
   stationType: null,

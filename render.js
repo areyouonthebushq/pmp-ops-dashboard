@@ -153,6 +153,9 @@ function renderAll() {
   if (typeof currentPage !== 'undefined' && currentPage === 'qc' && typeof qcNumpadValue !== 'undefined' && qcNumpadValue !== '0') {
     return;
   }
+  if (typeof currentPage !== 'undefined' && currentPage === 'presslog' && typeof plNumpadValue !== 'undefined' && plNumpadValue !== '0') {
+    return;
+  }
   renderAdminShell();
 }
 
@@ -162,6 +165,7 @@ function renderAdminShell() {
   renderFloor();
   renderJobs();
   renderTodos();
+  renderPressLog();
   renderQC();
   renderTV();
 }
@@ -772,6 +776,96 @@ function addTodo(key) {
   el.value = '';
   Storage.saveTodos(S.todos);
   renderTodos();
+}
+
+// ============================================================
+// PRESS LOG — job-centric pressed qty logging (same path as Press Station)
+// ============================================================
+let plNumpadValue = '0';
+
+function plNumpadTap(digit) {
+  if (plNumpadValue === '0') plNumpadValue = digit;
+  else if (plNumpadValue.length < 5) plNumpadValue += digit;
+  plNumpadUpdateDisplay();
+}
+function plNumpadClear() { plNumpadValue = '0'; plNumpadUpdateDisplay(); }
+function plNumpadBack() { plNumpadValue = plNumpadValue.length > 1 ? plNumpadValue.slice(0, -1) : '0'; plNumpadUpdateDisplay(); }
+
+function plNumpadUpdateDisplay() {
+  const n = parseInt(plNumpadValue, 10) || 0;
+  const el = document.getElementById('plNumpadDisplay');
+  if (el) { el.textContent = n.toLocaleString(); el.classList.toggle('has-value', n > 0); }
+  const logBtn = document.getElementById('plNumpadLogBtn');
+  const hasJob = !!S.pressLogSelectedJob;
+  if (logBtn) {
+    logBtn.disabled = n === 0 || !hasJob;
+    logBtn.textContent = n > 0 ? `LOG ${n.toLocaleString()} PRESSED` : 'LOG PRESSED';
+  }
+}
+
+function selectPressLogJob(jobId) {
+  S.pressLogSelectedJob = (jobId && String(jobId).trim()) ? jobId : null;
+  plNumpadValue = '0';
+  plNumpadUpdateDisplay();
+  renderPressLog();
+}
+
+function plNumpadSubmit() {
+  const n = parseInt(plNumpadValue, 10) || 0;
+  if (n < 1 || !S.pressLogSelectedJob) return;
+  const job = S.jobs.find(j => j.id === S.pressLogSelectedJob);
+  const result = logJobProgress(S.pressLogSelectedJob, 'pressed', n, 'Press Log');
+  if (result.ok) {
+    toast(`+${n.toLocaleString()} pressed → ${job ? (job.catalog || job.artist || '—') : '—'}`);
+    plNumpadValue = '0';
+    plNumpadUpdateDisplay();
+    renderPressLog();
+  } else {
+    toastError(result.error || 'Log failed');
+  }
+}
+
+function renderPressLog() {
+  const picker = document.getElementById('plJobPicker');
+  if (picker) {
+    const allJobs = S.jobs.slice().filter(j => j.status !== 'done').sort((a, b) => {
+      const statusOrder = { queue: 0, pressing: 1, assembly: 2, hold: 3 };
+      const sa = statusOrder[a.status] ?? 5;
+      const sb = statusOrder[b.status] ?? 5;
+      if (sa !== sb) return sa - sb;
+      return (a.catalog || '').localeCompare(b.catalog || '');
+    });
+    const selectedId = S.pressLogSelectedJob || '';
+    picker.innerHTML = `
+    <div class="qc-job-picker-label">SELECT JOB</div>
+    <select class="qc-job-select" onchange="selectPressLogJob(this.value || null)">
+    <option value="">— Select job —</option>
+    ${allJobs.map(j => `
+      <option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'} ${j.status ? '(' + j.status + ')' : ''}</option>
+    `).join('')}
+    </select>
+    `;
+  }
+  const jobLabel = document.getElementById('plNumpadJobLabel');
+  if (jobLabel) {
+    const sel = S.pressLogSelectedJob ? S.jobs.find(j => j.id === S.pressLogSelectedJob) : null;
+    jobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
+  }
+  if (typeof plNumpadUpdateDisplay === 'function') plNumpadUpdateDisplay();
+
+  const recentEl = document.getElementById('plRecent');
+  if (recentEl) {
+    const job = S.pressLogSelectedJob ? S.jobs.find(j => j.id === S.pressLogSelectedJob) : null;
+    const log = (job && Array.isArray(job.progressLog)) ? job.progressLog.filter(e => e.stage === 'pressed').slice(-10).reverse() : [];
+    if (!log.length) {
+      recentEl.innerHTML = '<div class="empty">No pressed entries for this job</div>';
+    } else {
+      recentEl.innerHTML = log.map(e => {
+        const time = new Date(e.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        return `<div class="progress-entry pressed">+${e.qty} PRESSED · ${(e.person || '—')} · ${time}</div>`;
+      }).join('');
+    }
+  }
 }
 
 // ============================================================
