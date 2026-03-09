@@ -342,21 +342,7 @@ function renderPressStationShell() {
   </button>
 </div>
 ` : ''}
-  <div class="ps-v1-sec">HOLD / NOTE</div>
-  <div class="ps-v1-edit">
-    ${job.status === 'hold' ?
-      `<button type="button" class="ps-v1-hold-btn resume" onclick="pressStationResume()">RESUME JOB</button>` :
-      `<button type="button" class="ps-v1-hold-btn hold" onclick="pressStationHold()">HOLD JOB</button>`}
-    <div class="ps-v1-edit-label" style="margin-top:var(--space-md)">Press note</div>
-    <textarea class="ps-v1-note" id="psStationNote" placeholder="Note for this run…"></textarea>
-    <div class="ps-v1-edit-actions">
-      <button type="button" class="ps-v1-save-note" onclick="pressStationSaveNote()">SAVE NOTE</button>
-    </div>
-  </div>
   `;
-  const noteEl = document.getElementById('psStationNote');
-  if (noteEl) noteEl.value = job.notes || '';
-
   logEl.innerHTML = '';
   requestAnimationFrame(() => {
     if (typeof psNumpadUpdateDisplay === 'function') psNumpadUpdateDisplay();
