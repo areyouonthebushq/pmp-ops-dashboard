@@ -71,6 +71,17 @@ function showShell(shellId) {
 
 function returnToAdmin() {
   setStationContext({});
+  // Ensure admin shell mode and top bar state after leaving a station
+  S.mode = 'admin';
+  const badge = document.getElementById('modeBadge');
+  if (badge) {
+    badge.textContent = 'ADMIN';
+    badge.className = 'bar-mode admin';
+  }
+  const exportBtn = document.getElementById('exportBtn');
+  if (exportBtn) exportBtn.style.display = '';
+  const backupBtn = document.getElementById('backupBtn');
+  if (backupBtn) backupBtn.style.display = 'none';
   hideAllShells();
   renderAll();
 }
