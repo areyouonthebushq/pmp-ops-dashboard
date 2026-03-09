@@ -598,11 +598,13 @@ function setJobsSort(key) {
   renderJobs();
 }
 
+const JOBS_TH_CLASS = { catalog: 'j-cat', artist: 'j-artist', album: 'j-album', format: 'j-spec', colorWt: 'j-spec', qty: 'j-spec', plus10: 'j-spec', status: 'j-state', due: 'j-state', press: 'j-support', assets: 'j-support', progress: 'j-support', location: 'j-support' };
 function jobsTableHeaderHTML() {
   const ths = JOBS_COLUMNS.map(c => {
     const active = S.jobsSortBy === c.key;
     const arrow = active ? (S.jobsSortDir === 'asc' ? ' ▲' : ' ▼') : '';
-    return `<th class="sortable-th ${active ? 'sort-' + S.jobsSortDir : ''}" onclick="setJobsSort('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow}</th>`;
+    const colClass = JOBS_TH_CLASS[c.key] || '';
+    return `<th class="sortable-th ${active ? 'sort-' + S.jobsSortDir : ''} ${colClass}" onclick="setJobsSort('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow}</th>`;
   }).join('');
   return ths;
 }
@@ -651,24 +653,24 @@ function renderJobs() {
     tbody.innerHTML = jobs.map(j => {
       const ah = assetHealth(j);
       const prog = progressDisplay(j);
-      return `<tr>
-        <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
-        <td class="panel-trigger" style="color:var(--d);cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.artist || '—'}</td>
-        <td class="panel-trigger" style="color:var(--d2);font-size:12px;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.album || '—'}</td>
-        <td>${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
-        <td><span style="color:var(--d)">${j.color || 'Black'}</span> ${j.weight ? `<span style="color:var(--d3)">${j.weight}</span>` : ''}</td>
-        <td>${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
-        <td style="color:var(--d3)">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
-        <td>${statusPill(j.status)}</td>
-        <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
-        <td style="color:var(--d3);font-size:12px">${j.press || '—'}</td>
-        <td class="assets-tap" onclick="event.stopPropagation(); openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
-        <td class="td-progress progress-tap" onclick="event.stopPropagation(); openProgressDetail('${j.id}')" title="View progress breakdown">
+      return `<tr data-status="${j.status || ''}">
+        <td class="j-cat panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
+        <td class="j-artist panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.artist || '—'}</td>
+        <td class="j-album panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.album || '—'}</td>
+        <td class="j-spec">${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : '—'}</td>
+        <td class="j-spec">${j.color || 'Black'}${j.weight ? ` <span class="j-wt">${j.weight}</span>` : ''}</td>
+        <td class="j-spec">${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
+        <td class="j-spec j-plus10">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
+        <td class="j-state">${statusPill(j.status)}</td>
+        <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
+        <td class="j-support">${j.press || '—'}</td>
+        <td class="j-support assets-tap" onclick="event.stopPropagation(); openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
+        <td class="j-support td-progress progress-tap" onclick="event.stopPropagation(); openProgressDetail('${j.id}')" title="View progress breakdown">
         <div class="progress-main">${prog.main}</div>
         <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
         <div class="progress-sub">${prog.sub}</div>
         </td>
-        <td>${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
+        <td class="j-support">${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
       </tr>`;
     }).join('');
   }

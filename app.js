@@ -350,17 +350,21 @@ function setPanelEditMode(enabled) {
   if (foot) foot.style.display = enabled ? 'flex' : 'none';
 
   const editBtn = document.getElementById('panelEditBtn');
-  if (editBtn) editBtn.textContent = enabled ? 'VIEWING' : 'EDIT';
+  if (editBtn) editBtn.textContent = enabled ? 'EDITING' : 'VIEWING';
+
+  body.querySelectorAll('button.btn.go').forEach(el => {
+    if (enabled) {
+      el.removeAttribute('disabled');
+      el.style.opacity = '';
+      el.style.pointerEvents = '';
+    } else {
+      el.setAttribute('disabled', 'true');
+      el.style.opacity = '0.8';
+      el.style.pointerEvents = 'none';
+    }
+  });
 
   if (!enabled) {
-    const progressForm = body.querySelector('.progress-log-form');
-    if (progressForm) {
-      progressForm.querySelectorAll('input, select, button').forEach(el => {
-        el.removeAttribute('disabled');
-        el.style.opacity = '';
-        el.style.pointerEvents = '';
-      });
-    }
     const assetList = document.getElementById('assetList');
     if (assetList) {
       assetList.querySelectorAll('.asset-row, .na-btn').forEach(el => {
@@ -453,6 +457,14 @@ function enterByLauncher(choice, pressId) {
   if (choice === 'qc') {
     setLastLauncherChoice({ stationType: 'qc' });
     setStationContext({});
+    if (role === 'admin') {
+      S.mode = 'admin';
+      const badgeEl = document.getElementById('modeBadge');
+      if (badgeEl) { badgeEl.textContent = 'ADMIN'; badgeEl.className = 'bar-mode admin'; }
+      if (exportBtn) exportBtn.style.display = '';
+      const navAuditEl = document.getElementById('navAudit');
+      if (navAuditEl) navAuditEl.style.display = '';
+    }
     hideAllShells();
     goPg('qc');
     renderAll();
