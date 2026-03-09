@@ -1066,7 +1066,7 @@ function calcOv() {
 // ============================================================
 // SAVE JOB — use findDuplicateJob from core
 // ============================================================
-function saveJob() {
+async function saveJob() {
   const cat = document.getElementById('jCat').value.trim().toUpperCase();
   const artist = document.getElementById('jArtist').value.trim();
   const album = document.getElementById('jAlbum') ? document.getElementById('jAlbum').value.trim() : '';
@@ -1120,16 +1120,17 @@ function saveJob() {
   }
   ensureJobProgressLog(job);
 
-  if (job.status === 'pressing' && job.press) {
-    const matchPress = S.presses.find(p => p.name === job.press);
+  if (job.press && String(job.press).trim()) {
+    const matchPress = S.presses.find(p => p.name === (job.press || '').trim());
     if (matchPress) setAssignment(matchPress.id, job.id);
   } else {
     releasePressByJob(job.id);
   }
 
   closePanel();
-  Storage.savePresses(S.presses);
-  Storage.saveJob(job);
+  const pressPromise = Storage.savePresses(S.presses);
+  const jobPromise = Storage.saveJob(job);
+  await Promise.all([pressPromise, jobPromise]);
   renderAll();
   toast(S.editId ? 'JOB UPDATED' : 'JOB ADDED');
 }
