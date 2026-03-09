@@ -1127,10 +1127,8 @@ async function saveJob() {
     releasePressByJob(job.id);
   }
 
+  await Promise.all([Storage.savePresses(S.presses), Storage.saveJob(job)]);
   closePanel();
-  const pressPromise = Storage.savePresses(S.presses);
-  const jobPromise = Storage.saveJob(job);
-  await Promise.all([pressPromise, jobPromise]);
   renderAll();
   toast(S.editId ? 'JOB UPDATED' : 'JOB ADDED');
 }
