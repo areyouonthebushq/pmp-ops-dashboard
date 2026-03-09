@@ -342,9 +342,8 @@ function renderPressStationShell() {
   </button>
 </div>
 ` : ''}
-  <div class="ps-v1-sec">CONTROLS</div>
+  <div class="ps-v1-sec">HOLD / NOTE</div>
   <div class="ps-v1-edit">
-    <div class="ps-v1-edit-label">HOLD / NOTE</div>
     ${job.status === 'hold' ?
       `<button type="button" class="ps-v1-hold-btn resume" onclick="pressStationResume()">RESUME JOB</button>` :
       `<button type="button" class="ps-v1-hold-btn hold" onclick="pressStationHold()">HOLD JOB</button>`}

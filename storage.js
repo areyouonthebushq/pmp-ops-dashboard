@@ -289,6 +289,7 @@ const Storage = {
     return flushLocalSave();
   },
   saveTodos(todos) {
+    if (typeof getAuthRole === 'function' && getAuthRole() === 'press') return Promise.resolve();
     if (useSupabase()) {
       return window.PMP.Supabase.saveTodos(todos)
         .then(() => { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
