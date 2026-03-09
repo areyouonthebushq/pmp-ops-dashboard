@@ -959,18 +959,21 @@ function openPanel(id) {
     openFloorCard(id);
     return;
   }
+  S.editId = id && id !== 'null' ? id : null;
+  if (S.editId) {
+    const j = S.jobs.find(x => x.id === S.editId);
+    if (!j) return;
+  }
   const ov = document.getElementById('overlay');
   ov.classList.add('open');
   panelOpen = true;
   S.panelOpenedAt = Date.now();
   hideDataChangedNotice();
   panelEditMode = false;
-  S.editId = id && id !== 'null' ? id : null;
   curAssets = {};
 
   if (S.editId) {
     const j = S.jobs.find(x => x.id === S.editId);
-    if (!j) return;
     document.getElementById('panelId').textContent = j.catalog || j.artist || 'Job';
     document.getElementById('panelSub').textContent = `${j.artist || ''} · ${j.album || ''}`;
     document.getElementById('delBtn').style.display = S.mode === 'admin' ? '' : 'none';

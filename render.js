@@ -984,9 +984,12 @@ function renderQC() {
 
   const sumEl = document.getElementById('qcSummary');
   if (sumEl) {
+    const totalRejects = S.jobs.reduce((sum, job) => {
+      const log = job.progressLog || [];
+      return sum + log.reduce((s, e) => (e.stage === 'rejected' && e.timestamp && new Date(e.timestamp).toDateString() === qcViewDate ? s + (Math.max(0, parseInt(e.qty, 10) || 0)) : s), 0);
+    }, 0);
     const counts = {};
     viewLog.forEach(e => counts[e.type] = (counts[e.type] || 0) + 1);
-    const totalRejects = viewLog.length;
     sumEl.innerHTML = (totalRejects ? `<span style="color:var(--d2);font-size:12px;margin-right: var(--space-sm)">${totalRejects} total</span>` : '') +
     Object.entries(counts).map(([t, n]) => `
       <div class="qc-sum-pill">

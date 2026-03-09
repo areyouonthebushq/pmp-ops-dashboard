@@ -457,10 +457,14 @@ function renderQCStationShell() {
     </button>
   `).join('');
 
+  const totalRejects = S.jobs.reduce((sum, job) => {
+    const log = job.progressLog || [];
+    return sum + log.reduce((s, e) => (e.stage === 'rejected' && e.timestamp && new Date(e.timestamp).toDateString() === today ? s + (Math.max(0, parseInt(e.qty, 10) || 0)) : s), 0);
+  }, 0);
   const counts = {};
   todayLog.forEach(e => counts[e.type] = (counts[e.type] || 0) + 1);
-  summaryEl.innerHTML = todayLog.length
-    ? `<span style="color:var(--d2);margin-right:var(--space-sm)">${todayLog.length} total</span>` +
+  summaryEl.innerHTML = totalRejects
+    ? `<span style="color:var(--d2);margin-right:var(--space-sm)">${totalRejects} total</span>` +
       Object.entries(counts).map(([t, n]) => `<div class="qcs-v1-sum-pill"><span class="n">${n}</span><span class="l">${t}</span></div>`).join('')
     : '<span style="color:var(--d3);font-size:13px">No rejects today</span>';
 
