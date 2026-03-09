@@ -1019,7 +1019,14 @@ function openPanel(id) {
   }
   if (S.editId) {
     const j = S.jobs.find(x => x.id === S.editId);
-    if (j) { ensureNotesLog(j); renderNotesSection(); }
+    if (j) {
+      ensureNotesLog(j);
+      renderNotesSection();
+      const jNotesInput = document.getElementById('jNotesInput');
+      const jAssemblyInput = document.getElementById('jAssemblyInput');
+      if (jNotesInput) jNotesInput.value = (j.notes != null && j.notes !== '') ? String(j.notes) : '';
+      if (jAssemblyInput) jAssemblyInput.value = (j.assembly != null && j.assembly !== '') ? String(j.assembly) : '';
+    }
   } else {
     const notesLogList = document.getElementById('notesLogList');
     const assemblyLogList = document.getElementById('assemblyLogList');
@@ -1112,8 +1119,10 @@ async function saveJob() {
   if (S.editId) {
     const existing = S.jobs.find(j => j.id === S.editId);
     job.progressLog = (existing && Array.isArray(existing.progressLog)) ? existing.progressLog : [];
-    job.notes = existing && existing.notes != null ? existing.notes : job.notes;
-    job.assembly = existing && existing.assembly != null ? existing.assembly : job.assembly;
+    const notesEl = document.getElementById('jNotesInput');
+    const assemblyEl = document.getElementById('jAssemblyInput');
+    job.notes = (notesEl && notesEl.value !== undefined) ? notesEl.value.trim() : (existing && existing.notes != null ? existing.notes : job.notes);
+    job.assembly = (assemblyEl && assemblyEl.value !== undefined) ? assemblyEl.value.trim() : (existing && existing.assembly != null ? existing.assembly : job.assembly);
     job.notesLog = (existing && Array.isArray(existing.notesLog)) ? existing.notesLog : [];
     job.assemblyLog = (existing && Array.isArray(existing.assemblyLog)) ? existing.assemblyLog : [];
     const i = S.jobs.findIndex(j => j.id === S.editId);
