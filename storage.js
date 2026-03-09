@@ -216,10 +216,15 @@ const Storage = {
         .then(function () {
           S.lastLocalWriteAt = Date.now();
           setSyncState('synced');
+          if (S._pressStationWrite) S._pressStationWrite = false;
           setTimeout(function () { pendingWrites.delete(job.id); }, 6000);
         })
         .catch(function (e) {
           console.error(e);
+          if (S._pressStationWrite) {
+            console.error('[PMP] Press Station saveJob Supabase error:', { code: e?.code, message: e?.message, details: e?.details }, e);
+            S._pressStationWrite = false;
+          }
           pendingWrites.delete(job.id);
           setSyncState('error', { toast: 'SAVE FAILED' });
           return Promise.reject(e);
@@ -303,7 +308,15 @@ const Storage = {
       saveInFlight = true;
       return supabaseWithRetry(function () { return window.PMP.Supabase.logProgress(entry); })
         .then(function () { S.lastLocalWriteAt = Date.now(); setSyncState('synced'); })
-        .catch(function (e) { console.error(e); setSyncState('error', { toastError: 'LOG FAILED' }); return Promise.reject(e); })
+        .catch(function (e) {
+          console.error(e);
+          if (S._pressStationWrite) {
+            console.error('[PMP] Press Station logProgress Supabase error:', { code: e?.code, message: e?.message, details: e?.details }, e);
+            S._pressStationWrite = false;
+          }
+          setSyncState('error', { toastError: 'LOG FAILED' });
+          return Promise.reject(e);
+        })
         .finally(function () { saveInFlight = false; });
     }
     return flushLocalSave();

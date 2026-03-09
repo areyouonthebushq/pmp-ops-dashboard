@@ -389,6 +389,8 @@ function pressStationLogPressed(qty) {
   if (!getStationEditPermissions().canLogPressProgress) return;
   const job = getStationJob();
   if (!job) return;
+  S._pressStationWrite = true;
+  setTimeout(function () { if (S._pressStationWrite) S._pressStationWrite = false; }, 5000);
   const result = logJobProgress(job.id, 'pressed', qty, 'Press Station');
   if (result.ok) {
     renderPressStationShell();
@@ -402,6 +404,7 @@ function pressStationHold() {
   const job = getStationJob();
   if (!job) return;
   job.status = 'hold';
+  S._pressStationWrite = true;
   Storage.saveJob(job);
   renderPressStationShell();
   toast('Job on hold');
@@ -411,6 +414,7 @@ function pressStationResume() {
   const job = getStationJob();
   if (!job) return;
   job.status = 'pressing';
+  S._pressStationWrite = true;
   Storage.saveJob(job);
   renderPressStationShell();
   toast('Job resumed');
@@ -421,6 +425,7 @@ function pressStationSaveNote() {
   if (!job) return;
   const el = document.getElementById('psStationNote');
   if (el) job.notes = el.value.trim();
+  S._pressStationWrite = true;
   Storage.saveJob(job);
   renderPressStationShell();
   toast('Note saved');
