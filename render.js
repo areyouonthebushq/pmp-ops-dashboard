@@ -405,9 +405,9 @@ function openProgressDetail(jobId) {
   const pctBreakdown = document.getElementById('progressDetailPctBreakdown');
   if (pctBreakdown) pctBreakdown.textContent = `Pressed ${yPct}% · QC ${gPct}% · Rejected ${rPct}% · Remaining ${remPct}%`;
   document.getElementById('progressDetailBar').innerHTML = [
+    rejectedPct > 0 ? `<div class="pd-seg rejected" style="width:${rejectedPct}%" title="Rejected: ${p.rejected.toLocaleString()}"></div>` : '',
     qcPct > 0 ? `<div class="pd-seg qc" style="width:${qcPct}%" title="QC passed: ${p.qcPassed.toLocaleString()}"></div>` : '',
     pendingPct > 0 ? `<div class="pd-seg pressed" style="width:${pendingPct}%" title="Pending QC: ${p.pendingQC.toLocaleString()}"></div>` : '',
-    rejectedPct > 0 ? `<div class="pd-seg rejected" style="width:${rejectedPct}%" title="Rejected: ${p.rejected.toLocaleString()}"></div>` : '',
     remainingPct > 0 ? `<div class="pd-seg remaining" style="width:${remainingPct}%"></div>` : '',
   ].filter(Boolean).join('') || '<div class="pd-seg remaining" style="width:100%"></div>';
   document.getElementById('progressDetailLegend').innerHTML = [
