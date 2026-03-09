@@ -411,7 +411,8 @@ function enterByLauncher(choice, pressId) {
     return;
   }
   hideLauncherPressPicker();
-  document.getElementById('modeScreen').style.display = 'none';
+  const modeScreen = document.getElementById('modeScreen');
+  if (modeScreen) modeScreen.style.display = 'none';
   history.pushState({ station: choice }, '', '');
   S.mode = choice === 'admin' ? 'admin' : 'floor';
   const badge = document.getElementById('modeBadge');
@@ -424,7 +425,8 @@ function enterByLauncher(choice, pressId) {
   loadAll();
   startPolling();
 
-  document.getElementById('app').style.display = 'block';
+  const appEl = document.getElementById('app');
+  if (appEl) appEl.style.display = 'block';
 
   if (choice === 'admin') {
     setStationContext({});
@@ -435,7 +437,7 @@ function enterByLauncher(choice, pressId) {
     renderAll();
     return;
   }
-  document.getElementById('app').style.display = 'block';
+  if (appEl) appEl.style.display = 'block';
   const navAudit = document.getElementById('navAudit');
   if (navAudit) navAudit.style.display = 'none';
   if (choice === 'floor_manager') {
@@ -865,7 +867,7 @@ function updateFAB() {
 
 function fabAction() {
   if (currentPage === 'floor' || currentPage === 'jobs') {
-    openPanel(null);
+    openNewJobChooser();
   }
 }
 
@@ -1192,6 +1194,241 @@ function closeConfirm() {
 document.getElementById('confOk').addEventListener('click', () => { if (confCb) confCb(); closeConfirm(); });
 
 // ============================================================
+// NEW JOB CHOOSER (FAB +)
+// ============================================================
+function openNewJobChooser() {
+  const wrap = document.getElementById('newJobChooserWrap');
+  if (wrap) wrap.classList.add('on');
+}
+function closeNewJobChooser() {
+  const wrap = document.getElementById('newJobChooserWrap');
+  if (wrap) wrap.classList.remove('on');
+}
+
+// ============================================================
+// NEW JOB WIZARD
+// ============================================================
+const WIZARD_STEP_NAMES = ['Identity', 'Production', 'Spec', 'Ops', 'Review'];
+let wizardStep = 1;
+let wizardData = {};
+let pendingWizardJob = null;
+let duplicateExistingJob = null;
+
+function openWizard() {
+  wizardStep = 1;
+  wizardData = {};
+  pendingWizardJob = null;
+  duplicateExistingJob = null;
+  const wrap = document.getElementById('wizardWrap');
+  if (wrap) wrap.classList.add('on');
+  renderWizardStep();
+}
+function closeWizard() {
+  const wrap = document.getElementById('wizardWrap');
+  if (wrap) wrap.classList.remove('on');
+}
+
+function getWizardEl(id) { return document.getElementById(id); }
+function getWizardVal(id) { const el = getWizardEl(id); return el ? el.value.trim() : ''; }
+
+function renderWizardStep() {
+  const titleEl = document.getElementById('wizardTitle');
+  const bodyEl = document.getElementById('wizardBody');
+  const footEl = document.getElementById('wizardFoot');
+  if (!bodyEl || !footEl) return;
+  if (titleEl) titleEl.textContent = 'Step ' + wizardStep + ' — ' + WIZARD_STEP_NAMES[wizardStep - 1];
+
+  if (wizardStep === 1) {
+    bodyEl.innerHTML = `
+      <div class="frow c2">
+        <div class="fg"><label class="fl">Catalog / Matrix #</label><input class="fi" id="wCatalog" placeholder="e.g. LUNLP3108" value="${(wizardData.catalog || '').replace(/"/g, '&quot;')}"></div>
+        <div class="fg"><label class="fl">Artist</label><input class="fi" id="wArtist" placeholder="Artist name" value="${(wizardData.artist || '').replace(/"/g, '&quot;')}"></div>
+      </div>
+      <div class="fg"><label class="fl">Album</label><input class="fi" id="wAlbum" placeholder="Album title" value="${(wizardData.album || '').replace(/"/g, '&quot;')}"></div>
+    `;
+    footEl.innerHTML = '<div class="wizard-foot-inner"><button type="button" class="btn ghost" onclick="closeWizard()">Cancel</button><button type="button" class="btn go" onclick="wizardNext()">Next</button></div>';
+  } else if (wizardStep === 2) {
+    bodyEl.innerHTML = `
+      <div class="frow c2">
+        <div class="fg"><label class="fl">Status</label><select class="fs" id="wStatus">${STATUS_OPTS.map(o => `<option value="${o.v}" ${(wizardData.status || 'queue') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select></div>
+        <div class="fg"><label class="fl">Press</label><select class="fs" id="wPress"><option value="">— Unassigned</option>${PRESS_OPTS.filter(p => p).map(p => `<option value="${p}" ${(wizardData.press || '') === p ? 'selected' : ''}>${p}</option>`).join('')}</select></div>
+      </div>
+      <div class="frow c2">
+        <div class="fg"><label class="fl">Order Qty</label><input class="fi" type="number" id="wQty" placeholder="500" value="${(wizardData.qty || '').replace(/"/g, '&quot;')}"></div>
+        <div class="fg"><label class="fl">Format</label><select class="fs" id="wFormat"><option value="1LP">1LP</option><option value="2LP">2LP (Double)</option><option value='7"'>7" Single</option><option value='7" EP'>7" EP</option></select></div>
+      </div>
+    `;
+    const fmtEl = bodyEl.querySelector('#wFormat');
+    if (fmtEl && wizardData.format) fmtEl.value = wizardData.format;
+    footEl.innerHTML = '<div class="wizard-foot-inner"><button type="button" class="btn ghost" onclick="wizardBack()">Back</button><button type="button" class="btn go" onclick="wizardNext()">Next</button></div>';
+  } else if (wizardStep === 3) {
+    bodyEl.innerHTML = `
+      <div class="frow c2">
+        <div class="fg"><label class="fl">Vinyl Type</label><select class="fs" id="wVinylType"><option value="Black">Black</option><option value="Color">Color</option></select></div>
+        <div class="fg"><label class="fl">Color Spec</label><input class="fi" id="wColor" placeholder="e.g. Black" value="${(wizardData.color || '').replace(/"/g, '&quot;')}"></div>
+      </div>
+      <div class="frow c2">
+        <div class="fg"><label class="fl">Weight</label><select class="fs" id="wWeight"><option value="140g">140g</option><option value="150g">150g</option><option value="180g">180g</option></select></div>
+        <div class="fg"><label class="fl">Specialty</label><select class="fs" id="wSpecialty"><option value="">None</option><option value="Splatter">Splatter</option><option value="Marble">Marble</option><option value="Swirl">Swirl</option><option value="Picture Disc">Picture Disc</option><option value="Other">Other</option></select></div>
+      </div>
+    `;
+    var v = bodyEl.querySelector('#wVinylType'); if (v && wizardData.vinylType) v.value = wizardData.vinylType;
+    var w = bodyEl.querySelector('#wWeight'); if (w && wizardData.weight) w.value = wizardData.weight;
+    var s = bodyEl.querySelector('#wSpecialty'); if (s && wizardData.specialty) s.value = wizardData.specialty;
+    footEl.innerHTML = '<div class="wizard-foot-inner"><button type="button" class="btn ghost" onclick="wizardBack()">Back</button><button type="button" class="btn go" onclick="wizardNext()">Next</button></div>';
+  } else if (wizardStep === 4) {
+    bodyEl.innerHTML = `
+      <div class="frow c2">
+        <div class="fg"><label class="fl">Due Date</label><input class="fi" type="date" id="wDue" value="${(wizardData.due || '').replace(/"/g, '&quot;')}"></div>
+        <div class="fg"><label class="fl">Location</label><input class="fi" id="wLocation" placeholder="e.g. Bay 3" value="${(wizardData.location || '').replace(/"/g, '&quot;')}"></div>
+      </div>
+      <div class="fg"><label class="fl">Client / Label</label><input class="fi" id="wClient" placeholder="Client name" value="${(wizardData.client || '').replace(/"/g, '&quot;')}"></div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fi fta" id="wNotes" rows="2" placeholder="Production notes">${(wizardData.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea></div>
+    `;
+    footEl.innerHTML = '<div class="wizard-foot-inner"><button type="button" class="btn ghost" onclick="wizardBack()">Back</button><button type="button" class="btn go" onclick="wizardNext()">Next</button></div>';
+  } else {
+    const cat = wizardData.catalog || '—';
+    const art = wizardData.artist || '—';
+    const alb = wizardData.album || '—';
+    const st = (wizardData.status || 'queue').toUpperCase();
+    const pr = wizardData.press || '—';
+    const qty = wizardData.qty || '—';
+    const fmt = wizardData.format || '—';
+    const vt = wizardData.vinylType || '—';
+    const cl = wizardData.color || '—';
+    const wt = wizardData.weight || '—';
+    const spec = wizardData.specialty || '—';
+    const due = wizardData.due || '—';
+    const loc = wizardData.location || '—';
+    const client = wizardData.client || '—';
+    const notes = (wizardData.notes || '—').slice(0, 80) + ((wizardData.notes || '').length > 80 ? '…' : '');
+    bodyEl.innerHTML = `
+      <div class="wizard-review">
+        <p><strong>Identity</strong> ${cat} · ${art} · ${alb}</p>
+        <p><strong>Production</strong> ${st} · ${pr} · Qty ${qty} · ${fmt}</p>
+        <p><strong>Spec</strong> ${vt} · ${cl} · ${wt} · ${spec}</p>
+        <p><strong>Ops</strong> Due ${due} · ${loc} · ${client}</p>
+        <p><strong>Notes</strong> ${notes}</p>
+      </div>
+    `;
+    footEl.innerHTML = '<div class="wizard-foot-inner"><button type="button" class="btn ghost" onclick="wizardBack()">Back</button><button type="button" class="btn go" onclick="wizardSave()">Save Job</button></div>';
+  }
+}
+
+function wizardCollectStep() {
+  if (wizardStep === 1) {
+    wizardData.catalog = getWizardVal('wCatalog');
+    wizardData.artist = getWizardVal('wArtist');
+    wizardData.album = getWizardVal('wAlbum');
+  } else if (wizardStep === 2) {
+    wizardData.status = getWizardVal('wStatus') || 'queue';
+    wizardData.press = getWizardVal('wPress');
+    wizardData.qty = getWizardVal('wQty');
+    const fmtEl = getWizardEl('wFormat');
+    wizardData.format = fmtEl ? fmtEl.value : '';
+  } else if (wizardStep === 3) {
+    wizardData.vinylType = getWizardEl('wVinylType') ? getWizardEl('wVinylType').value : '';
+    wizardData.color = getWizardVal('wColor');
+    wizardData.weight = getWizardEl('wWeight') ? getWizardEl('wWeight').value : '';
+    wizardData.specialty = getWizardEl('wSpecialty') ? getWizardEl('wSpecialty').value : '';
+  } else if (wizardStep === 4) {
+    wizardData.due = getWizardVal('wDue');
+    wizardData.location = getWizardVal('wLocation');
+    wizardData.client = getWizardVal('wClient');
+    wizardData.notes = getWizardEl('wNotes') ? getWizardEl('wNotes').value.trim() : '';
+  }
+}
+
+function wizardNext() {
+  wizardCollectStep();
+  if (wizardStep === 1 && !wizardData.catalog && !wizardData.artist) {
+    toast('Catalog # or Artist required');
+    return;
+  }
+  if (wizardStep < 5) { wizardStep++; renderWizardStep(); }
+}
+function wizardBack() {
+  if (wizardStep > 1) { wizardStep--; renderWizardStep(); }
+}
+
+function wizardSave() {
+  wizardCollectStep();
+  const cat = (wizardData.catalog || '').trim().toUpperCase();
+  const artist = (wizardData.artist || '').trim();
+  const album = (wizardData.album || '').trim();
+  if (!cat && !artist) { toast('Catalog # or Artist required'); return; }
+  const dupes = findDuplicateJob(S.jobs, cat, artist, album, undefined);
+  if (dupes.length > 0) {
+    const existing = dupes[0];
+    duplicateExistingJob = existing;
+    pendingWizardJob = buildWizardJob();
+    document.getElementById('duplicateJobMsg').textContent = `${existing.catalog || ''} · ${existing.artist || ''} · ${existing.album || ''} is already in the system (status: ${(existing.status || 'unknown').toUpperCase()}).`;
+    document.getElementById('duplicateOpenExistingBtn').onclick = () => { closeDuplicateModal(); closeWizard(); openPanel(duplicateExistingJob.id); };
+    document.getElementById('duplicateCreateAnywayBtn').onclick = () => { const j = pendingWizardJob; closeDuplicateModal(); if (j) doWizardSave(j); };
+    document.getElementById('duplicateJobWrap').classList.add('on');
+    return;
+  }
+  doWizardSave(buildWizardJob());
+}
+
+function buildWizardJob() {
+  wizardCollectStep();
+  const cat = (wizardData.catalog || '').trim().toUpperCase();
+  const artist = (wizardData.artist || '').trim();
+  const album = (wizardData.album || '').trim();
+  return {
+    id: 'j' + Date.now(),
+    catalog: cat,
+    artist,
+    album,
+    status: (wizardData.status || 'queue').trim() || 'queue',
+    press: (wizardData.press || '').trim(),
+    qty: (wizardData.qty || '').trim(),
+    format: (wizardData.format || '').trim(),
+    vinylType: (wizardData.vinylType || '').trim(),
+    color: (wizardData.color || '').trim(),
+    weight: (wizardData.weight || '').trim(),
+    specialty: (wizardData.specialty || '').trim(),
+    due: (wizardData.due || '').trim(),
+    location: (wizardData.location || '').trim(),
+    client: (wizardData.client || '').trim(),
+    notes: (wizardData.notes || '').trim(),
+    assembly: '',
+    assets: {},
+    progressLog: [],
+    notesLog: [],
+    assemblyLog: [],
+  };
+}
+
+async function doWizardSave(job) {
+  if (!job) return;
+  ensureJobProgressLog(job);
+  if (job.press && String(job.press).trim()) {
+    const matchPress = S.presses.find(p => p.name === (job.press || '').trim());
+    if (matchPress) setAssignment(matchPress.id, job.id);
+  } else {
+    releasePressByJob(job.id);
+  }
+  S.jobs.unshift(job);
+  try {
+    await Promise.all([Storage.savePresses(S.presses), Storage.saveJob(job)]);
+    closeWizard();
+    renderAll();
+    toast('JOB ADDED');
+  } catch (e) {
+    if (typeof toastError === 'function') toastError(e && (e.message || e.error) ? String(e.message || e.error) : 'Save failed');
+    else toast('Save failed');
+  }
+}
+
+function closeDuplicateModal() {
+  document.getElementById('duplicateJobWrap').classList.remove('on');
+  pendingWizardJob = null;
+  duplicateExistingJob = null;
+}
+
+// ============================================================
 // SUGGESTED STATUS — from progress; apply in panel
 // ============================================================
 function applySuggestedStatus(jobId) {
@@ -1362,7 +1599,13 @@ function importCSV(input) {
       }
     });
     const toSave = S.jobs.slice(-n);
-    Storage.saveJobs(toSave)
+    toSave.forEach(j => {
+      if (j.press && String(j.press).trim()) {
+        const mp = S.presses.find(p => p.name === (j.press || '').trim());
+        if (mp) setAssignment(mp.id, j.id);
+      }
+    });
+    Promise.all([Storage.saveJobs(toSave), Storage.savePresses(S.presses)])
       .then(() => { renderAll(); toast(`${n} JOBS IMPORTED`); })
       .catch((e) => {
         console.error('CSV import save failed', e);
@@ -1543,7 +1786,7 @@ document.addEventListener('keydown', e => {
     }
 
     if ((e.key === 'n' || e.key === 'N') && (currentPage === 'floor' || currentPage === 'jobs')) {
-      openPanel(null);
+      openNewJobChooser();
     }
   }
 });

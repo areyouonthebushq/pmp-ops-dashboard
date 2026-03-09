@@ -194,7 +194,7 @@
             <input class="search-input" id="floorSearch" placeholder="FILTER BY CATALOG, ARTIST, ALBUM…">
         </div>
         <span class="search-count" id="floorCount"></span>
-        <button type="button" class="bar-btn" onclick="openPanel(null)" style="white-space:nowrap;">+ ADD JOB</button>
+        <button type="button" class="bar-btn" onclick="openNewJobChooser()" style="white-space:nowrap;">+ ADD JOB</button>
         </div>
         <div class="tbl-wrap">
         <table>
@@ -223,10 +223,10 @@
             <input class="search-input" id="jobSearch" placeholder="SEARCH JOBS…">
         </div>
         <span class="search-count" id="jobCount"></span>
-        <button type="button" class="bar-btn" onclick="openPanel(null)">+ ADD JOB</button>
+        <button type="button" class="bar-btn" onclick="openNewJobChooser()">+ ADD JOB</button>
         <label class="bar-btn" style="cursor:pointer;border:1px solid var(--b2);padding: var(--space-sm) var(--space-md);">
             ↑ IMPORT CSV
-            <input type="file" accept=".csv" style="display:none" onchange="importCSV(this)">
+            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(this)">
         </label>
         </div>
         <div class="tbl-wrap">
@@ -696,6 +696,44 @@
         <div style="display:flex;gap: var(--space-sm);justify-content:center">
         <button class="btn ghost" onclick="closeConfirm()">CANCEL</button>
         <button class="btn del" id="confOk">CONFIRM</button>
+        </div>
+    </div>
+    </div>
+
+    <!-- NEW JOB CHOOSER (FAB +) -->
+    <div class="new-job-chooser-wrap" id="newJobChooserWrap" onclick="if(event.target===this)closeNewJobChooser()">
+    <div class="new-job-chooser-box" onclick="event.stopPropagation()">
+        <h3 class="new-job-chooser-title">New Job</h3>
+        <p class="new-job-chooser-hint">Add a single job or import from CSV.</p>
+        <div class="new-job-chooser-btns">
+            <button type="button" class="btn go" onclick="closeNewJobChooser();openWizard();">Manual Entry</button>
+            <button type="button" class="btn ghost" onclick="closeNewJobChooser();var e=document.getElementById('csvFileInput');if(e)e.click();">Import CSV</button>
+        </div>
+        <button type="button" class="new-job-chooser-close" onclick="closeNewJobChooser()" aria-label="Close">✕</button>
+    </div>
+    </div>
+
+    <!-- NEW JOB WIZARD -->
+    <div class="wizard-wrap" id="wizardWrap" onclick="if(event.target===this)closeWizard()">
+    <div class="wizard-box" onclick="event.stopPropagation()">
+        <div class="wizard-head">
+            <span class="wizard-title" id="wizardTitle">New Job</span>
+            <button type="button" class="panel-close" onclick="closeWizard()" aria-label="Close">✕</button>
+        </div>
+        <div class="wizard-body" id="wizardBody"></div>
+        <div class="wizard-foot" id="wizardFoot"></div>
+    </div>
+    </div>
+
+    <!-- DUPLICATE JOB WARNING (wizard save) -->
+    <div class="duplicate-job-wrap" id="duplicateJobWrap" onclick="if(event.target===this)closeDuplicateModal()">
+    <div class="duplicate-job-box" onclick="event.stopPropagation()">
+        <h3 class="duplicate-job-title">Job already exists</h3>
+        <p class="duplicate-job-msg" id="duplicateJobMsg"></p>
+        <div class="duplicate-job-btns">
+            <button type="button" class="btn go" id="duplicateOpenExistingBtn">Open Existing Job</button>
+            <button type="button" class="btn ghost" id="duplicateCreateAnywayBtn">Create Anyway</button>
+            <button type="button" class="btn ghost" onclick="closeDuplicateModal()">Cancel</button>
         </div>
     </div>
     </div>
