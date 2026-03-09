@@ -350,7 +350,7 @@ function setPanelEditMode(enabled) {
   if (foot) foot.style.display = enabled ? 'flex' : 'none';
 
   const editBtn = document.getElementById('panelEditBtn');
-  if (editBtn) editBtn.textContent = enabled ? 'EDITING' : 'VIEWING';
+  if (editBtn) editBtn.textContent = enabled ? 'EDITING' : 'EDIT';
 
   body.querySelectorAll('button.btn.go').forEach(el => {
     if (enabled) {
