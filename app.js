@@ -1752,6 +1752,16 @@ document.addEventListener('keydown', e => {
       e.preventDefault();
       return;
     }
+    if (document.getElementById('newJobChooserWrap')?.classList.contains('on')) {
+      closeNewJobChooser();
+      e.preventDefault();
+      return;
+    }
+    if (document.getElementById('wizardWrap')?.classList.contains('on')) {
+      closeWizard();
+      e.preventDefault();
+      return;
+    }
     if (document.getElementById('confirmWrap').classList.contains('open')) closeConfirm();
     else if (panelOpen) closePanel();
     else if (document.body.classList.contains('tv')) exitTV();
@@ -1785,7 +1795,8 @@ document.addEventListener('keydown', e => {
       }
     }
 
-    if ((e.key === 'n' || e.key === 'N') && (currentPage === 'floor' || currentPage === 'jobs')) {
+    const chooserOrWizardOpen = document.getElementById('newJobChooserWrap')?.classList.contains('on') || document.getElementById('wizardWrap')?.classList.contains('on');
+    if ((e.key === 'n' || e.key === 'N') && (currentPage === 'floor' || currentPage === 'jobs') && !chooserOrWizardOpen) {
       openNewJobChooser();
     }
   }
