@@ -772,6 +772,7 @@ function enterApp(mode) {
 
 function doLogout() {
   setStationContext({});
+  if (typeof hideStationShellsOnly === 'function') hideStationShellsOnly();
   hideLauncherPressPicker();
   renderLauncherLast();
   document.getElementById('app').style.display = 'none';

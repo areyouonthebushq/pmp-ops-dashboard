@@ -35,13 +35,18 @@ function setStationContext(opts) {
 // ============================================================
 const STATION_SHELL_IDS = ['pressStationShell', 'qcStationShell', 'floorManagerShell'];
 
-function hideAllShells() {
-  const app = document.getElementById('app');
-  if (app) app.style.display = 'block';
+/** Hide station shells only (no app/fab change). Use when returning to launcher. */
+function hideStationShellsOnly() {
   STATION_SHELL_IDS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('on');
   });
+}
+
+function hideAllShells() {
+  const app = document.getElementById('app');
+  if (app) app.style.display = 'block';
+  hideStationShellsOnly();
   const fab = document.getElementById('fab');
   if (fab) fab.style.display = 'flex';
   const fabLabel = document.querySelector('.fab-label');
