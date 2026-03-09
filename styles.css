@@ -1171,6 +1171,24 @@
         border: 2px solid var(--r);
         margin-bottom: var(--space-md);
     }
+    .qc-reject-picker-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-lg);
+        background: rgba(0, 0, 0, 0.5);
+        border: none;
+        margin: 0;
+    }
+    .qc-reject-picker-overlay .qc-reject-picker-card {
+        padding: var(--space-md);
+        background: var(--s1);
+        border: 2px solid var(--r);
+        max-width: 360px;
+    }
     .qc-reject-picker-title {
         font-family: 'Inconsolata', monospace;
         font-size: 14px;

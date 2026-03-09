@@ -283,23 +283,23 @@
                 </div>
             </div>
         </div>
-        <div class="qc-reject-picker" id="qcRejectPicker" style="display:none">
-            <div class="qc-reject-picker-title" id="qcRejectPickerTitle">REJECT — SELECT DEFECT TYPE</div>
-            <div class="qc-reject-picker-btns">
-                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('FLASH')">⚡ FLASH</button>
-                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('BLEMISH')">◉ BLEMISH</button>
-                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('OFF-CENTER')">⊕ OFF-CENTER</button>
-                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('AUDIO')">♫ AUDIO</button>
-                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('UNTRIMMED')">⬡ UNTRIMMED</button>
-                <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('BISCUIT/FLASH')">✕ BISCUIT/FLASH</button>
+        <div class="qc-reject-picker qc-reject-picker-overlay" id="qcRejectPicker" style="display:none">
+            <div class="qc-reject-picker-card">
+                <div class="qc-reject-picker-title" id="qcRejectPickerTitle">REJECT — SELECT DEFECT TYPE</div>
+                <div class="qc-reject-picker-btns">
+                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('FLASH')">⚡ FLASH</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('BLEMISH')">◉ BLEMISH</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('OFF-CENTER')">⊕ OFF-CENTER</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('AUDIO')">♫ AUDIO</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('UNTRIMMED')">⬡ UNTRIMMED</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('BISCUIT/FLASH')">✕ BISCUIT/FLASH</button>
+                </div>
+                <button type="button" class="qc-reject-cancel" onclick="qcNumpadHideRejectPicker()">CANCEL</button>
             </div>
-            <button type="button" class="qc-reject-cancel" onclick="qcNumpadHideRejectPicker()">CANCEL</button>
         </div>
         <div class="hint-block">
         ⚠ REMINDER · REJECTS ON SPINDLE/BOX · UNTRIMMED FILE VERTICALLY · NO BISCUITS W/ FLASH
         </div>
-        <div class="sec">TODAY'S SUMMARY (total = units rejected · pills = log events by type)</div>
-        <div class="qc-summary" id="qcSummary"></div>
         <div class="sec">LOG</div>
         <div class="qc-date-nav">
         <button class="qc-date-btn" onclick="qcDateStep(-1)">◂ PREV</button>
