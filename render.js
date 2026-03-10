@@ -930,9 +930,8 @@ function renderLog() {
     });
     const selectedId = S.logSelectedJob || '';
     picker.innerHTML = `
-    <div class="qc-job-picker-label">SELECT JOB</div>
     <select class="qc-job-select" onchange="selectLogJob(this.value || null)">
-    <option value="">— Select job —</option>
+    <option value="">Choose job</option>
     ${allJobs.map(j => `
       <option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'} ${j.status ? '(' + j.status + ')' : ''}</option>
     `).join('')}

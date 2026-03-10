@@ -1448,10 +1448,13 @@
     min-height: 0;
     }
     #pg-log .log-fp-display.has-value { color: var(--g); }
-    #pg-log .log-main.mode-press .log-fp-display { border-color: var(--w2); }
-    #pg-log .log-main.mode-qcpass .log-fp-display { border-color: var(--g2); }
-    #pg-log .log-main.mode-qcreject .log-fp-display { border-color: var(--r2); }
+    #pg-log .log-main.mode-press .log-fp-display { border-color: var(--w2); color: var(--w); }
+    #pg-log .log-main.mode-qcpass .log-fp-display { border-color: var(--g2); color: var(--g); }
+    #pg-log .log-main.mode-qcreject .log-fp-display { border-color: var(--r2); color: var(--r); }
     #pg-log .log-main.log-faceplate .ps-numpad-btn { min-height: 0; height: 100%; display: flex; align-items: center; justify-content: center; }
+    #pg-log .log-main.mode-press .ps-numpad-btn { color: var(--w); }
+    #pg-log .log-main.mode-qcpass .ps-numpad-btn { color: var(--g); }
+    #pg-log .log-main.mode-qcreject .ps-numpad-btn { color: var(--r); }
     #pg-log .log-main.log-faceplate .log-enter-btn {
     min-height: 0;
     height: 100%;
