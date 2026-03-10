@@ -1320,12 +1320,12 @@
     }
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
-    /* Unified LOG page — exact 4×6 faceplate; no dead cells; LOG in row 6 col 4 */
+    /* Unified LOG page — DESKTOP FACEPLATE SPEC: 4 cols × 6 rows. No presets. LOG row 6 col 4 only. */
     .log-job-picker {
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
     }
-    /* Faceplate: 4 columns, 6 rows, one rectangle, no empty cells */
+    /* Row 1: job cols 1-4. Row 2: display cols 1-4. Row 3: PRESS,7,8,9. Row 4: QC PASS,4,5,6. Row 5: QC REJECT,1,2,3. Row 6: C,0,←,LOG. */
     .log-main.log-faceplate {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
