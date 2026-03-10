@@ -729,15 +729,15 @@
     </div>
 
     <!-- ASSETS DETAIL — editable asset checklist (triggered from Assets on press cards or floor table) -->
-    <div class="assets-overlay" id="assetsOverlay" onclick="if(event.target===this)closeAssetsOverlay()">
+    <div class="assets-overlay" id="assetsOverlay" onclick="if(event.target===this)closeAssetsOverlay(true)">
     <div class="assets-overlay-box" onclick="event.stopPropagation()">
-        <button type="button" class="assets-overlay-close" onclick="closeAssetsOverlay()" aria-label="Close">✕</button>
+        <button type="button" class="assets-overlay-close" onclick="closeAssetsOverlay(true)" aria-label="Close">✕</button>
         <div class="assets-overlay-title" id="assetsOverlayTitle"></div>
         <div class="assets-overlay-hint">Tap to mark received · Expand for details · N/A if not applicable</div>
         <div class="assets-overlay-list" id="assetsOverlayList"></div>
         <div class="assets-overlay-actions">
             <button type="button" class="btn go" onclick="saveAssetsOverlay()">SAVE & CLOSE</button>
-            <button type="button" class="btn ghost" onclick="closeAssetsOverlay()">CANCEL</button>
+            <button type="button" class="btn ghost" onclick="closeAssetsOverlay(true)">CANCEL</button>
         </div>
     </div>
     </div>

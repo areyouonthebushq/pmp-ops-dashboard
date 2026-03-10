@@ -1217,6 +1217,7 @@ function confirmDel() {
       toast('JOB DELETED');
     } catch (e) {
       if (typeof toastError === 'function') toastError(e?.message || 'Delete failed');
+      throw e;
     }
   });
 }
@@ -1235,7 +1236,9 @@ function closeConfirm() {
   if (confOk) confOk.textContent = 'CONFIRM';
 }
 document.getElementById('confOk').addEventListener('click', () => {
-  if (confCb) Promise.resolve(confCb()).catch(() => {}).finally(() => closeConfirm());
+  if (confCb) Promise.resolve(confCb()).then(() => closeConfirm()).catch((e) => {
+    if (typeof toastError === 'function') toastError(e?.message || 'Action failed');
+  });
 });
 
 // ============================================================
