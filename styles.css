@@ -1394,23 +1394,32 @@
     .log-main.mode-qcpass { border-color: var(--g2); }
     .log-main.mode-qcreject { border-color: var(--r2); }
     .log-console-rail { grid-area: rail; min-height: 36px; border-bottom: 1px solid var(--b1); padding: var(--space-xs) 0; }
-    .log-console-rail .log-rail-simple {
+    .log-console-rail .log-rail-simple,
+    .ps-v1-rail .log-rail-simple {
       display: flex; align-items: center; gap: var(--space-sm); min-height: 28px;
       font-family: 'Inconsolata', monospace; font-size: 11px; letter-spacing: 1px;
     }
-    .log-console-rail .log-rail-bar {
+    .log-console-rail .log-rail-bar,
+    .ps-v1-rail .log-rail-bar {
       flex: 1; min-width: 0; height: 10px; background: var(--s3); border: 1px solid var(--b2);
       overflow: hidden; border-radius: 2px; transition: box-shadow 0.75s ease-out;
     }
-    .log-console-rail .log-rail-fill {
+    .log-console-rail .log-rail-fill,
+    .ps-v1-rail .log-rail-fill {
       height: 100%; border-radius: 1px; transition: width 0.25s ease-out;
     }
-    .log-console-rail .log-rail-simple.mode-press .log-rail-fill { background: var(--w2); }
-    .log-console-rail .log-rail-simple.mode-qcpass .log-rail-fill { background: var(--g2); }
-    .log-console-rail .log-rail-simple.mode-qcreject .log-rail-fill { background: var(--r2); }
-    .log-console-rail .log-rail-simple.log-rail-placeholder .log-rail-fill { background: var(--d3); }
-    .log-console-rail .log-rail-pct { color: var(--d2); font-weight: 700; min-width: 2.2em; text-align: right; }
-    .log-console-rail.rail-glow-press .log-rail-bar { animation: log-rail-glow-w 0.75s ease-out 1; }
+    .log-console-rail .log-rail-simple.mode-press .log-rail-fill,
+    .ps-v1-rail .log-rail-simple.mode-press .log-rail-fill { background: var(--w2); }
+    .log-console-rail .log-rail-simple.mode-qcpass .log-rail-fill,
+    .ps-v1-rail .log-rail-simple.mode-qcpass .log-rail-fill { background: var(--g2); }
+    .log-console-rail .log-rail-simple.mode-qcreject .log-rail-fill,
+    .ps-v1-rail .log-rail-simple.mode-qcreject .log-rail-fill { background: var(--r2); }
+    .log-console-rail .log-rail-simple.log-rail-placeholder .log-rail-fill,
+    .ps-v1-rail .log-rail-simple.log-rail-placeholder .log-rail-fill { background: var(--d3); }
+    .log-console-rail .log-rail-pct,
+    .ps-v1-rail .log-rail-pct { color: var(--d2); font-weight: 700; min-width: 2.2em; text-align: right; }
+    .log-console-rail.rail-glow-press .log-rail-bar,
+    .ps-v1-rail.rail-glow-press .log-rail-bar { animation: log-rail-glow-w 0.75s ease-out 1; }
     .log-console-rail.rail-glow-qcpass .log-rail-bar { animation: log-rail-glow-g 0.75s ease-out 1; }
     .log-console-rail.rail-glow-qcreject .log-rail-bar { animation: log-rail-glow-r 0.75s ease-out 1; }
     @keyframes log-rail-glow-w {
@@ -2265,8 +2274,8 @@
     /* Press Station v1 — single-press workstation; extends press-card / floor language */
     .ps-v1-sec { font-family: 'Special Elite', cursive; font-size: 13px; color: var(--d2); letter-spacing: 3px; text-transform: uppercase; margin: var(--space-md) 0 var(--space-sm); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--b1); }
     .ps-v1-sec:first-child { margin-top: 0; }
-    .ps-v1-rail { margin-bottom: var(--space-sm); min-height: 36px; }
-    .ps-v1-rail .status-rail { padding: var(--space-sm) 0; }
+    .ps-v1-rail { margin-bottom: var(--space-sm); min-height: 36px; padding: var(--space-xs) 0; }
+    .ps-v1-press-name.station-name { color: var(--w); }
     .ps-v1-stat-block { background: var(--s1); border: 1px solid var(--b1); padding: var(--space-md); margin-bottom: var(--space-sm); }
     .ps-v1-job-title { font-size: 15px; font-weight: 700; color: var(--d); margin-bottom: var(--space-xs); font-family: 'Inconsolata', monospace; }
     .ps-v1-job-meta { font-size: 13px; color: var(--d3); margin-bottom: var(--space-sm); font-family: 'Inconsolata', monospace; letter-spacing: 0.5px; }
@@ -2278,7 +2287,6 @@
     .ps-v1-blocked { font-size: 12px; color: var(--r); margin-top: var(--space-xs); font-family: 'Inconsolata', monospace; }
     .ps-v1-bar { height: 8px; background: var(--s3); border: 1px solid var(--b2); overflow: hidden; margin: var(--space-xs) 0; border-radius: 1px; }
     .ps-v1-bar-fill { height: 100%; background: var(--w2); transition: width 0.2s; border-radius: 1px; }
-    .ps-v1-rail .status-rail-bar-fill { background: var(--w2); }
     .ps-v1-idle { font-size: 15px; color: var(--d3); font-weight: 600; font-family: 'Inconsolata', monospace; }
     .ps-v1-edit {
     margin-top: var(--space-md);

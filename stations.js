@@ -304,7 +304,7 @@ function renderPressStationShell() {
   <div class="ps-v1-sec">JOB</div>
   <div class="ps-v1-job-title">${(job.catalog || '—')} · ${(job.artist || '—')}</div>
   <div class="ps-v1-job-meta">${job.album || ''} ${job.format ? ' · ' + job.format : ''}</div>
-  <div class="ps-v1-rail">${typeof statusRailHTML === 'function' ? statusRailHTML(job) : ''}</div>
+  <div class="ps-v1-rail">${typeof logConsoleRailHTML === 'function' ? logConsoleRailHTML(job, 'press') : ''}</div>
   ${blocked.length ? `<div class="ps-v1-blocked">${blocked.join(' · ')}</div>` : ''}
   ${remaining > 0 ? `
 <div class="ps-v1-sec">LOG PRESSED</div>
@@ -341,24 +341,30 @@ function renderPressStationShell() {
   });
 }
 
-/** Update only the progress numbers on the press station rail without rebuilding the numpad. */
+function triggerPressStationRailGlow() {
+  const rail = document.querySelector('.ps-v1-rail');
+  if (!rail) return;
+  rail.classList.remove('rail-glow-press');
+  rail.classList.add('rail-glow-press');
+  setTimeout(function () { rail.classList.remove('rail-glow-press'); }, 750);
+}
+
+/** Update only the progress bar and % on the press station rail without rebuilding the numpad. */
 function updatePressStationProgress() {
   const job = getStationJob();
   if (!job) return;
   const prog = getJobProgress(job);
   const ordered = prog.ordered;
   const pressed = prog.pressed;
-  const remaining = Math.max(0, ordered - pressed);
   const pct = ordered ? Math.min(100, (pressed / ordered) * 100) : 0;
+  const pctText = Math.round(pct) + '%';
 
-  const rail = document.querySelector('.ps-v1-rail .status-rail');
+  const rail = document.querySelector('.ps-v1-rail');
   if (!rail) return;
-  const nums = rail.querySelectorAll('.status-rail-num');
-  if (nums[0]) nums[0].textContent = ordered.toLocaleString();
-  if (nums[1]) nums[1].textContent = pressed.toLocaleString();
-  if (nums[2]) nums[2].textContent = remaining.toLocaleString();
-  const barFill = rail.querySelector('.status-rail-bar-fill');
+  const barFill = rail.querySelector('.log-rail-fill');
+  const pctEl = rail.querySelector('.log-rail-pct');
   if (barFill) barFill.style.width = `${pct}%`;
+  if (pctEl) pctEl.textContent = pctText;
 }
 
 async function pressStationLogPressed(qty) {
@@ -372,6 +378,7 @@ async function pressStationLogPressed(qty) {
     if (result.ok) {
       renderPressStationShell();
       toast(`+${qty} logged`);
+      triggerPressStationRailGlow();
     } else {
       toastError(result.error || 'Log failed');
     }
