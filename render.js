@@ -120,7 +120,7 @@ function buildPressCardHTML(p, linkTo, showControls) {
     <div class="pc-controls" onclick="event.stopPropagation()">
       <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
       <option value="">— ASSIGN JOB</option>
-      ${S.jobs.filter(j => j.status !== 'done').map(j => `<option value="${j.id}" ${p.job_id === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
+      ${sortJobsByCatalogAsc(S.jobs.filter(j => j.status !== 'done')).map(j => `<option value="${j.id}" ${p.job_id === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
       </select>
       <select class="pc-select" style="max-width:110px" onchange="setPressStatus('${p.id}',this.value)">
       <option value="online"  ${p.status === 'online'  ? 'selected' : ''}>Online</option>
@@ -944,13 +944,7 @@ function renderLog() {
 
   const picker = document.getElementById('logJobPicker');
   if (picker) {
-    const allJobs = S.jobs.slice().filter(j => j.status !== 'done').sort((a, b) => {
-      const statusOrder = { queue: 0, pressing: 1, assembly: 2, hold: 3 };
-      const sa = statusOrder[a.status] ?? 5;
-      const sb = statusOrder[b.status] ?? 5;
-      if (sa !== sb) return sa - sb;
-      return (a.catalog || '').localeCompare(b.catalog || '');
-    });
+    const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => j.status !== 'done'));
     const selectedId = S.logSelectedJob || '';
     picker.innerHTML = `
     <select class="qc-job-select" onchange="selectLogJob(this.value || null)">

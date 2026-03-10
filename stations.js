@@ -437,7 +437,7 @@ function exitQCStation() {
 function renderQCStationShell() {
   const today = new Date().toDateString();
   const todayLog = S.qcLog.filter(e => e.date === today);
-  const pressing = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
+  const pressing = sortJobsByCatalogAsc(S.jobs.filter(j => ['pressing','assembly'].includes(j.status)));
   const selectedJob = S.qcSelectedJob ? S.jobs.find(j => j.id === S.qcSelectedJob) : null;
 
   const currentEl = document.getElementById('qcStationCurrent');

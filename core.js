@@ -133,6 +133,18 @@ function debounce(fn, ms) {
   };
 }
 
+/** Sort job list by catalog number ascending; fallback empty string then artist. Stable. Used by all job dropdowns/pickers. */
+function sortJobsByCatalogAsc(jobs) {
+  if (!Array.isArray(jobs)) return [];
+  return jobs.slice().sort((a, b) => {
+    const ca = (a.catalog != null && a.catalog !== '') ? String(a.catalog) : '';
+    const cb = (b.catalog != null && b.catalog !== '') ? String(b.catalog) : '';
+    const c = ca.localeCompare(cb, undefined, { sensitivity: 'base' });
+    if (c !== 0) return c;
+    return (a.artist || '').localeCompare(b.artist || '', undefined, { sensitivity: 'base' });
+  });
+}
+
 // Legacy compatibility: migrate cached press objects from `job` to `job_id` during hydration.
 function normalizeLegacyPresses(presses) {
   if (!Array.isArray(presses)) return presses;
