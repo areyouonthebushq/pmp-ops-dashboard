@@ -1320,7 +1320,36 @@
     }
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
-    /* Unified LOG page — vertical machine layout: job, mode row, display, 4 keypad rows, LOG. */
+    /* Unified LOG page — presentation shell (launcher-style framing), then vertical machine layout. */
+    #pg-log {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    }
+    .log-page-shell {
+    width: 100%;
+    max-width: min(380px, 92vw);
+    border: 1px solid var(--b2);
+    background: var(--s1);
+    padding: var(--space-md) var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    }
+    .log-page-shell .log-shell-sec {
+    font-family: 'Special Elite', cursive;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--d3);
+    margin: 0;
+    padding: 0 0 var(--space-xs);
+    border-bottom: 1px solid var(--b1);
+    }
+    .log-page-shell .log-shell-sec-log { margin-top: var(--space-xs); }
+    .log-page-shell .log-job-picker { margin: 0; max-width: 100%; }
+    .log-page-shell .log-console-wrap { margin: 0; }
     #pg-log .log-job-picker {
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);

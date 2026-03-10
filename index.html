@@ -250,10 +250,11 @@
 
     <!-- ======= UNIFIED LOG PAGE (replaces Press Log + QC Log entry) ======= -->
     <div class="pg" id="pg-log">
-        <div class="sec">SELECT JOB</div>
-        <div class="log-job-picker" id="logJobPicker"></div>
-        <div class="sec qc-primary-sec">LOG</div>
-        <div class="log-console-wrap">
+        <div class="log-page-shell">
+            <div class="log-shell-sec">SELECT JOB</div>
+            <div class="log-job-picker" id="logJobPicker"></div>
+            <div class="log-shell-sec log-shell-sec-log">LOG</div>
+            <div class="log-console-wrap">
             <div class="log-main log-faceplate mode-press" id="logConsole">
                 <div class="log-fp-job" id="logNumpadJobLabel">Select a job above</div>
                 <button type="button" class="log-action-btn log-action-press log-fp-press" id="logBtnPress" onclick="setLogAction('press')">PRESS</button>
@@ -290,6 +291,7 @@
                 <button type="button" class="qc-reject-cancel" onclick="unifiedLogHideRejectPicker()">CANCEL</button>
             </div>
             </div>
+        </div>
         </div>
         <div class="sec">RECENT</div>
         <div class="log-recent" id="logRecent"></div>
