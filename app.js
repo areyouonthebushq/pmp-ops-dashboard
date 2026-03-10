@@ -936,6 +936,21 @@ function toggleTVParty() {
 }
 
 // ============================================================
+// GLOBAL FULLSCREEN TOGGLE (independent of TV mode)
+// ============================================================
+function toggleFullscreen() {
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  const el = document.documentElement;
+  if (!isFs) {
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+  }
+}
+
+// ============================================================
 // AUDIT PAGE
 // ============================================================
 async function loadAuditPage() {

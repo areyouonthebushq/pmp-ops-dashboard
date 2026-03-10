@@ -402,8 +402,13 @@
 
     <!-- SYNC BAR -->
     <div class="syncbar">
-    <span id="syncStatus" class="sync-ok">● READY</span>
-    <span class="syncbar-version">PMP OPS v7.1</span>
+    <div class="syncbar-left">
+        <span id="syncStatus" class="sync-ok">● READY</span>
+        <span class="syncbar-version">PMP OPS v7.1</span>
+    </div>
+    <button type="button" class="syncbar-fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen mode">
+        FULLSCREEN
+    </button>
     </div>
 
     <!-- ============================================================ SLIDE PANEL — Unified single-scroll form -->
