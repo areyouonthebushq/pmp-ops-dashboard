@@ -1321,9 +1321,10 @@
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
     /* Unified LOG page — vertical machine layout: job, mode row, display, 4 keypad rows, LOG. */
-    .log-job-picker {
+    #pg-log .log-job-picker {
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
+    max-width: 360px;
     }
     #pg-log .log-console-wrap { position: relative; max-width: 360px; margin-bottom: var(--space-lg); }
     #pg-log .log-console-wrap .qc-reject-picker-overlay.qc-reject-picker-console-overlay {
@@ -1378,7 +1379,7 @@
     .log-fp-c { grid-area: c; }
     .log-fp-zero { grid-area: zero; }
     .log-fp-back { grid-area: back; }
-    .log-fp-log { grid-area: log; }
+    .log-fp-log { grid-area: log; grid-column: 1 / -1; width: 100%; }
     .log-action-btn {
     min-height: 0;
     height: 100%;
