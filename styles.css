@@ -1321,7 +1321,7 @@
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
     /* Unified LOG page — presentation shell (launcher-style framing), then vertical machine layout. */
-    #pg-log {
+    #pg-log.on {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -1493,13 +1493,15 @@
         .qc-numpad-display { font-size: 56px; min-height: 80px; }
         .qc-numpad-pass, .qc-numpad-reject { min-height: 64px; font-size: 18px; }
         .qc-reject-type-btn { min-height: 64px; }
+        /* Keep LOG console as 3-column block on mobile (no single-column stack). */
         #pg-log .log-main.log-faceplate {
-            grid-template-columns: 1fr;
-            grid-template-rows: auto 56px 72px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px;
-            grid-template-areas: "job" "mode1" "mode2" "mode3" "display" "k7" "k8" "k9" "k4" "k5" "k6" "k1" "k2" "k3" "c" "zero" "back" "log";
+            min-width: 260px;
+            padding: var(--space-sm) var(--space-md);
         }
-        #pg-log .log-action-btn { min-height: 56px; }
-        #pg-log .log-enter-btn { min-height: 56px; font-size: 20px; }
+        #pg-log .log-fp-display { font-size: 36px; padding: var(--space-sm) var(--space-md); }
+        #pg-log .log-action-btn { min-height: 48px; font-size: 18px; }
+        #pg-log .log-main.log-faceplate .ps-numpad-btn { font-size: 18px; }
+        #pg-log .log-enter-btn { min-height: 48px; font-size: 16px; }
     }
     .qc-secondary-sec { font-size: 11px; color: var(--d3); letter-spacing: 1.5px; margin-top: var(--space-lg); }
 
