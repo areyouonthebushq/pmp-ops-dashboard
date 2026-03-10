@@ -201,6 +201,8 @@ function renderStats() {
 function renderPresses() {
   const el = document.getElementById('pressGrid');
   if (!el) return;
+  const active = document.activeElement;
+  if (active && active.tagName === 'SELECT' && el.contains(active)) return;
   const isAdmin = S.mode === 'admin';
   el.innerHTML = S.presses.map(p => buildPressCardHTML(p, isAdmin ? 'pressStation' : 'panel', isAdmin)).join('');
 }
@@ -966,9 +968,11 @@ function renderLog() {
 
   const picker = document.getElementById('logJobPicker');
   if (picker) {
-    const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => j.status !== 'done'));
-    const selectedId = S.logSelectedJob || '';
-    picker.innerHTML = `
+    const active = document.activeElement;
+    if (!(active && active.tagName === 'SELECT' && picker.contains(active))) {
+      const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => j.status !== 'done'));
+      const selectedId = S.logSelectedJob || '';
+      picker.innerHTML = `
     <select class="qc-job-select" onchange="selectLogJob(this.value || null)">
     <option value="">Choose job</option>
     ${allJobs.map(j => `
@@ -976,6 +980,7 @@ function renderLog() {
     `).join('')}
     </select>
     `;
+    }
   }
 
   const jobLabel = document.getElementById('logNumpadJobLabel');
