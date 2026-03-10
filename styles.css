@@ -1433,14 +1433,14 @@
     font-size: 18px;
     font-weight: 700;
     letter-spacing: 2px;
-    border: 2px solid transparent;
+    border: 1px solid var(--b2);
     cursor: pointer;
     transition: all 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
     }
-    .log-enter-btn.log-enter-press { color: var(--w); background: var(--s2); border-color: var(--w2); }
+    .log-enter-btn.log-enter-press { color: var(--w); background: var(--w2); border-color: var(--w2); }
     .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gg); }
     .log-enter-btn.log-enter-qcpass { color: var(--g); background: var(--g3); border-color: var(--g2); }
     .log-enter-btn.log-enter-qcpass:hover:not(:disabled) { background: var(--g); color: #000; border-color: var(--g); box-shadow: var(--gg); }
