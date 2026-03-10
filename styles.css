@@ -1327,7 +1327,7 @@
     }
     .log-main {
     display: grid;
-    grid-template-columns: minmax(100px, 1fr) minmax(260px, 340px) minmax(90px, 1fr);
+    grid-template-columns: minmax(100px, 1fr) minmax(260px, 340px);
     grid-template-rows: 1fr;
     gap: 0;
     column-gap: var(--space-md);
@@ -1351,7 +1351,7 @@
     .log-action-btn {
     min-height: 56px;
     font-family: 'Inconsolata', monospace;
-    font-size: 14px;
+    font-size: 22px;
     font-weight: 700;
     letter-spacing: 1px;
     border: 1px solid var(--b2);
@@ -1379,52 +1379,49 @@
     }
     .log-center .qc-numpad-job { font-size: 13px; margin-bottom: 0; color: var(--d2); }
     .log-center .qc-numpad-block { margin-bottom: 0; }
-    .log-center .qc-numpad { max-width: 100%; }
+    .log-center .qc-numpad { max-width: 100%; touch-action: manipulation; }
     #pg-log .log-main .log-center .qc-numpad-display {
     padding: var(--space-md) var(--space-lg);
     margin-bottom: var(--space-sm);
     min-height: 72px;
-    background: var(--b1);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    background: var(--s1);
+    border: 1px solid var(--b2);
     }
+    #pg-log .log-main .log-center .qc-numpad-display.has-value { color: var(--g); }
+    #pg-log .log-main.mode-press .log-center .qc-numpad-display { border-color: var(--w2); }
+    #pg-log .log-main.mode-qcpass .log-center .qc-numpad-display { border-color: var(--g2); }
+    #pg-log .log-main.mode-qcreject .log-center .qc-numpad-display { border-color: var(--r2); }
     #pg-log .log-main .log-center .qc-numpad-grid {
-    gap: var(--space-xs);
+    gap: 4px;
     margin-bottom: var(--space-sm);
     }
-    #pg-log .log-main.mode-press .qc-numpad-display { border-color: var(--w2); }
-    #pg-log .log-main.mode-qcpass .qc-numpad-display { border-color: var(--g2); }
-    #pg-log .log-main.mode-qcreject .qc-numpad-display { border-color: var(--r2); }
-    .log-enter-wrap {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: stretch;
-    min-height: 0;
-    }
-    .log-enter-btn {
+    #pg-log .log-main .log-center .ps-numpad-presets { display: flex; gap: 4px; margin-bottom: var(--space-sm); }
+    #pg-log .log-main .log-center .log-enter-btn {
     width: 100%;
     min-height: 56px;
     font-family: 'Inconsolata', monospace;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: 2px;
-    background: var(--s2);
-    border: 1px solid var(--b2);
-    color: var(--d2);
+    border: 2px solid transparent;
     cursor: pointer;
     transition: all 0.15s;
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: 0;
     }
-    .log-enter-btn.log-enter-press { color: var(--w); border-color: var(--b2); }
-    .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); }
-    .log-enter-btn.log-enter-qcpass { color: var(--g); border-color: var(--b2); }
-    .log-enter-btn.log-enter-qcpass:hover:not(:disabled) { background: var(--g); color: #000; border-color: var(--g); }
-    .log-enter-btn.log-enter-qcreject { color: var(--r); border-color: var(--b2); }
-    .log-enter-btn.log-enter-qcreject:hover:not(:disabled) { background: var(--r); color: #fff; border-color: var(--r); }
-    .log-enter-btn:disabled { opacity: 0.4; cursor: not-allowed; background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    .log-enter-btn.log-enter-press { color: var(--w); background: var(--s2); border-color: var(--w2); }
+    .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gg); }
+    .log-enter-btn.log-enter-qcpass { color: var(--g); background: var(--g3); border-color: var(--g2); }
+    .log-enter-btn.log-enter-qcpass:hover:not(:disabled) { background: var(--g); color: #000; border-color: var(--g); box-shadow: var(--gg); }
+    .log-enter-btn.log-enter-qcreject { color: var(--r); background: var(--r2); border-color: var(--r2); }
+    .log-enter-btn.log-enter-qcreject:hover:not(:disabled) { background: var(--r); color: #fff; border-color: var(--r); box-shadow: var(--gg); }
+    .log-enter-btn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+    .log-enter-btn:disabled.log-enter-press { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    .log-enter-btn:disabled.log-enter-qcpass { background: var(--g3); color: var(--g); border-color: var(--g2); }
+    .log-enter-btn:disabled.log-enter-qcreject { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    .log-enter-btn:active { transform: scale(0.98); }
     .log-recent { margin-bottom: var(--space-lg); }
     .log-recent .progress-entry { padding: var(--space-xs) 0; border-bottom: 1px solid var(--b1); font-size: 12px; color: var(--d2); }
     .log-recent .progress-entry.pressed { color: var(--g); }
@@ -1439,8 +1436,7 @@
         #pg-log .log-main { grid-template-columns: 1fr; align-items: stretch; }
         #pg-log .log-actions { flex-direction: row; flex-wrap: wrap; gap: var(--space-sm); }
         #pg-log .log-action-btn { min-height: 64px; }
-        #pg-log .log-enter-wrap { justify-content: flex-end; }
-        #pg-log .log-enter-btn { min-height: 64px; font-size: 18px; }
+        #pg-log .log-enter-btn { min-height: 64px; font-size: 20px; }
     }
     .qc-secondary-sec { font-size: 11px; color: var(--d3); letter-spacing: 1.5px; margin-top: var(--space-lg); }
 

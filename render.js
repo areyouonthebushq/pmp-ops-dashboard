@@ -796,6 +796,7 @@ function logNumpadTap(digit) {
 }
 function logNumpadClear() { logNumpadValue = '0'; logNumpadUpdateDisplay(); }
 function logNumpadBack() { logNumpadValue = logNumpadValue.length > 1 ? logNumpadValue.slice(0, -1) : '0'; logNumpadUpdateDisplay(); }
+function logNumpadSet(n) { logNumpadValue = String(n); logNumpadUpdateDisplay(); }
 
 function logNumpadUpdateDisplay() {
   const n = parseInt(logNumpadValue, 10) || 0;
