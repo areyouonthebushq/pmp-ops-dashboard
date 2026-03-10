@@ -272,7 +272,9 @@
                 <button type="button" class="ps-numpad-btn ps-numpad-clear log-fp-c" onclick="logNumpadClear()">C</button>
                 <button type="button" class="ps-numpad-btn log-fp-zero" onclick="logNumpadTap('0')">0</button>
                 <button type="button" class="ps-numpad-btn ps-numpad-back log-fp-back" onclick="logNumpadBack()">←</button>
-                <button type="button" class="log-enter-btn log-enter-press log-fp-log" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>LOG PRESS</button>
+                <div class="log-fp-log-wrap">
+                    <button type="button" class="log-enter-btn log-enter-press log-fp-log" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>LOG PRESS</button>
+                </div>
             </div>
             <div class="qc-reject-picker qc-reject-picker-overlay qc-reject-picker-console-overlay" id="logRejectPicker" style="display:none">
             <div class="qc-reject-picker-card">

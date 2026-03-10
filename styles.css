@@ -1379,7 +1379,8 @@
     .log-fp-c { grid-area: c; }
     .log-fp-zero { grid-area: zero; }
     .log-fp-back { grid-area: back; }
-    .log-fp-log { grid-area: log; grid-column: 1 / -1; grid-row: 8 / 9; width: 100%; min-width: 0; }
+    .log-fp-log-wrap { grid-area: log; grid-column: 1 / -1; grid-row: 8 / 9; min-width: 0; display: flex; }
+    .log-fp-log-wrap .log-enter-btn { flex: 1; width: 100%; min-width: 0; }
     .log-action-btn {
     min-height: 0;
     height: 100%;
