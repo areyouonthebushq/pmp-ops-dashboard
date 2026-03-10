@@ -400,16 +400,8 @@
     <span id="offlineBannerQueue"></span>
     </div>
 
-    <!-- SYNC BAR -->
-    <div class="syncbar">
-    <div class="syncbar-left">
-        <span id="syncStatus" class="sync-ok">● READY</span>
-        <span class="syncbar-version">PMP OPS v7.1</span>
-    </div>
-    <button type="button" class="syncbar-fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen mode">
-        FULLSCREEN
-    </button>
-    </div>
+    <!-- SYNC BAR — exactly two flex children: left block + fullscreen button (no whitespace nodes) -->
+    <div class="syncbar"><div class="syncbar-left"><span id="syncStatus" class="sync-ok">● READY</span><span class="syncbar-version">PMP OPS v7.1</span></div><button type="button" class="syncbar-fullscreen-btn" onclick="toggleFullscreen()" title="Toggle fullscreen mode">FULLSCREEN</button></div>
 
     <!-- ============================================================ SLIDE PANEL — Unified single-scroll form -->
     <div class="overlay" id="overlay">
