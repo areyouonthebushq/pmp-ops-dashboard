@@ -1398,11 +1398,11 @@
     }
     .log-action-btn:hover:not(.active) { background: var(--s3); }
     .log-action-press { color: var(--d2); }
-    .log-action-press.active { background: var(--w); color: #000; border-color: var(--w); }
+    .log-action-press.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
     .log-action-qcpass { color: var(--d2); }
-    .log-action-qcpass.active { background: var(--g); color: #000; border-color: var(--g); }
+    .log-action-qcpass.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
     .log-action-qcreject { color: var(--d2); }
-    .log-action-qcreject.active { background: var(--r); color: #fff; border-color: var(--r); }
+    .log-action-qcreject.active { background: var(--r2); color: var(--r); border-color: var(--r2); }
     .log-fp-display {
     display: flex;
     align-items: center;
