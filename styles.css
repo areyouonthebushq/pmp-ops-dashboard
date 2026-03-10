@@ -1320,36 +1320,50 @@
     }
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
-    /* Unified LOG page — design-system conformance: launcher/station tokens only */
+    /* Unified LOG page — one faceplate grid; locked tracks; no independent flex columns */
     .log-job-picker {
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
     }
-    .log-main {
+    /* Faceplate: one CSS Grid; explicit rows/columns; all elements snap to same tracks */
+    .log-main.log-faceplate {
     display: grid;
-    grid-template-columns: minmax(100px, 1fr) minmax(260px, 340px);
-    grid-template-rows: 1fr;
+    grid-template-columns: minmax(90px, 100px) minmax(260px, 320px) minmax(90px, 110px);
+    grid-template-rows: auto 72px 56px 56px 56px 56px 56px;
+    grid-template-areas:
+        "job   job   job"
+        "press display log"
+        "qcpass row1  log"
+        "qcrej row2  log"
+        " .    row3  log"
+        " .    row4  log"
+        " .    presets log";
     gap: 0;
-    column-gap: var(--space-md);
-    align-items: start;
     margin-bottom: var(--space-lg);
     padding: var(--space-md) var(--space-lg);
     background: var(--s2);
     border: 1px solid var(--b2);
     transition: border-color 0.2s;
+    touch-action: manipulation;
     }
     .log-main.mode-press { border-color: var(--w2); }
     .log-main.mode-qcpass { border-color: var(--g2); }
     .log-main.mode-qcreject { border-color: var(--r2); }
-    .log-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-xs);
-    justify-content: flex-start;
-    min-height: 0;
-    }
+    .log-faceplate-job { grid-area: job; font-size: 13px; color: var(--d2); padding: var(--space-xs) 0; font-family: 'Inconsolata', monospace; }
+    .log-action-btn { grid-area: unset; }
+    .log-action-press { grid-area: press; }
+    .log-action-qcpass { grid-area: qcpass; }
+    .log-action-qcreject { grid-area: qcrej; }
+    .log-faceplate-display { grid-area: display; }
+    .log-faceplate-row:nth-of-type(1) { grid-area: row1; }
+    .log-faceplate-row:nth-of-type(2) { grid-area: row2; }
+    .log-faceplate-row:nth-of-type(3) { grid-area: row3; }
+    .log-faceplate-row:nth-of-type(4) { grid-area: row4; }
+    .log-faceplate-presets { grid-area: presets; }
+    .log-enter-btn { grid-area: log; }
     .log-action-btn {
-    min-height: 56px;
+    min-height: 0;
+    height: 100%;
     font-family: 'Inconsolata', monospace;
     font-size: 22px;
     font-weight: 700;
@@ -1359,7 +1373,6 @@
     transition: all 0.15s;
     background: var(--s2);
     color: var(--d2);
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1371,34 +1384,42 @@
     .log-action-qcpass.active { background: var(--g); color: #000; border-color: var(--g); }
     .log-action-qcreject { color: var(--d2); }
     .log-action-qcreject.active { background: var(--r); color: #fff; border-color: var(--r); }
-    .log-center {
-    min-width: 0;
+    .log-faceplate-display {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    }
-    .log-center .qc-numpad-job { font-size: 13px; margin-bottom: 0; color: var(--d2); }
-    .log-center .qc-numpad-block { margin-bottom: 0; }
-    .log-center .qc-numpad { max-width: 100%; touch-action: manipulation; }
-    #pg-log .log-main .log-center .qc-numpad-display {
-    padding: var(--space-md) var(--space-lg);
-    margin-bottom: var(--space-sm);
-    min-height: 72px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 var(--space-lg);
+    font-family: 'Inconsolata', monospace;
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--d3);
+    letter-spacing: 2px;
     background: var(--s1);
     border: 1px solid var(--b2);
+    min-height: 0;
     }
-    #pg-log .log-main .log-center .qc-numpad-display.has-value { color: var(--g); }
-    #pg-log .log-main.mode-press .log-center .qc-numpad-display { border-color: var(--w2); }
-    #pg-log .log-main.mode-qcpass .log-center .qc-numpad-display { border-color: var(--g2); }
-    #pg-log .log-main.mode-qcreject .log-center .qc-numpad-display { border-color: var(--r2); }
-    #pg-log .log-main .log-center .qc-numpad-grid {
+    #pg-log .log-faceplate-display.has-value { color: var(--g); }
+    #pg-log .log-main.mode-press .log-faceplate-display { border-color: var(--w2); }
+    #pg-log .log-main.mode-qcpass .log-faceplate-display { border-color: var(--g2); }
+    #pg-log .log-main.mode-qcreject .log-faceplate-display { border-color: var(--r2); }
+    .log-faceplate-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: var(--space-xs);
-    margin-bottom: var(--space-sm);
+    min-height: 0;
     }
-    #pg-log .log-main .log-center .ps-numpad-presets { display: flex; gap: var(--space-xs); margin-bottom: var(--space-sm); }
-    #pg-log .log-main .log-center .log-enter-btn {
+    .log-faceplate-row .ps-numpad-btn { min-height: 0; height: 100%; }
+    .log-faceplate-presets {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: var(--space-xs);
+    min-height: 0;
+    }
+    .log-faceplate-presets .ps-numpad-preset { min-height: 0; height: 100%; }
+    .log-enter-btn {
+    min-height: 0;
+    height: 100%;
     width: 100%;
-    min-height: 56px;
     font-family: 'Inconsolata', monospace;
     font-size: 18px;
     font-weight: 700;
@@ -1409,7 +1430,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 0;
     }
     .log-enter-btn.log-enter-press { color: var(--w); background: var(--s2); border-color: var(--w2); }
     .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gg); }
@@ -1433,10 +1453,13 @@
         .qc-numpad-display { font-size: 56px; min-height: 80px; }
         .qc-numpad-pass, .qc-numpad-reject { min-height: 64px; font-size: 18px; }
         .qc-reject-type-btn { min-height: 64px; }
-        #pg-log .log-main { grid-template-columns: 1fr; align-items: stretch; }
-        #pg-log .log-actions { flex-direction: row; flex-wrap: wrap; gap: var(--space-sm); }
-        #pg-log .log-action-btn { min-height: 64px; }
-        #pg-log .log-enter-btn { min-height: 64px; font-size: 20px; }
+        #pg-log .log-main.log-faceplate {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto 72px 56px 56px 56px 56px 56px 56px 56px 56px 56px;
+            grid-template-areas: "job" "press" "qcpass" "qcrej" "display" "row1" "row2" "row3" "row4" "presets" "log";
+        }
+        #pg-log .log-action-btn { min-height: 56px; }
+        #pg-log .log-enter-btn { min-height: 56px; font-size: 20px; }
     }
     .qc-secondary-sec { font-size: 11px; color: var(--d3); letter-spacing: 1.5px; margin-top: var(--space-lg); }
 
