@@ -304,16 +304,8 @@ function renderPressStationShell() {
   <div class="ps-v1-sec">JOB</div>
   <div class="ps-v1-job-title">${(job.catalog || '—')} · ${(job.artist || '—')}</div>
   <div class="ps-v1-job-meta">${job.album || ''} ${job.format ? ' · ' + job.format : ''}</div>
-  <div class="ps-v1-sec">PROGRESS</div>
-  <div class="ps-v1-stat-block">
-    <div class="ps-v1-stat-row">
-      <div class="ps-v1-stat"><span class="num">${ordered.toLocaleString()}</span> <span class="lbl">ORDERED</span></div>
-      <div class="ps-v1-stat"><span class="num">${pressed.toLocaleString()}</span> <span class="lbl">PRESSED</span></div>
-    </div>
-    <div class="ps-v1-remaining">${remaining.toLocaleString()} REMAINING</div>
-    <div class="ps-v1-bar"><div class="ps-v1-bar-fill" style="width:${pct}%"></div></div>
-    ${blocked.length ? `<div class="ps-v1-blocked">${blocked.join(' · ')}</div>` : ''}
-  </div>
+  <div class="ps-v1-rail">${typeof statusRailHTML === 'function' ? statusRailHTML(job) : ''}</div>
+  ${blocked.length ? `<div class="ps-v1-blocked">${blocked.join(' · ')}</div>` : ''}
   ${remaining > 0 ? `
 <div class="ps-v1-sec">LOG PRESSED</div>
 <div class="ps-numpad">
@@ -349,7 +341,7 @@ function renderPressStationShell() {
   });
 }
 
-/** Update only the progress numbers on the press station without rebuilding the numpad. */
+/** Update only the progress numbers on the press station rail without rebuilding the numpad. */
 function updatePressStationProgress() {
   const job = getStationJob();
   if (!job) return;
@@ -359,14 +351,13 @@ function updatePressStationProgress() {
   const remaining = Math.max(0, ordered - pressed);
   const pct = ordered ? Math.min(100, (pressed / ordered) * 100) : 0;
 
-  const statBlock = document.querySelector('.ps-v1-stat-block');
-  if (!statBlock) return;
-  const nums = statBlock.querySelectorAll('.ps-v1-stat .num');
+  const rail = document.querySelector('.ps-v1-rail .status-rail');
+  if (!rail) return;
+  const nums = rail.querySelectorAll('.status-rail-num');
   if (nums[0]) nums[0].textContent = ordered.toLocaleString();
   if (nums[1]) nums[1].textContent = pressed.toLocaleString();
-  const remainEl = statBlock.querySelector('.ps-v1-remaining');
-  if (remainEl) remainEl.textContent = `${remaining.toLocaleString()} REMAINING`;
-  const barFill = statBlock.querySelector('.ps-v1-bar-fill');
+  if (nums[2]) nums[2].textContent = remaining.toLocaleString();
+  const barFill = rail.querySelector('.status-rail-bar-fill');
   if (barFill) barFill.style.width = `${pct}%`;
 }
 

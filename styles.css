@@ -1372,8 +1372,9 @@
     .log-main.log-faceplate {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: auto 56px 72px 56px 56px 56px 56px 56px;
+    grid-template-rows: auto auto 56px 72px 56px 56px 56px 56px 56px;
     grid-template-areas:
+        "rail   rail   rail"
         "job    job    job"
         "mode1  mode2  mode3"
         "display display display"
@@ -1392,7 +1393,26 @@
     .log-main.mode-press { border-color: var(--w2); }
     .log-main.mode-qcpass { border-color: var(--g2); }
     .log-main.mode-qcreject { border-color: var(--r2); }
+    .log-console-rail { grid-area: rail; min-height: 36px; border-bottom: 1px solid var(--b1); }
     .log-fp-job { grid-area: job; font-size: 14px; color: var(--d2); padding: var(--space-xs) 0; font-family: 'Inconsolata', monospace; border-bottom: 1px solid var(--b1); }
+
+    /* Status rail — shared by LOG console and Press Station (ORDERED · PRESSED · REMAINING + bar) */
+    .status-rail {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-md);
+    min-height: 32px;
+    padding: var(--space-xs) 0;
+    font-family: 'Inconsolata', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    }
+    .status-rail-cell { display: inline-flex; align-items: baseline; gap: var(--space-xs); }
+    .status-rail-num { font-weight: 700; color: var(--g); }
+    .status-rail-placeholder .status-rail-num { color: var(--d3); }
+    .status-rail-bar { flex: 1; min-width: 60px; height: 6px; background: var(--s3); border: 1px solid var(--b2); overflow: hidden; border-radius: 1px; }
+    .status-rail-bar-fill { height: 100%; background: var(--g); transition: width 0.2s; border-radius: 1px; }
     .log-fp-display { grid-area: display; }
     .log-fp-press { grid-area: mode1; }
     .log-fp-qcpass { grid-area: mode2; }
@@ -2211,6 +2231,8 @@
     /* Press Station v1 — single-press workstation; extends press-card / floor language */
     .ps-v1-sec { font-family: 'Special Elite', cursive; font-size: 13px; color: var(--d2); letter-spacing: 3px; text-transform: uppercase; margin: var(--space-md) 0 var(--space-sm); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--b1); }
     .ps-v1-sec:first-child { margin-top: 0; }
+    .ps-v1-rail { margin-bottom: var(--space-sm); min-height: 36px; }
+    .ps-v1-rail .status-rail { padding: var(--space-sm) 0; }
     .ps-v1-stat-block { background: var(--s1); border: 1px solid var(--b1); padding: var(--space-md); margin-bottom: var(--space-sm); }
     .ps-v1-job-title { font-size: 15px; font-weight: 700; color: var(--d); margin-bottom: var(--space-xs); font-family: 'Inconsolata', monospace; }
     .ps-v1-job-meta { font-size: 13px; color: var(--d3); margin-bottom: var(--space-sm); font-family: 'Inconsolata', monospace; letter-spacing: 0.5px; }

@@ -962,6 +962,12 @@ function renderLog() {
     jobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
   }
 
+  const logConsoleRail = document.getElementById('logConsoleRail');
+  if (logConsoleRail) {
+    const job = S.logSelectedJob ? S.jobs.find(j => j.id === S.logSelectedJob) : null;
+    logConsoleRail.innerHTML = job ? statusRailHTML(job) : statusRailPlaceholderHTML();
+  }
+
   ['press', 'qc_pass', 'qc_reject'].forEach(a => {
     const btn = document.getElementById('logBtn' + (a === 'press' ? 'Press' : a === 'qc_pass' ? 'QcPass' : 'QcReject'));
     if (btn) btn.classList.toggle('active', logAction === a);

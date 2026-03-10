@@ -208,6 +208,31 @@ function progressDualBarHTML(pressedPct, qcPassedPct) {
   return `<div class="dl-bar-pressed" style="width:${pressedPct}%"></div><div class="dl-bar-qc" style="width:${qcPassedPct}%"></div>`;
 }
 
+/** Shared status rail: ORDERED · PRESSED · REMAINING + bar. Used by LOG console and Press Station. */
+function statusRailHTML(job) {
+  if (!job) return statusRailPlaceholderHTML();
+  const p = getJobProgress(job);
+  const ordered = p.ordered;
+  const pressed = p.pressed;
+  const remaining = Math.max(0, ordered - pressed);
+  const pct = ordered ? Math.min(100, (pressed / ordered) * 100) : 0;
+  return `<div class="status-rail">
+    <span class="status-rail-cell"><span class="status-rail-num">${ordered.toLocaleString()}</span> ORDERED</span>
+    <span class="status-rail-cell"><span class="status-rail-num">${pressed.toLocaleString()}</span> PRESSED</span>
+    <span class="status-rail-cell"><span class="status-rail-num">${remaining.toLocaleString()}</span> REMAINING</span>
+    <div class="status-rail-bar"><div class="status-rail-bar-fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+function statusRailPlaceholderHTML() {
+  return `<div class="status-rail status-rail-placeholder">
+    <span class="status-rail-cell"><span class="status-rail-num">—</span> ORDERED</span>
+    <span class="status-rail-cell"><span class="status-rail-num">—</span> PRESSED</span>
+    <span class="status-rail-cell"><span class="status-rail-num">—</span> REMAINING</span>
+    <div class="status-rail-bar"><div class="status-rail-bar-fill" style="width:0%"></div></div>
+  </div>`;
+}
+
 function ensureNotesLog(job) {
   if (!job) return;
   if (!Array.isArray(job.notesLog)) job.notesLog = [];
