@@ -949,6 +949,16 @@ function renderLog() {
     const btn = document.getElementById('logBtn' + (a === 'press' ? 'Press' : a === 'qc_pass' ? 'QcPass' : 'QcReject'));
     if (btn) btn.classList.toggle('active', logAction === a);
   });
+  const enterBtn = document.getElementById('logEnterBtn');
+  if (enterBtn) {
+    enterBtn.textContent = logAction === 'press' ? 'LOG PRESS' : logAction === 'qc_pass' ? 'LOG PASS' : 'LOG REJECT';
+    enterBtn.className = 'log-enter-btn log-enter-' + (logAction === 'press' ? 'press' : logAction === 'qc_pass' ? 'qcpass' : 'qcreject');
+  }
+  const consoleEl = document.getElementById('logConsole');
+  if (consoleEl) {
+    consoleEl.classList.remove('mode-press', 'mode-qcpass', 'mode-qcreject');
+    consoleEl.classList.add('mode-' + (logAction === 'press' ? 'press' : logAction === 'qc_pass' ? 'qcpass' : 'qcreject'));
+  }
   if (typeof logNumpadUpdateDisplay === 'function') logNumpadUpdateDisplay();
 
   const recentEl = document.getElementById('logRecent');

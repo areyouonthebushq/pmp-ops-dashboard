@@ -1320,7 +1320,7 @@
     }
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
-    /* Unified LOG page — microwave layout: actions | numpad | ENTER */
+    /* Unified LOG page — one console: mode propagates to actions, display, LOG button */
     .log-job-picker {
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
@@ -1331,7 +1331,14 @@
     gap: var(--space-lg);
     align-items: start;
     margin-bottom: var(--space-lg);
+    padding: var(--space-lg);
+    background: var(--s2);
+    border: 2px solid var(--b2);
+    transition: border-color 0.2s, box-shadow 0.2s;
     }
+    .log-main.mode-press { border-color: var(--w2); }
+    .log-main.mode-qcpass { border-color: var(--g2); }
+    .log-main.mode-qcreject { border-color: var(--r2); }
     .log-actions {
     display: flex;
     flex-direction: column;
@@ -1359,21 +1366,29 @@
     .log-action-qcreject.active { background: var(--r2); color: #fff; }
     .log-center { min-width: 0; }
     .log-center .qc-numpad-block { margin-bottom: 0; }
+    #pg-log .log-main.mode-press .qc-numpad-display { border-color: var(--w2); }
+    #pg-log .log-main.mode-qcpass .qc-numpad-display { border-color: var(--g2); }
+    #pg-log .log-main.mode-qcreject .qc-numpad-display { border-color: var(--r2); }
     .log-enter-wrap { display: flex; align-items: center; justify-content: center; min-height: 200px; }
     .log-enter-btn {
     min-width: 120px;
     min-height: 120px;
     font-family: 'Inconsolata', monospace;
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 700;
-    letter-spacing: 3px;
-    background: var(--s2);
-    border: 3px solid var(--g);
-    color: var(--g);
+    letter-spacing: 2px;
+    background: var(--s1);
+    border: 3px solid var(--b2);
+    color: var(--d2);
     cursor: pointer;
     transition: all 0.15s;
     }
-    .log-enter-btn:hover:not(:disabled) { background: var(--g); color: #000; box-shadow: var(--gg); }
+    .log-enter-btn.log-enter-press { border-color: var(--w2); color: var(--w); }
+    .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w2); color: #000; }
+    .log-enter-btn.log-enter-qcpass { border-color: var(--g2); color: var(--g); }
+    .log-enter-btn.log-enter-qcpass:hover:not(:disabled) { background: var(--g3); color: #000; }
+    .log-enter-btn.log-enter-qcreject { border-color: var(--r2); color: var(--r); }
+    .log-enter-btn.log-enter-qcreject:hover:not(:disabled) { background: var(--r2); color: #fff; }
     .log-enter-btn:disabled { opacity: 0.35; cursor: not-allowed; border-color: var(--b2); color: var(--d3); }
     .log-recent { margin-bottom: var(--space-lg); }
     .log-recent .progress-entry { padding: var(--space-xs) 0; border-bottom: 1px solid var(--b1); font-size: 12px; color: var(--d2); }

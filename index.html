@@ -252,8 +252,8 @@
     <div class="pg" id="pg-log">
         <div class="sec">SELECT JOB</div>
         <div class="log-job-picker" id="logJobPicker"></div>
-        <div class="sec qc-primary-sec">ACTION · QTY · ENTER</div>
-        <div class="log-main">
+        <div class="sec qc-primary-sec">LOG</div>
+        <div class="log-main mode-press" id="logConsole">
             <div class="log-actions">
                 <button type="button" class="log-action-btn log-action-press" id="logBtnPress" onclick="setLogAction('press')">PRESS</button>
                 <button type="button" class="log-action-btn log-action-qcpass" id="logBtnQcPass" onclick="setLogAction('qc_pass')">QC PASS</button>
@@ -282,7 +282,7 @@
                 </div>
             </div>
             <div class="log-enter-wrap">
-                <button type="button" class="log-enter-btn" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>ENTER</button>
+                <button type="button" class="log-enter-btn log-enter-press" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>LOG PRESS</button>
             </div>
         </div>
         <div class="qc-reject-picker qc-reject-picker-overlay" id="logRejectPicker" style="display:none">
