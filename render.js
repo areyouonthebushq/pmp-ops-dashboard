@@ -208,9 +208,14 @@ function renderPresses() {
 // ============================================================
 // FLOOR TABLE
 // ============================================================
+var FLOOR_LIST_SECTION_LABELS = { presses: 'PRESSES', active: 'ACTIVE', queued: 'QUEUED', overdue: 'OVERDUE', total: 'TOTAL OPEN' };
+
 function renderFloor() {
   const el = document.getElementById('floorBody');
   if (!el) return;
+  const secTitleEl = document.getElementById('floorListSecTitle');
+  if (secTitleEl) secTitleEl.textContent = FLOOR_LIST_SECTION_LABELS[S.floorStatFilter] || 'TOTAL OPEN';
+
   const q = document.getElementById('floorSearch')?.value || '';
   const { jobs: rawJobs, total } = getFloorJobs(q, S.floorStatFilter);
   const jobs = sortFloorJobs(rawJobs);
