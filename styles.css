@@ -1320,7 +1320,7 @@
     }
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
-    /* Unified LOG page — one faceplate: chassis, shared grid, embedded readout, integrated LOG */
+    /* Unified LOG page — one faceplate; app spacing scale only; all buttons same rules */
     .log-job-picker {
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
@@ -1344,14 +1344,14 @@
     .log-actions {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: var(--space-sm);
     justify-content: flex-start;
     min-height: 0;
     }
     .log-action-btn {
-    min-height: 48px;
+    min-height: 56px;
     font-family: 'Inconsolata', monospace;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     letter-spacing: 1px;
     border: 2px solid;
@@ -1375,13 +1375,18 @@
     flex-direction: column;
     gap: var(--space-sm);
     }
-    .log-center .qc-numpad-job { font-size: 12px; margin-bottom: 0; }
+    .log-center .qc-numpad-job { font-size: 13px; margin-bottom: 0; color: var(--d2); }
     .log-center .qc-numpad-block { margin-bottom: 0; }
     .log-center .qc-numpad { max-width: 100%; }
-    .log-center .qc-numpad-grid { gap: 3px; margin-bottom: var(--space-sm); }
-    #pg-log .log-main .qc-numpad-display {
+    #pg-log .log-main .log-center .qc-numpad-display {
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-sm);
+    min-height: 72px;
     background: var(--b1);
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    }
+    #pg-log .log-main .log-center .qc-numpad-grid {
+    gap: var(--space-xs);
     margin-bottom: var(--space-sm);
     }
     #pg-log .log-main.mode-press .qc-numpad-display { border-color: var(--w2); }
@@ -1427,7 +1432,8 @@
         .qc-numpad-pass, .qc-numpad-reject { min-height: 64px; font-size: 18px; }
         .qc-reject-type-btn { min-height: 64px; }
         #pg-log .log-main { grid-template-columns: 1fr; align-items: stretch; }
-        #pg-log .log-actions { flex-direction: row; flex-wrap: wrap; }
+        #pg-log .log-actions { flex-direction: row; flex-wrap: wrap; gap: var(--space-sm); }
+        #pg-log .log-action-btn { min-height: 64px; }
         #pg-log .log-enter-wrap { justify-content: flex-end; }
         #pg-log .log-enter-btn { min-height: 64px; font-size: 18px; }
     }
