@@ -1341,8 +1341,6 @@
     margin-bottom: var(--space-lg);
     padding: var(--space-md) var(--space-lg);
     max-width: 360px;
-    margin-left: auto;
-    margin-right: auto;
     background: var(--s2);
     border: 1px solid var(--b2);
     transition: border-color 0.2s;
@@ -1351,7 +1349,7 @@
     .log-main.mode-press { border-color: var(--w2); }
     .log-main.mode-qcpass { border-color: var(--g2); }
     .log-main.mode-qcreject { border-color: var(--r2); }
-    .log-fp-job { grid-area: job; font-size: 13px; color: var(--d2); padding: var(--space-xs) 0; font-family: 'Inconsolata', monospace; border-bottom: 1px solid var(--b1); }
+    .log-fp-job { grid-area: job; font-size: 14px; color: var(--d2); padding: var(--space-xs) 0; font-family: 'Inconsolata', monospace; border-bottom: 1px solid var(--b1); }
     .log-fp-display { grid-area: display; }
     .log-fp-press { grid-area: press; }
     .log-fp-qcpass { grid-area: qcpass; }
@@ -1375,7 +1373,6 @@
     font-family: 'Inconsolata', monospace;
     font-size: 22px;
     font-weight: 700;
-    letter-spacing: 1px;
     border: 1px solid var(--b2);
     cursor: pointer;
     transition: all 0.15s;
@@ -1396,10 +1393,11 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    padding: 0 var(--space-lg);
+    padding: var(--space-md) var(--space-lg);
     font-family: 'Inconsolata', monospace;
     font-size: 48px;
     font-weight: 700;
+    line-height: 1;
     color: var(--d3);
     letter-spacing: 2px;
     background: var(--s1);
