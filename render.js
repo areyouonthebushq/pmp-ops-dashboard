@@ -1167,8 +1167,9 @@ function renderProgressSection() {
 
   const job = S.jobs.find(j => j.id === S.editId);
   if (!job) return;
-  if (form) form.style.display = '';
-  if (logBtn) logBtn.disabled = false;
+  /* Panel = edit-only; quantity logging lives on LOG page and Press Station */
+  if (form) form.style.display = 'none';
+  if (logBtn) logBtn.disabled = true;
 
   const p = getJobProgress(job);
   const ordered = p.ordered;
