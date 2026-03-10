@@ -176,10 +176,7 @@
         <div class="nav-item on" data-pg="floor" onclick="goPg('floor')">⬡ FLOOR</div>
         <div class="nav-item" data-pg="jobs" onclick="goPg('jobs')">▶ JOBS</div>
         <div class="nav-item" id="navTodos" data-pg="todos" onclick="goPg('todos')" style="display:none">✓ TODOS</div>
-        <div class="nav-item" data-pg="presslog" onclick="goPg('presslog')">⬡ PRESS LOG</div>
-        <div class="nav-item" data-pg="qc" onclick="goPg('qc')">
-        ⚠ QC LOG <span class="badge" id="qcBadge"></span>
-        </div>
+        <div class="nav-item" data-pg="log" onclick="goPg('log')">⬡ LOG <span class="badge" id="logBadge"></span></div>
         <div class="nav-item" id="navAudit" data-pg="audit" onclick="goPg('audit')" style="display:none">📋 AUDIT</div>
     </div>
 
@@ -251,98 +248,67 @@
         <div class="todo-cols" id="todoCols"></div>
     </div>
 
-    <!-- ======= PRESS LOG PAGE ======= -->
-    <div class="pg" id="pg-presslog">
+    <!-- ======= UNIFIED LOG PAGE (replaces Press Log + QC Log entry) ======= -->
+    <div class="pg" id="pg-log">
         <div class="sec">SELECT JOB</div>
-        <div class="pl-job-picker" id="plJobPicker"></div>
-        <div class="sec qc-primary-sec">LOG PRESSED</div>
-        <div class="qc-numpad-block" id="plNumpadBlock">
-            <div class="qc-numpad-job" id="plNumpadJobLabel">Select a job above</div>
-            <div class="qc-numpad">
-                <div class="qc-numpad-display" id="plNumpadDisplay">0</div>
-                <div class="qc-numpad-grid">
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('7')">7</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('8')">8</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('9')">9</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('4')">4</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('5')">5</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('6')">6</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('1')">1</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('2')">2</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('3')">3</button>
-                    <button type="button" class="ps-numpad-btn ps-numpad-clear" onclick="plNumpadClear()">C</button>
-                    <button type="button" class="ps-numpad-btn" onclick="plNumpadTap('0')">0</button>
-                    <button type="button" class="ps-numpad-btn ps-numpad-back" onclick="plNumpadBack()">←</button>
+        <div class="log-job-picker" id="logJobPicker"></div>
+        <div class="sec qc-primary-sec">ACTION · QTY · ENTER</div>
+        <div class="log-main">
+            <div class="log-actions">
+                <button type="button" class="log-action-btn log-action-press" id="logBtnPress" onclick="setLogAction('press')">PRESS</button>
+                <button type="button" class="log-action-btn log-action-qcpass" id="logBtnQcPass" onclick="setLogAction('qc_pass')">QC PASS</button>
+                <button type="button" class="log-action-btn log-action-qcreject" id="logBtnQcReject" onclick="setLogAction('qc_reject')">QC REJECT</button>
+            </div>
+            <div class="log-center">
+                <div class="qc-numpad-job" id="logNumpadJobLabel">Select a job above</div>
+                <div class="qc-numpad-block">
+                    <div class="qc-numpad">
+                        <div class="qc-numpad-display" id="logNumpadDisplay">0</div>
+                        <div class="qc-numpad-grid">
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('7')">7</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('8')">8</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('9')">9</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('4')">4</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('5')">5</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('6')">6</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('1')">1</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('2')">2</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('3')">3</button>
+                            <button type="button" class="ps-numpad-btn ps-numpad-clear" onclick="logNumpadClear()">C</button>
+                            <button type="button" class="ps-numpad-btn" onclick="logNumpadTap('0')">0</button>
+                            <button type="button" class="ps-numpad-btn ps-numpad-back" onclick="logNumpadBack()">←</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="qc-numpad-actions">
-                    <button type="button" class="pl-numpad-log" id="plNumpadLogBtn" onclick="plNumpadSubmit()" disabled>LOG PRESSED</button>
+            </div>
+            <div class="log-enter-wrap">
+                <button type="button" class="log-enter-btn" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>ENTER</button>
+            </div>
+        </div>
+        <div class="qc-reject-picker qc-reject-picker-overlay" id="logRejectPicker" style="display:none">
+            <div class="qc-reject-picker-card">
+                <div class="qc-reject-picker-title" id="logRejectPickerTitle">REJECT — SELECT DEFECT TYPE</div>
+                <div class="qc-reject-picker-btns">
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('FLASH')">⚡ FLASH</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('BLEMISH')">◉ BLEMISH</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('OFF-CENTER')">⊕ OFF-CENTER</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('AUDIO')">♫ AUDIO</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('UNTRIMMED')">⬡ UNTRIMMED</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('BISCUIT/FLASH')">✕ BISCUIT/FLASH</button>
                 </div>
+                <button type="button" class="qc-reject-cancel" onclick="unifiedLogHideRejectPicker()">CANCEL</button>
             </div>
         </div>
         <div class="sec">RECENT</div>
-        <div class="pl-recent" id="plRecent"></div>
-    </div>
-
-    <!-- ======= QC PAGE ======= -->
-    <div class="pg" id="pg-qc">
-        <div class="sec">SELECT JOB</div>
-        <div class="qc-job-picker" id="qcJobPicker"></div>
-        <div class="sec qc-primary-sec">LOG QC</div>
-        <div class="qc-numpad-block" id="qcNumpadBlock">
-            <div class="qc-numpad-job" id="qcNumpadJobLabel">Select a job above</div>
-            <div class="qc-numpad">
-                <div class="qc-numpad-display" id="qcNumpadDisplay">0</div>
-                <div class="qc-numpad-grid">
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('7')">7</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('8')">8</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('9')">9</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('4')">4</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('5')">5</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('6')">6</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('1')">1</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('2')">2</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('3')">3</button>
-                    <button type="button" class="ps-numpad-btn ps-numpad-clear" onclick="qcNumpadClear()">C</button>
-                    <button type="button" class="ps-numpad-btn" onclick="qcNumpadTap('0')">0</button>
-                    <button type="button" class="ps-numpad-btn ps-numpad-back" onclick="qcNumpadBack()">←</button>
-                </div>
-                <div class="qc-numpad-actions">
-                    <button type="button" class="qc-numpad-pass" id="qcNumpadPass" onclick="qcNumpadPass()" disabled>
-                        ✓ QC PASSED
-                    </button>
-                    <button type="button" class="qc-numpad-reject" id="qcNumpadReject" onclick="qcNumpadShowRejectPicker()" disabled>
-                        ✕ REJECT
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="qc-reject-picker qc-reject-picker-overlay" id="qcRejectPicker" style="display:none">
-            <div class="qc-reject-picker-card">
-                <div class="qc-reject-picker-title" id="qcRejectPickerTitle">REJECT — SELECT DEFECT TYPE</div>
-                <div class="qc-reject-picker-btns">
-                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('FLASH')">⚡ FLASH</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('BLEMISH')">◉ BLEMISH</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('OFF-CENTER')">⊕ OFF-CENTER</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('AUDIO')">♫ AUDIO</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('UNTRIMMED')">⬡ UNTRIMMED</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="qcNumpadReject('BISCUIT/FLASH')">✕ BISCUIT/FLASH</button>
-                </div>
-                <button type="button" class="qc-reject-cancel" onclick="qcNumpadHideRejectPicker()">CANCEL</button>
-            </div>
-        </div>
-        <div class="hint-block">
-        ⚠ REMINDER · REJECTS ON SPINDLE/BOX · UNTRIMMED FILE VERTICALLY · NO BISCUITS W/ FLASH
-        </div>
-        <div class="sec">LOG</div>
+        <div class="log-recent" id="logRecent"></div>
+        <div class="sec">QC LOG</div>
         <div class="qc-date-nav">
-        <button class="qc-date-btn" onclick="qcDateStep(-1)">◂ PREV</button>
-        <span class="qc-date-label" id="qcDateLabel"></span>
-        <button class="qc-date-btn" onclick="qcDateStep(1)">NEXT ▸</button>
-        <button class="qc-date-btn" onclick="qcDateToday()">TODAY</button>
+        <button class="qc-date-btn" onclick="logDateStep(-1)">◂ PREV</button>
+        <span class="qc-date-label" id="logDateLabel"></span>
+        <button class="qc-date-btn" onclick="logDateStep(1)">NEXT ▸</button>
+        <button class="qc-date-btn" onclick="logDateToday()">TODAY</button>
         </div>
-        <div class="qc-log" id="qcLog">
-        <div class="empty">NO REJECTS LOGGED TODAY</div>
-        </div>
+        <div class="qc-log" id="logQcLog"><div class="empty">NO REJECTS LOGGED TODAY</div></div>
     </div>
 
     <!-- ======= AUDIT PAGE (admin only) ======= -->

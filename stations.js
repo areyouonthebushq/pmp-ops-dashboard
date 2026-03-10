@@ -421,7 +421,7 @@ function pressStationSaveNote() {
 // ============================================================
 function openQCStation() {
   hideAllShells();
-  goPg('qc');
+  goPg('log');
   renderAll();
 }
 

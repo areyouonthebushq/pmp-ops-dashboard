@@ -150,10 +150,7 @@ function renderAll() {
     renderFloorManagerShell();
     return;
   }
-  if (typeof currentPage !== 'undefined' && currentPage === 'qc' && typeof qcNumpadValue !== 'undefined' && qcNumpadValue !== '0') {
-    return;
-  }
-  if (typeof currentPage !== 'undefined' && currentPage === 'presslog' && typeof plNumpadValue !== 'undefined' && plNumpadValue !== '0') {
+  if (typeof currentPage !== 'undefined' && currentPage === 'log' && typeof logNumpadValue !== 'undefined' && logNumpadValue !== '0') {
     return;
   }
   renderAdminShell();
@@ -165,8 +162,7 @@ function renderAdminShell() {
   renderFloor();
   renderJobs();
   renderTodos();
-  renderPressLog();
-  renderQC();
+  renderLog();
   renderTV();
 }
 
@@ -779,99 +775,13 @@ function addTodo(key) {
 }
 
 // ============================================================
-// PRESS LOG — job-centric pressed qty logging (same path as Press Station)
+// UNIFIED LOG — one page: job + action (PRESS / QC PASS / QC REJECT) + numpad + ENTER
+// Replaces separate Press Log and QC Log entry surfaces.
 // ============================================================
-let plNumpadValue = '0';
-
-function plNumpadTap(digit) {
-  if (plNumpadValue === '0') plNumpadValue = digit;
-  else if (plNumpadValue.length < 5) plNumpadValue += digit;
-  plNumpadUpdateDisplay();
-}
-function plNumpadClear() { plNumpadValue = '0'; plNumpadUpdateDisplay(); }
-function plNumpadBack() { plNumpadValue = plNumpadValue.length > 1 ? plNumpadValue.slice(0, -1) : '0'; plNumpadUpdateDisplay(); }
-
-function plNumpadUpdateDisplay() {
-  const n = parseInt(plNumpadValue, 10) || 0;
-  const el = document.getElementById('plNumpadDisplay');
-  if (el) { el.textContent = n.toLocaleString(); el.classList.toggle('has-value', n > 0); }
-  const logBtn = document.getElementById('plNumpadLogBtn');
-  const hasJob = !!S.pressLogSelectedJob;
-  if (logBtn) {
-    logBtn.disabled = n === 0 || !hasJob;
-    logBtn.textContent = n > 0 ? `LOG ${n.toLocaleString()} PRESSED` : 'LOG PRESSED';
-  }
-}
-
-function selectPressLogJob(jobId) {
-  S.pressLogSelectedJob = (jobId && String(jobId).trim()) ? jobId : null;
-  plNumpadValue = '0';
-  plNumpadUpdateDisplay();
-  renderPressLog();
-}
-
-function plNumpadSubmit() {
-  const n = parseInt(plNumpadValue, 10) || 0;
-  if (n < 1 || !S.pressLogSelectedJob) return;
-  const job = S.jobs.find(j => j.id === S.pressLogSelectedJob);
-  const result = logJobProgress(S.pressLogSelectedJob, 'pressed', n, 'Press Log');
-  if (result.ok) {
-    toast(`+${n.toLocaleString()} pressed → ${job ? (job.catalog || job.artist || '—') : '—'}`);
-    plNumpadValue = '0';
-    plNumpadUpdateDisplay();
-    renderPressLog();
-  } else {
-    toastError(result.error || 'Log failed');
-  }
-}
-
-function renderPressLog() {
-  const picker = document.getElementById('plJobPicker');
-  if (picker) {
-    const allJobs = S.jobs.slice().filter(j => j.status !== 'done').sort((a, b) => {
-      const statusOrder = { queue: 0, pressing: 1, assembly: 2, hold: 3 };
-      const sa = statusOrder[a.status] ?? 5;
-      const sb = statusOrder[b.status] ?? 5;
-      if (sa !== sb) return sa - sb;
-      return (a.catalog || '').localeCompare(b.catalog || '');
-    });
-    const selectedId = S.pressLogSelectedJob || '';
-    picker.innerHTML = `
-    <div class="qc-job-picker-label">SELECT JOB</div>
-    <select class="qc-job-select" onchange="selectPressLogJob(this.value || null)">
-    <option value="">— Select job —</option>
-    ${allJobs.map(j => `
-      <option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'} ${j.status ? '(' + j.status + ')' : ''}</option>
-    `).join('')}
-    </select>
-    `;
-  }
-  const jobLabel = document.getElementById('plNumpadJobLabel');
-  if (jobLabel) {
-    const sel = S.pressLogSelectedJob ? S.jobs.find(j => j.id === S.pressLogSelectedJob) : null;
-    jobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
-  }
-  if (typeof plNumpadUpdateDisplay === 'function') plNumpadUpdateDisplay();
-
-  const recentEl = document.getElementById('plRecent');
-  if (recentEl) {
-    const job = S.pressLogSelectedJob ? S.jobs.find(j => j.id === S.pressLogSelectedJob) : null;
-    const log = (job && Array.isArray(job.progressLog)) ? job.progressLog.filter(e => e.stage === 'pressed').slice(-10).reverse() : [];
-    if (!log.length) {
-      recentEl.innerHTML = '<div class="empty">No pressed entries for this job</div>';
-    } else {
-      recentEl.innerHTML = log.map(e => {
-        const time = new Date(e.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-        return `<div class="progress-entry pressed">+${e.qty} PRESSED · ${(e.person || '—')} · ${time}</div>`;
-      }).join('');
-    }
-  }
-}
-
-// ============================================================
-// QC — job picker + date-navigable history
-// ============================================================
-let qcViewDate = new Date().toDateString();
+let logNumpadValue = '0';
+let logAction = 'press';
+let logViewDate = new Date().toDateString();
+let pendingLogRejectQty = 0;
 
 function tryAddQCRejectToProgress(jobId) {
   if (!jobId) return { applied: false };
@@ -879,71 +789,86 @@ function tryAddQCRejectToProgress(jobId) {
   return result.ok ? { applied: true } : { applied: false, error: result.error };
 }
 
-// QC Numpad — microwave-simple: display, digits, pass (green), reject (red → defect picker)
-let qcNumpadValue = '0';
-
-function qcNumpadTap(digit) {
-  if (qcNumpadValue === '0') qcNumpadValue = digit;
-  else if (qcNumpadValue.length < 5) qcNumpadValue += digit;
-  qcNumpadUpdateDisplay();
+function logNumpadTap(digit) {
+  if (logNumpadValue === '0') logNumpadValue = digit;
+  else if (logNumpadValue.length < 5) logNumpadValue += digit;
+  logNumpadUpdateDisplay();
 }
-function qcNumpadClear() { qcNumpadValue = '0'; qcNumpadUpdateDisplay(); }
-function qcNumpadBack() { qcNumpadValue = qcNumpadValue.length > 1 ? qcNumpadValue.slice(0, -1) : '0'; qcNumpadUpdateDisplay(); }
+function logNumpadClear() { logNumpadValue = '0'; logNumpadUpdateDisplay(); }
+function logNumpadBack() { logNumpadValue = logNumpadValue.length > 1 ? logNumpadValue.slice(0, -1) : '0'; logNumpadUpdateDisplay(); }
 
-function qcNumpadUpdateDisplay() {
-  const n = parseInt(qcNumpadValue, 10) || 0;
-  const el = document.getElementById('qcNumpadDisplay');
+function logNumpadUpdateDisplay() {
+  const n = parseInt(logNumpadValue, 10) || 0;
+  const el = document.getElementById('logNumpadDisplay');
   if (el) { el.textContent = n.toLocaleString(); el.classList.toggle('has-value', n > 0); }
-  const passBtn = document.getElementById('qcNumpadPass');
-  const rejBtn = document.getElementById('qcNumpadReject');
-  const hasJob = !!S.qcSelectedJob;
-  if (passBtn) { passBtn.disabled = n === 0 || !hasJob; passBtn.textContent = n > 0 ? `✓ ${n.toLocaleString()} QC PASSED` : '✓ QC PASSED'; }
-  if (rejBtn) { rejBtn.disabled = n === 0 || !hasJob; rejBtn.textContent = n > 0 ? `✕ REJECT ${n.toLocaleString()}` : '✕ REJECT'; }
+  const enterBtn = document.getElementById('logEnterBtn');
+  const hasJob = !!S.logSelectedJob;
+  if (enterBtn) enterBtn.disabled = n === 0 || !hasJob;
 }
 
-function qcNumpadPass() {
-  if (!getStationEditPermissions().canLogQC) return;
-  const n = parseInt(qcNumpadValue, 10) || 0;
-  if (n < 1 || !S.qcSelectedJob) return;
-  const job = S.jobs.find(j => j.id === S.qcSelectedJob);
-  const result = logJobProgress(S.qcSelectedJob, 'qc_passed', n, 'QC');
-  if (result.ok) {
-    toast(`${n.toLocaleString()} QC passed → ${job ? (job.catalog || job.artist || '—') : '—'}`);
-    qcNumpadValue = '0';
-    qcNumpadUpdateDisplay();
-    renderQC();
-  } else {
-    toastError(result.error || 'Log failed');
-  }
+function setLogAction(action) {
+  logAction = action;
+  renderLog();
 }
 
-function qcNumpadShowRejectPicker() {
-  if (!getStationEditPermissions().canLogQC) return;
-  const n = parseInt(qcNumpadValue, 10) || 0;
-  if (n < 1 || !S.qcSelectedJob) return;
-  const titleEl = document.getElementById('qcRejectPickerTitle');
-  if (titleEl) titleEl.textContent = `REJECT ${n.toLocaleString()} — SELECT DEFECT TYPE`;
-  document.getElementById('qcRejectPicker').style.display = 'block';
+function selectLogJob(jobId) {
+  S.logSelectedJob = (jobId && String(jobId).trim()) ? jobId : null;
+  logNumpadValue = '0';
+  logNumpadUpdateDisplay();
+  renderLog();
 }
 
-function qcNumpadHideRejectPicker() {
-  document.getElementById('qcRejectPicker').style.display = 'none';
-}
-
-function qcNumpadReject(defectType) {
-  if (!getStationEditPermissions().canLogQC) return;
-  const n = parseInt(qcNumpadValue, 10) || 0;
-  if (n < 1 || !S.qcSelectedJob) return;
-  const job = S.jobs.find(j => j.id === S.qcSelectedJob);
+function unifiedLogEnter() {
+  const n = parseInt(logNumpadValue, 10) || 0;
+  if (n < 1 || !S.logSelectedJob) return;
+  const job = S.jobs.find(j => j.id === S.logSelectedJob);
   const jobName = job ? (job.catalog || job.artist || '—') : '—';
 
-  const result = logJobProgress(S.qcSelectedJob, 'rejected', n, 'QC');
-  if (!result.ok) {
-    toastError(result.error || 'Reject log failed');
-    qcNumpadHideRejectPicker();
+  if (logAction === 'press') {
+    const result = logJobProgress(S.logSelectedJob, 'pressed', n, 'Log');
+    if (result.ok) {
+      toast(`+${n.toLocaleString()} pressed → ${jobName}`);
+      logNumpadValue = '0';
+      logNumpadUpdateDisplay();
+      renderLog();
+    } else toastError(result.error || 'Log failed');
     return;
   }
+  if (logAction === 'qc_pass') {
+    const result = logJobProgress(S.logSelectedJob, 'qc_passed', n, 'Log');
+    if (result.ok) {
+      toast(`${n.toLocaleString()} QC passed → ${jobName}`);
+      logNumpadValue = '0';
+      logNumpadUpdateDisplay();
+      renderLog();
+    } else toastError(result.error || 'Log failed');
+    return;
+  }
+  if (logAction === 'qc_reject') {
+    pendingLogRejectQty = n;
+    const titleEl = document.getElementById('logRejectPickerTitle');
+    if (titleEl) titleEl.textContent = `REJECT ${n.toLocaleString()} — SELECT DEFECT TYPE`;
+    document.getElementById('logRejectPicker').style.display = 'block';
+  }
+}
 
+function unifiedLogHideRejectPicker() {
+  document.getElementById('logRejectPicker').style.display = 'none';
+  pendingLogRejectQty = 0;
+}
+
+function unifiedLogRejectWithDefect(defectType) {
+  const n = pendingLogRejectQty;
+  if (n < 1 || !S.logSelectedJob) { unifiedLogHideRejectPicker(); return; }
+  const job = S.jobs.find(j => j.id === S.logSelectedJob);
+  const jobName = job ? (job.catalog || job.artist || '—') : '—';
+
+  const result = logJobProgress(S.logSelectedJob, 'rejected', n, 'Log');
+  if (!result.ok) {
+    toastError(result.error || 'Reject log failed');
+    unifiedLogHideRejectPicker();
+    return;
+  }
   const time = new Date().toLocaleTimeString('en-US', { hour12: false });
   const date = new Date().toDateString();
   S.qcLog.unshift({ time, type: defectType, job: n > 1 ? `${jobName} (x${n})` : jobName, date });
@@ -951,61 +876,11 @@ function qcNumpadReject(defectType) {
   Storage.logQC({ time, type: defectType, job: n > 1 ? `${jobName} (x${n})` : jobName, date });
 
   toast(`${n.toLocaleString()} ${defectType} → ${jobName}`);
-  qcNumpadValue = '0';
-  qcNumpadHideRejectPicker();
-  qcNumpadUpdateDisplay();
-  renderQC();
-}
-
-function logQC(type) {
-  if (!getStationEditPermissions().canLogQC) return;
-  if (!S.qcSelectedJob) {
-    toastError('Select a job first');
-    return;
-  }
-  const jobId = S.qcSelectedJob;
-  const j = S.jobs.find(x => x.id === jobId);
-  const job = j ? (j.catalog || j.artist || '—') : '—';
-  const time = new Date().toLocaleTimeString('en-US', {hour12:false});
-  const date = new Date().toDateString();
-
-  S.qcLog.unshift({time, type, job, date});
-  if (S.qcLog.length > 1000) S.qcLog.splice(1000);
-
-  Storage.logQC({ time, type, job, date });
-  const progressResult = tryAddQCRejectToProgress(jobId);
-  if (!progressResult.applied && progressResult.error) {
-    toast('DEFECT LOGGED. REJECTED COUNT NOT UPDATED (CHECK PRESSED TOTAL).');
-  } else {
-    toast(`${type} → ${job}`);
-  }
-  qcViewDate = date;
-  renderQC();
-}
-
-function selectQCJob(jid) {
-  S.qcSelectedJob = (jid && String(jid).trim()) ? jid : null;
-  renderQC();
-}
-
-function logQCPassed() {
-  if (!getStationEditPermissions().canLogQC) return;
-  if (!S.qcSelectedJob) {
-    toastError('Select a job first');
-    return;
-  }
-  const jobId = S.qcSelectedJob;
-  const input = document.getElementById('qcPassedQty');
-  const qty = input ? Math.max(1, parseInt(input.value, 10) || 1) : 1;
-  const job = S.jobs.find(j => j.id === jobId);
-  const result = logJobProgress(jobId, 'qc_passed', qty, 'QC');
-  if (result.ok) {
-    if (input) input.value = '1';
-    renderQC();
-    toast(`${qty} QC passed → ${job ? (job.catalog || job.artist || '—') : ''}`);
-  } else {
-    toastError(result.error || 'Log failed');
-  }
+  logNumpadValue = '0';
+  pendingLogRejectQty = 0;
+  unifiedLogHideRejectPicker();
+  logNumpadUpdateDisplay();
+  renderLog();
 }
 
 function getQCDates() {
@@ -1014,51 +889,48 @@ function getQCDates() {
   return dates;
 }
 
-function qcDateStep(dir) {
+function logDateStep(dir) {
   const dates = getQCDates();
   if (!dates.length) return;
-  const curIdx = dates.indexOf(qcViewDate);
-  if (curIdx === -1) {
-    qcViewDate = dates[0];
-  } else {
+  const curIdx = dates.indexOf(logViewDate);
+  if (curIdx === -1) logViewDate = dates[0];
+  else {
     const newIdx = curIdx - dir;
-    if (newIdx >= 0 && newIdx < dates.length) {
-      qcViewDate = dates[newIdx];
-    }
+    if (newIdx >= 0 && newIdx < dates.length) logViewDate = dates[newIdx];
   }
-  renderQC();
+  renderLog();
 }
 
-function qcDateToday() {
-  qcViewDate = new Date().toDateString();
-  renderQC();
+function logDateToday() {
+  logViewDate = new Date().toDateString();
+  renderLog();
 }
 
-function renderQC() {
+function renderLog() {
   const today = new Date().toDateString();
-  const isToday = qcViewDate === today;
-  const viewLog = S.qcLog.filter(e => e.date === qcViewDate);
+  const isToday = logViewDate === today;
+  const viewLog = S.qcLog.filter(e => e.date === logViewDate);
   const todayLog = isToday ? viewLog : S.qcLog.filter(e => e.date === today);
 
-  const badge = document.getElementById('qcBadge');
+  const badge = document.getElementById('logBadge');
   if (badge) {
     badge.textContent = todayLog.length;
     badge.classList.toggle('show', todayLog.length > 0);
   }
 
-  const picker = document.getElementById('qcJobPicker');
+  const picker = document.getElementById('logJobPicker');
   if (picker) {
-    const allJobs = S.jobs.slice().sort((a, b) => {
-      const statusOrder = { queue: 0, pressing: 1, assembly: 2, hold: 3, done: 4 };
+    const allJobs = S.jobs.slice().filter(j => j.status !== 'done').sort((a, b) => {
+      const statusOrder = { queue: 0, pressing: 1, assembly: 2, hold: 3 };
       const sa = statusOrder[a.status] ?? 5;
       const sb = statusOrder[b.status] ?? 5;
       if (sa !== sb) return sa - sb;
       return (a.catalog || '').localeCompare(b.catalog || '');
     });
-    const selectedId = S.qcSelectedJob || '';
+    const selectedId = S.logSelectedJob || '';
     picker.innerHTML = `
     <div class="qc-job-picker-label">SELECT JOB</div>
-    <select class="qc-job-select" onchange="selectQCJob(this.value || null)">
+    <select class="qc-job-select" onchange="selectLogJob(this.value || null)">
     <option value="">— Select job —</option>
     ${allJobs.map(j => `
       <option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'} ${j.status ? '(' + j.status + ')' : ''}</option>
@@ -1067,60 +939,53 @@ function renderQC() {
     `;
   }
 
-  const qcNumpadJobLabel = document.getElementById('qcNumpadJobLabel');
-  if (qcNumpadJobLabel) {
-    const sel = S.qcSelectedJob ? S.jobs.find(j => j.id === S.qcSelectedJob) : null;
-    qcNumpadJobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
-  }
-  if (typeof qcNumpadUpdateDisplay === 'function') qcNumpadUpdateDisplay();
-
-  const hasJob = !!S.qcSelectedJob;
-  const qcRejectBtns = document.querySelectorAll('.qc-btns .qc-btn');
-  qcRejectBtns.forEach(btn => { btn.disabled = !hasJob; });
-
-  const sumEl = document.getElementById('qcSummary');
-  if (sumEl) {
-    const totalRejects = S.jobs.reduce((sum, job) => {
-      const log = job.progressLog || [];
-      return sum + log.reduce((s, e) => (e.stage === 'rejected' && e.timestamp && new Date(e.timestamp).toDateString() === qcViewDate ? s + (Math.max(0, parseInt(e.qty, 10) || 0)) : s), 0);
-    }, 0);
-    const counts = {};
-    viewLog.forEach(e => counts[e.type] = (counts[e.type] || 0) + 1);
-    sumEl.innerHTML = (totalRejects ? `<span style="color:var(--d2);font-size:12px;margin-right: var(--space-sm)">${totalRejects} total</span>` : '') +
-    Object.entries(counts).map(([t, n]) => `
-      <div class="qc-sum-pill">
-      <span class="qsp-n">${n}</span>
-      <span class="qsp-l">${t}</span>
-      </div>
-    `).join('') || '<span style="color:var(--d3);font-size:12px">NO REJECTS THIS DAY</span>';
+  const jobLabel = document.getElementById('logNumpadJobLabel');
+  if (jobLabel) {
+    const sel = S.logSelectedJob ? S.jobs.find(j => j.id === S.logSelectedJob) : null;
+    jobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
   }
 
-  const dateLabel = document.getElementById('qcDateLabel');
-  if (dateLabel) {
-    const d = new Date(qcViewDate);
-    const formatted = d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'});
-    dateLabel.innerHTML = formatted + (isToday ? '<span class="qdl-today">TODAY</span>' : '');
-  }
-
-  const logEl = document.getElementById('qcLog');
-  if (!logEl) return;
-  if (!viewLog.length) {
-    logEl.innerHTML = `<div class="empty">No rejects logged ${isToday ? 'today' : 'on this date'}</div>`;
-    requestAnimationFrame(() => {
-      if (typeof qcNumpadUpdateDisplay === 'function') qcNumpadUpdateDisplay();
-    });
-    return;
-  }
-  logEl.innerHTML = viewLog.map(e => `
-    <div class="qc-entry">
-    <span class="qt">${e.time}</span>
-    <span class="qtype">${e.type}</span>
-    <span class="qjob">${e.job}</span>
-    </div>
-  `).join('');
-  requestAnimationFrame(() => {
-    if (typeof qcNumpadUpdateDisplay === 'function') qcNumpadUpdateDisplay();
+  ['press', 'qc_pass', 'qc_reject'].forEach(a => {
+    const btn = document.getElementById('logBtn' + (a === 'press' ? 'Press' : a === 'qc_pass' ? 'QcPass' : 'QcReject'));
+    if (btn) btn.classList.toggle('active', logAction === a);
   });
+  if (typeof logNumpadUpdateDisplay === 'function') logNumpadUpdateDisplay();
+
+  const recentEl = document.getElementById('logRecent');
+  if (recentEl) {
+    const job = S.logSelectedJob ? S.jobs.find(j => j.id === S.logSelectedJob) : null;
+    const log = (job && Array.isArray(job.progressLog)) ? job.progressLog.slice(-15).reverse() : [];
+    if (!log.length) recentEl.innerHTML = '<div class="empty">No entries for this job</div>';
+    else {
+      recentEl.innerHTML = log.map(e => {
+        const time = new Date(e.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        const stage = e.stage === 'pressed' ? 'PRESSED' : e.stage === 'qc_passed' ? 'QC PASS' : 'REJECT';
+        return `<div class="progress-entry ${e.stage}">+${e.qty} ${stage} · ${(e.person || '—')} · ${time}</div>`;
+      }).join('');
+    }
+  }
+
+  const dateLabel = document.getElementById('logDateLabel');
+  if (dateLabel) {
+    const d = new Date(logViewDate);
+    dateLabel.innerHTML = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) + (isToday ? '<span class="qdl-today">TODAY</span>' : '');
+  }
+
+  const logEl = document.getElementById('logQcLog');
+  if (logEl) {
+    if (!viewLog.length) logEl.innerHTML = `<div class="empty">No rejects logged ${isToday ? 'today' : 'on this date'}</div>`;
+    else logEl.innerHTML = viewLog.map(e => `
+      <div class="qc-entry">
+      <span class="qt">${e.time}</span>
+      <span class="qtype">${e.type}</span>
+      <span class="qjob">${e.job}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function renderQC() {
+  renderLog();
 }
 
 // ============================================================

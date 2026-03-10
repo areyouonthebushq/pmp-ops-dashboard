@@ -73,6 +73,7 @@ let S = {
   editId: null,
   qcSelectedJob: null,
   pressLogSelectedJob: null,
+  logSelectedJob: null,
   floorCardJobId: null,
   floorCardEditMode: false,
   stationType: null,
@@ -280,7 +281,7 @@ function startRealtime() {
         console.log('[PMP] Realtime event → showDataChangedNotice');
         showDataChangedNotice();
       } else if ((typeof psNumpadValue !== 'undefined' && psNumpadValue !== '0') ||
-                 (typeof qcNumpadValue !== 'undefined' && qcNumpadValue !== '0')) {
+                 (typeof logNumpadValue !== 'undefined' && logNumpadValue !== '0')) {
         console.log('[PMP] Realtime event → loadAll (numpad active, renderAll will skip re-render)');
         loadAll();
       } else {
@@ -467,7 +468,7 @@ function enterByLauncher(choice, pressId) {
       if (navAuditEl) navAuditEl.style.display = '';
     }
     hideAllShells();
-    goPg('qc');
+    goPg('log');
     renderAll();
     return;
   }
