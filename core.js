@@ -233,6 +233,28 @@ function statusRailPlaceholderHTML() {
   </div>`;
 }
 
+/** LOG console only: single compact % bar by mode (PRESS = pressed/ordered, PASS = qcPassed/ordered, REJECT = rejected/ordered). */
+function logConsoleRailHTML(job, mode) {
+  if (!job) return logConsoleRailPlaceholderHTML();
+  const p = getJobProgress(job);
+  const ordered = p.ordered;
+  const num = mode === 'press' ? p.pressed : mode === 'qc_pass' ? p.qcPassed : p.rejected;
+  const pct = ordered ? Math.min(100, (num / ordered) * 100) : 0;
+  const modeClass = mode === 'press' ? 'mode-press' : mode === 'qc_pass' ? 'mode-qcpass' : 'mode-qcreject';
+  const pctText = Math.round(pct) + '%';
+  return `<div class="log-rail-simple ${modeClass}">
+    <div class="log-rail-bar"><div class="log-rail-fill" style="width:${pct}%"></div></div>
+    <span class="log-rail-pct">${pctText}</span>
+  </div>`;
+}
+
+function logConsoleRailPlaceholderHTML() {
+  return `<div class="log-rail-simple log-rail-placeholder">
+    <div class="log-rail-bar"><div class="log-rail-fill" style="width:0%"></div></div>
+    <span class="log-rail-pct">—</span>
+  </div>`;
+}
+
 function ensureNotesLog(job) {
   if (!job) return;
   if (!Array.isArray(job.notesLog)) job.notesLog = [];

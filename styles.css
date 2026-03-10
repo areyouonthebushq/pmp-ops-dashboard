@@ -1393,7 +1393,41 @@
     .log-main.mode-press { border-color: var(--w2); }
     .log-main.mode-qcpass { border-color: var(--g2); }
     .log-main.mode-qcreject { border-color: var(--r2); }
-    .log-console-rail { grid-area: rail; min-height: 36px; border-bottom: 1px solid var(--b1); }
+    .log-console-rail { grid-area: rail; min-height: 36px; border-bottom: 1px solid var(--b1); padding: var(--space-xs) 0; }
+    .log-console-rail .log-rail-simple {
+      display: flex; align-items: center; gap: var(--space-sm); min-height: 28px;
+      font-family: 'Inconsolata', monospace; font-size: 11px; letter-spacing: 1px;
+    }
+    .log-console-rail .log-rail-bar {
+      flex: 1; min-width: 0; height: 10px; background: var(--s3); border: 1px solid var(--b2);
+      overflow: hidden; border-radius: 2px; transition: box-shadow 0.75s ease-out;
+    }
+    .log-console-rail .log-rail-fill {
+      height: 100%; border-radius: 1px; transition: width 0.25s ease-out;
+    }
+    .log-console-rail .log-rail-simple.mode-press .log-rail-fill { background: var(--w2); }
+    .log-console-rail .log-rail-simple.mode-qcpass .log-rail-fill { background: var(--g2); }
+    .log-console-rail .log-rail-simple.mode-qcreject .log-rail-fill { background: var(--r2); }
+    .log-console-rail .log-rail-simple.log-rail-placeholder .log-rail-fill { background: var(--d3); }
+    .log-console-rail .log-rail-pct { color: var(--d2); font-weight: 700; min-width: 2.2em; text-align: right; }
+    .log-console-rail.rail-glow-press .log-rail-bar { animation: log-rail-glow-w 0.75s ease-out 1; }
+    .log-console-rail.rail-glow-qcpass .log-rail-bar { animation: log-rail-glow-g 0.75s ease-out 1; }
+    .log-console-rail.rail-glow-qcreject .log-rail-bar { animation: log-rail-glow-r 0.75s ease-out 1; }
+    @keyframes log-rail-glow-w {
+      0%, 100% { box-shadow: none; }
+      15% { box-shadow: 0 0 14px var(--w), 0 0 24px rgba(255, 179, 0, 0.4); }
+      70% { box-shadow: 0 0 14px var(--w), 0 0 24px rgba(255, 179, 0, 0.4); }
+    }
+    @keyframes log-rail-glow-g {
+      0%, 100% { box-shadow: none; }
+      15% { box-shadow: 0 0 14px var(--g), 0 0 24px rgba(0, 230, 118, 0.4); }
+      70% { box-shadow: 0 0 14px var(--g), 0 0 24px rgba(0, 230, 118, 0.4); }
+    }
+    @keyframes log-rail-glow-r {
+      0%, 100% { box-shadow: none; }
+      15% { box-shadow: 0 0 14px var(--r), 0 0 24px rgba(255, 61, 61, 0.4); }
+      70% { box-shadow: 0 0 14px var(--r), 0 0 24px rgba(255, 61, 61, 0.4); }
+    }
     .log-fp-job { grid-area: job; font-size: 14px; color: var(--d2); padding: var(--space-xs) 0; font-family: 'Inconsolata', monospace; border-bottom: 1px solid var(--b1); }
 
     /* Status rail — shared by LOG console and Press Station (ORDERED · PRESSED · REMAINING + bar) */
@@ -1429,7 +1463,7 @@
     .log-fp-c { grid-area: c; }
     .log-fp-zero { grid-area: zero; }
     .log-fp-back { grid-area: back; }
-    .log-fp-log-wrap { grid-area: log; grid-column: 1 / -1; grid-row: 8 / 9; min-width: 0; display: flex; }
+    .log-fp-log-wrap { grid-area: log; min-width: 0; min-height: 48px; display: flex; }
     .log-fp-log-wrap .log-enter-btn { flex: 1; width: 100%; min-width: 0; }
     .log-action-btn {
     min-height: 0;

@@ -824,6 +824,17 @@ function setLogAction(action) {
   renderLog();
 }
 
+function triggerLogRailGlow() {
+  const el = document.getElementById('logConsoleRail');
+  if (!el) return;
+  const mode = logAction === 'press' ? 'press' : logAction === 'qc_pass' ? 'qcpass' : 'qcreject';
+  el.classList.remove('rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject');
+  el.classList.add('rail-glow-' + mode);
+  setTimeout(function () {
+    el.classList.remove('rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject');
+  }, 750);
+}
+
 function selectLogJob(jobId) {
   S.logSelectedJob = (jobId && String(jobId).trim()) ? jobId : null;
   logNumpadValue = '0';
@@ -848,6 +859,7 @@ async function unifiedLogEnter() {
       logNumpadValue = '0';
       logNumpadUpdateDisplay();
       renderLog();
+      triggerLogRailGlow();
     } catch (e) {
       toastError(e?.message || 'Log failed');
     }
@@ -864,6 +876,7 @@ async function unifiedLogEnter() {
       logNumpadValue = '0';
       logNumpadUpdateDisplay();
       renderLog();
+      triggerLogRailGlow();
     } catch (e) {
       toastError(e?.message || 'Log failed');
     }
@@ -906,6 +919,7 @@ async function unifiedLogRejectWithDefect(defectType) {
     unifiedLogHideRejectPicker();
     logNumpadUpdateDisplay();
     renderLog();
+    triggerLogRailGlow();
   } catch (e) {
     toastError(e?.message || 'Reject log failed');
     unifiedLogHideRejectPicker();
@@ -970,7 +984,7 @@ function renderLog() {
   const logConsoleRail = document.getElementById('logConsoleRail');
   if (logConsoleRail) {
     const job = S.logSelectedJob ? S.jobs.find(j => j.id === S.logSelectedJob) : null;
-    logConsoleRail.innerHTML = job ? statusRailHTML(job) : statusRailPlaceholderHTML();
+    logConsoleRail.innerHTML = job ? logConsoleRailHTML(job, logAction) : logConsoleRailPlaceholderHTML();
   }
 
   ['press', 'qc_pass', 'qc_reject'].forEach(a => {
