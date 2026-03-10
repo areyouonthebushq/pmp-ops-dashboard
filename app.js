@@ -1822,6 +1822,12 @@ document.addEventListener('keydown', e => {
     return;
   }
 
+  if ((e.key === 'f' || e.key === 'F') && !isTyping) {
+    e.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+
   if (!isTyping && !panelOpen && !stationVisible) {
     const qcPage = document.getElementById('pg-qc');
     if (qcPage && qcPage.classList.contains('on')) {
