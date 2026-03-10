@@ -1379,7 +1379,7 @@
     .log-fp-c { grid-area: c; }
     .log-fp-zero { grid-area: zero; }
     .log-fp-back { grid-area: back; }
-    .log-fp-log { grid-area: log; grid-column: 1 / -1; width: 100%; }
+    .log-fp-log { grid-area: log; grid-column: 1 / -1; grid-row: 8 / 9; width: 100%; min-width: 0; }
     .log-action-btn {
     min-height: 0;
     height: 100%;
@@ -1422,10 +1422,12 @@
     #pg-log .log-main.mode-qcpass .log-fp-display { border-color: var(--g2); }
     #pg-log .log-main.mode-qcreject .log-fp-display { border-color: var(--r2); }
     #pg-log .log-main.log-faceplate .ps-numpad-btn { min-height: 0; height: 100%; display: flex; align-items: center; justify-content: center; }
-    .log-enter-btn {
+    #pg-log .log-main.log-faceplate .log-enter-btn {
     min-height: 0;
     height: 100%;
     width: 100%;
+    max-width: none;
+    box-sizing: border-box;
     font-family: 'Inconsolata', monospace;
     font-size: 18px;
     font-weight: 700;
