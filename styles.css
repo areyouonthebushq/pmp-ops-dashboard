@@ -1320,27 +1320,39 @@
     }
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
-    /* Unified LOG page — DESKTOP FACEPLATE SPEC: 4 cols × 6 rows. No presets. LOG row 6 col 4 only. */
+    /* Unified LOG page — vertical machine layout: job, mode row, display, 4 keypad rows, LOG. */
     .log-job-picker {
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
     }
-    /* Row 1: job cols 1-4. Row 2: display cols 1-4. Row 3: PRESS,7,8,9. Row 4: QC PASS,4,5,6. Row 5: QC REJECT,1,2,3. Row 6: C,0,←,LOG. */
+    #pg-log .log-console-wrap { position: relative; max-width: 360px; margin-bottom: var(--space-lg); }
+    #pg-log .log-console-wrap .qc-reject-picker-overlay.qc-reject-picker-console-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+    background: rgba(0, 0, 0, 0.6);
+    margin: 0;
+    border-radius: 0;
+    }
     .log-main.log-faceplate {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: auto 72px 56px 56px 56px 56px;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto 56px 72px 56px 56px 56px 56px 56px;
     grid-template-areas:
-        "job    job    job    job"
-        "display display display display"
-        "press  k7     k8     k9"
-        "qcpass k4     k5     k6"
-        "qcrej  k1     k2     k3"
-        "c      zero   back   log";
+        "job    job    job"
+        "mode1  mode2  mode3"
+        "display display display"
+        "k7     k8     k9"
+        "k4     k5     k6"
+        "k1     k2     k3"
+        "c      zero   back"
+        "log    log    log";
     gap: 0;
-    margin-bottom: var(--space-lg);
     padding: var(--space-md) var(--space-lg);
-    max-width: 360px;
     background: var(--s2);
     border: 1px solid var(--b2);
     transition: border-color 0.2s;
@@ -1351,9 +1363,9 @@
     .log-main.mode-qcreject { border-color: var(--r2); }
     .log-fp-job { grid-area: job; font-size: 14px; color: var(--d2); padding: var(--space-xs) 0; font-family: 'Inconsolata', monospace; border-bottom: 1px solid var(--b1); }
     .log-fp-display { grid-area: display; }
-    .log-fp-press { grid-area: press; }
-    .log-fp-qcpass { grid-area: qcpass; }
-    .log-fp-qcrej { grid-area: qcrej; }
+    .log-fp-press { grid-area: mode1; }
+    .log-fp-qcpass { grid-area: mode2; }
+    .log-fp-qcrej { grid-area: mode3; }
     .log-fp-k7 { grid-area: k7; }
     .log-fp-k8 { grid-area: k8; }
     .log-fp-k9 { grid-area: k9; }
@@ -1448,8 +1460,8 @@
         .qc-reject-type-btn { min-height: 64px; }
         #pg-log .log-main.log-faceplate {
             grid-template-columns: 1fr;
-            grid-template-rows: auto 72px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px;
-            grid-template-areas: "job" "display" "press" "qcpass" "qcrej" "k7" "k8" "k9" "k4" "k5" "k6" "k1" "k2" "k3" "c" "zero" "back" "log";
+            grid-template-rows: auto 56px 72px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px 56px;
+            grid-template-areas: "job" "mode1" "mode2" "mode3" "display" "k7" "k8" "k9" "k4" "k5" "k6" "k1" "k2" "k3" "c" "zero" "back" "log";
         }
         #pg-log .log-action-btn { min-height: 56px; }
         #pg-log .log-enter-btn { min-height: 56px; font-size: 20px; }

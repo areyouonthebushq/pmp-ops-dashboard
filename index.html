@@ -253,27 +253,28 @@
         <div class="sec">SELECT JOB</div>
         <div class="log-job-picker" id="logJobPicker"></div>
         <div class="sec qc-primary-sec">LOG</div>
-        <div class="log-main log-faceplate mode-press" id="logConsole">
-            <div class="log-fp-job" id="logNumpadJobLabel">Select a job above</div>
-            <div class="log-fp-display" id="logNumpadDisplay">0</div>
-            <button type="button" class="log-action-btn log-action-press log-fp-press" id="logBtnPress" onclick="setLogAction('press')">PRESS</button>
-            <button type="button" class="log-action-btn log-action-qcpass log-fp-qcpass" id="logBtnQcPass" onclick="setLogAction('qc_pass')">PASS</button>
-            <button type="button" class="log-action-btn log-action-qcreject log-fp-qcrej" id="logBtnQcReject" onclick="setLogAction('qc_reject')">REJECT</button>
-            <button type="button" class="ps-numpad-btn log-fp-k7" onclick="logNumpadTap('7')">7</button>
-            <button type="button" class="ps-numpad-btn log-fp-k8" onclick="logNumpadTap('8')">8</button>
-            <button type="button" class="ps-numpad-btn log-fp-k9" onclick="logNumpadTap('9')">9</button>
-            <button type="button" class="ps-numpad-btn log-fp-k4" onclick="logNumpadTap('4')">4</button>
-            <button type="button" class="ps-numpad-btn log-fp-k5" onclick="logNumpadTap('5')">5</button>
-            <button type="button" class="ps-numpad-btn log-fp-k6" onclick="logNumpadTap('6')">6</button>
-            <button type="button" class="ps-numpad-btn log-fp-k1" onclick="logNumpadTap('1')">1</button>
-            <button type="button" class="ps-numpad-btn log-fp-k2" onclick="logNumpadTap('2')">2</button>
-            <button type="button" class="ps-numpad-btn log-fp-k3" onclick="logNumpadTap('3')">3</button>
-            <button type="button" class="ps-numpad-btn ps-numpad-clear log-fp-c" onclick="logNumpadClear()">C</button>
-            <button type="button" class="ps-numpad-btn log-fp-zero" onclick="logNumpadTap('0')">0</button>
-            <button type="button" class="ps-numpad-btn ps-numpad-back log-fp-back" onclick="logNumpadBack()">←</button>
-            <button type="button" class="log-enter-btn log-enter-press log-fp-log" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>LOG PRESS</button>
-        </div>
-        <div class="qc-reject-picker qc-reject-picker-overlay" id="logRejectPicker" style="display:none">
+        <div class="log-console-wrap">
+            <div class="log-main log-faceplate mode-press" id="logConsole">
+                <div class="log-fp-job" id="logNumpadJobLabel">Select a job above</div>
+                <button type="button" class="log-action-btn log-action-press log-fp-press" id="logBtnPress" onclick="setLogAction('press')">PRESS</button>
+                <button type="button" class="log-action-btn log-action-qcpass log-fp-qcpass" id="logBtnQcPass" onclick="setLogAction('qc_pass')">PASS</button>
+                <button type="button" class="log-action-btn log-action-qcreject log-fp-qcrej" id="logBtnQcReject" onclick="setLogAction('qc_reject')">REJECT</button>
+                <div class="log-fp-display" id="logNumpadDisplay">0</div>
+                <button type="button" class="ps-numpad-btn log-fp-k7" onclick="logNumpadTap('7')">7</button>
+                <button type="button" class="ps-numpad-btn log-fp-k8" onclick="logNumpadTap('8')">8</button>
+                <button type="button" class="ps-numpad-btn log-fp-k9" onclick="logNumpadTap('9')">9</button>
+                <button type="button" class="ps-numpad-btn log-fp-k4" onclick="logNumpadTap('4')">4</button>
+                <button type="button" class="ps-numpad-btn log-fp-k5" onclick="logNumpadTap('5')">5</button>
+                <button type="button" class="ps-numpad-btn log-fp-k6" onclick="logNumpadTap('6')">6</button>
+                <button type="button" class="ps-numpad-btn log-fp-k1" onclick="logNumpadTap('1')">1</button>
+                <button type="button" class="ps-numpad-btn log-fp-k2" onclick="logNumpadTap('2')">2</button>
+                <button type="button" class="ps-numpad-btn log-fp-k3" onclick="logNumpadTap('3')">3</button>
+                <button type="button" class="ps-numpad-btn ps-numpad-clear log-fp-c" onclick="logNumpadClear()">C</button>
+                <button type="button" class="ps-numpad-btn log-fp-zero" onclick="logNumpadTap('0')">0</button>
+                <button type="button" class="ps-numpad-btn ps-numpad-back log-fp-back" onclick="logNumpadBack()">←</button>
+                <button type="button" class="log-enter-btn log-enter-press log-fp-log" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>LOG PRESS</button>
+            </div>
+            <div class="qc-reject-picker qc-reject-picker-overlay qc-reject-picker-console-overlay" id="logRejectPicker" style="display:none">
             <div class="qc-reject-picker-card">
                 <div class="qc-reject-picker-title" id="logRejectPickerTitle">REJECT — SELECT DEFECT TYPE</div>
                 <div class="qc-reject-picker-btns">
@@ -285,6 +286,7 @@
                     <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('BISCUIT/FLASH')">✕ BISCUIT/FLASH</button>
                 </div>
                 <button type="button" class="qc-reject-cancel" onclick="unifiedLogHideRejectPicker()">CANCEL</button>
+            </div>
             </div>
         </div>
         <div class="sec">RECENT</div>
