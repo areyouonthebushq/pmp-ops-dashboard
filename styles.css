@@ -1320,7 +1320,7 @@
     }
     .qc-reject-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
-    /* Unified LOG page — one faceplate; app spacing scale only; all buttons same rules */
+    /* Unified LOG page — design-system conformance: launcher/station tokens only */
     .log-job-picker {
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-lg);
     padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
@@ -1331,11 +1331,11 @@
     grid-template-rows: 1fr;
     gap: 0;
     column-gap: var(--space-md);
-    align-items: stretch;
+    align-items: start;
     margin-bottom: var(--space-lg);
-    padding: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
     background: var(--s2);
-    border: 2px solid var(--b2);
+    border: 1px solid var(--b2);
     transition: border-color 0.2s;
     }
     .log-main.mode-press { border-color: var(--w2); }
@@ -1344,7 +1344,7 @@
     .log-actions {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-xs);
     justify-content: flex-start;
     min-height: 0;
     }
@@ -1392,10 +1392,10 @@
     #pg-log .log-main.mode-qcpass .log-center .qc-numpad-display { border-color: var(--g2); }
     #pg-log .log-main.mode-qcreject .log-center .qc-numpad-display { border-color: var(--r2); }
     #pg-log .log-main .log-center .qc-numpad-grid {
-    gap: 4px;
+    gap: var(--space-xs);
     margin-bottom: var(--space-sm);
     }
-    #pg-log .log-main .log-center .ps-numpad-presets { display: flex; gap: 4px; margin-bottom: var(--space-sm); }
+    #pg-log .log-main .log-center .ps-numpad-presets { display: flex; gap: var(--space-xs); margin-bottom: var(--space-sm); }
     #pg-log .log-main .log-center .log-enter-btn {
     width: 100%;
     min-height: 56px;
