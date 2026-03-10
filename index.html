@@ -158,12 +158,12 @@
 
     <!-- TOP BAR -->
     <div class="bar">
-        <div class="bar-logo">PMP<span>·</span>OPS</div>
+        <div class="bar-logo" onclick="enterTV()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();enterTV();}" title="TV mode" role="button" tabindex="0">PMP<span>·</span>OPS</div>
         <span id="modeBadge" class="bar-mode"></span>
         <div class="bar-clock" id="clock"></div>
         <div class="bar-actions">
         <button type="button" class="bar-btn" id="minimalThemeBtn" onclick="toggleMinimalTheme()" title="Toggle minimal theme">MIN</button>
-        <button class="bar-btn" onclick="enterTV()">⬛ TV</button>
+        <button class="bar-btn" onclick="enterTV()" style="display:none" aria-hidden="true">⬛ TV</button>
         <button class="bar-btn" onclick="openQCStation()" title="QC Station — rapid reject logging" style="display:none">QC</button>
         <button id="exportBtn" class="bar-btn" onclick="exportCSV()">↓ CSV</button>
         <button id="backupBtn" class="bar-btn" onclick="exportBackup()" title="Export full operational backup (JSON)" style="display:none">💾 BACKUP</button>

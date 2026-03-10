@@ -345,6 +345,7 @@
     font-family:'Special Elite',cursive;
     font-size:17px; letter-spacing:2px; color: var(--g);
     flex-shrink:0;
+    cursor:pointer;
     }
     .bar-logo span { color: var(--p); }
     .bar-mode {
