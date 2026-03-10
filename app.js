@@ -87,7 +87,7 @@ let S = {
   floorSortDir: 'asc',
   jobsSortBy: 'catalog',
   jobsSortDir: 'asc',
-  floorStatFilter: 'active',
+  floorStatFilter: null,
 };
 let saveTimer = null;
 let curAssets = {};

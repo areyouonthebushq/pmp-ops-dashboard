@@ -211,10 +211,13 @@ function renderPresses() {
 var FLOOR_LIST_SECTION_LABELS = { presses: 'PRESSES', active: 'ACTIVE', queued: 'QUEUED', overdue: 'OVERDUE', total: 'TOTAL OPEN' };
 
 function renderFloor() {
+  const detailBlock = document.getElementById('floorDetailBlock');
+  if (detailBlock) detailBlock.style.display = S.floorStatFilter == null ? 'none' : '';
+
   const el = document.getElementById('floorBody');
   if (!el) return;
   const secTitleEl = document.getElementById('floorListSecTitle');
-  if (secTitleEl) secTitleEl.textContent = FLOOR_LIST_SECTION_LABELS[S.floorStatFilter] || 'TOTAL OPEN';
+  if (secTitleEl) secTitleEl.textContent = FLOOR_LIST_SECTION_LABELS[S.floorStatFilter] || '';
 
   const q = document.getElementById('floorSearch')?.value || '';
   const { jobs: rawJobs, total } = getFloorJobs(q, S.floorStatFilter);
