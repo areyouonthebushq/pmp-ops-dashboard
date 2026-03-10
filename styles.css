@@ -1433,9 +1433,11 @@
     font-size: 18px;
     font-weight: 700;
     letter-spacing: 2px;
-    border: 1px solid var(--b2);
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--b2);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
