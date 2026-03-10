@@ -468,7 +468,10 @@ function closeAssetsOverlay(skipSave) {
       if (el) el.classList.remove('on');
       renderAll();
     })
-    .catch(() => {});
+    .catch((e) => {
+      if (typeof setSyncState === 'function') setSyncState('error', { toast: 'SAVE FAILED' });
+      if (typeof toastError === 'function') toastError('Assets save failed');
+    });
 }
 
 function flushAssetsOverlayInputs() {
@@ -576,7 +579,10 @@ function saveAssetsOverlay() {
       renderAll();
       if (typeof toast === 'function') toast('ASSETS SAVED');
     })
-    .catch(() => {});
+    .catch((e) => {
+      if (typeof setSyncState === 'function') setSyncState('error', { toast: 'SAVE FAILED' });
+      if (typeof toastError === 'function') toastError('Assets save failed');
+    });
 }
 
 // ============================================================
@@ -784,9 +790,10 @@ let logViewDate = new Date().toDateString();
 let pendingLogRejectQty = 0;
 
 function tryAddQCRejectToProgress(jobId) {
-  if (!jobId) return { applied: false };
-  const result = logJobProgress(jobId, 'rejected', 1, 'QC');
-  return result.ok ? { applied: true } : { applied: false, error: result.error };
+  if (!jobId) return Promise.resolve({ applied: false });
+  return logJobProgress(jobId, 'rejected', 1, 'QC')
+    .then((r) => (r.ok ? { applied: true } : { applied: false, error: r.error }))
+    .catch(() => ({ applied: false }));
 }
 
 function logNumpadTap(digit) {
@@ -819,30 +826,42 @@ function selectLogJob(jobId) {
   renderLog();
 }
 
-function unifiedLogEnter() {
+async function unifiedLogEnter() {
   const n = parseInt(logNumpadValue, 10) || 0;
   if (n < 1 || !S.logSelectedJob) return;
   const job = S.jobs.find(j => j.id === S.logSelectedJob);
   const jobName = job ? (job.catalog || job.artist || '—') : '—';
 
   if (logAction === 'press') {
-    const result = logJobProgress(S.logSelectedJob, 'pressed', n, 'Log');
-    if (result.ok) {
+    try {
+      const result = await logJobProgress(S.logSelectedJob, 'pressed', n, 'Log');
+      if (!result.ok) {
+        toastError(result.error || 'Log failed');
+        return;
+      }
       toast(`+${n.toLocaleString()} pressed → ${jobName}`);
       logNumpadValue = '0';
       logNumpadUpdateDisplay();
       renderLog();
-    } else toastError(result.error || 'Log failed');
+    } catch (e) {
+      toastError(e?.message || 'Log failed');
+    }
     return;
   }
   if (logAction === 'qc_pass') {
-    const result = logJobProgress(S.logSelectedJob, 'qc_passed', n, 'Log');
-    if (result.ok) {
+    try {
+      const result = await logJobProgress(S.logSelectedJob, 'qc_passed', n, 'Log');
+      if (!result.ok) {
+        toastError(result.error || 'Log failed');
+        return;
+      }
       toast(`${n.toLocaleString()} QC passed → ${jobName}`);
       logNumpadValue = '0';
       logNumpadUpdateDisplay();
       renderLog();
-    } else toastError(result.error || 'Log failed');
+    } catch (e) {
+      toastError(e?.message || 'Log failed');
+    }
     return;
   }
   if (logAction === 'qc_reject') {
@@ -858,30 +877,34 @@ function unifiedLogHideRejectPicker() {
   pendingLogRejectQty = 0;
 }
 
-function unifiedLogRejectWithDefect(defectType) {
+async function unifiedLogRejectWithDefect(defectType) {
   const n = pendingLogRejectQty;
   if (n < 1 || !S.logSelectedJob) { unifiedLogHideRejectPicker(); return; }
   const job = S.jobs.find(j => j.id === S.logSelectedJob);
   const jobName = job ? (job.catalog || job.artist || '—') : '—';
 
-  const result = logJobProgress(S.logSelectedJob, 'rejected', n, 'Log');
-  if (!result.ok) {
-    toastError(result.error || 'Reject log failed');
+  try {
+    const result = await logJobProgress(S.logSelectedJob, 'rejected', n, 'Log');
+    if (!result.ok) {
+      toastError(result.error || 'Reject log failed');
+      unifiedLogHideRejectPicker();
+      return;
+    }
+    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const date = new Date().toDateString();
+    S.qcLog.unshift({ time, type: defectType, job: n > 1 ? `${jobName} (x${n})` : jobName, date });
+    if (S.qcLog.length > 1000) S.qcLog.splice(1000);
+    await Storage.logQC({ time, type: defectType, job: n > 1 ? `${jobName} (x${n})` : jobName, date });
+    toast(`${n.toLocaleString()} ${defectType} → ${jobName}`);
+    logNumpadValue = '0';
+    pendingLogRejectQty = 0;
     unifiedLogHideRejectPicker();
-    return;
+    logNumpadUpdateDisplay();
+    renderLog();
+  } catch (e) {
+    toastError(e?.message || 'Reject log failed');
+    unifiedLogHideRejectPicker();
   }
-  const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-  const date = new Date().toDateString();
-  S.qcLog.unshift({ time, type: defectType, job: n > 1 ? `${jobName} (x${n})` : jobName, date });
-  if (S.qcLog.length > 1000) S.qcLog.splice(1000);
-  Storage.logQC({ time, type: defectType, job: n > 1 ? `${jobName} (x${n})` : jobName, date });
-
-  toast(`${n.toLocaleString()} ${defectType} → ${jobName}`);
-  logNumpadValue = '0';
-  pendingLogRejectQty = 0;
-  unifiedLogHideRejectPicker();
-  logNumpadUpdateDisplay();
-  renderLog();
 }
 
 function getQCDates() {

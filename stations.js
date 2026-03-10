@@ -370,18 +370,22 @@ function updatePressStationProgress() {
   if (barFill) barFill.style.width = `${pct}%`;
 }
 
-function pressStationLogPressed(qty) {
+async function pressStationLogPressed(qty) {
   if (!getStationEditPermissions().canLogPressProgress) return;
   const job = getStationJob();
   if (!job) return;
   S._pressStationWrite = true;
   setTimeout(function () { if (S._pressStationWrite) S._pressStationWrite = false; }, 5000);
-  const result = logJobProgress(job.id, 'pressed', qty, 'Press Station');
-  if (result.ok) {
-    renderPressStationShell();
-    toast(`+${qty} logged`);
-  } else {
-    toastError(result.error || 'Log failed');
+  try {
+    const result = await logJobProgress(job.id, 'pressed', qty, 'Press Station');
+    if (result.ok) {
+      renderPressStationShell();
+      toast(`+${qty} logged`);
+    } else {
+      toastError(result.error || 'Log failed');
+    }
+  } catch (e) {
+    toastError(e?.message || 'Log failed');
   }
 }
 

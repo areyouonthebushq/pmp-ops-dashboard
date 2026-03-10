@@ -207,35 +207,44 @@ function checkTodoReset() {
 
 function logJobProgress(jobId, stage, qty, person) {
   const job = S.jobs.find(j => j.id === jobId);
-  if (!job) return { ok: false, error: 'Job not found' };
+  if (!job) return Promise.resolve({ ok: false, error: 'Job not found' });
   ensureJobProgressLog(job);
-  if (!PROGRESS_STAGES.includes(stage)) return { ok: false, error: 'INVALID STAGE' };
+  if (!PROGRESS_STAGES.includes(stage)) return Promise.resolve({ ok: false, error: 'INVALID STAGE' });
   const q = parseInt(qty, 10);
-  if (!Number.isInteger(q) || q < 1) return { ok: false, error: 'qty must be a positive integer' };
+  if (!Number.isInteger(q) || q < 1) return Promise.resolve({ ok: false, error: 'qty must be a positive integer' });
   const cur = getJobProgress(job);
   const ordered = cur.ordered;
   if (stage === 'qc_passed') {
     const newQC = cur.qcPassed + q;
-    if (newQC + cur.rejected > cur.pressed) return { ok: false, error: 'qc_passed + rejected cannot exceed pressed' };
+    if (newQC + cur.rejected > cur.pressed) return Promise.resolve({ ok: false, error: 'qc_passed + rejected cannot exceed pressed' });
   }
   if (stage === 'rejected') {
     const newRej = cur.rejected + q;
-    if (newRej > ordered) return { ok: false, error: 'rejected cannot exceed ordered' };
+    if (newRej > ordered) return Promise.resolve({ ok: false, error: 'rejected cannot exceed ordered' });
   }
   const personVal = (person != null && String(person).trim()) ? String(person).trim() : 'UNKNOWN';
   const timestamp = new Date().toISOString();
   job.progressLog.push({ qty: q, stage, person: personVal, timestamp });
-  Storage.logProgress({ job_id: jobId, qty: q, stage, person: personVal, timestamp });
 
   const isAssigned = S.presses.some(p => p.job_id === jobId);
   const suggestion = suggestedStatus(job, isAssigned);
+  const prev = job.status;
   if (suggestion && (suggestion.suggested === 'pressing' || suggestion.suggested === 'done')) {
-    const prev = job.status;
     job.status = suggestion.suggested;
-    Storage.saveJob(job);
-    if (prev !== suggestion.suggested) toast(`Status set to ${suggestion.suggested.toUpperCase()}`);
   }
-  return { ok: true };
+  let p = Storage.logProgress({ job_id: jobId, qty: q, stage, person: personVal, timestamp });
+  if (suggestion && (suggestion.suggested === 'pressing' || suggestion.suggested === 'done')) {
+    p = p.then(() => Storage.saveJob(job)).then(() => {
+      if (prev !== suggestion.suggested) toast(`Status set to ${suggestion.suggested.toUpperCase()}`);
+      return { ok: true };
+    });
+  } else {
+    p = p.then(() => ({ ok: true }));
+  }
+  return p.catch((e) => {
+    setSyncState('error', { toast: 'LOG FAILED' });
+    return Promise.reject(e);
+  });
 }
 
 // ============================================================
@@ -1184,12 +1193,16 @@ function confirmDel() {
   const j = S.jobs.find(x => x.id === S.editId);
   openConfirm('DELETE JOB?', `REMOVE ${j?.catalog || 'this job'} — ${j?.artist || ''}? CANNOT BE UNDONE.`, async () => {
     const id = S.editId;
-    releasePressByJob(id);
-    S.jobs = S.jobs.filter(x => x.id !== id);
-    closePanel();
-    await Storage.deleteJob(id);
-    renderAll();
-    toast('JOB DELETED');
+    try {
+      await Storage.deleteJob(id);
+      releasePressByJob(id);
+      S.jobs = S.jobs.filter(x => x.id !== id);
+      closePanel();
+      renderAll();
+      toast('JOB DELETED');
+    } catch (e) {
+      if (typeof toastError === 'function') toastError(e?.message || 'Delete failed');
+    }
   });
 }
 
@@ -1206,7 +1219,9 @@ function closeConfirm() {
   const confOk = document.getElementById('confOk');
   if (confOk) confOk.textContent = 'CONFIRM';
 }
-document.getElementById('confOk').addEventListener('click', () => { if (confCb) confCb(); closeConfirm(); });
+document.getElementById('confOk').addEventListener('click', () => {
+  if (confCb) Promise.resolve(confCb()).catch(() => {}).finally(() => closeConfirm());
+});
 
 // ============================================================
 // NEW JOB CHOOSER (FAB +)
@@ -1687,7 +1702,7 @@ function checkBillingExpand() {
 // ============================================================
 // PROGRESS LOG & NOTES (panel)
 // ============================================================
-function submitProgressLog() {
+async function submitProgressLog() {
   if (!S.editId) return;
   const personEl = document.getElementById('progressPerson');
   const stageEl = document.getElementById('progressStage');
@@ -1695,12 +1710,16 @@ function submitProgressLog() {
   const person = personEl ? personEl.value : '';
   const stage = stageEl ? stageEl.value : '';
   const qty = qtyEl ? qtyEl.value : '';
-  const result = logJobProgress(S.editId, stage, qty, person);
-  if (result.ok) {
-    renderProgressSection();
-    if (qtyEl) qtyEl.value = '';
-  } else {
-    toastError(result.error || 'Invalid');
+  try {
+    const result = await logJobProgress(S.editId, stage, qty, person);
+    if (result.ok) {
+      renderProgressSection();
+      if (qtyEl) qtyEl.value = '';
+    } else {
+      toastError(result.error || 'Invalid');
+    }
+  } catch (e) {
+    toastError(e?.message || 'Log failed');
   }
 }
 

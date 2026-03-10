@@ -153,6 +153,12 @@ async function replayQueue() {
           job.status = item.payload.status;
           await window.PMP.Supabase.saveJob(job);
         }
+      } else if (item.type === 'job_assets') {
+        const job = S.jobs.find((j) => j.id === item.payload.jobId);
+        if (job && item.payload.assets != null) {
+          job.assets = item.payload.assets;
+          await window.PMP.Supabase.updateJobAssets(item.payload.jobId, item.payload.assets);
+        }
       }
     } catch (e) {
       console.warn('[PMP] Replay failed for', item.type, e);
@@ -172,7 +178,10 @@ function onOnline() {
   if (appEl && appEl.style.display === 'none') return;
   if (getOfflineQueue().length > 0 || S.offlineMode) {
     setSyncState('loading');
-    loadAll().then(() => replayQueue()).then(() => loadAll());
+    loadAll().then(() => replayQueue()).then(() => loadAll()).catch((e) => {
+      console.error('[PMP] Reconnect sync failed', e);
+      setSyncState('error', { toast: 'Sync failed after reconnect' });
+    });
   }
 }
 
