@@ -1019,7 +1019,9 @@ function openPanel(id) {
     document.getElementById('panelSub').textContent = `${j.artist || ''} · ${j.album || ''}`;
     document.getElementById('delBtn').style.display = S.mode === 'admin' ? '' : 'none';
     const archiveBtn = document.getElementById('archiveBtn');
+    const restoreBtn = document.getElementById('restoreBtn');
     if (archiveBtn) archiveBtn.style.display = (j && !j.archived_at) ? '' : 'none';
+    if (restoreBtn) restoreBtn.style.display = (j && j.archived_at) ? '' : 'none';
 
     FIELD_MAP.forEach(f => {
       const el = document.getElementById(f.id);
@@ -1043,7 +1045,9 @@ function openPanel(id) {
     document.getElementById('panelSub').textContent = '';
     document.getElementById('delBtn').style.display = 'none';
     const archiveBtn = document.getElementById('archiveBtn');
+    const restoreBtn = document.getElementById('restoreBtn');
     if (archiveBtn) archiveBtn.style.display = 'none';
+    if (restoreBtn) restoreBtn.style.display = 'none';
     clearFields();
   }
   buildAssetList();
@@ -1235,6 +1239,30 @@ async function archiveJob() {
     console.error('[PMP] Archive failed', e);
     if (typeof setSyncState === 'function') setSyncState('error', { toast: 'ARCHIVE FAILED' });
     if (typeof toastError === 'function') toastError(e?.message || 'Archive failed. Ensure DB has archived_at, archived_by, archive_reason columns.');
+  }
+}
+
+// ============================================================
+// RESTORE — un-archive job (clear archive fields)
+// ============================================================
+async function restoreJob() {
+  const j = S.jobs.find(x => x.id === S.editId);
+  if (!j) return;
+  if (!j.archived_at) { toast('Job is not archived'); return; }
+  const payload = Object.assign({}, j, { archived_at: null, archived_by: null, archive_reason: null });
+  try {
+    await Storage.saveJob(payload);
+    j.archived_at = null;
+    j.archived_by = null;
+    j.archive_reason = null;
+    if (S.presses && S.presses.length) await Storage.savePresses(S.presses);
+    closePanel();
+    renderAll();
+    toast('Job restored');
+  } catch (e) {
+    console.error('[PMP] Restore failed', e);
+    if (typeof setSyncState === 'function') setSyncState('error', { toast: 'RESTORE FAILED' });
+    if (typeof toastError === 'function') toastError(e?.message || 'Restore failed.');
   }
 }
 
