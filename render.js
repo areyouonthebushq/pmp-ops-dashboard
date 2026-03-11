@@ -1111,6 +1111,9 @@ function renderQC() {
 // TV MODE
 // ============================================================
 function renderTV() {
+  const today = new Date().toDateString();
+  const activeJobs = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
+
   const pe = document.getElementById('tvPresses');
   if (pe) pe.innerHTML = S.presses.map(p => {
     const j = p.job_id ? S.jobs.find(x => x.id === p.job_id) : null;
@@ -1136,8 +1139,7 @@ function renderTV() {
 
   const qe = document.getElementById('tvBody');
   if (qe) {
-    const active = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
-    qe.innerHTML = active.map(j => {
+    qe.innerHTML = activeJobs.map(j => {
       const ah = assetHealth(j);
       return `<tr>
         <td class="tc">${j.catalog || '—'}</td>
@@ -1150,12 +1152,114 @@ function renderTV() {
     }).join('');
   }
 
+  const statsEl = document.getElementById('tvStats');
+  if (statsEl) {
+    let pressedToday = 0;
+    let passedToday = 0;
+    activeJobs.forEach(j => {
+      (j.progressLog || []).forEach(e => {
+        if (!e || !e.timestamp) return;
+        if (new Date(e.timestamp).toDateString() !== today) return;
+        if (e.stage === 'pressed') pressedToday += (parseInt(e.qty, 10) || 0);
+        if (e.stage === 'qc_passed') passedToday += (parseInt(e.qty, 10) || 0);
+      });
+    });
+    const rejectedToday = (S.qcLog || []).filter(e => e.date === today).reduce((sum, e) => {
+      const m = (e.job || '').match(/\(x(\d+)\)\s*$/i);
+      const n = m ? parseInt(m[1], 10) : 1;
+      return sum + (Number.isFinite(n) ? n : 1);
+    }, 0);
+    const pressingNow = S.presses.filter(p => !!p.job_id).length;
+    const blockers = activeJobs.filter(j => (j.status || '').toLowerCase() === 'hold').length + S.presses.filter(p => p.status === 'offline').length;
+
+    statsEl.innerHTML = `
+      <div class="tv-stat"><div class="tv-stat-num w">${pressedToday.toLocaleString()}</div><div class="tv-stat-lab">PRESSED TODAY</div></div>
+      <div class="tv-stat"><div class="tv-stat-num g">${passedToday.toLocaleString()}</div><div class="tv-stat-lab">PASSED TODAY</div></div>
+      <div class="tv-stat"><div class="tv-stat-num r">${rejectedToday.toLocaleString()}</div><div class="tv-stat-lab">REJECTED TODAY</div></div>
+      <div class="tv-stat"><div class="tv-stat-num">${pressingNow.toLocaleString()}</div><div class="tv-stat-lab">PRESSING NOW</div></div>
+      <div class="tv-stat"><div class="tv-stat-num w">${blockers.toLocaleString()}</div><div class="tv-stat-lab">BLOCKERS</div></div>
+    `;
+  }
+
   const ti = document.getElementById('tvTicker');
   if (ti) {
-    const parts = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done')
-      .map(j => `★ ${j.catalog || '—'} · ${j.artist || ''} · ${j.format || ''} · Due: ${j.due || 'TBD'}`);
-    ti.textContent = parts.join('    ') || '★ NO ACTIVE JOBS ★';
+    const items = [];
+
+    // Notes today
+    activeJobs.forEach(j => {
+      ensureNotesLog(j);
+      (j.notesLog || []).forEach(n => {
+        if (!n || !n.timestamp) return;
+        if (new Date(n.timestamp).toDateString() !== today) return;
+        items.push({
+          ts: n.timestamp,
+          kind: 'NOTE',
+          color: 'd',
+          text: `${j.catalog || '—'} · ${truncateTickerText(n.text || '', 70)}`,
+        });
+      });
+    });
+
+    // Progress today (PRESS/PASS)
+    activeJobs.forEach(j => {
+      (j.progressLog || []).forEach(e => {
+        if (!e || !e.timestamp) return;
+        if (new Date(e.timestamp).toDateString() !== today) return;
+        if (e.stage !== 'pressed' && e.stage !== 'qc_passed') return;
+        const qty = parseInt(e.qty, 10) || 0;
+        const press = (j.press || '').split(',')[0].trim();
+        items.push({
+          ts: e.timestamp,
+          kind: e.stage === 'pressed' ? 'PRESS' : 'PASS',
+          color: e.stage === 'pressed' ? 'w' : 'g',
+          text: `${e.stage === 'pressed' ? '+ ' + qty.toLocaleString() : '+ ' + qty.toLocaleString()} · ${j.catalog || '—'}${press ? ' · ' + press : ''}`,
+          source: e.person || '',
+        });
+      });
+    });
+
+    // Rejects today (defect types)
+    (S.qcLog || []).filter(e => e.date === today).forEach(e => {
+      const m = (e.job || '').match(/\(x(\d+)\)\s*$/i);
+      const qty = m ? parseInt(m[1], 10) : 1;
+      const jobLabel = m ? (e.job || '').replace(/\s*\(x\d+\)\s*$/i, '').trim() : (e.job || '—');
+      const job = activeJobs.find(j => j.catalog === jobLabel) || null;
+      const press = job ? (job.press || '').split(',')[0].trim() : '';
+      const base = new Date(today);
+      const parts = String(e.time || '').split(':').map(n => parseInt(n, 10));
+      if (parts.length >= 2 && parts.every(n => Number.isFinite(n))) base.setHours(parts[0], parts[1], parts[2] || 0, 0);
+      items.push({
+        ts: base.toISOString(),
+        kind: 'REJECT',
+        color: 'r',
+        text: `+ ${Number.isFinite(qty) ? qty.toLocaleString() : '1'} ${String(e.type || '').toUpperCase()} · ${jobLabel}${press ? ' · ' + press : ''}`,
+      });
+    });
+
+    // Alerts: presses offline
+    S.presses.filter(p => p.status === 'offline').forEach(p => {
+      items.push({
+        ts: new Date().toISOString(),
+        kind: 'ALERT',
+        color: 'w',
+        text: `${p.name} down`,
+      });
+    });
+
+    items.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+    const top = items.slice(0, 30);
+    if (!top.length) {
+      ti.textContent = '★ NO ACTIVITY TODAY ★';
+    } else {
+      ti.innerHTML = top.map(it => `<span class="tv-tick tv-tick-${it.color}"><span class="tv-tick-k">${escapeHtml(it.kind)}</span> · ${escapeHtml(it.text)}</span>`).join('<span class="tv-tick-sep">   •   </span>');
+    }
   }
+}
+
+function truncateTickerText(s, n) {
+  const t = (s || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= n) return t;
+  return t.slice(0, Math.max(0, n - 1)).trim() + '…';
 }
 
 // ============================================================

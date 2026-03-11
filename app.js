@@ -17,22 +17,42 @@ window.addEventListener('unhandledrejection', function (event) {
   sz(); addEventListener('resize', sz);
   const ch = 'アイウエオ01カキクケコ10サシスセソ';
   let drops = [];
+  let lastCols = 0;
+  function getRainCfg() {
+    const party = document.body.classList.contains('tv-party');
+    return {
+      party,
+      col: party ? 14 : 18,
+      step: party ? 42 : 55,
+      fade: party ? 0.05 : 0.06,
+      font: party ? 14 : 13,
+    };
+  }
   const reset = () => {
-    drops = Array(Math.floor(c.width / 18)).fill(0).map(() => Math.random() * c.height / 18 | 0);
+    const cfg = getRainCfg();
+    const cols = Math.max(1, Math.floor(c.width / cfg.col));
+    lastCols = cols;
+    drops = Array(cols).fill(0).map(() => Math.random() * c.height / cfg.col | 0);
   };
   reset(); addEventListener('resize', reset);
 
   let last = 0;
   function frame(ts) {
-    if (ts - last > 55) {
+    const cfg = getRainCfg();
+    const cols = Math.max(1, Math.floor(c.width / cfg.col));
+    if (cols !== lastCols) reset();
+    if (ts - last > cfg.step) {
       last = ts;
-      ctx.fillStyle = 'rgba(6,8,6,0.06)';
+      ctx.fillStyle = `rgba(6,8,6,${cfg.fade})`;
       ctx.fillRect(0, 0, c.width, c.height);
       ctx.fillStyle = '#00e676';
-      ctx.font = '13px monospace';
+      ctx.font = `${cfg.font}px monospace`;
       drops.forEach((y, i) => {
-        ctx.fillText(ch[Math.random() * ch.length | 0], i * 18, y * 18);
-        if (y * 18 > c.height && Math.random() > 0.97) drops[i] = 0;
+        const x = i * cfg.col;
+        const yy = y * cfg.col;
+        ctx.fillText(ch[Math.random() * ch.length | 0], x, yy);
+        if (cfg.party && Math.random() > 0.8) ctx.fillText(ch[Math.random() * ch.length | 0], x, yy + cfg.col);
+        if (yy > c.height && Math.random() > (cfg.party ? 0.965 : 0.97)) drops[i] = 0;
         else drops[i]++;
       });
     }

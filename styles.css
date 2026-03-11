@@ -1634,6 +1634,17 @@
     .tv-clock { font-size:42px; color: var(--g); font-weight:700; letter-spacing:4px; line-height:1; }
     .tv-date  { font-size:11px; color: var(--d3); letter-spacing:2px; text-align:right; margin-top: 2px; }
 
+    .tv-stats {
+    display:flex; flex-wrap:wrap; gap: var(--space-sm);
+    padding: var(--space-sm) 0; border-bottom:1px solid var(--b1);
+    }
+    .tv-stat { display:flex; gap: var(--space-sm); align-items:baseline; padding: var(--space-xs) var(--space-sm); border:1px solid var(--b1); background: var(--s1); }
+    .tv-stat-num { font-size: 18px; font-weight: 800; color: var(--d); }
+    .tv-stat-num.g { color: var(--g); }
+    .tv-stat-num.w { color: var(--w); }
+    .tv-stat-num.r { color: var(--r); }
+    .tv-stat-lab { font-size: 10px; letter-spacing: 2px; color: var(--d3); text-transform: uppercase; }
+
     .tv-presses { display:grid; grid-template-columns:repeat(4,1fr); gap: var(--space-md); flex-shrink:0; }
     @media(max-width:800px) { .tv-presses { grid-template-columns:repeat(2,1fr); } }
     .tv-press {
@@ -1674,6 +1685,13 @@
     opacity:0.8;
     }
     .tv-ticker-inner { display:inline-block; animation:tick 40s linear infinite; }
+    .tv-tick { color: var(--d); font-size: 12px; letter-spacing: 1px; }
+    .tv-tick-k { font-weight: 800; }
+    .tv-tick-g { color: var(--g); }
+    .tv-tick-w { color: var(--w); }
+    .tv-tick-r { color: var(--r); }
+    .tv-tick-d { color: var(--d); }
+    .tv-tick-sep { color: var(--d3); }
     @keyframes tick { from{transform:translateX(100vw)} to{transform:translateX(-100%)} }
 
     .tv-esc {
