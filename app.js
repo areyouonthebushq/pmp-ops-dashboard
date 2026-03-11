@@ -1211,7 +1211,7 @@ async function saveJob() {
 // ============================================================
 // ARCHIVE — soft remove from active views
 // ============================================================
-function archiveJob() {
+async function archiveJob() {
   const j = S.jobs.find(x => x.id === S.editId);
   if (!j) return;
   if (j.archived_at) { toast('Job is already archived'); return; }
@@ -1220,11 +1220,17 @@ function archiveJob() {
   j.archived_by = who;
   j.archive_reason = '';
   if (typeof releasePressByJob === 'function') releasePressByJob(j.id);
-  Storage.saveJob(j);
-  if (S.presses && S.presses.length) Storage.savePresses(S.presses);
-  closePanel();
-  renderAll();
-  toast('Job archived');
+  try {
+    await Storage.saveJob(j);
+    if (S.presses && S.presses.length) await Storage.savePresses(S.presses);
+    closePanel();
+    renderAll();
+    toast('Job archived');
+  } catch (e) {
+    console.error('[PMP] Archive failed', e);
+    if (typeof setSyncState === 'function') setSyncState('error', { toast: 'ARCHIVE FAILED' });
+    if (typeof toastError === 'function') toastError(e?.message || 'Archive failed. Ensure DB has archived_at, archived_by, archive_reason columns.');
+  }
 }
 
 // ============================================================

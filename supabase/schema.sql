@@ -34,7 +34,10 @@ CREATE TABLE IF NOT EXISTS jobs (
   pay2 date,
   assets jsonb DEFAULT '{}',
   created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
+  updated_at timestamptz DEFAULT now(),
+  archived_at timestamptz DEFAULT NULL,
+  archived_by text DEFAULT NULL,
+  archive_reason text DEFAULT NULL
 );
 
 -- Progress log: append-only pressing/QC events per job
