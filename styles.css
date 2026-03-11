@@ -985,6 +985,7 @@
     .form-section--recede + .billing-toggle { margin-top: var(--space-xs); }
     .form-section--recede + .panel-notes .fl { color: var(--d3); }
     .form-section--recede + .billing-toggle { color: var(--d3); font-size: 10px; }
+    .po-contract-block { margin-bottom: var(--space-sm); }
 
     .panel-notes .fg { margin-bottom: var(--space-sm); }
     .panel-notes .fl { font-size:9px; color: var(--d3); letter-spacing:1.5px; }

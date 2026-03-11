@@ -30,6 +30,16 @@ const FIELD_MAP = [
   { id:'jPay2',        key:'pay2',        type:'date' },
 ];
 
+/** PO / CONTRACT — floor-critical packaging/assembly reference (Phase 1). Keys live on job.poContract. */
+const PO_CONTRACT_FIELDS = [
+  { id: 'jPoSleeveType',   key: 'sleeveType' },
+  { id: 'jPoSleeveColor',  key: 'sleeveColor' },
+  { id: 'jPoInsert',       key: 'insertDetails' },
+  { id: 'jPoSticker',      key: 'stickerDetails' },
+  { id: 'jPoPackaging',    key: 'packagingNotes' },
+  { id: 'jPoAssembly',     key: 'specialAssemblyNotes' },
+];
+
 // ============================================================
 // ASSET DEFINITIONS
 // ============================================================

@@ -49,6 +49,7 @@
       archived_at: job.archived_at || null,
       archived_by: job.archived_by || null,
       archive_reason: job.archive_reason || null,
+      po_contract: (job.poContract && typeof job.poContract === 'object') ? job.poContract : {},
     };
   }
 
@@ -91,6 +92,7 @@
       archived_at: row.archived_at || null,
       archived_by: row.archived_by || null,
       archive_reason: row.archive_reason || null,
+      poContract: (row.po_contract && typeof row.po_contract === 'object') ? row.po_contract : {},
     };
     return job;
   }

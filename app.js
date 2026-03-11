@@ -1045,6 +1045,13 @@ function openPanel(id) {
     }
     document.getElementById('jOv').value = j.qty ? Math.ceil(parseInt(j.qty, 10) * 1.1).toLocaleString() : '';
     curAssets = j.assets ? JSON.parse(JSON.stringify(j.assets)) : {};
+    const po = j.poContract && typeof j.poContract === 'object' ? j.poContract : {};
+    if (typeof PO_CONTRACT_FIELDS !== 'undefined') {
+      PO_CONTRACT_FIELDS.forEach(function (f) {
+        const el = document.getElementById(f.id);
+        if (el) el.value = (po[f.key] != null && po[f.key] !== '') ? String(po[f.key]) : '';
+      });
+    }
   } else {
     document.getElementById('panelId').textContent = 'NEW JOB';
     document.getElementById('panelSub').textContent = '';
@@ -1095,6 +1102,12 @@ function openPanel(id) {
     const jAssemblyInput = document.getElementById('jAssemblyInput');
     if (jNotesInput) jNotesInput.value = '';
     if (jAssemblyInput) jAssemblyInput.value = '';
+    if (typeof PO_CONTRACT_FIELDS !== 'undefined') {
+      PO_CONTRACT_FIELDS.forEach(function (f) {
+        const el = document.getElementById(f.id);
+        if (el) el.value = '';
+      });
+    }
   }
 
   document.getElementById('panelBody').scrollTop = 0;
@@ -1128,6 +1141,12 @@ function clearFields() {
     else el.value = '';
   });
   document.getElementById('jOv').value = '';
+  if (typeof PO_CONTRACT_FIELDS !== 'undefined') {
+    PO_CONTRACT_FIELDS.forEach(f => {
+      const el = document.getElementById(f.id);
+      if (el) el.value = '';
+    });
+  }
 }
 
 function calcOv() {
@@ -1174,6 +1193,14 @@ async function saveJob() {
   });
 
   job.assets = JSON.parse(JSON.stringify(curAssets));
+
+  job.poContract = {};
+  if (typeof PO_CONTRACT_FIELDS !== 'undefined') {
+    PO_CONTRACT_FIELDS.forEach(function (f) {
+      const el = document.getElementById(f.id);
+      if (el && el.value !== undefined) job.poContract[f.key] = el.value.trim() || '';
+    });
+  }
 
   if (S.editId) {
     const existing = S.jobs.find(j => j.id === S.editId);

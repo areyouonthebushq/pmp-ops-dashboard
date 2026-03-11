@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS jobs (
   updated_at timestamptz DEFAULT now(),
   archived_at timestamptz DEFAULT NULL,
   archived_by text DEFAULT NULL,
-  archive_reason text DEFAULT NULL
+  archive_reason text DEFAULT NULL,
+  po_contract jsonb DEFAULT '{}'
 );
 
 -- Progress log: append-only pressing/QC events per job
