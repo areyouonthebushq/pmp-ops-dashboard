@@ -318,20 +318,17 @@
                     <option value="">Select job</option>
                 </select>
             </div>
-            <button type="button" class="bar-btn" id="notesAddBtn" disabled onclick="openNotesComposer()">+ ADD NOTE</button>
+            <button type="button" class="bar-btn" id="notesAddBtn" disabled onclick="toggleNotesUtility('add')" title="Add note">+</button>
+            <button type="button" class="bar-btn" id="notesSearchBtn" onclick="toggleNotesUtility('search')" title="Search notes">⌕</button>
         </div>
-        <div class="search-bar notes-search">
-        <div class="search-wrap">
-            <input class="search-input" id="notesSearch" placeholder="SEARCH NOTES…" oninput="renderNotesPage()">
+        <div class="notes-utility-row" id="notesAddRow" style="display:none;">
+            <textarea class="fta notes-textarea" id="notesNewText" placeholder="Add note" onkeydown="notesComposerKeydown(event)"></textarea>
         </div>
-        <span class="search-count" id="notesSearchCount"></span>
-        </div>
-        <div class="notes-input-row" id="notesInputRow" style="display:none;">
-            <textarea class="fta notes-textarea" id="notesNewText" placeholder="Note text…" onkeydown="notesComposerKeydown(event)"></textarea>
-            <div class="notes-input-actions">
-                <button type="button" class="bar-btn" onclick="addNoteFromNotesPage()">SAVE</button>
-                <button type="button" class="bar-btn" onclick="closeNotesComposer()">CANCEL</button>
+        <div class="notes-utility-row" id="notesSearchRow" style="display:none;">
+            <div class="search-wrap notes-search-wrap">
+                <input class="search-input" id="notesSearch" placeholder="Search notes" oninput="renderNotesPage()">
             </div>
+            <span class="search-count" id="notesSearchCount"></span>
         </div>
         <div class="sec">NOTES</div>
         <div class="log-recent notes-feed" id="notesFeed"></div>

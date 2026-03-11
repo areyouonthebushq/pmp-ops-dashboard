@@ -1290,7 +1290,9 @@ function renderNotesPage() {
   const selEl = document.getElementById('notesJobSelect');
   const feedEl = document.getElementById('notesFeed');
   const addBtn = document.getElementById('notesAddBtn');
-  const inputRow = document.getElementById('notesInputRow');
+  const addRow = document.getElementById('notesAddRow');
+  const searchRow = document.getElementById('notesSearchRow');
+  const searchBtn = document.getElementById('notesSearchBtn');
   const searchEl = document.getElementById('notesSearch');
   const searchCountEl = document.getElementById('notesSearchCount');
   if (!selEl || !feedEl) return;
@@ -1347,5 +1349,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
       }).join('');
 
   if (addBtn) addBtn.disabled = !selectedId;
-  if (inputRow) inputRow.style.display = (selectedId && S.notesComposerOpen) ? '' : 'none';
+  if (addRow) addRow.style.display = (selectedId && S.notesUtilityOpen === 'add') ? '' : 'none';
+  if (searchRow) searchRow.style.display = (S.notesUtilityOpen === 'search') ? '' : 'none';
+  if (searchBtn) searchBtn.classList.toggle('active', S.notesUtilityOpen === 'search');
 }

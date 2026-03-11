@@ -1773,10 +1773,9 @@
     .notes-toolbar label { font-size:11px; letter-spacing:1px; color: var(--d3); }
     .notes-toolbar .log-job-picker { margin: 0; }
     .notes-toolbar .qc-job-select { width: 100%; max-width: 420px; }
-    .notes-search { margin-bottom: var(--space-md); }
-    .notes-input-row { display: flex; flex-direction: column; gap: var(--space-sm); margin-bottom: var(--space-md); }
-    .notes-input-row .notes-textarea { width: 100%; min-height: 72px; resize: vertical; }
-    .notes-input-row .notes-input-actions { display: flex; gap: var(--space-sm); justify-content: flex-end; flex-wrap: wrap; }
+    .notes-utility-row { margin-bottom: var(--space-md); }
+    .notes-utility-row .notes-textarea { width: 100%; min-height: 72px; resize: vertical; }
+    .notes-search-wrap { width: 100%; max-width: 520px; }
     .notes-feed.notes-feed { margin-bottom: var(--space-lg); }
     .notes-feed .progress-entry { padding: var(--space-sm) 0; border-bottom: 1px solid var(--b1); display: block; }
     .notes-feed .notes-entry-job { font-size: 10px; letter-spacing: 1px; color: var(--d3); text-transform: uppercase; margin-bottom: var(--space-xs); }

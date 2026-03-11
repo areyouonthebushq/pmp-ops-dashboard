@@ -89,6 +89,7 @@ let S = {
   jobsSortDir: 'asc',
   floorStatFilter: null,
   notesComposerOpen: false,
+  notesUtilityOpen: null, // 'add' | 'search' | null
 };
 let saveTimer = null;
 let curAssets = {};
@@ -2015,6 +2016,7 @@ async function addNoteFromNotesPage() {
     return;
   }
   S.notesComposerOpen = false;
+  S.notesUtilityOpen = null;
   renderNotesPage();
   toast('NOTE LOGGED');
 }
@@ -2035,28 +2037,37 @@ function addAssemblyNote() {
   toast('NOTE LOGGED');
 }
 
-function openNotesComposer() {
-  const selEl = document.getElementById('notesJobSelect');
-  const jobId = selEl && (selEl.value || '').trim();
-  if (!jobId) return;
-  S.notesComposerOpen = true;
-  renderNotesPage();
-  const textEl = document.getElementById('notesNewText');
-  if (textEl) textEl.focus();
-}
-
-function closeNotesComposer() {
-  S.notesComposerOpen = false;
-  const textEl = document.getElementById('notesNewText');
-  if (textEl) textEl.value = '';
-  renderNotesPage();
-}
-
 function notesComposerKeydown(e) {
   if (!e) return;
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     addNoteFromNotesPage();
+  }
+}
+
+function toggleNotesUtility(which) {
+  if (which !== 'add' && which !== 'search') return;
+  const selEl = document.getElementById('notesJobSelect');
+  const jobId = selEl && (selEl.value || '').trim();
+  if (which === 'add' && !jobId) return;
+  const next = (S.notesUtilityOpen === which) ? null : which;
+  S.notesUtilityOpen = next;
+  S.notesComposerOpen = (next === 'add');
+  if (next !== 'search') {
+    const s = document.getElementById('notesSearch');
+    if (s) s.value = '';
+  }
+  if (next !== 'add') {
+    const t = document.getElementById('notesNewText');
+    if (t) t.value = '';
+  }
+  renderNotesPage();
+  if (next === 'add') {
+    const t = document.getElementById('notesNewText');
+    if (t) t.focus();
+  } else if (next === 'search') {
+    const s = document.getElementById('notesSearch');
+    if (s) s.focus();
   }
 }
 
