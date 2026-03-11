@@ -1291,6 +1291,8 @@ function renderNotesPage() {
   const feedEl = document.getElementById('notesFeed');
   const addBtn = document.getElementById('notesAddBtn');
   const inputRow = document.getElementById('notesInputRow');
+  const searchEl = document.getElementById('notesSearch');
+  const searchCountEl = document.getElementById('notesSearchCount');
   if (!selEl || !feedEl) return;
 
   const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
@@ -1298,7 +1300,7 @@ function renderNotesPage() {
   const active = document.activeElement;
   if (pickerEl && !(active && active.id === 'notesJobSelect')) {
     pickerEl.innerHTML = `<select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
-<option value="">— All notes —</option>
+<option value="">Select job</option>
 ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'}${j.status ? ' (' + j.status + ')' : ''}</option>`).join('')}
 </select>`;
   }
@@ -1308,24 +1310,42 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
     const job = S.jobs.find(j => j.id === selectedId);
     if (job) {
       ensureNotesLog(job);
-      (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, jobLabel: [job.catalog, job.artist].filter(Boolean).join(' · ') || job.id, text: e.text, person: e.person, timestamp: e.timestamp }));
+      (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, catalog: job.catalog || '', artist: job.artist || '', album: job.album || '', text: e.text, person: e.person, timestamp: e.timestamp }));
     }
   } else {
     allJobs.forEach(job => {
       ensureNotesLog(job);
-      (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, jobLabel: [job.catalog, job.artist].filter(Boolean).join(' · ') || job.id, text: e.text, person: e.person, timestamp: e.timestamp }));
+      (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, catalog: job.catalog || '', artist: job.artist || '', album: job.album || '', text: e.text, person: e.person, timestamp: e.timestamp }));
     });
   }
   entries.sort((a, b) => (new Date(b.timestamp) - new Date(a.timestamp)));
+
+  const q = (searchEl && searchEl.value ? String(searchEl.value) : '').toLowerCase().trim();
+  if (q) {
+    entries = entries.filter(e => {
+      const hay = [
+        e.text || '',
+        e.person || '',
+        e.catalog || '',
+        e.artist || '',
+        e.album || '',
+        e.jobId || '',
+      ].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  if (searchCountEl) searchCountEl.textContent = q ? (entries.length + ' match') : '';
 
   feedEl.innerHTML = entries.length === 0
     ? '<div class="progress-empty">No notes yet.</div>'
     : entries.map(e => {
         const time = new Date(e.timestamp).toLocaleString();
         const meta = [escapeHtml(e.person || 'Unknown'), time].join(' · ');
-        return `<div class="progress-entry"><div class="notes-entry-job">${escapeHtml(e.jobLabel)}</div><div class="notes-entry-meta">${meta}</div><div class="notes-entry-text">${escapeHtml(e.text)}</div></div>`;
+        const cat = e.catalog ? escapeHtml(e.catalog) : escapeHtml(e.jobId || '—');
+        const artist = e.artist ? escapeHtml(e.artist) : '—';
+        return `<div class="progress-entry"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-meta">${meta}</div><div class="notes-entry-text">${escapeHtml(e.text)}</div></div>`;
       }).join('');
 
   if (addBtn) addBtn.disabled = !selectedId;
-  if (inputRow) inputRow.style.display = selectedId ? '' : 'none';
+  if (inputRow) inputRow.style.display = (selectedId && S.notesComposerOpen) ? '' : 'none';
 }

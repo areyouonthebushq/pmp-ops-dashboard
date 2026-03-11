@@ -313,17 +313,25 @@
     <!-- ======= NOTES PAGE ======= -->
     <div class="pg" id="pg-notes">
         <div class="notes-toolbar">
-            <label for="notesJobSelect">Job</label>
             <div class="log-job-picker" id="notesJobPicker">
                 <select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
-                    <option value="">— All notes —</option>
+                    <option value="">Select job</option>
                 </select>
             </div>
-            <button type="button" class="bar-btn" id="notesAddBtn" disabled onclick="addNoteFromNotesPage()">+ ADD NOTE</button>
+            <button type="button" class="bar-btn" id="notesAddBtn" disabled onclick="openNotesComposer()">+ ADD NOTE</button>
+        </div>
+        <div class="search-bar notes-search">
+        <div class="search-wrap">
+            <input class="search-input" id="notesSearch" placeholder="SEARCH NOTES…" oninput="renderNotesPage()">
+        </div>
+        <span class="search-count" id="notesSearchCount"></span>
         </div>
         <div class="notes-input-row" id="notesInputRow" style="display:none;">
-            <input type="text" class="fi" id="notesNewText" placeholder="Note text…" />
-            <button type="button" class="bar-btn" onclick="addNoteFromNotesPage()">Save</button>
+            <textarea class="fta notes-textarea" id="notesNewText" placeholder="Note text…" onkeydown="notesComposerKeydown(event)"></textarea>
+            <div class="notes-input-actions">
+                <button type="button" class="bar-btn" onclick="addNoteFromNotesPage()">SAVE</button>
+                <button type="button" class="bar-btn" onclick="closeNotesComposer()">CANCEL</button>
+            </div>
         </div>
         <div class="sec">NOTES</div>
         <div class="log-recent notes-feed" id="notesFeed"></div>

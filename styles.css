@@ -1584,7 +1584,6 @@
     }
     .qc-secondary-sec { font-size: 11px; color: var(--d3); letter-spacing: 1.5px; margin-top: var(--space-lg); }
 
-    .qc-log { }
     .qc-entry {
     display:grid; grid-template-columns:60px 130px 1fr;
     gap: var(--space-md); padding: var(--space-sm) 0; border-bottom:1px solid var(--b1);
@@ -1774,13 +1773,17 @@
     .notes-toolbar label { font-size:11px; letter-spacing:1px; color: var(--d3); }
     .notes-toolbar .log-job-picker { margin: 0; }
     .notes-toolbar .qc-job-select { width: 100%; max-width: 420px; }
-    .notes-input-row { display: flex; gap: var(--space-sm); margin-bottom: var(--space-md); align-items: center; }
-    .notes-input-row .fi { flex: 1; }
+    .notes-search { margin-bottom: var(--space-md); }
+    .notes-input-row { display: flex; flex-direction: column; gap: var(--space-sm); margin-bottom: var(--space-md); }
+    .notes-input-row .notes-textarea { width: 100%; min-height: 72px; resize: vertical; }
+    .notes-input-row .notes-input-actions { display: flex; gap: var(--space-sm); justify-content: flex-end; flex-wrap: wrap; }
     .notes-feed.notes-feed { margin-bottom: var(--space-lg); }
     .notes-feed .progress-entry { padding: var(--space-sm) 0; border-bottom: 1px solid var(--b1); display: block; }
     .notes-feed .notes-entry-job { font-size: 10px; letter-spacing: 1px; color: var(--d3); text-transform: uppercase; margin-bottom: var(--space-xs); }
     .notes-feed .notes-entry-meta { font-size: 11px; color: var(--d2); margin-bottom: var(--space-xs); }
     .notes-feed .notes-entry-text { font-size: 13px; color: var(--d); font-family: 'Inconsolata', monospace; }
+    .notes-feed .notes-entry-cat { color: var(--w); }
+    .notes-feed .notes-entry-artist { color: var(--d); }
     .audit-hint { font-size:12px; color: var(--d2); }
     .audit-tbl { font-size:12px; }
     .audit-tbl th { font-size:10px; letter-spacing:1px; color: var(--d3); }

@@ -88,6 +88,7 @@ let S = {
   jobsSortBy: 'catalog',
   jobsSortDir: 'asc',
   floorStatFilter: null,
+  notesComposerOpen: false,
 };
 let saveTimer = null;
 let curAssets = {};
@@ -2013,6 +2014,7 @@ async function addNoteFromNotesPage() {
     if (typeof toastError === 'function') toastError(e && (e.message || e.error) ? String(e.message || e.error) : 'Save failed');
     return;
   }
+  S.notesComposerOpen = false;
   renderNotesPage();
   toast('NOTE LOGGED');
 }
@@ -2031,6 +2033,31 @@ function addAssemblyNote() {
   Storage.saveJob(job);
   renderNotesSection();
   toast('NOTE LOGGED');
+}
+
+function openNotesComposer() {
+  const selEl = document.getElementById('notesJobSelect');
+  const jobId = selEl && (selEl.value || '').trim();
+  if (!jobId) return;
+  S.notesComposerOpen = true;
+  renderNotesPage();
+  const textEl = document.getElementById('notesNewText');
+  if (textEl) textEl.focus();
+}
+
+function closeNotesComposer() {
+  S.notesComposerOpen = false;
+  const textEl = document.getElementById('notesNewText');
+  if (textEl) textEl.value = '';
+  renderNotesPage();
+}
+
+function notesComposerKeydown(e) {
+  if (!e) return;
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    addNoteFromNotesPage();
+  }
 }
 
 // ============================================================
