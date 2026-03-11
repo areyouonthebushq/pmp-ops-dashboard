@@ -705,7 +705,9 @@ async function authBootstrap() {
     } else if (event === 'SIGNED_IN' && session) {
       fetchAndStoreProfile(session.user.id).then(() => {
         const appEl = document.getElementById('app');
-        if (!appEl || appEl.style.display === 'none') showLauncher();
+        const inApp = appEl && appEl.style.display !== 'none';
+        const inStation = typeof isStationShellVisible === 'function' && isStationShellVisible();
+        if (!inApp && !inStation) showLauncher();
       });
     }
   });

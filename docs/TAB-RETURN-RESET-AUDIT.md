@@ -1,6 +1,14 @@
 # Tab Return Reset — Audit and Fix
 
-## PHASE 1 — Audit
+## Press Station–specific regression (second fix)
+
+**Cause:** When a **station shell** (Press Station, QC Station, or Floor Manager) is active, `showShell()` in stations.js hides `#app` and shows the shell. So when the auth callback runs on tab return, it sees `app.style.display === 'none'` and (with the first fix) would still call `showLauncher()`, kicking the user back to the launcher. Admin and LOG stay inside `#app`, so they were already preserved by the first fix.
+
+**Fix:** In the `SIGNED_IN` branch, call `showLauncher()` only when the user is neither in the app nor in a station shell: `if (!inApp && !inStation) showLauncher()`, where `inStation = typeof isStationShellVisible === 'function' && isStationShellVisible()`.
+
+---
+
+## PHASE 1 — Audit (initial)
 
 ### 1. Callers of showLauncher / enterByLauncher / authBootstrap / showLoginScreen / doLogout / signOutFully
 
