@@ -1769,15 +1769,18 @@
     .jobs-toolbar { display:flex; gap: var(--space-sm); align-items:center; flex-wrap:wrap; margin-bottom: var(--space-md); }
     .audit-toolbar { display:flex; align-items:center; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap:wrap; }
     .audit-toolbar label { font-size:11px; letter-spacing:1px; color: var(--d3); }
-    .notes-toolbar { display:flex; align-items:center; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap:wrap; }
+    .notes-toolbar { display:grid; grid-template-columns: 1fr auto auto; align-items:center; gap: var(--space-md); margin-bottom: var(--space-md); }
     .notes-toolbar label { font-size:11px; letter-spacing:1px; color: var(--d3); }
     .notes-toolbar .log-job-picker { margin: 0; }
     .notes-toolbar .qc-job-select { width: 100%; max-width: 420px; }
     .notes-toolbar .bar-btn.is-disabled { opacity: 0.4; }
     .notes-select-glow { border-color: var(--g) !important; box-shadow: var(--gg) !important; }
-    .notes-utility-row { margin-bottom: var(--space-md); }
-    .notes-utility-row .notes-textarea { width: 100%; min-height: 72px; resize: vertical; }
-    .notes-search-wrap { width: 100%; max-width: 520px; }
+    .notes-utility-row { margin-bottom: var(--space-md); display:grid; grid-template-columns: 1fr auto auto; align-items:center; gap: var(--space-md); }
+    /* Add-note row ends under the + button (col 2) */
+    #notesAddRow .notes-textarea { grid-column: 1 / 3; width: 100%; height: 38px; min-height: 38px; max-height: 120px; overflow:auto; resize:none; }
+    /* Search row ends under the search button (col 3) */
+    #notesSearchRow .notes-search-wrap { grid-column: 1 / 4; width: 100%; max-width: none; }
+    #notesSearchRow .notes-search-wrap .search-count { position:absolute; right: var(--space-md); top:50%; transform:translateY(-50%); }
     .notes-feed.notes-feed { margin-bottom: var(--space-lg); }
     .notes-feed .progress-entry { padding: var(--space-sm) 0; border-bottom: 1px solid var(--b1); display: block; }
     .notes-feed .notes-entry-job { font-size: 10px; letter-spacing: 1px; color: var(--d3); text-transform: uppercase; margin-bottom: var(--space-xs); }
@@ -1787,10 +1790,10 @@
     .notes-feed .notes-entry-artist { color: var(--d); }
 
     @media (max-width: 600px) {
-        .notes-toolbar { flex-wrap: nowrap; gap: var(--space-sm); }
-        .notes-toolbar .log-job-picker { flex: 1; min-width: 0; }
+        .notes-toolbar { gap: var(--space-sm); }
+        .notes-toolbar .log-job-picker { min-width: 0; }
         .notes-toolbar .qc-job-select { max-width: none; width: 100%; }
-        .notes-toolbar .bar-btn { flex: 0 0 auto; }
+        .notes-utility-row { gap: var(--space-sm); }
     }
     .audit-hint { font-size:12px; color: var(--d2); }
     .audit-tbl { font-size:12px; }

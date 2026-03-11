@@ -2042,6 +2042,19 @@ function notesComposerKeydown(e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     addNoteFromNotesPage();
+    return;
+  }
+  if (e.key === 'Enter' && e.shiftKey) {
+    const t = e.target;
+    if (t && t.tagName === 'TEXTAREA') {
+      setTimeout(function () {
+        try {
+          t.style.height = '38px';
+          const h = Math.min(Math.max(38, t.scrollHeight), 120);
+          t.style.height = h + 'px';
+        } catch (_) {}
+      }, 0);
+    }
   }
 }
 
