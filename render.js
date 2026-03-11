@@ -165,6 +165,7 @@ function renderAdminShell() {
   renderJobs();
   renderTodos();
   renderLog();
+  renderNotesPage();
   renderTV();
 }
 
@@ -1279,4 +1280,48 @@ function renderNotesSection() {
       return `<div class="progress-entry"><strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
     }).join('') || '<div class="progress-empty">No notes yet.</div>';
   }
+}
+
+// ============================================================
+// NOTES PAGE — plant-wide notes feed, filterable by job
+// ============================================================
+function renderNotesPage() {
+  const selEl = document.getElementById('notesJobSelect');
+  const feedEl = document.getElementById('notesFeed');
+  const addBtn = document.getElementById('notesAddBtn');
+  const inputRow = document.getElementById('notesInputRow');
+  if (!selEl || !feedEl) return;
+
+  const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
+  const selectedId = (selEl.value || '').trim();
+  const active = document.activeElement;
+  if (!(active && active.id === 'notesJobSelect')) {
+    selEl.innerHTML = '<option value="">— All notes —</option>' +
+      allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('');
+  }
+
+  let entries = [];
+  if (selectedId) {
+    const job = S.jobs.find(j => j.id === selectedId);
+    if (job) {
+      ensureNotesLog(job);
+      (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, jobLabel: [job.catalog, job.artist].filter(Boolean).join(' · ') || job.id, text: e.text, person: e.person, timestamp: e.timestamp }));
+    }
+  } else {
+    S.jobs.forEach(job => {
+      ensureNotesLog(job);
+      (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, jobLabel: [job.catalog, job.artist].filter(Boolean).join(' · ') || job.id, text: e.text, person: e.person, timestamp: e.timestamp }));
+    });
+  }
+  entries.sort((a, b) => (new Date(b.timestamp) - new Date(a.timestamp)));
+
+  feedEl.innerHTML = entries.length === 0
+    ? '<div class="progress-empty">No notes yet.</div>'
+    : entries.map(e => {
+        const time = new Date(e.timestamp).toLocaleString();
+        return `<div class="progress-entry"><span class="notes-feed-job">${escapeHtml(e.jobLabel)}</span> · <strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
+      }).join('');
+
+  if (addBtn) addBtn.disabled = !selectedId;
+  if (inputRow) inputRow.style.display = selectedId ? '' : 'none';
 }

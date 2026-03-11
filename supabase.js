@@ -50,6 +50,8 @@
       archived_by: job.archived_by || null,
       archive_reason: job.archive_reason || null,
       po_contract: (job.poContract && typeof job.poContract === 'object') ? job.poContract : {},
+      notes_log: Array.isArray(job.notesLog) ? job.notesLog : [],
+      assembly_log: Array.isArray(job.assemblyLog) ? job.assemblyLog : [],
     };
   }
 
@@ -81,8 +83,8 @@
       cpl: row.cpl,
       notes: row.notes,
       assembly: row.assembly,
-      notesLog: [],
-      assemblyLog: [],
+      notesLog: Array.isArray(row.notes_log) ? row.notes_log : [],
+      assemblyLog: Array.isArray(row.assembly_log) ? row.assembly_log : [],
       invDate: row.inv_date,
       deposit: row.deposit,
       inv2: row.inv2,

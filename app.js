@@ -1940,6 +1940,25 @@ function addProductionNote() {
   toast('NOTE LOGGED');
 }
 
+function addNoteFromNotesPage() {
+  const selEl = document.getElementById('notesJobSelect');
+  const jobId = selEl && (selEl.value || '').trim();
+  if (!jobId) return;
+  const job = S.jobs.find(j => j.id === jobId);
+  if (!job) return;
+  const textEl = document.getElementById('notesNewText');
+  const text = textEl && textEl.value ? textEl.value.trim() : '';
+  if (!text) return;
+  ensureNotesLog(job);
+  const person = S.mode === 'admin' ? 'Admin' : 'Operator';
+  job.notesLog.push({ text, person, timestamp: new Date().toISOString() });
+  job.notes = text;
+  if (textEl) textEl.value = '';
+  Storage.saveJob(job);
+  renderNotesPage();
+  toast('NOTE LOGGED');
+}
+
 function addAssemblyNote() {
   const job = S.jobs.find(j => j.id === S.editId);
   if (!job) return;
