@@ -392,6 +392,10 @@ function setPanelEditMode(enabled) {
       });
     }
   }
+  if (S.editId) {
+    const j = S.jobs.find(x => x.id === S.editId);
+    if (j) updatePoImageUI(j);
+  }
 }
 
 // ============================================================
@@ -1133,6 +1137,10 @@ function openPanel(id) {
     const editBtn = document.getElementById('panelEditBtn');
     if (editBtn) editBtn.style.display = '';
   }
+  if (S.editId) {
+    const j = S.jobs.find(x => x.id === S.editId);
+    if (j) updatePoImageUI(j);
+  }
 }
 
 function updatePoImageUI(job) {
@@ -1142,24 +1150,60 @@ function updatePoImageUI(job) {
   const replaceBtn = document.getElementById('poImageReplaceBtn');
   const removeBtn = document.getElementById('poImageRemoveBtn');
   const input = document.getElementById('jPoImageInput');
+  const actionsEl = document.querySelector('.po-image-actions');
   if (!placeholder || !preview || !uploadBtn || !replaceBtn || !removeBtn || !input) return;
   const url = job && job.poContract && job.poContract.imageUrl;
   if (url) {
     placeholder.style.display = 'none';
     preview.style.display = 'block';
     preview.src = url;
+    preview.classList.add('po-image-clickable');
+    preview.onclick = function () { openPoImageLightbox(preview.src); };
+    if (actionsEl) actionsEl.style.display = panelEditMode ? '' : 'none';
     uploadBtn.style.display = 'none';
-    replaceBtn.style.display = '';
-    removeBtn.style.display = '';
+    replaceBtn.style.display = panelEditMode ? '' : 'none';
+    removeBtn.style.display = panelEditMode ? '' : 'none';
   } else {
     placeholder.style.display = 'block';
     preview.style.display = 'none';
     preview.removeAttribute('src');
-    uploadBtn.style.display = '';
+    preview.onclick = null;
+    preview.classList.remove('po-image-clickable');
+    if (actionsEl) actionsEl.style.display = panelEditMode ? '' : 'none';
+    uploadBtn.style.display = panelEditMode ? '' : 'none';
     replaceBtn.style.display = 'none';
     removeBtn.style.display = 'none';
   }
   input.value = '';
+}
+
+function openPoImageLightbox(src) {
+  if (!src) return;
+  let el = document.getElementById('poImageLightbox');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'poImageLightbox';
+    el.className = 'po-image-lightbox';
+    el.innerHTML = '<button type="button" class="po-image-lightbox-close" aria-label="Close" onclick="closePoImageLightbox()">&times;</button><img alt="PO reference" />';
+    el.onclick = function (e) { if (e.target === el) closePoImageLightbox(); };
+    el.querySelector('img').onclick = function (e) { e.stopPropagation(); };
+    document.body.appendChild(el);
+  }
+  const img = el.querySelector('img');
+  if (img) img.src = src;
+  el.classList.add('open');
+  var esc = function (e) { if (e.key === 'Escape') closePoImageLightbox(); };
+  el._esc = esc;
+  document.addEventListener('keydown', esc);
+}
+
+function closePoImageLightbox() {
+  const el = document.getElementById('poImageLightbox');
+  if (el) {
+    if (el._esc) document.removeEventListener('keydown', el._esc);
+    el._esc = null;
+    el.classList.remove('open');
+  }
 }
 
 async function onPoImageFileSelected(input) {
@@ -1284,6 +1328,14 @@ async function saveJob() {
       const el = document.getElementById(f.id);
       if (el && el.value !== undefined) job.poContract[f.key] = el.value.trim() || '';
     });
+  }
+  // Preserve PO image reference so it is not lost on panel save
+  if (S.editId) {
+    const existingForPo = S.jobs.find(j => j.id === S.editId);
+    if (existingForPo && existingForPo.poContract && (existingForPo.poContract.imagePath != null || existingForPo.poContract.imageUrl != null)) {
+      if (existingForPo.poContract.imagePath != null) job.poContract.imagePath = existingForPo.poContract.imagePath;
+      if (existingForPo.poContract.imageUrl != null) job.poContract.imageUrl = existingForPo.poContract.imageUrl;
+    }
   }
 
   if (S.editId) {
