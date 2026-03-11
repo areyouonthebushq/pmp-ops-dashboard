@@ -2096,6 +2096,12 @@ function pulseNotesJobSelect() {
   setTimeout(function () { el.classList.remove('notes-select-glow'); }, 750);
 }
 
+function notesSearchAction() {
+  renderNotesPage();
+  const s = document.getElementById('notesSearch');
+  if (s) s.focus();
+}
+
 // ============================================================
 // TOAST
 // ============================================================

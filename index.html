@@ -323,12 +323,16 @@
         </div>
         <div class="notes-utility-row" id="notesAddRow" style="display:none;">
             <textarea class="fta notes-textarea" id="notesNewText" placeholder="Add note" onkeydown="notesComposerKeydown(event)"></textarea>
+            <button type="button" class="bar-btn go notes-utility-action" onclick="addNoteFromNotesPage()">ADD</button>
+            <div></div>
         </div>
         <div class="notes-utility-row" id="notesSearchRow" style="display:none;">
             <div class="search-wrap notes-search-wrap">
                 <input class="search-input" id="notesSearch" placeholder="Search notes" oninput="renderNotesPage()">
                 <span class="search-count" id="notesSearchCount"></span>
             </div>
+            <div></div>
+            <button type="button" class="bar-btn go notes-utility-action" onclick="notesSearchAction()">SEARCH</button>
         </div>
         <div class="sec">NOTES</div>
         <div class="log-recent notes-feed" id="notesFeed"></div>

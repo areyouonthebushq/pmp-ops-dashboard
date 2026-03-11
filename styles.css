@@ -364,6 +364,8 @@
     }
     .bar-btn:hover { border-color: var(--g); color: var(--g); }
     .bar-btn.warn:hover { border-color: var(--r); color: var(--r); }
+    .bar-btn.go { border-color: var(--g2); background: var(--g3); color: var(--g); font-weight: 700; }
+    .bar-btn.go:hover { border-color: var(--g); background: var(--g); color: #000; box-shadow: var(--gg); }
 
     /* NAV */
     .nav {
@@ -1777,10 +1779,11 @@
     .notes-select-glow { border-color: var(--g) !important; box-shadow: var(--gg) !important; }
     .notes-utility-row { margin-bottom: var(--space-md); display:grid; grid-template-columns: 1fr auto auto; align-items:center; gap: var(--space-md); }
     /* Add-note row ends under the + button (col 2) */
-    #notesAddRow .notes-textarea { grid-column: 1 / 3; width: 100%; height: 38px; min-height: 38px; max-height: 120px; overflow:auto; resize:none; }
-    /* Search row ends under the search button (col 3) */
-    #notesSearchRow .notes-search-wrap { grid-column: 1 / 4; width: 100%; max-width: none; }
+    #notesAddRow .notes-textarea { grid-column: 1 / 2; width: 100%; height: 38px; min-height: 38px; max-height: 120px; overflow:auto; resize:none; }
+    /* Search input ends under the search button (col 3) */
+    #notesSearchRow .notes-search-wrap { grid-column: 1 / 3; width: 100%; max-width: none; }
     #notesSearchRow .notes-search-wrap .search-count { position:absolute; right: var(--space-md); top:50%; transform:translateY(-50%); }
+    .notes-utility-action { min-height: 38px; }
     .notes-feed.notes-feed { margin-bottom: var(--space-lg); }
     .notes-feed .progress-entry { padding: var(--space-sm) 0; border-bottom: 1px solid var(--b1); display: block; }
     .notes-feed .notes-entry-job { font-size: 10px; letter-spacing: 1px; color: var(--d3); text-transform: uppercase; margin-bottom: var(--space-xs); }
