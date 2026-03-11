@@ -82,10 +82,6 @@ function buildPressCardHTML(p, linkTo, showControls) {
   const job = p.job_id ? S.jobs.find(j => j.id === p.job_id) : null;
   const ah = job ? assetHealth(job) : { done: 0, total: 0, pct: 0 };
   const prog = job ? progressDisplay(job) : null;
-  const segs = ASSET_DEFS.slice(0, 8).map(a => {
-    const got = job && job.assets && job.assets[a.key]?.received;
-    return `<div class="abar-seg ${got ? 'done' : ''}"></div>`;
-  }).join('');
   const isPressStation = linkTo === 'pressStation';
   const jobBlockClick = (isPressStation && showControls && job) ? `openPanel('${job.id}')` : (linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : linkTo === 'pressStation' ? `openPressStation('${p.id}')` : `openPanel('${job?.id}')`);
   const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : linkTo === 'pressStation' ? (showControls ? 'TAP → JOB PANEL' : 'TAP → STATION') : 'TAP TO OPEN →';
@@ -115,7 +111,7 @@ function buildPressCardHTML(p, linkTo, showControls) {
     </div>
     <div class="pc-assets pc-assets-demoted" onclick="event.stopPropagation(); openAssetsOverlay('${job.id}')" style="cursor:pointer" title="View and edit assets">
       <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
-      <div class="abar abar-thin">${segs}</div>
+      ${ahHTML(job)}
     </div>
     ` : (isPressStation ? `<div class="pc-job-link" onclick="openPressStation('${p.id}')" title="Open Press Station" style="cursor:pointer"><div class="pc-idle-msg">NO JOB ASSIGNED</div></div>` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>')}
     ${showControls ? `
@@ -976,6 +972,14 @@ function renderLog() {
   const viewLog = S.qcLog.filter(e => e.date === logViewDate);
   const todayLog = isToday ? viewLog : S.qcLog.filter(e => e.date === today);
 
+  function parseSurfaceWho(s) {
+    const raw = (s || '').trim();
+    if (!raw) return { surface: '—', who: '' };
+    const parts = raw.split('·').map(x => x.trim()).filter(Boolean);
+    if (parts.length <= 1) return { surface: raw, who: '' };
+    return { surface: parts[0], who: parts.slice(1).join(' · ') };
+  }
+
   const badge = document.getElementById('logBadge');
   if (badge) {
     badge.textContent = todayLog.length;
@@ -1051,13 +1055,15 @@ function renderLog() {
         if (e.stage === 'rejected') return; // reject rows rendered from qcLog with defect type
         const action = e.stage === 'pressed' ? 'PRESS' : e.stage === 'qc_passed' ? 'PASS' : 'LOG';
         const cls = e.stage === 'pressed' ? 'pressed' : e.stage === 'qc_passed' ? 'qc_passed' : '';
+        const sw = parseSurfaceWho(e.person || '');
         items.push({
           ts: e.timestamp,
           qty: parseInt(e.qty, 10) || 0,
           action,
           defect: '',
           cls,
-          source: e.person || '—',
+          source: sw.surface || '—',
+          who: sw.who || '',
           press: (j.press || '').split(',')[0].trim(),
           jobLabel: `${j.catalog || '—'} · ${j.artist || '—'}`,
         });
@@ -1094,6 +1100,7 @@ function renderLog() {
         const metaParts = [
           escapeHtml(it.source || '—'),
           it.press ? escapeHtml(it.press) : null,
+          it.who ? escapeHtml(it.who) : null,
           escapeHtml(time),
           escapeHtml(it.jobLabel || '—'),
         ].filter(Boolean);
@@ -1374,22 +1381,20 @@ function renderProgressSection() {
   const rejected = p.rejected;
   const pendingQC = p.pendingQC;
 
-  summaryEl.innerHTML = `
-    <div class="ps-cell"><span class="ps-val">${ordered.toLocaleString()}</span>ORDERED</div>
-    <div class="ps-cell"><span class="ps-val">${pressed.toLocaleString()}</span>PRESSED</div>
-    <div class="ps-cell"><span class="ps-val">${qcPassed.toLocaleString()}</span>QC PASSED</div>
-    <div class="ps-cell"><span class="ps-val">${rejected.toLocaleString()}</span>REJECTED</div>
-    <div class="ps-cell"><span class="ps-val">${pendingQC.toLocaleString()}</span>PENDING QC</div>
-  `;
-
   const completionRatio = ordered > 0 ? Math.min(1, qcPassed / ordered) : 0;
   const barPct = Math.round(completionRatio * 100);
   const overQty = pressed > ordered;
+  summaryEl.innerHTML = `
+    <div class="ps-cell"><span class="ps-val" style="color:var(--d)">${barPct}%</span>QC COMPLETE</div>
+    <div class="ps-cell"><span class="ps-val" style="color:var(--w)">${pressed.toLocaleString()}</span>PRESSED</div>
+    <div class="ps-cell"><span class="ps-val" style="color:var(--g)">${qcPassed.toLocaleString()}</span>PASSED</div>
+    <div class="ps-cell"><span class="ps-val" style="color:var(--r)">${rejected.toLocaleString()}</span>REJECTED</div>
+    <div class="ps-cell"><span class="ps-val" style="color:var(--d2)">${pendingQC.toLocaleString()}</span>PENDING</div>
+  `;
+
   barEl.innerHTML = `
-    <div class="progress-bar-outer">
-    <div class="progress-bar-fill" style="width:${barPct}%"></div>
-    </div>
-    <div class="progress-bar-text">QC: ${qcPassed.toLocaleString()} / ${ordered.toLocaleString()} ORDERED · PRESSED: ${pressed.toLocaleString()}</div>
+    <div class="dl-bar td">${progressDualBarHTML(p.pressedPct, p.qcPassedPct)}</div>
+    <div class="progress-bar-text">QC ${qcPassed.toLocaleString()}/${ordered.toLocaleString()} · Pressed ${pressed.toLocaleString()}</div>
     ${overQty ? '<div class="progress-over-qty">OVER QTY</div>' : ''}
   `;
 
@@ -1448,18 +1453,28 @@ function renderNotesPage() {
   const selectedId = (selEl.value || '').trim();
   const active = document.activeElement;
   if (pickerEl && !(active && active.id === 'notesJobSelect')) {
+    const email = (window.PMP?.userProfile?.email || '').toLowerCase();
+    const name = (window.PMP?.userProfile?.display_name || '').toLowerCase();
+    const canAlert = email.includes('piper') || name.includes('piper');
     pickerEl.innerHTML = `<select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
 <option value="">Select job</option>
+<option value="!TEAM" ${selectedId === '!TEAM' ? 'selected' : ''}>!TEAM</option>
+${canAlert ? `<option value="!ALERT" ${selectedId === '!ALERT' ? 'selected' : ''}>!ALERT</option>` : ''}
 ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'}${j.status ? ' (' + j.status + ')' : ''}</option>`).join('')}
 </select>`;
   }
 
   let entries = [];
   if (selectedId) {
+    if (selectedId === '!TEAM' || selectedId === '!ALERT') {
+      const ch = (S.notesChannels && Array.isArray(S.notesChannels[selectedId])) ? S.notesChannels[selectedId] : [];
+      ch.forEach(e => entries.push({ jobId: selectedId, catalog: selectedId, artist: '', album: '', text: e.text, person: e.person, timestamp: e.timestamp }));
+    } else {
     const job = S.jobs.find(j => j.id === selectedId);
     if (job) {
       ensureNotesLog(job);
       (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, catalog: job.catalog || '', artist: job.artist || '', album: job.album || '', text: e.text, person: e.person, timestamp: e.timestamp }));
+    }
     }
   } else {
     allJobs.forEach(job => {
@@ -1495,7 +1510,8 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         return `<div class="progress-entry"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-meta">${meta}</div><div class="notes-entry-text">${escapeHtml(e.text)}</div></div>`;
       }).join('');
 
-  if (addBtn) addBtn.classList.toggle('is-disabled', !selectedId);
+  const addAllowed = !!selectedId && (selectedId !== '!ALERT' || ((window.PMP?.userProfile?.email || '').toLowerCase().includes('piper') || (window.PMP?.userProfile?.display_name || '').toLowerCase().includes('piper')));
+  if (addBtn) addBtn.classList.toggle('is-disabled', !addAllowed);
   if (addRow) addRow.style.display = (selectedId && S.notesUtilityOpen === 'add') ? '' : 'none';
   if (searchRow) searchRow.style.display = (S.notesUtilityOpen === 'search') ? '' : 'none';
   if (searchBtn) searchBtn.classList.toggle('active', S.notesUtilityOpen === 'search');

@@ -89,6 +89,7 @@ let S = {
   presses: JSON.parse(JSON.stringify(DEFAULT_PRESSES)),
   todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)),
   qcLog: [],
+  notesChannels: { '!TEAM': [], '!ALERT': [] },
   mode: 'floor',
   editId: null,
   qcSelectedJob: null,
@@ -179,6 +180,14 @@ async function loadAll() {
       console.warn('[PMP] Supabase returned 0 jobs but local state has', S.jobs.length, '— keeping local state (possible transient failure)');
     }
     if (data.lastReset) S._lastReset = data.lastReset;
+    if (data.notesChannels && typeof data.notesChannels === 'object') {
+      S.notesChannels = data.notesChannels;
+    } else if (!S.notesChannels || typeof S.notesChannels !== 'object') {
+      S.notesChannels = { '!TEAM': [], '!ALERT': [] };
+    } else {
+      if (!Array.isArray(S.notesChannels['!TEAM'])) S.notesChannels['!TEAM'] = [];
+      if (!Array.isArray(S.notesChannels['!ALERT'])) S.notesChannels['!ALERT'] = [];
+    }
     S.jobs.forEach(ensureJobProgressLog);
     syncJobPressFromPresses();
     checkTodoReset();
@@ -244,7 +253,9 @@ function logJobProgress(jobId, stage, qty, person) {
     const newRej = cur.rejected + q;
     if (newRej > ordered) return Promise.resolve({ ok: false, error: 'rejected cannot exceed ordered' });
   }
-  const personVal = (person != null && String(person).trim()) ? String(person).trim() : 'UNKNOWN';
+  const surface = (person != null && String(person).trim()) ? String(person).trim() : 'UNKNOWN';
+  const who = (window.PMP?.userProfile?.display_name || window.PMP?.userProfile?.email || (S.mode === 'admin' ? 'Admin' : 'Operator') || '—');
+  const personVal = surface.includes('·') ? surface : `${surface} · ${who}`;
   const timestamp = new Date().toISOString();
   job.progressLog.push({ qty: q, stage, person: personVal, timestamp });
 
@@ -2019,6 +2030,28 @@ async function addNoteFromNotesPage() {
   const selEl = document.getElementById('notesJobSelect');
   const jobId = selEl && (selEl.value || '').trim();
   if (!jobId) return;
+  if (jobId === '!TEAM' || jobId === '!ALERT') {
+    const textEl = document.getElementById('notesNewText');
+    const text = textEl && textEl.value ? textEl.value.trim() : '';
+    if (!text) return;
+    if (jobId === '!ALERT') {
+      const email = (window.PMP?.userProfile?.email || '').toLowerCase();
+      const name = (window.PMP?.userProfile?.display_name || '').toLowerCase();
+      const ok = email.includes('piper') || name.includes('piper');
+      if (!ok) return;
+    }
+    if (!S.notesChannels || typeof S.notesChannels !== 'object') S.notesChannels = { '!TEAM': [], '!ALERT': [] };
+    if (!Array.isArray(S.notesChannels[jobId])) S.notesChannels[jobId] = [];
+    const person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
+    S.notesChannels[jobId].push({ text, person, timestamp: new Date().toISOString() });
+    if (textEl) textEl.value = '';
+    await Storage.saveNotesChannels(S.notesChannels).catch(() => {});
+    S.notesUtilityOpen = null;
+    S.notesComposerOpen = false;
+    renderNotesPage();
+    toast('NOTE LOGGED');
+    return;
+  }
   const job = S.jobs.find(j => j.id === jobId);
   if (!job) return;
   const textEl = document.getElementById('notesNewText');
@@ -2057,6 +2090,16 @@ function addAssemblyNote() {
   toast('NOTE LOGGED');
 }
 
+function panelAddNote() {
+  const prod = document.getElementById('jNotesInput');
+  const asm = document.getElementById('jAssemblyInput');
+  const prodText = prod && prod.value ? prod.value.trim() : '';
+  const asmText = asm && asm.value ? asm.value.trim() : '';
+  const activeId = document.activeElement ? document.activeElement.id : '';
+  if (activeId === 'jAssemblyInput' || (!prodText && asmText)) addAssemblyNote();
+  else addProductionNote();
+}
+
 function notesComposerKeydown(e) {
   if (!e) return;
   if (e.key === 'Enter' && !e.shiftKey) {
@@ -2085,6 +2128,12 @@ function toggleNotesUtility(which) {
   if (which === 'add' && !jobId) {
     pulseNotesJobSelect();
     return;
+  }
+  if (which === 'add' && jobId === '!ALERT') {
+    const email = (window.PMP?.userProfile?.email || '').toLowerCase();
+    const name = (window.PMP?.userProfile?.display_name || '').toLowerCase();
+    const ok = email.includes('piper') || name.includes('piper');
+    if (!ok) { pulseNotesJobSelect(); return; }
   }
   const next = (S.notesUtilityOpen === which) ? null : which;
   S.notesUtilityOpen = next;

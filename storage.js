@@ -2,6 +2,7 @@
 // STORAGE — unified on window.storage, no localStorage split
 // ============================================================
 const STORE_KEY = 'pmp_ops_data';
+const NOTES_CHANNELS_KEY = 'pmp_notes_channels';
 
 async function safeGet(k) {
   try {
@@ -196,10 +197,14 @@ const Storage = {
         data.presses = JSON.parse(JSON.stringify(DEFAULT_PRESSES));
         await window.PMP.Supabase.savePresses(data.presses).catch(() => {});
       }
+      try {
+        const rawChannels = await safeGet(NOTES_CHANNELS_KEY);
+        data.notesChannels = rawChannels ? JSON.parse(rawChannels) : null;
+      } catch { data.notesChannels = null; }
       return data;
     }
     const raw = await safeGet(STORE_KEY);
-    if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], lastReset: null };
+    if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], lastReset: null, notesChannels: null };
     const data = JSON.parse(raw);
     return {
       jobs: data.jobs || [],
@@ -207,6 +212,7 @@ const Storage = {
       todos: data.todos || { daily: [], weekly: [], standing: [] },
       qcLog: data.qcLog || [],
       lastReset: data.lastReset || null,
+      notesChannels: data.notesChannels || null,
     };
   },
   saveJob(job) {
@@ -241,6 +247,15 @@ const Storage = {
         .finally(function () { saveInFlight = false; });
     }
     pendingWrites.delete(job.id);
+    return flushLocalSave();
+  },
+
+  saveNotesChannels(channels) {
+    const payload = channels && typeof channels === 'object' ? channels : { '!TEAM': [], '!ALERT': [] };
+    if (useSupabase()) {
+      return safeSet(NOTES_CHANNELS_KEY, payload);
+    }
+    S.notesChannels = payload;
     return flushLocalSave();
   },
   updateJobAssets(jobId, assets) {
@@ -373,6 +388,7 @@ function flushLocalSave() {
     todos: S.todos,
     qcLog: S.qcLog,
     lastReset: S._lastReset || new Date().toDateString(),
+    notesChannels: S.notesChannels || null,
   };
   return safeSet(STORE_KEY, payload).then(() => setSyncState('synced'));
 }
@@ -388,6 +404,7 @@ function scheduleSave() {
       todos: S.todos,
       qcLog: S.qcLog,
       lastReset: S._lastReset || new Date().toDateString(),
+      notesChannels: S.notesChannels || null,
     });
     setSyncState('synced');
   }, 800);
