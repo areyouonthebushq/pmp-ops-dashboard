@@ -914,6 +914,7 @@
     .panel-close:hover { border-color: var(--r); color: var(--r); }
     #panelEditBtn { font-size: 10px; letter-spacing: 1px; width: auto; padding: 0 12px; }
     #panelEditBtn:hover { border-color: var(--g); color: var(--g); }
+    #panelEditBtn.editing { border-color: var(--g); color: var(--g); }
 
     /* Single scrollable form body */
     .panel-body { flex:1; overflow-y:auto; padding: var(--space-lg); }

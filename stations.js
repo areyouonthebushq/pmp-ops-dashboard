@@ -194,11 +194,18 @@ function releasePressByJob(jobId) {
   syncJobPressFromPresses();
 }
 
+function blurPressGridSelectIfFocused() {
+  const grid = document.getElementById('pressGrid');
+  const active = document.activeElement;
+  if (grid && active && active.tagName === 'SELECT' && grid.contains(active)) active.blur();
+}
+
 function assignJob(pid, jid) {
   const p = S.presses.find(x => x.id === pid);
   if (p) {
     setAssignment(pid, jid || null);
     Storage.savePresses(S.presses);
+    blurPressGridSelectIfFocused();
     renderAll();
   }
 }
@@ -208,6 +215,7 @@ function setPressStatus(pid, st) {
   if (p) {
     p.status = st;
     Storage.savePresses(S.presses);
+    blurPressGridSelectIfFocused();
     renderAll();
   }
 }
@@ -435,7 +443,7 @@ function exitQCStation() {
 function renderQCStationShell() {
   const today = new Date().toDateString();
   const todayLog = S.qcLog.filter(e => e.date === today);
-  const pressing = sortJobsByCatalogAsc(S.jobs.filter(j => ['pressing','assembly'].includes(j.status)));
+  const pressing = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && ['pressing','assembly'].includes(j.status)));
   const selectedJob = S.qcSelectedJob ? S.jobs.find(j => j.id === S.qcSelectedJob) : null;
 
   const currentEl = document.getElementById('qcStationCurrent');

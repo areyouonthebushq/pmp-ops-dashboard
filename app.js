@@ -361,7 +361,7 @@ function setPanelEditMode(enabled) {
   if (foot) foot.style.display = enabled ? 'flex' : 'none';
 
   const editBtn = document.getElementById('panelEditBtn');
-  if (editBtn) editBtn.textContent = enabled ? 'EDITING' : 'EDIT';
+  if (editBtn) { editBtn.textContent = enabled ? 'EDITING' : 'EDIT'; editBtn.classList.toggle('editing', enabled); }
 
   body.querySelectorAll('button.btn.go').forEach(el => {
     if (enabled) {
@@ -1018,6 +1018,8 @@ function openPanel(id) {
     document.getElementById('panelId').textContent = j.catalog || j.artist || 'Job';
     document.getElementById('panelSub').textContent = `${j.artist || ''} · ${j.album || ''}`;
     document.getElementById('delBtn').style.display = S.mode === 'admin' ? '' : 'none';
+    const archiveBtn = document.getElementById('archiveBtn');
+    if (archiveBtn) archiveBtn.style.display = (j && !j.archived_at) ? '' : 'none';
 
     FIELD_MAP.forEach(f => {
       const el = document.getElementById(f.id);
@@ -1040,6 +1042,8 @@ function openPanel(id) {
     document.getElementById('panelId').textContent = 'NEW JOB';
     document.getElementById('panelSub').textContent = '';
     document.getElementById('delBtn').style.display = 'none';
+    const archiveBtn = document.getElementById('archiveBtn');
+    if (archiveBtn) archiveBtn.style.display = 'none';
     clearFields();
   }
   buildAssetList();
@@ -1132,7 +1136,7 @@ async function saveJob() {
   if (!cat && !artist) { toast('CATALOG # OR ARTIST REQUIRED'); return; }
 
   if (!S.editId) {
-    const dupes = findDuplicateJob(S.jobs, cat, artist, album, S.editId || undefined);
+    const dupes = findDuplicateJob(S.jobs.filter(j => !isJobArchived(j)), cat, artist, album, S.editId || undefined);
     if (dupes.length > 0) {
       const existing = dupes[0];
       openConfirm(
@@ -1165,6 +1169,11 @@ async function saveJob() {
   if (S.editId) {
     const existing = S.jobs.find(j => j.id === S.editId);
     job.progressLog = (existing && Array.isArray(existing.progressLog)) ? existing.progressLog : [];
+    if (existing) {
+      job.archived_at = existing.archived_at || null;
+      job.archived_by = existing.archived_by || null;
+      job.archive_reason = existing.archive_reason || null;
+    }
     const notesEl = document.getElementById('jNotesInput');
     const assemblyEl = document.getElementById('jAssemblyInput');
     job.notes = (notesEl && notesEl.value !== undefined) ? notesEl.value.trim() : (existing && existing.notes != null ? existing.notes : job.notes);
@@ -1200,7 +1209,26 @@ async function saveJob() {
 }
 
 // ============================================================
-// DELETE — confirm dialog
+// ARCHIVE — soft remove from active views
+// ============================================================
+function archiveJob() {
+  const j = S.jobs.find(x => x.id === S.editId);
+  if (!j) return;
+  if (j.archived_at) { toast('Job is already archived'); return; }
+  const who = (typeof getAuthRole === 'function' && window.PMP?.userProfile?.email) ? window.PMP.userProfile.email : (window.PMP?.userProfile?.display_name || 'unknown');
+  j.archived_at = new Date().toISOString();
+  j.archived_by = who;
+  j.archive_reason = '';
+  if (typeof releasePressByJob === 'function') releasePressByJob(j.id);
+  Storage.saveJob(j);
+  if (S.presses && S.presses.length) Storage.savePresses(S.presses);
+  closePanel();
+  renderAll();
+  toast('Job archived');
+}
+
+// ============================================================
+// DELETE — confirm dialog (admin-only, hard delete)
 // ============================================================
 let confCb = null;
 
@@ -1405,7 +1433,7 @@ function wizardSave() {
   const artist = (wizardData.artist || '').trim();
   const album = (wizardData.album || '').trim();
   if (!cat && !artist) { toast('Catalog # or Artist required'); return; }
-  const dupes = findDuplicateJob(S.jobs, cat, artist, album, undefined);
+  const dupes = findDuplicateJob(S.jobs.filter(j => !isJobArchived(j)), cat, artist, album, undefined);
   if (dupes.length > 0) {
     const existing = dupes[0];
     duplicateExistingJob = existing;
@@ -1631,7 +1659,7 @@ function importCSV(input) {
       const row = {};
       hdrs.forEach((h, i) => row[h] = (vals[i] || '').trim());
       if (row.catalog || row.artist) {
-        const existingCat = row.catalog ? S.jobs.find(j => j.catalog && j.catalog.toUpperCase() === (row.catalog || '').toUpperCase()) : null;
+        const existingCat = row.catalog ? S.jobs.find(j => !isJobArchived(j) && j.catalog && j.catalog.toUpperCase() === (row.catalog || '').toUpperCase()) : null;
         if (existingCat) {
           console.warn('[PMP] CSV import skipped duplicate:', row.catalog);
           return;

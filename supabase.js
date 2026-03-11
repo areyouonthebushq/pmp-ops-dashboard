@@ -46,6 +46,9 @@
       inv2: job.inv2 || null,
       pay2: job.pay2 || null,
       assets: job.assets || {},
+      archived_at: job.archived_at || null,
+      archived_by: job.archived_by || null,
+      archive_reason: job.archive_reason || null,
     };
   }
 
@@ -85,6 +88,9 @@
       pay2: row.pay2,
       assets: row.assets || {},
       progressLog: [],
+      archived_at: row.archived_at || null,
+      archived_by: row.archived_by || null,
+      archive_reason: row.archive_reason || null,
     };
     return job;
   }

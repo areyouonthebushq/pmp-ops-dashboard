@@ -2,23 +2,25 @@
 // SHARED DATA & RENDER HELPERS — single source for floor/stats/press
 // ============================================================
 function getFloorStats() {
-  const active = S.jobs.filter(j => ['pressing','assembly'].includes(j.status));
-  const overdue = S.jobs.filter(j => j.due && j.status !== 'done' && new Date(j.due) < Date.now());
+  const open = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
+  const active = open.filter(j => ['pressing','assembly'].includes(j.status));
+  const overdue = open.filter(j => j.due && new Date(j.due) < Date.now());
   const online = S.presses.filter(p => p.status === 'online').length;
   const onPress = S.presses.filter(p => p.job_id).map(p => p.job_id);
   return [
     { key: 'presses', v: `${online}/${S.presses.length}`, l: 'PRESSES', s: 'online', c: online < S.presses.length ? 'warn' : '' },
     { key: 'active', v: active.length, l: 'ACTIVE', s: 'pressing/assembly', c: '' },
-    { key: 'queued', v: S.jobs.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
+    { key: 'queued', v: open.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
     { key: 'overdue', v: overdue.length, l: 'OVERDUE', s: 'past due date', c: overdue.length ? 'red' : '' },
-    { key: 'total', v: S.jobs.filter(j => j.status !== 'done').length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
+    { key: 'total', v: open.length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
   ];
 }
 
 function getFloorJobs(query, statFilter) {
   const q = (query || '').toLowerCase().trim();
-  const total = S.jobs.filter(j => j.status !== 'done').length;
-  let jobs = S.jobs.filter(j => j.status !== 'done');
+  const open = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
+  const total = open.length;
+  let jobs = open.slice();
   if (statFilter === 'presses') {
     const onPress = S.presses.filter(p => p.job_id).map(p => p.job_id);
     jobs = jobs.filter(j => onPress.includes(j.id));
@@ -120,7 +122,7 @@ function buildPressCardHTML(p, linkTo, showControls) {
     <div class="pc-controls" onclick="event.stopPropagation()">
       <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
       <option value="">— ASSIGN JOB</option>
-      ${sortJobsByCatalogAsc(S.jobs.filter(j => j.status !== 'done')).map(j => `<option value="${j.id}" ${p.job_id === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
+      ${sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done')).map(j => `<option value="${j.id}" ${p.job_id === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
       </select>
       <select class="pc-select" style="max-width:110px" onchange="setPressStatus('${p.id}',this.value)">
       <option value="online"  ${p.status === 'online'  ? 'selected' : ''}>Online</option>
@@ -243,7 +245,7 @@ function renderFloor() {
 
   const doneEl = document.getElementById('recentDone');
   if (doneEl) {
-    const doneJobs = S.jobs.filter(j => j.status === 'done').slice(0, 5);
+    const doneJobs = S.jobs.filter(j => !isJobArchived(j) && j.status === 'done').slice(0, 5);
     if (doneJobs.length) {
       doneEl.innerHTML = `
         <div class="sec" style="color:var(--d3)">RECENTLY COMPLETED</div>
@@ -628,7 +630,8 @@ function jobsTableHeaderHTML() {
 function renderJobs() {
   const filter = document.getElementById('jobFilter')?.value || '';
   const q = (document.getElementById('jobSearch')?.value || '').toLowerCase().trim();
-  let jobs = filter ? S.jobs.filter(j => j.status === filter) : S.jobs;
+  const activeJobs = S.jobs.filter(j => !isJobArchived(j));
+  let jobs = filter ? activeJobs.filter(j => j.status === filter) : activeJobs.slice();
 
   if (q) {
     jobs = jobs.filter(j =>
@@ -645,7 +648,7 @@ function renderJobs() {
 
   const countEl = document.getElementById('jobCount');
   if (countEl) {
-    countEl.textContent = `${jobs.length} of ${S.jobs.length}`;
+    countEl.textContent = `${jobs.length} of ${activeJobs.length}`;
   }
 
   const tbody = document.getElementById('jobsBody');
@@ -970,7 +973,7 @@ function renderLog() {
   if (picker) {
     const active = document.activeElement;
     if (!(active && active.tagName === 'SELECT' && picker.contains(active))) {
-      const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => j.status !== 'done'));
+      const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
       const selectedId = S.logSelectedJob || '';
       picker.innerHTML = `
     <select class="qc-job-select" onchange="selectLogJob(this.value || null)">
@@ -1077,7 +1080,7 @@ function renderTV() {
 
   const qe = document.getElementById('tvBody');
   if (qe) {
-    const active = S.jobs.filter(j => j.status !== 'done');
+    const active = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
     qe.innerHTML = active.map(j => {
       const ah = assetHealth(j);
       return `<tr>
@@ -1093,7 +1096,7 @@ function renderTV() {
 
   const ti = document.getElementById('tvTicker');
   if (ti) {
-    const parts = S.jobs.filter(j => j.status !== 'done')
+    const parts = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done')
       .map(j => `★ ${j.catalog || '—'} · ${j.artist || ''} · ${j.format || ''} · Due: ${j.due || 'TBD'}`);
     ti.textContent = parts.join('    ') || '★ NO ACTIVE JOBS ★';
   }

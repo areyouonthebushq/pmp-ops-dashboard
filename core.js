@@ -267,6 +267,10 @@ function ensureNotesLog(job) {
   }
 }
 
+function isJobArchived(job) {
+  return !!(job && job.archived_at);
+}
+
 function findDuplicateJob(jobs, catalog, artist, album, excludeId) {
   return jobs.filter(j => {
     if (excludeId && j.id === excludeId) return false;
