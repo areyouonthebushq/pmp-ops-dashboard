@@ -210,6 +210,15 @@ function assignJob(pid, jid) {
   }
 }
 
+/** Press Station: change which job is assigned to the current press. Same job list/sort as LOG picker. */
+function selectPressStationJob(jobId) {
+  const press = getStationPress();
+  if (!press) return;
+  setAssignment(press.id, jobId || null);
+  Storage.savePresses(S.presses);
+  renderAll();
+}
+
 function setPressStatus(pid, st) {
   const p = S.presses.find(x => x.id === pid);
   if (p) {
@@ -293,8 +302,24 @@ function renderPressStationShell() {
   nameEl.textContent = press ? press.name : '—';
   nameEl.classList.toggle('seven', press && press.type === '7"');
 
+  const allJobs = typeof sortJobsByCatalogAsc === 'function'
+    ? sortJobsByCatalogAsc(S.jobs.filter(function (j) { return !isJobArchived(j) && j.status !== 'done'; }))
+    : [];
+  const selectedId = (press && press.job_id) || '';
+
+  const jobPickerHTML = `
+  <div class="ps-v1-sec">SELECT JOB</div>
+  <div class="ps-v1-job-picker">
+    <select class="qc-job-select" onchange="selectPressStationJob(this.value || null)">
+      <option value="">— No job —</option>
+      ${allJobs.map(function (j) {
+        return '<option value="' + j.id + '" ' + (selectedId === j.id ? 'selected' : '') + '>' + (j.catalog || '—') + ' · ' + (j.artist || '—') + (j.status ? ' (' + j.status + ')' : '') + '</option>';
+      }).join('')}
+    </select>
+  </div>`;
+
   if (!job) {
-    contentEl.innerHTML = `<div class="ps-v1-idle">NO JOB ASSIGNED</div><p style="color:var(--d3);margin-top:var(--space-sm)">Assign a job from Admin to start logging.</p>`;
+    contentEl.innerHTML = `<div class="ps-v1-console-wrap">${jobPickerHTML}<div class="ps-v1-sec">JOB</div><div class="ps-v1-idle">NO JOB ASSIGNED</div><p style="color:var(--d3);margin-top:var(--space-sm)">Choose a job above to start logging.</p></div>`;
     logEl.innerHTML = '';
     return;
   }
@@ -309,6 +334,8 @@ function renderPressStationShell() {
   if (remaining <= 0 && ordered > 0) blocked.push('Order complete');
 
   contentEl.innerHTML = `
+  <div class="ps-v1-console-wrap">
+  ${jobPickerHTML}
   <div class="ps-v1-sec">JOB</div>
   <div class="ps-v1-job-title">${(job.catalog || '—')} · ${(job.artist || '—')}</div>
   <div class="ps-v1-job-meta">${job.album || ''} ${job.format ? ' · ' + job.format : ''}</div>
@@ -342,7 +369,7 @@ function renderPressStationShell() {
   </button>
 </div>
 ` : ''}
-  `;
+  </div>`;
   logEl.innerHTML = '';
   requestAnimationFrame(() => {
     if (typeof psNumpadUpdateDisplay === 'function') psNumpadUpdateDisplay();
