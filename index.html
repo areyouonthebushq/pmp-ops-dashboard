@@ -311,30 +311,37 @@
 
     <!-- ======= NOTES PAGE ======= -->
     <div class="pg" id="pg-notes">
-        <div class="notes-toolbar">
-            <div class="log-job-picker" id="notesJobPicker">
-                <select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
-                    <option value="">Select job</option>
-                </select>
+        <div class="notes-terminal">
+            <div class="notes-control-rail">
+                <div class="notes-rail-label">CHANNEL</div>
+                <div class="notes-toolbar">
+                    <div class="log-job-picker" id="notesJobPicker">
+                        <select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
+                            <option value="">Select job</option>
+                        </select>
+                    </div>
+                    <button type="button" class="bar-btn notes-rail-btn" id="notesAddBtn" onclick="toggleNotesUtility('add')" title="Add note">+</button>
+                    <button type="button" class="bar-btn notes-rail-btn" id="notesSearchBtn" onclick="toggleNotesUtility('search')" title="Search notes">⌕</button>
+                </div>
             </div>
-            <button type="button" class="bar-btn" id="notesAddBtn" onclick="toggleNotesUtility('add')" title="Add note">+</button>
-            <button type="button" class="bar-btn" id="notesSearchBtn" onclick="toggleNotesUtility('search')" title="Search notes">⌕</button>
-        </div>
-        <div class="notes-utility-row" id="notesAddRow" style="display:none;">
-            <textarea class="fta notes-textarea" id="notesNewText" placeholder="Add note" onkeydown="notesComposerKeydown(event)"></textarea>
-            <button type="button" class="bar-btn go notes-utility-action" onclick="addNoteFromNotesPage()">ADD</button>
-            <div></div>
-        </div>
-        <div class="notes-utility-row" id="notesSearchRow" style="display:none;">
-            <div class="search-wrap notes-search-wrap">
-                <input class="search-input" id="notesSearch" placeholder="Search notes" oninput="renderNotesPage()">
-                <span class="search-count" id="notesSearchCount"></span>
+            <div class="notes-utility-row" id="notesAddRow" style="display:none;">
+                <textarea class="fta notes-textarea" id="notesNewText" placeholder="Add note" onkeydown="notesComposerKeydown(event)"></textarea>
+                <button type="button" class="bar-btn go notes-utility-action" onclick="addNoteFromNotesPage()">ADD</button>
+                <div></div>
             </div>
-            <div></div>
-            <button type="button" class="bar-btn go notes-utility-action" onclick="notesSearchAction()">SEARCH</button>
+            <div class="notes-utility-row" id="notesSearchRow" style="display:none;">
+                <div class="search-wrap notes-search-wrap">
+                    <input class="search-input" id="notesSearch" placeholder="Search notes" oninput="renderNotesPage()">
+                    <span class="search-count" id="notesSearchCount"></span>
+                </div>
+                <div></div>
+                <button type="button" class="bar-btn go notes-utility-action" onclick="notesSearchAction()">SEARCH</button>
+            </div>
+            <div class="notes-feed-sec">NOTES</div>
+            <div class="notes-feed-wrap">
+                <div class="log-recent notes-feed" id="notesFeed"></div>
+            </div>
         </div>
-        <div class="sec">NOTES</div>
-        <div class="log-recent notes-feed" id="notesFeed"></div>
     </div>
 
     <!-- ======= AUDIT PAGE (admin only) ======= -->

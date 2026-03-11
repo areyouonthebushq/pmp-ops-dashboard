@@ -197,10 +197,6 @@ const Storage = {
         data.presses = JSON.parse(JSON.stringify(DEFAULT_PRESSES));
         await window.PMP.Supabase.savePresses(data.presses).catch(() => {});
       }
-      try {
-        const rawChannels = await safeGet(NOTES_CHANNELS_KEY);
-        data.notesChannels = rawChannels ? JSON.parse(rawChannels) : null;
-      } catch { data.notesChannels = null; }
       return data;
     }
     const raw = await safeGet(STORE_KEY);
@@ -253,7 +249,9 @@ const Storage = {
   saveNotesChannels(channels) {
     const payload = channels && typeof channels === 'object' ? channels : { '!TEAM': [], '!ALERT': [] };
     if (useSupabase()) {
-      return safeSet(NOTES_CHANNELS_KEY, payload);
+      return window.PMP.Supabase.saveNotesChannels(payload)
+        .then(function () { S.notesChannels = payload; })
+        .catch(function (e) { console.error('[PMP] saveNotesChannels Supabase error', e); });
     }
     S.notesChannels = payload;
     return flushLocalSave();

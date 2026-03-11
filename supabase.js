@@ -186,12 +186,13 @@
 
     async loadAllData() {
       const client = getClient();
-      const [jobsRes, progressRes, pressesRes, todosRes, qcRes] = await Promise.all([
+      const [jobsRes, progressRes, pressesRes, todosRes, qcRes, channelsRes] = await Promise.all([
         client.from('jobs').select('*').order('created_at', { ascending: true }),
         client.from('progress_log').select('*').order('timestamp', { ascending: true }),
         client.from('presses').select('*'),
         client.from('todos').select('*').order('sort_order', { ascending: true }),
         client.from('qc_log').select('*').order('created_at', { ascending: false }),
+        client.from('notes_channels').select('*'),
       ]);
 
       const jobs = (jobsRes.data || []).map(rowToJob);
@@ -222,7 +223,13 @@
         date: row.date,
       }));
 
-      return { jobs, presses, todos, qcLog };
+      const notesChannels = {};
+      (channelsRes.data || []).forEach((row) => {
+        if (!row || !row.id) return;
+        notesChannels[row.id] = Array.isArray(row.log) ? row.log : [];
+      });
+
+      return { jobs, presses, todos, qcLog, notesChannels };
     },
 
     async saveJob(job) {
@@ -309,12 +316,24 @@
         .on('postgres_changes', { event: '*', schema: 'public', table: 'todos' }, onChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'progress_log' }, onChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'qc_log' }, onChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'notes_channels' }, onChange)
         .subscribe((status) => {
           if (status === 'CHANNEL_ERROR') console.warn('[PMP] Realtime channel error');
         });
       return function unsubscribe() {
         client.removeChannel(channel);
       };
+    },
+
+    async saveNotesChannels(channels) {
+      const client = getClient();
+      const rows = Object.entries(channels || {}).map(([id, log]) => ({
+        id,
+        log: Array.isArray(log) ? log : [],
+      }));
+      if (!rows.length) return;
+      const { error } = await client.from('notes_channels').upsert(rows, { onConflict: 'id' });
+      if (error) throw error;
     },
 
     /**

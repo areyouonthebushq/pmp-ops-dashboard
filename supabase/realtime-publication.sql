@@ -6,3 +6,4 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.presses;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.todos;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.progress_log;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.qc_log;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notes_channels;
