@@ -1348,7 +1348,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         return `<div class="progress-entry"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-meta">${meta}</div><div class="notes-entry-text">${escapeHtml(e.text)}</div></div>`;
       }).join('');
 
-  if (addBtn) addBtn.disabled = !selectedId;
+  if (addBtn) addBtn.classList.toggle('is-disabled', !selectedId);
   if (addRow) addRow.style.display = (selectedId && S.notesUtilityOpen === 'add') ? '' : 'none';
   if (searchRow) searchRow.style.display = (S.notesUtilityOpen === 'search') ? '' : 'none';
   if (searchBtn) searchBtn.classList.toggle('active', S.notesUtilityOpen === 'search');

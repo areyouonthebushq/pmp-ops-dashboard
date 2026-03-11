@@ -2049,7 +2049,10 @@ function toggleNotesUtility(which) {
   if (which !== 'add' && which !== 'search') return;
   const selEl = document.getElementById('notesJobSelect');
   const jobId = selEl && (selEl.value || '').trim();
-  if (which === 'add' && !jobId) return;
+  if (which === 'add' && !jobId) {
+    pulseNotesJobSelect();
+    return;
+  }
   const next = (S.notesUtilityOpen === which) ? null : which;
   S.notesUtilityOpen = next;
   S.notesComposerOpen = (next === 'add');
@@ -2069,6 +2072,15 @@ function toggleNotesUtility(which) {
     const s = document.getElementById('notesSearch');
     if (s) s.focus();
   }
+}
+
+function pulseNotesJobSelect() {
+  const el = document.getElementById('notesJobSelect');
+  if (!el) return;
+  el.classList.remove('notes-select-glow');
+  void el.offsetWidth; // restart animation
+  el.classList.add('notes-select-glow');
+  setTimeout(function () { el.classList.remove('notes-select-glow'); }, 750);
 }
 
 // ============================================================
