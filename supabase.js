@@ -319,6 +319,30 @@
      * Fetch audit log (admin only; RLS enforces). For minimal UI or export.
      * @param {Object} opts - { limit?: number, table_name?: string, entity_id?: string, since?: string (ISO date) }
      */
+    /** PO image: bucket and path convention. Path = {jobId}/po.{ext}. Requires bucket "po-images" (public read, auth write). */
+    getPoImagePath(jobId, filename) {
+      if (!jobId || !filename) return null;
+      const ext = (filename.match(/\.(jpe?g|png|gif|webp)$/i) || [])[1] || 'jpg';
+      return jobId + '/po.' + ext.toLowerCase();
+    },
+
+    async uploadPoImage(jobId, file) {
+      if (!jobId || !file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid job or image file');
+      const client = getClient();
+      const path = this.getPoImagePath(jobId, file.name);
+      const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = client.storage.from('po-images').getPublicUrl(path);
+      return { path, url: data.publicUrl };
+    },
+
+    async deletePoImage(path) {
+      if (!path) return;
+      const client = getClient();
+      const { error } = await client.storage.from('po-images').remove([path]);
+      if (error) throw error;
+    },
+
     async getAuditLog(opts = {}) {
       const client = getClient();
       let q = client

@@ -1052,6 +1052,7 @@ function openPanel(id) {
         if (el) el.value = (po[f.key] != null && po[f.key] !== '') ? String(po[f.key]) : '';
       });
     }
+    updatePoImageUI(j);
   } else {
     document.getElementById('panelId').textContent = 'NEW JOB';
     document.getElementById('panelSub').textContent = '';
@@ -1108,6 +1109,7 @@ function openPanel(id) {
         if (el) el.value = '';
       });
     }
+    updatePoImageUI(null);
   }
 
   document.getElementById('panelBody').scrollTop = 0;
@@ -1130,6 +1132,88 @@ function openPanel(id) {
     setPanelEditMode(false);
     const editBtn = document.getElementById('panelEditBtn');
     if (editBtn) editBtn.style.display = '';
+  }
+}
+
+function updatePoImageUI(job) {
+  const placeholder = document.getElementById('poImagePlaceholder');
+  const preview = document.getElementById('poImagePreview');
+  const uploadBtn = document.getElementById('poImageUploadBtn');
+  const replaceBtn = document.getElementById('poImageReplaceBtn');
+  const removeBtn = document.getElementById('poImageRemoveBtn');
+  const input = document.getElementById('jPoImageInput');
+  if (!placeholder || !preview || !uploadBtn || !replaceBtn || !removeBtn || !input) return;
+  const url = job && job.poContract && job.poContract.imageUrl;
+  if (url) {
+    placeholder.style.display = 'none';
+    preview.style.display = 'block';
+    preview.src = url;
+    uploadBtn.style.display = 'none';
+    replaceBtn.style.display = '';
+    removeBtn.style.display = '';
+  } else {
+    placeholder.style.display = 'block';
+    preview.style.display = 'none';
+    preview.removeAttribute('src');
+    uploadBtn.style.display = '';
+    replaceBtn.style.display = 'none';
+    removeBtn.style.display = 'none';
+  }
+  input.value = '';
+}
+
+async function onPoImageFileSelected(input) {
+  const file = input && input.files && input.files[0];
+  if (!file) return;
+  const jobId = S.editId;
+  if (!jobId) {
+    if (typeof toast === 'function') toast('Save the job first to add a PO image.');
+    input.value = '';
+    return;
+  }
+  if (!window.PMP || !window.PMP.Supabase || typeof window.PMP.Supabase.uploadPoImage !== 'function') {
+    if (typeof toast === 'function') toast('Storage not available.');
+    input.value = '';
+    return;
+  }
+  try {
+    const j = S.jobs.find(function (x) { return x.id === jobId; });
+    if (!j) { input.value = ''; return; }
+    if (j.poContract && j.poContract.imagePath && window.PMP.Supabase.deletePoImage) {
+      try { await window.PMP.Supabase.deletePoImage(j.poContract.imagePath); } catch (_) {}
+    }
+    const { path, url } = await window.PMP.Supabase.uploadPoImage(jobId, file);
+    if (!j.poContract || typeof j.poContract !== 'object') j.poContract = {};
+    j.poContract.imageUrl = url;
+    j.poContract.imagePath = path;
+    await Storage.saveJob(j);
+    updatePoImageUI(j);
+    if (typeof toast === 'function') toast('PO image uploaded');
+  } catch (e) {
+    console.error('[PMP] PO image upload failed', e);
+    if (typeof toastError === 'function') toastError(e && e.message ? e.message : 'Upload failed');
+  }
+  input.value = '';
+}
+
+async function removePoImage() {
+  const jobId = S.editId;
+  if (!jobId) return;
+  const j = S.jobs.find(function (x) { return x.id === jobId; });
+  if (!j || !j.poContract || !j.poContract.imagePath) return;
+  const path = j.poContract.imagePath;
+  try {
+    if (window.PMP && window.PMP.Supabase && typeof window.PMP.Supabase.deletePoImage === 'function') {
+      await window.PMP.Supabase.deletePoImage(path);
+    }
+    delete j.poContract.imageUrl;
+    delete j.poContract.imagePath;
+    await Storage.saveJob(j);
+    updatePoImageUI(j);
+    if (typeof toast === 'function') toast('PO image removed');
+  } catch (e) {
+    console.error('[PMP] PO image remove failed', e);
+    if (typeof toastError === 'function') toastError(e && e.message ? e.message : 'Remove failed');
   }
 }
 

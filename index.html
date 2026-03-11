@@ -624,6 +624,19 @@
             <label class="fl">Special assembly notes</label>
             <input class="fi" id="jPoAssembly" placeholder="Floor-critical assembly">
         </div>
+        <div class="fg po-image-block">
+            <label class="fl">PO / Contract image</label>
+            <input type="file" id="jPoImageInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="onPoImageFileSelected(this)">
+            <div id="poImageArea">
+                <div id="poImagePlaceholder" class="po-image-placeholder">No image</div>
+                <img id="poImagePreview" class="po-image-preview" alt="PO reference" style="display:none">
+            </div>
+            <div class="po-image-actions">
+                <button type="button" class="btn ghost" id="poImageUploadBtn" onclick="document.getElementById('jPoImageInput').click()">Upload image</button>
+                <button type="button" class="btn ghost" id="poImageReplaceBtn" style="display:none" onclick="document.getElementById('jPoImageInput').click()">Replace</button>
+                <button type="button" class="btn ghost" id="poImageRemoveBtn" style="display:none" onclick="removePoImage()">Remove</button>
+            </div>
+        </div>
         </div>
 
         <div class="form-section"><span class="fs-num">3</span> ASSETS</div>
