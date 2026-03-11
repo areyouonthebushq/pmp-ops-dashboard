@@ -703,7 +703,10 @@ async function authBootstrap() {
       updateSentryUserTag();
       showLoginScreen(false);
     } else if (event === 'SIGNED_IN' && session) {
-      fetchAndStoreProfile(session.user.id).then(() => showLauncher());
+      fetchAndStoreProfile(session.user.id).then(() => {
+        const appEl = document.getElementById('app');
+        if (!appEl || appEl.style.display === 'none') showLauncher();
+      });
     }
   });
 
