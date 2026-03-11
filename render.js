@@ -1286,6 +1286,7 @@ function renderNotesSection() {
 // NOTES PAGE — plant-wide notes feed, filterable by job
 // ============================================================
 function renderNotesPage() {
+  const pickerEl = document.getElementById('notesJobPicker');
   const selEl = document.getElementById('notesJobSelect');
   const feedEl = document.getElementById('notesFeed');
   const addBtn = document.getElementById('notesAddBtn');
@@ -1295,9 +1296,11 @@ function renderNotesPage() {
   const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
   const selectedId = (selEl.value || '').trim();
   const active = document.activeElement;
-  if (!(active && active.id === 'notesJobSelect')) {
-    selEl.innerHTML = '<option value="">— All notes —</option>' +
-      allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('');
+  if (pickerEl && !(active && active.id === 'notesJobSelect')) {
+    pickerEl.innerHTML = `<select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
+<option value="">— All notes —</option>
+${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'}${j.status ? ' (' + j.status + ')' : ''}</option>`).join('')}
+</select>`;
   }
 
   let entries = [];
@@ -1308,7 +1311,7 @@ function renderNotesPage() {
       (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, jobLabel: [job.catalog, job.artist].filter(Boolean).join(' · ') || job.id, text: e.text, person: e.person, timestamp: e.timestamp }));
     }
   } else {
-    S.jobs.forEach(job => {
+    allJobs.forEach(job => {
       ensureNotesLog(job);
       (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, jobLabel: [job.catalog, job.artist].filter(Boolean).join(' · ') || job.id, text: e.text, person: e.person, timestamp: e.timestamp }));
     });
@@ -1319,7 +1322,8 @@ function renderNotesPage() {
     ? '<div class="progress-empty">No notes yet.</div>'
     : entries.map(e => {
         const time = new Date(e.timestamp).toLocaleString();
-        return `<div class="progress-entry"><span class="notes-feed-job">${escapeHtml(e.jobLabel)}</span> · <strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
+        const meta = [escapeHtml(e.person || 'Unknown'), time].join(' · ');
+        return `<div class="progress-entry"><div class="notes-entry-job">${escapeHtml(e.jobLabel)}</div><div class="notes-entry-meta">${meta}</div><div class="notes-entry-text">${escapeHtml(e.text)}</div></div>`;
       }).join('');
 
   if (addBtn) addBtn.disabled = !selectedId;

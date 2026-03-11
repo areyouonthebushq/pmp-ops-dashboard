@@ -1772,11 +1772,15 @@
     .audit-toolbar label { font-size:11px; letter-spacing:1px; color: var(--d3); }
     .notes-toolbar { display:flex; align-items:center; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap:wrap; }
     .notes-toolbar label { font-size:11px; letter-spacing:1px; color: var(--d3); }
-    .notes-toolbar #notesJobSelect { min-width: 200px; padding: var(--space-sm) var(--space-md); font-size: 13px; }
-    .notes-input-row { display: flex; gap: var(--space-sm); margin-bottom: var(--space-md); }
-    .notes-input-row input { flex: 1; padding: var(--space-sm) var(--space-md); font-size: 13px; }
-    .notes-feed { }
-    .notes-feed .notes-feed-job { font-size: 11px; letter-spacing: 1px; color: var(--d3); }
+    .notes-toolbar .log-job-picker { margin: 0; }
+    .notes-toolbar .qc-job-select { width: 100%; max-width: 420px; }
+    .notes-input-row { display: flex; gap: var(--space-sm); margin-bottom: var(--space-md); align-items: center; }
+    .notes-input-row .fi { flex: 1; }
+    .notes-feed.notes-feed { margin-bottom: var(--space-lg); }
+    .notes-feed .progress-entry { padding: var(--space-sm) 0; border-bottom: 1px solid var(--b1); display: block; }
+    .notes-feed .notes-entry-job { font-size: 10px; letter-spacing: 1px; color: var(--d3); text-transform: uppercase; margin-bottom: var(--space-xs); }
+    .notes-feed .notes-entry-meta { font-size: 11px; color: var(--d2); margin-bottom: var(--space-xs); }
+    .notes-feed .notes-entry-text { font-size: 13px; color: var(--d); font-family: 'Inconsolata', monospace; }
     .audit-hint { font-size:12px; color: var(--d2); }
     .audit-tbl { font-size:12px; }
     .audit-tbl th { font-size:10px; letter-spacing:1px; color: var(--d3); }

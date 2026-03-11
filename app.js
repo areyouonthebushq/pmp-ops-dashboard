@@ -1350,6 +1350,7 @@ async function saveJob() {
     const assemblyEl = document.getElementById('jAssemblyInput');
     job.notes = (notesEl && notesEl.value !== undefined) ? notesEl.value.trim() : (existing && existing.notes != null ? existing.notes : job.notes);
     job.assembly = (assemblyEl && assemblyEl.value !== undefined) ? assemblyEl.value.trim() : (existing && existing.assembly != null ? existing.assembly : job.assembly);
+    /* Preserve append-only logs so notes/assembly persist across panel save */
     job.notesLog = (existing && Array.isArray(existing.notesLog)) ? existing.notesLog : [];
     job.assemblyLog = (existing && Array.isArray(existing.assemblyLog)) ? existing.assemblyLog : [];
     const i = S.jobs.findIndex(j => j.id === S.editId);
@@ -1992,7 +1993,7 @@ function addProductionNote() {
   toast('NOTE LOGGED');
 }
 
-function addNoteFromNotesPage() {
+async function addNoteFromNotesPage() {
   const selEl = document.getElementById('notesJobSelect');
   const jobId = selEl && (selEl.value || '').trim();
   if (!jobId) return;
@@ -2006,7 +2007,12 @@ function addNoteFromNotesPage() {
   job.notesLog.push({ text, person, timestamp: new Date().toISOString() });
   job.notes = text;
   if (textEl) textEl.value = '';
-  Storage.saveJob(job);
+  try {
+    await Storage.saveJob(job);
+  } catch (e) {
+    if (typeof toastError === 'function') toastError(e && (e.message || e.error) ? String(e.message || e.error) : 'Save failed');
+    return;
+  }
   renderNotesPage();
   toast('NOTE LOGGED');
 }

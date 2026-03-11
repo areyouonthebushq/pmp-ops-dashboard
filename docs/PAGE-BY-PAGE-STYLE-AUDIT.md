@@ -118,6 +118,8 @@
 
 **Floor card / assets overlay / progress detail overlay:** Full-screen overlay with inner box; borders and spacing use tokens. Some inner titles use different font sizes. Coherence 6/10.
 
+**NOTES page:** Job dropdown and notes list **reuse LOG page patterns** so NOTES does not drift. Use **`.log-job-picker`** + **`.qc-job-select`** for the job dropdown (same style/language as LOG). Use **`.log-recent`** as the feed container and **`.progress-entry`** for each note row; add **`.notes-entry-job`**, **`.notes-entry-meta`**, **`.notes-entry-text`** for hierarchy (job identity, person · time, note text). Nav: NOTES and AUDIT use **geometric symbols** (◇ ▣) in the same visual class as ⬡ FLOOR / ▶ JOBS / ⬡ LOG, not emoji.
+
 ---
 
 ## Strongest reference surfaces
