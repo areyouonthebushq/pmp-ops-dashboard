@@ -631,7 +631,16 @@ function renderJobs() {
   const filter = document.getElementById('jobFilter')?.value || '';
   const q = (document.getElementById('jobSearch')?.value || '').toLowerCase().trim();
   const activeJobs = S.jobs.filter(j => !isJobArchived(j));
-  let jobs = filter ? activeJobs.filter(j => j.status === filter) : activeJobs.slice();
+  const archivedJobs = S.jobs.filter(j => isJobArchived(j));
+  let jobs;
+  let totalForCount;
+  if (filter === 'archived') {
+    jobs = archivedJobs.slice();
+    totalForCount = archivedJobs.length;
+  } else {
+    jobs = filter ? activeJobs.filter(j => j.status === filter) : activeJobs.slice();
+    totalForCount = activeJobs.length;
+  }
 
   if (q) {
     jobs = jobs.filter(j =>
@@ -648,7 +657,7 @@ function renderJobs() {
 
   const countEl = document.getElementById('jobCount');
   if (countEl) {
-    countEl.textContent = `${jobs.length} of ${activeJobs.length}`;
+    countEl.textContent = `${jobs.length} of ${totalForCount}`;
   }
 
   const tbody = document.getElementById('jobsBody');
@@ -657,7 +666,10 @@ function renderJobs() {
   if (!jobs.length) {
     if (tbody) tbody.innerHTML = '';
     if (cards) cards.innerHTML = '';
-    if (empty) { empty.style.display = 'block'; empty.textContent = q ? `NO MATCHES FOR "${q}"` : 'NO JOBS IN SYSTEM · TAP + TO ADD'; }
+    const emptyMsg = filter === 'archived'
+      ? (q ? `NO ARCHIVED JOBS MATCH "${q}"` : 'NO ARCHIVED JOBS')
+      : (q ? `NO MATCHES FOR "${q}"` : 'NO JOBS IN SYSTEM · TAP + TO ADD');
+    if (empty) { empty.style.display = 'block'; empty.textContent = emptyMsg; }
     return;
   }
   if (empty) empty.style.display = 'none';
