@@ -1216,12 +1216,17 @@ async function archiveJob() {
   if (!j) return;
   if (j.archived_at) { toast('Job is already archived'); return; }
   const who = (typeof getAuthRole === 'function' && window.PMP?.userProfile?.email) ? window.PMP.userProfile.email : (window.PMP?.userProfile?.display_name || 'unknown');
-  j.archived_at = new Date().toISOString();
-  j.archived_by = who;
-  j.archive_reason = '';
-  if (typeof releasePressByJob === 'function') releasePressByJob(j.id);
+  const payload = Object.assign({}, j, {
+    archived_at: new Date().toISOString(),
+    archived_by: who,
+    archive_reason: ''
+  });
   try {
-    await Storage.saveJob(j);
+    await Storage.saveJob(payload);
+    j.archived_at = payload.archived_at;
+    j.archived_by = payload.archived_by;
+    j.archive_reason = payload.archive_reason;
+    if (typeof releasePressByJob === 'function') releasePressByJob(j.id);
     if (S.presses && S.presses.length) await Storage.savePresses(S.presses);
     closePanel();
     renderAll();
