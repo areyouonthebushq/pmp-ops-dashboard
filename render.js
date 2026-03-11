@@ -1027,36 +1027,79 @@ function renderLog() {
   }
   if (typeof logNumpadUpdateDisplay === 'function') logNumpadUpdateDisplay();
 
-  const recentEl = document.getElementById('logRecent');
-  if (recentEl) {
-    const job = S.logSelectedJob ? S.jobs.find(j => j.id === S.logSelectedJob) : null;
-    const log = (job && Array.isArray(job.progressLog)) ? job.progressLog.slice(-15).reverse() : [];
-    if (!log.length) recentEl.innerHTML = '<div class="empty">No entries for this job</div>';
-    else {
-      recentEl.innerHTML = log.map(e => {
-        const time = new Date(e.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-        const stage = e.stage === 'pressed' ? 'PRESSED' : e.stage === 'qc_passed' ? 'QC PASS' : 'REJECT';
-        return `<div class="progress-entry ${e.stage}">+${e.qty} ${stage} · ${(e.person || '—')} · ${time}</div>`;
-      }).join('');
-    }
-  }
-
   const dateLabel = document.getElementById('logDateLabel');
   if (dateLabel) {
     const d = new Date(logViewDate);
-    dateLabel.innerHTML = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) + (isToday ? '<span class="qdl-today">TODAY</span>' : '');
+    dateLabel.textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  const logEl = document.getElementById('logQcLog');
-  if (logEl) {
-    if (!viewLog.length) logEl.innerHTML = `<div class="empty">No rejects logged ${isToday ? 'today' : 'on this date'}</div>`;
-    else logEl.innerHTML = viewLog.map(e => `
-      <div class="qc-entry">
-      <span class="qt">${e.time}</span>
-      <span class="qtype">${e.type}</span>
-      <span class="qjob">${e.job}</span>
-      </div>
-    `).join('');
+  const todayBtn = document.getElementById('logTodayBtn');
+  if (todayBtn) todayBtn.classList.toggle('active', isToday);
+
+  const feedEl = document.getElementById('logDailyFeed');
+  if (feedEl) {
+    const items = [];
+    const allJobs = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
+    const viewDate = logViewDate;
+
+    allJobs.forEach(j => {
+      if (!Array.isArray(j.progressLog)) return;
+      j.progressLog.forEach(e => {
+        if (!e || !e.timestamp) return;
+        const d = new Date(e.timestamp).toDateString();
+        if (d !== viewDate) return;
+        if (e.stage === 'rejected') return; // reject rows rendered from qcLog with defect type
+        const action = e.stage === 'pressed' ? 'PRESS' : e.stage === 'qc_passed' ? 'PASS' : 'LOG';
+        const cls = e.stage === 'pressed' ? 'pressed' : e.stage === 'qc_passed' ? 'qc_passed' : '';
+        items.push({
+          ts: e.timestamp,
+          qty: parseInt(e.qty, 10) || 0,
+          action,
+          defect: '',
+          cls,
+          source: e.person || '—',
+          press: (j.press || '').split(',')[0].trim(),
+          jobLabel: `${j.catalog || '—'} · ${j.artist || '—'}`,
+        });
+      });
+    });
+
+    viewLog.forEach(e => {
+      const m = (e.job || '').match(/\(x(\d+)\)\s*$/i);
+      const qty = m ? parseInt(m[1], 10) : 1;
+      const jobLabel = m ? (e.job || '').replace(/\s*\(x\d+\)\s*$/i, '').trim() : (e.job || '—');
+      const base = new Date(viewDate);
+      const parts = String(e.time || '').split(':').map(n => parseInt(n, 10));
+      if (parts.length >= 2 && parts.every(n => Number.isFinite(n))) base.setHours(parts[0], parts[1], parts[2] || 0, 0);
+      items.push({
+        ts: base.toISOString(),
+        qty: Number.isFinite(qty) ? qty : 1,
+        action: 'REJECT',
+        defect: e.type || '',
+        cls: 'rejected',
+        source: 'QC',
+        press: '',
+        jobLabel,
+      });
+    });
+
+    items.sort((a, b) => new Date(b.ts) - new Date(a.ts));
+
+    if (!items.length) {
+      feedEl.innerHTML = `<div class="empty">No entries ${isToday ? 'today' : 'on this date'}</div>`;
+    } else {
+      feedEl.innerHTML = items.map(it => {
+        const time = new Date(it.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        const primary = `+${(it.qty || 0).toLocaleString()} ${it.action}${it.defect ? ' · ' + escapeHtml(it.defect) : ''}`;
+        const metaParts = [
+          escapeHtml(it.source || '—'),
+          it.press ? escapeHtml(it.press) : null,
+          escapeHtml(time),
+          escapeHtml(it.jobLabel || '—'),
+        ].filter(Boolean);
+        return `<div class="progress-entry ${it.cls}"><div class="log-feed-primary">${primary}</div><div class="log-feed-meta">${metaParts.join(' · ')}</div></div>`;
+      }).join('');
+    }
   }
 }
 

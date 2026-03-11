@@ -298,16 +298,14 @@
             </div>
         </div>
         </div>
-        <div class="sec">RECENT</div>
-        <div class="log-recent" id="logRecent"></div>
-        <div class="sec">QC LOG</div>
+        <div class="sec">LOG</div>
         <div class="qc-date-nav">
         <button class="qc-date-btn" onclick="logDateStep(-1)">◂ PREV</button>
         <span class="qc-date-label" id="logDateLabel"></span>
         <button class="qc-date-btn" onclick="logDateStep(1)">NEXT ▸</button>
-        <button class="qc-date-btn" onclick="logDateToday()">TODAY</button>
+        <button class="qc-date-btn" id="logTodayBtn" onclick="logDateToday()">TODAY</button>
         </div>
-        <div class="qc-log" id="logQcLog"><div class="empty">NO REJECTS LOGGED TODAY</div></div>
+        <div class="log-recent" id="logDailyFeed"><div class="empty">NO ENTRIES</div></div>
     </div>
 
     <!-- ======= NOTES PAGE ======= -->

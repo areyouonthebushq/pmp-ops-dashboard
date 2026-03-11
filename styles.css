@@ -585,13 +585,13 @@
     cursor:pointer; transition:all 0.15s;
     }
     .qc-date-btn:hover { border-color: var(--d2); color: var(--d); }
+    .qc-date-btn.active { border-color: var(--g); color: var(--g); background: var(--g3); }
     .qc-date-label {
     font-size:13px; color: var(--d); letter-spacing:1px;
     font-weight:600;
     }
     .qc-date-label .qdl-today {
-    font-size:10px; color: var(--g); margin-left: var(--space-sm);
-    letter-spacing:2px;
+    display:none;
     }
 
     /* ============================================================ RECENTLY COMPLETED
@@ -1098,7 +1098,7 @@
     @media(max-width:480px) { .progress-log-form.frow.c2 { grid-template-columns:1fr; } .progress-summary { grid-template-columns:repeat(3,1fr); } }
     .progress-recent { display:flex; flex-direction:column; gap: var(--space-xs); }
     .progress-entry { font-size:12px; color: var(--d2); font-family:'Inconsolata',monospace; padding: var(--space-sm); background: var(--s2); border-left:2px solid var(--b2); }
-    .progress-entry.pressed { border-left-color: var(--g); }
+    .progress-entry.pressed { border-left-color: var(--w); }
     .progress-entry.qc_passed { border-left-color: var(--g); }
     .progress-entry.rejected { border-left-color: var(--r); }
     .progress-empty { font-size:11px; color: var(--d3); font-style:italic; padding: var(--space-sm) 0; }
@@ -1565,9 +1565,17 @@
     .log-enter-btn:active { transform: scale(0.98); }
     .log-recent { margin-bottom: var(--space-lg); }
     .log-recent .progress-entry { padding: var(--space-xs) 0; border-bottom: 1px solid var(--b1); font-size: 12px; color: var(--d2); }
-    .log-recent .progress-entry.pressed { color: var(--g); }
+    .log-recent .progress-entry.pressed { color: var(--w); }
     .log-recent .progress-entry.qc_passed { color: var(--g); }
     .log-recent .progress-entry.rejected { color: var(--r); }
+
+    /* Unified LOG feed rows (bottom of LOG page) */
+    #logDailyFeed .progress-entry { background: transparent; border-left: 0; }
+    #logDailyFeed .log-feed-primary { font-size: 13px; color: var(--d); font-weight: 700; }
+    #logDailyFeed .progress-entry.pressed .log-feed-primary { color: var(--w); }
+    #logDailyFeed .progress-entry.qc_passed .log-feed-primary { color: var(--g); }
+    #logDailyFeed .progress-entry.rejected .log-feed-primary { color: var(--r); }
+    #logDailyFeed .log-feed-meta { font-size: 11px; color: var(--d2); margin-top: var(--space-xs); }
 
     @media (max-width: 600px) {
         .qc-numpad { max-width: 100%; }
