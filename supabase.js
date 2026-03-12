@@ -235,11 +235,12 @@
 
       const compounds = (compoundsRes.data || []).map((row) => ({
         id: row.id,
-        name: row.name || '',
-        imageUrl: row.image_url || '',
-        stock: row.stock || '',
-        location: row.location || '',
-        notes: row.notes || '',
+        number: row.number != null ? String(row.number) : '',
+        code_name: (row.code_name != null ? String(row.code_name) : '') || (row.name != null ? String(row.name) : ''),
+        amount_on_hand: (row.amount_on_hand != null ? String(row.amount_on_hand) : '') || (row.stock != null ? String(row.stock) : ''),
+        color: row.color != null ? String(row.color) : '',
+        notes: row.notes != null ? String(row.notes) : '',
+        imageUrl: (row.image_url != null && row.image_url !== '') ? String(row.image_url) : '',
       }));
 
       const notesChannels = {};
@@ -396,6 +397,22 @@
       if (error) throw error;
     },
 
+    /** Compound color image: path = compounds/{compoundId}/color.{ext}. Same bucket as PO. */
+    getCompoundImagePath(compoundId, filename) {
+      if (!compoundId || !filename) return null;
+      const ext = (filename.match(/\.(jpe?g|png|gif|webp)$/i) || [])[1] || 'jpg';
+      return 'compounds/' + compoundId + '/color.' + ext.toLowerCase();
+    },
+    async uploadCompoundImage(compoundId, file) {
+      if (!compoundId || !file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid compound or image file');
+      const client = getClient();
+      const path = this.getCompoundImagePath(compoundId, file.name);
+      const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = client.storage.from('po-images').getPublicUrl(path);
+      return { path, url: data.publicUrl };
+    },
+
     async getAuditLog(opts = {}) {
       const client = getClient();
       let q = client
@@ -415,11 +432,14 @@
       const client = getClient();
       const rows = (compounds || []).map((c) => ({
         id: c.id,
-        name: c.name || '',
-        image_url: c.imageUrl || null,
-        stock: c.stock || null,
-        location: c.location || null,
-        notes: c.notes || null,
+        number: (c.number != null && c.number !== '') ? String(c.number) : null,
+        code_name: (c.code_name != null && c.code_name !== '') ? String(c.code_name) : null,
+        amount_on_hand: (c.amount_on_hand != null && c.amount_on_hand !== '') ? String(c.amount_on_hand) : null,
+        color: (c.color != null && c.color !== '') ? String(c.color) : null,
+        notes: (c.notes != null && c.notes !== '') ? String(c.notes) : null,
+        name: String(c.code_name != null ? c.code_name : (c.name != null ? c.name : '')),
+        stock: (c.amount_on_hand != null && c.amount_on_hand !== '') ? String(c.amount_on_hand) : null,
+        image_url: (c.imageUrl != null && c.imageUrl !== '') ? String(c.imageUrl) : null,
       }));
       if (!rows.length) return;
       const { error } = await client.from('compounds').upsert(rows, { onConflict: 'id' });

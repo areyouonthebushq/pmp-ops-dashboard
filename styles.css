@@ -1103,6 +1103,8 @@
     .po-image-lightbox img { max-width: 100%; max-height: 100%; object-fit: contain; }
     .po-image-lightbox-close { position: absolute; top: var(--space-md); right: var(--space-md); background: transparent; border: 1px solid rgba(255,255,255,0.5); color: #fff; font-size: 24px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; line-height: 1; padding: 0; }
     .po-image-lightbox-close:hover { background: rgba(255,255,255,0.2); }
+    .po-image-lightbox-replace { position: absolute; bottom: var(--space-lg); left: 50%; transform: translateX(-50%); padding: var(--space-sm) var(--space-md); font-size: 12px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5); color: #fff; cursor: pointer; border-radius: 4px; }
+    .po-image-lightbox-replace:hover { background: rgba(255,255,255,0.3); }
 
     .panel-notes .fg { margin-bottom: var(--space-sm); }
     .panel-notes .fl { font-size:9px; color: var(--d3); letter-spacing:1.5px; }
@@ -1127,7 +1129,7 @@
     background: var(--s2); flex-shrink:0;
     }
 
-    /* ============================================================ COMPOUND LIBRARY */
+    /* ============================================================ PVC (compound library) */
     .compound-shell {
     max-width: 980px;
     margin: 0 auto;
@@ -1140,7 +1142,10 @@
     }
     .compound-toolbar {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
     gap: var(--space-md);
     border-bottom: 1px solid var(--b2);
     padding-bottom: var(--space-md);
@@ -1149,6 +1154,33 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    }
+    .pvc-add-btn {
+    background: var(--s0);
+    color: var(--d);
+    border: 1px solid var(--b2);
+    font-weight: 600;
+    }
+    .pvc-add-btn:hover {
+    background: var(--s2);
+    border-color: var(--d3);
+    }
+    .compound-toolbar-actions {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    }
+    .pvc-import-label {
+    border: 1px solid var(--b2);
+    padding: var(--space-sm) var(--space-md);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--d2);
+    background: var(--s1);
+    }
+    .pvc-import-label:hover {
+    background: var(--s2);
+    color: var(--d);
     }
     .compound-title {
     font-size: 13px;
@@ -1197,6 +1229,7 @@
     border: 1px solid var(--b2);
     background: var(--s2);
     flex-shrink: 0;
+    cursor: pointer;
     }
     .compound-thumb-hasimg {
     background-size: cover;
@@ -1210,6 +1243,12 @@
     font-size: 14px;
     color: var(--d);
     font-weight: 600;
+    margin-bottom: 2px;
+    }
+    .compound-number {
+    font-size: 12px;
+    color: var(--d3);
+    letter-spacing: 0.5px;
     margin-bottom: 2px;
     }
     .compound-meta {

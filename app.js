@@ -1322,58 +1322,239 @@ function panelPoStarClick() {
 }
 
 // ============================================================
-// COMPOUND LIBRARY — backstage reference
+// PVC — operational compound library; Add New Compound (rhymes with Add New Job)
 // ============================================================
 
-function compoundFormSubmit() {
-  const nameEl = document.getElementById('compoundName');
-  const imgEl = document.getElementById('compoundImageUrl');
-  const stockEl = document.getElementById('compoundStock');
-  const locEl = document.getElementById('compoundLocation');
-  const notesEl = document.getElementById('compoundNotes');
-  if (!nameEl || !imgEl || !stockEl || !locEl || !notesEl) return;
-  const name = (nameEl.value || '').trim();
-  const imageUrl = (imgEl.value || '').trim();
-  const stock = (stockEl.value || '').trim();
-  const location = (locEl.value || '').trim();
-  const notes = (notesEl.value || '').trim();
-  if (!name) return;
-  const list = Array.isArray(S.compounds) ? S.compounds.slice() : [];
-  if (S.compoundEditId) {
-    const idx = list.findIndex((c) => c.id === S.compoundEditId);
-    if (idx !== -1) {
-      list[idx] = { ...list[idx], name, imageUrl, stock, location, notes };
-    }
-  } else {
-    const id = 'cmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-    list.push({ id, name, imageUrl, stock, location, notes });
-  }
-  S.compounds = list;
+function openCompoundWizard() {
   S.compoundEditId = null;
-  Storage.saveCompounds(list).then(() => {
-    renderCompoundsPage();
-  }).catch(() => {});
+  S.compoundWizardData = { number: '', code_name: '', amount_on_hand: '', color: '', notes: '' };
+  renderCompoundWizard();
+  const wrap = document.getElementById('compoundWizardWrap');
+  if (wrap) wrap.classList.add('on');
 }
 
-function editCompound(id) {
-  S.compoundEditId = id;
+function closeCompoundWizard() {
+  const wrap = document.getElementById('compoundWizardWrap');
+  if (wrap) wrap.classList.remove('on');
+  S.compoundEditId = null;
   renderCompoundsPage();
 }
 
-function openPoImageLightbox(src) {
+function renderCompoundWizard() {
+  const titleEl = document.getElementById('compoundWizardTitle');
+  const bodyEl = document.getElementById('compoundWizardBody');
+  const footEl = document.getElementById('compoundWizardFoot');
+  if (!bodyEl || !footEl) return;
+  const data = S.compoundWizardData || { number: '', code_name: '', amount_on_hand: '', color: '', notes: '' };
+  const isEdit = !!S.compoundEditId;
+  if (titleEl) titleEl.textContent = isEdit ? 'Edit Compound' : 'New Compound';
+  bodyEl.innerHTML = [
+    '<div class="fg"><label class="fl">Number</label><input class="fi" id="cWizNumber" placeholder="e.g. 001" value="' + (data.number || '').replace(/"/g, '&quot;') + '"></div>',
+    '<div class="fg"><label class="fl">Code name</label><input class="fi" id="cWizCodeName" placeholder="Code name" value="' + (data.code_name || '').replace(/"/g, '&quot;') + '"></div>',
+    '<div class="fg"><label class="fl">Amount on hand</label><input class="fi" id="cWizAmount" placeholder="e.g. 1/2 tote" value="' + (data.amount_on_hand || '').replace(/"/g, '&quot;') + '"></div>',
+    '<div class="fg"><label class="fl">Color</label><input class="fi" id="cWizColor" placeholder="e.g. Black" value="' + (data.color || '').replace(/"/g, '&quot;') + '"></div>',
+    '<div class="fg"><label class="fl">Notes</label><textarea class="fi fta" id="cWizNotes" rows="2" placeholder="Notes">' + (data.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea></div>',
+  ].join('');
+  footEl.innerHTML = '<div class="wizard-foot-inner"><button type="button" class="btn ghost" onclick="closeCompoundWizard()">Cancel</button><button type="button" class="btn go" onclick="compoundWizardSave()">' + (isEdit ? 'Save' : 'Add Compound') + '</button></div>';
+}
+
+function compoundWizardSave() {
+  const numberEl = document.getElementById('cWizNumber');
+  const codeNameEl = document.getElementById('cWizCodeName');
+  const amountEl = document.getElementById('cWizAmount');
+  const colorEl = document.getElementById('cWizColor');
+  const notesEl = document.getElementById('cWizNotes');
+  if (!codeNameEl) return;
+  const number = (numberEl && numberEl.value) ? numberEl.value.trim() : '';
+  const code_name = (codeNameEl.value || '').trim();
+  const amount_on_hand = (amountEl && amountEl.value) ? amountEl.value.trim() : '';
+  const color = (colorEl && colorEl.value) ? colorEl.value.trim() : '';
+  const notes = (notesEl && notesEl.value) ? notesEl.value.trim() : '';
+  const list = Array.isArray(S.compounds) ? S.compounds.slice() : [];
+  if (S.compoundEditId) {
+    const idx = list.findIndex(function (c) { return c.id === S.compoundEditId; });
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], number, code_name, amount_on_hand, color, notes };
+    }
+  } else {
+    const id = 'cmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    list.push({ id, number, code_name, amount_on_hand, color, notes });
+  }
+  S.compounds = list;
+  S.compoundEditId = null;
+  Storage.saveCompounds(list).then(function () {
+    closeCompoundWizard();
+    renderCompoundsPage();
+    if (typeof toast === 'function') toast('Compound saved.');
+  }).catch(function () {});
+}
+
+function pvcThumbClick(compoundId, hasImage) {
+  if (hasImage) {
+    var c = (S.compounds || []).find(function (x) { return x.id === compoundId; });
+    if (c && c.imageUrl) openPoImageLightbox(c.imageUrl, { compoundId: compoundId });
+  } else {
+    S.pvcUploadCompoundId = compoundId;
+    var input = document.getElementById('pvcCompoundImageInput');
+    if (input) input.click();
+  }
+}
+
+function onPvcCompoundImageSelected(input) {
+  var file = input && input.files && input.files[0];
+  input.value = '';
+  var compoundId = S.pvcUploadCompoundId;
+  S.pvcUploadCompoundId = null;
+  if (!file || !compoundId) return;
+  if (!window.PMP || !window.PMP.Supabase || typeof window.PMP.Supabase.uploadCompoundImage !== 'function') {
+    if (typeof toast === 'function') toast('Storage not available.');
+    return;
+  }
+  window.PMP.Supabase.uploadCompoundImage(compoundId, file).then(function (res) {
+    var list = Array.isArray(S.compounds) ? S.compounds.slice() : [];
+    var idx = list.findIndex(function (x) { return x.id === compoundId; });
+    if (idx !== -1) {
+      list[idx] = Object.assign({}, list[idx], { imageUrl: res.url });
+      S.compounds = list;
+      Storage.saveCompounds(S.compounds).then(function () {
+        closePoImageLightbox();
+        renderCompoundsPage();
+        if (typeof toast === 'function') toast('Photo uploaded.');
+      }).catch(function () {
+        if (typeof toast === 'function') toast('Save failed.');
+      });
+    }
+  }).catch(function (e) {
+    console.error('[PMP] Compound image upload failed', e);
+    if (typeof toast === 'function') toast(e && e.message ? e.message : 'Upload failed.');
+  });
+}
+
+function editCompound(id) {
+  const c = (S.compounds || []).find(function (x) { return x.id === id; });
+  if (!c) return;
+  S.compoundEditId = id;
+  S.compoundWizardData = {
+    number: c.number || '',
+    code_name: c.code_name || '',
+    amount_on_hand: c.amount_on_hand || '',
+    color: c.color || '',
+    notes: c.notes || '',
+  };
+  renderCompoundWizard();
+  const wrap = document.getElementById('compoundWizardWrap');
+  if (wrap) wrap.classList.add('on');
+}
+
+// PVC CSV import — template: number, code name, amount on hand, color, notes
+function mapPvcCsvHeaderToKey(h) {
+  const t = (h || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const map = {
+    number: 'number',
+    'code name': 'code_name',
+    code_name: 'code_name',
+    codename: 'code_name',
+    'amount on hand': 'amount_on_hand',
+    amount_on_hand: 'amount_on_hand',
+    amount: 'amount_on_hand',
+    color: 'color',
+    notes: 'notes',
+  };
+  return map[t] || null;
+}
+
+function parsePvcCsvToCompounds(text) {
+  const lines = typeof parseCSVLines === 'function' ? parseCSVLines(text) : [];
+  if (lines.length < 2) return [];
+  const headers = lines[0].map(function (h) { return (h || '').trim(); });
+  const keyToCol = {};
+  headers.forEach(function (h, i) {
+    var k = mapPvcCsvHeaderToKey(h);
+    if (k && keyToCol[k] === undefined) keyToCol[k] = i;
+  });
+  const out = [];
+  var baseId = 'cmp_csv_' + Date.now();
+  for (var i = 1; i < lines.length; i++) {
+    var vals = lines[i];
+    var number = (keyToCol.number >= 0 && vals[keyToCol.number] != null) ? String(vals[keyToCol.number]).trim() : '';
+    var code_name = (keyToCol.code_name >= 0 && vals[keyToCol.code_name] != null) ? String(vals[keyToCol.code_name]).trim() : '';
+    var amount_on_hand = (keyToCol.amount_on_hand >= 0 && vals[keyToCol.amount_on_hand] != null) ? String(vals[keyToCol.amount_on_hand]).trim() : '';
+    var color = (keyToCol.color >= 0 && vals[keyToCol.color] != null) ? String(vals[keyToCol.color]).trim() : '';
+    var notes = (keyToCol.notes >= 0 && vals[keyToCol.notes] != null) ? String(vals[keyToCol.notes]).trim() : '';
+    if (!number && !code_name && !amount_on_hand && !color && !notes) continue;
+    out.push({
+      id: baseId + '_' + i + '_' + Math.random().toString(36).slice(2, 6),
+      number: number,
+      code_name: code_name,
+      amount_on_hand: amount_on_hand,
+      color: color,
+      notes: notes,
+    });
+  }
+  return out;
+}
+
+function onPvcCsvSelected(input) {
+  var file = input && input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    var text = e.target && e.target.result;
+    var compounds = typeof text === 'string' ? parsePvcCsvToCompounds(text) : [];
+    if (!compounds.length) {
+      if (typeof toast === 'function') toast('No rows to import.');
+      return;
+    }
+    var list = Array.isArray(S.compounds) ? S.compounds.slice() : [];
+    compounds.forEach(function (c) { list.push(c); });
+    S.compounds = list;
+    Storage.saveCompounds(S.compounds).then(function () {
+      renderCompoundsPage();
+      if (typeof toast === 'function') toast(compounds.length + ' compound' + (compounds.length !== 1 ? 's' : '') + ' imported.');
+    }).catch(function () {
+      if (typeof toast === 'function') toast('Import failed.');
+    });
+  };
+  reader.onerror = function () {
+    if (typeof toast === 'function') toast('Could not read file.');
+  };
+  reader.readAsText(file);
+}
+
+function openPoImageLightbox(src, opts) {
   if (!src) return;
-  let el = document.getElementById('poImageLightbox');
+  var el = document.getElementById('poImageLightbox');
   if (!el) {
     el = document.createElement('div');
     el.id = 'poImageLightbox';
     el.className = 'po-image-lightbox';
-    el.innerHTML = '<button type="button" class="po-image-lightbox-close" aria-label="Close" onclick="closePoImageLightbox()">&times;</button><img alt="PO reference" />';
+    el.innerHTML = '<button type="button" class="po-image-lightbox-close" aria-label="Close" onclick="closePoImageLightbox()">&times;</button><img alt="Image" /><button type="button" class="po-image-lightbox-replace" id="poImageLightboxReplace" style="display:none;">Replace</button>';
     el.onclick = function (e) { if (e.target === el) closePoImageLightbox(); };
     el.querySelector('img').onclick = function (e) { e.stopPropagation(); };
     document.body.appendChild(el);
   }
-  const img = el.querySelector('img');
+  var img = el.querySelector('img');
   if (img) img.src = src;
+  var replaceBtn = document.getElementById('poImageLightboxReplace');
+  if (replaceBtn) {
+    if (opts && opts.compoundId) {
+      el.dataset.compoundId = opts.compoundId;
+      replaceBtn.style.display = 'block';
+      replaceBtn.onclick = function (e) {
+        e.stopPropagation();
+        var cid = el.dataset.compoundId;
+        if (cid) {
+          S.pvcUploadCompoundId = cid;
+          var input = document.getElementById('pvcCompoundImageInput');
+          if (input) input.click();
+        }
+      };
+    } else {
+      el.dataset.compoundId = '';
+      replaceBtn.style.display = 'none';
+    }
+  }
   el.classList.add('open');
   var esc = function (e) { if (e.key === 'Escape') closePoImageLightbox(); };
   el._esc = esc;
@@ -2930,6 +3111,12 @@ document.addEventListener('keydown', e => {
     const wizardOpen = document.getElementById('wizardWrap')?.classList.contains('on');
     if (wizardOpen) {
       closeWizard();
+      e.preventDefault();
+      return;
+    }
+    const compoundWizardOpen = document.getElementById('compoundWizardWrap')?.classList.contains('on');
+    if (compoundWizardOpen) {
+      closeCompoundWizard();
       e.preventDefault();
       return;
     }

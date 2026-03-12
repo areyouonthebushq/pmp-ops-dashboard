@@ -168,67 +168,48 @@ function renderAdminShell() {
 }
 
 // ============================================================
-// COMPOUND LIBRARY — visual reference
+// PVC — operational compound library (visual reference)
 // ============================================================
 
 function renderCompoundsPage() {
   const shell = document.getElementById('pg-compounds');
   if (!shell) return;
   const listEl = document.getElementById('compoundList');
-  const nameEl = document.getElementById('compoundName');
-  const imgEl = document.getElementById('compoundImageUrl');
-  const stockEl = document.getElementById('compoundStock');
-  const locEl = document.getElementById('compoundLocation');
-  const notesEl = document.getElementById('compoundNotes');
-  const submitEl = document.getElementById('compoundSubmitBtn');
-  if (!listEl || !nameEl || !imgEl || !stockEl || !locEl || !notesEl || !submitEl) return;
+  if (!listEl) return;
 
   const compounds = Array.isArray(S.compounds) ? S.compounds : [];
-  const edit = S.compoundEditId;
-
-  if (!edit) {
-    nameEl.value = '';
-    imgEl.value = '';
-    stockEl.value = '';
-    locEl.value = '';
-    notesEl.value = '';
-    submitEl.textContent = 'ADD';
-  } else {
-    const c = compounds.find((x) => x.id === edit);
-    if (c) {
-      nameEl.value = c.name || '';
-      imgEl.value = c.imageUrl || '';
-      stockEl.value = c.stock || '';
-      locEl.value = c.location || '';
-      notesEl.value = c.notes || '';
-      submitEl.textContent = 'SAVE';
-    }
-  }
 
   if (!compounds.length) {
-    listEl.innerHTML = '<div class="empty">NO COMPOUNDS YET</div>';
+    listEl.innerHTML = '<div class="empty">NO COMPOUNDS YET · TAP + ADD COMPOUND</div>';
     return;
   }
 
   listEl.innerHTML = compounds.map((c) => {
-    const hasImg = !!(c.imageUrl && c.imageUrl.trim());
-    const thumb = hasImg
-      ? `<div class="compound-thumb compound-thumb-hasimg" style="background-image:url('${c.imageUrl.replace(/'/g, "\\'")}');"></div>`
-      : '<div class="compound-thumb"></div>';
-    const notes = (c.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `
-      <div class="compound-card" onclick="editCompound('${c.id}')">
-        ${thumb}
-        <div class="compound-main">
-          <div class="compound-name">${c.name || '—'}</div>
-          <div class="compound-meta">
-            ${c.stock ? `<span class="compound-pill">STOCK · ${c.stock}</span>` : ''}
-            ${c.location ? `<span class="compound-pill">LOC · ${c.location}</span>` : ''}
-          </div>
-          ${notes ? `<div class="compound-notes">${notes}</div>` : ''}
-        </div>
-      </div>
-    `;
+    var imageUrl = (c.imageUrl || '').trim();
+    var hasImage = !!imageUrl;
+    var thumbStyle = hasImage ? ' style="background-image:url(\'' + imageUrl.replace(/'/g, "\\'") + '\')"' : '';
+    var thumbClass = 'compound-thumb' + (hasImage ? ' compound-thumb-hasimg' : '');
+    var thumbOnclick = 'event.stopPropagation();pvcThumbClick(\'' + c.id.replace(/'/g, "\\'") + '\',' + hasImage + ')';
+    var thumb = '<div class="' + thumbClass + '"' + thumbStyle + ' onclick="' + thumbOnclick + '" role="button" aria-label="' + (hasImage ? 'View or replace photo' : 'Upload photo') + '" title="' + (hasImage ? 'View / Replace photo' : 'Upload photo') + '"></div>';
+    var number = (c.number || '').trim();
+    var codeName = (c.code_name || '').trim() || '—';
+    var amount = (c.amount_on_hand || '').trim();
+    var color = (c.color || '').trim();
+    var notes = (c.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    var metaParts = [];
+    if (amount) metaParts.push('AMT · ' + amount);
+    if (color) metaParts.push(color);
+    var metaHtml = metaParts.length ? '<div class="compound-meta">' + metaParts.map(function (p) { return '<span class="compound-pill">' + escapeHtml(p) + '</span>'; }).join('') + '</div>' : '';
+    return (
+      '<div class="compound-card" onclick="editCompound(\'' + c.id.replace(/'/g, "\\'") + '\')">' +
+      thumb +
+      '<div class="compound-main">' +
+      (number ? '<div class="compound-number">' + escapeHtml(number) + '</div>' : '') +
+      '<div class="compound-name">' + escapeHtml(codeName) + '</div>' +
+      metaHtml +
+      (notes ? '<div class="compound-notes">' + notes + '</div>' : '') +
+      '</div></div>'
+    );
   }).join('');
 }
 

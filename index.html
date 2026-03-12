@@ -395,25 +395,36 @@
       </div>
     </div>
 
-    <!-- ======= COMPOUND LIBRARY PAGE ======= -->
+    <!-- ======= PVC PAGE (compound library) ======= -->
     <div class="pg" id="pg-compounds">
       <div class="compound-shell">
         <div class="compound-toolbar">
           <div class="compound-toolbar-left">
-            <div class="compound-title">COMPOUND LIBRARY</div>
-            <div class="compound-sub">Visual reference for floor mixes</div>
+            <div class="compound-title">PVC</div>
+            <div class="compound-sub">Operational compound library</div>
           </div>
-          <div class="compound-form">
-            <input id="compoundName" class="fi compound-name-input" placeholder="Name / label">
-            <input id="compoundImageUrl" class="fi compound-img-input" placeholder="Image URL (optional)">
-            <input id="compoundStock" class="fi compound-stock-input" placeholder="Stock (e.g. 1/2 tote)">
-            <input id="compoundLocation" class="fi compound-loc-input" placeholder="Location">
-            <input id="compoundNotes" class="fi compound-notes-input" placeholder="Notes (optional)">
-            <button type="button" id="compoundSubmitBtn" class="bar-btn go" onclick="compoundFormSubmit()">ADD</button>
+          <div class="compound-toolbar-actions">
+            <label class="bar-btn pvc-import-label" style="cursor:pointer;">↑ IMPORT CSV
+              <input type="file" id="pvcCsvInput" accept=".csv" style="display:none" onchange="onPvcCsvSelected(this)">
+            </label>
+            <button type="button" class="bar-btn pvc-add-btn" onclick="openCompoundWizard()">+ ADD COMPOUND</button>
           </div>
         </div>
+        <input type="file" id="pvcCompoundImageInput" accept="image/*" style="display:none" onchange="onPvcCompoundImageSelected(this)">
         <div class="compound-list" id="compoundList"></div>
       </div>
+    </div>
+
+    <!-- NEW COMPOUND WIZARD (rhymes with New Job wizard) -->
+    <div class="wizard-wrap" id="compoundWizardWrap" onclick="if(event.target===this)closeCompoundWizard()">
+    <div class="wizard-box" onclick="event.stopPropagation()">
+        <div class="wizard-head">
+            <span class="wizard-title" id="compoundWizardTitle">New Compound</span>
+            <button type="button" class="panel-close" onclick="closeCompoundWizard()" aria-label="Close">✕</button>
+        </div>
+        <div class="wizard-body" id="compoundWizardBody"></div>
+        <div class="wizard-foot" id="compoundWizardFoot"></div>
+    </div>
     </div>
 
     <!-- ============================================================ PRESS STATION SHELL (v1) -->
