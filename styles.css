@@ -1134,7 +1134,15 @@
     display: flex; gap: var(--space-sm); align-items: flex-start; margin-top: var(--space-xs);
     padding: var(--space-sm); background: var(--s2); border: 1px solid var(--b1); border-radius: var(--radius);
     }
-    .asset-note-composer .notes-textarea { flex: 1; min-height: 38px; max-height: 120px; }
+    /* Asset note composer: match NOTES add-note height for consistency */
+    .asset-note-composer .notes-textarea {
+    flex: 1;
+    height: 38px;
+    min-height: 38px;
+    max-height: 38px;
+    overflow: auto;
+    resize: none;
+    }
     .asset-note-composer .bar-btn { flex-shrink: 0; }
 
     /* ============================================================ TODOS */
