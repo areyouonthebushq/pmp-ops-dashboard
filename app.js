@@ -250,7 +250,7 @@ function addDevNote() {
   if (!areaEl || !textEl) return;
   const area = (areaEl.value || '').trim();
   const text = (textEl.value || '').trim();
-  if (!area || !text) return;
+  if (!text) return;
   const person = currentDevPersonLabel();
   const timestamp = new Date().toISOString();
   Storage.logDevNote({ area, text, person, timestamp })
@@ -261,6 +261,13 @@ function addDevNote() {
     .catch(() => {});
 }
 
+function devComposerKeydown(event) {
+  if (event.key === 'Enter' && !event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey) {
+    event.preventDefault();
+    addDevNote();
+  }
+}
+
 function onDevAreaChange() {
   renderDevPage();
 }
@@ -268,7 +275,7 @@ function onDevAreaChange() {
 function exportDevNotes() {
   const notes = Array.isArray(S.devNotes) ? S.devNotes.slice() : [];
   if (!notes.length) return;
-  const rows = [['area', 'timestamp', 'person', 'text']];
+  const rows = [['channel', 'timestamp', 'person', 'text']];
   notes
     .slice()
     .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0))

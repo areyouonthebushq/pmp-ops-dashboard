@@ -180,7 +180,7 @@
         <div class="nav-item" data-pg="log" onclick="goPg('log')">⬡ LOG <span class="badge" id="logBadge"></span></div>
         <div class="nav-item" data-pg="notes" onclick="goPg('notes')">◇ NOTES</div>
         <div class="nav-item" id="navAudit" data-pg="audit" onclick="goPg('audit')" style="display:none">▣ AUDIT</div>
-        <div class="nav-item" id="navDev" data-pg="dev" onclick="goPg('dev')" style="display:none">DEV</div>
+        <div class="nav-item" id="navDev" data-pg="dev" onclick="goPg('dev')" style="display:none">♛ DEV</div>
     </div>
 
     <!-- ======= FLOOR PAGE ======= -->
@@ -375,16 +375,16 @@
     <div class="pg" id="pg-dev">
       <div class="dev-terminal">
         <div class="dev-control-rail">
-          <div class="dev-rail-label">AREA</div>
+          <div class="dev-rail-label">CHANNEL</div>
           <div class="dev-toolbar">
             <select id="devAreaSelect" class="fs dev-area-select" onchange="onDevAreaChange()">
-              <option value="">ALL AREAS</option>
+              <option value="">ALL CHANNELS</option>
             </select>
             <button type="button" class="bar-btn dev-export-btn" onclick="exportDevNotes()">EXPORT</button>
           </div>
         </div>
         <div class="dev-utility-row">
-          <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)"></textarea>
+          <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)" onkeydown="devComposerKeydown(event)"></textarea>
           <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">ADD</button>
         </div>
         <div class="dev-feed-sec">DEV NOTES</div>
