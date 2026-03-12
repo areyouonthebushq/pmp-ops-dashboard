@@ -1500,12 +1500,8 @@ function renderNotesPage() {
   const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
   const active = document.activeElement;
   if (pickerEl && !(active && active.id === 'notesJobSelect')) {
-    const role = (window.PMP?.userProfile?.role || '').toLowerCase();
-    const canAlert = role === 'admin';
     pickerEl.innerHTML = `<select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
 <option value="">Select job</option>
-<option value="!TEAM" ${selectedId === '!TEAM' ? 'selected' : ''}>!TEAM</option>
-${canAlert ? `<option value="!ALERT" ${selectedId === '!ALERT' ? 'selected' : ''}>!ALERT</option>` : ''}
 ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' : ''}>${(j.catalog || '—')} · ${j.artist || '—'}${j.status ? ' (' + j.status + ')' : ''}</option>`).join('')}
 </select>`;
   }
@@ -1513,8 +1509,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
   let entries = [];
   if (selectedId) {
     if (selectedId === '!TEAM' || selectedId === '!ALERT') {
-      const ch = (S.notesChannels && Array.isArray(S.notesChannels[selectedId])) ? S.notesChannels[selectedId] : [];
-      ch.forEach(e => entries.push({ jobId: selectedId, catalog: selectedId, artist: '', album: '', text: e.text, person: e.person, timestamp: e.timestamp }));
+      // Channels currently tabled; no-op selection.
     } else {
     const job = S.jobs.find(j => j.id === selectedId);
     if (job) {
@@ -1547,34 +1542,6 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         assetKey: e.assetKey || null,
       }));
     });
-    const teamCh = (S.notesChannels && Array.isArray(S.notesChannels['!TEAM']))
-      ? S.notesChannels['!TEAM']
-      : [];
-    teamCh.forEach(e => entries.push({
-      jobId: '!TEAM',
-      catalog: '!TEAM',
-      artist: '',
-      album: '',
-      text: e.text,
-      person: e.person,
-      timestamp: e.timestamp,
-      assetLabel: null,
-      assetKey: null,
-    }));
-    const alertCh = (S.notesChannels && Array.isArray(S.notesChannels['!ALERT']))
-      ? S.notesChannels['!ALERT']
-      : [];
-    alertCh.forEach(e => entries.push({
-      jobId: '!ALERT',
-      catalog: '!ALERT',
-      artist: '',
-      album: '',
-      text: e.text,
-      person: e.person,
-      timestamp: e.timestamp,
-      assetLabel: null,
-      assetKey: null,
-    }));
   }
   entries.sort((a, b) => (new Date(b.timestamp) - new Date(a.timestamp)));
 
