@@ -1598,7 +1598,7 @@
     #logDailyFeed .progress-entry.pressed .log-feed-primary { color: var(--w); }
     #logDailyFeed .progress-entry.qc_passed .log-feed-primary { color: var(--g); }
     #logDailyFeed .progress-entry.rejected .log-feed-primary { color: var(--r); }
-    #logDailyFeed .progress-entry.asset_note .log-feed-primary { color: var(--d2); }
+    #logDailyFeed .progress-entry.asset_note .log-feed-primary { color: var(--d2); text-decoration: underline; cursor: pointer; }
     #logDailyFeed .log-feed-meta { font-size: 11px; color: var(--d2); margin-top: var(--space-xs); }
 
     @media (max-width: 600px) {

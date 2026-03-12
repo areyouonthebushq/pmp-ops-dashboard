@@ -1077,6 +1077,8 @@ function renderLog() {
             who: sw.who || '',
             press: (j.press || '').split(',')[0].trim(),
             jobLabel: `${j.catalog || '—'} · ${j.artist || '—'}`,
+            jobId: j.id,
+            assetKey: e.asset_key || '',
           });
           return;
         }
@@ -1093,6 +1095,8 @@ function renderLog() {
           who: sw.who || '',
           press: (j.press || '').split(',')[0].trim(),
           jobLabel: `${j.catalog || '—'} · ${j.artist || '—'}`,
+          jobId: j.id,
+          assetKey: '',
         });
       });
     });
@@ -1133,7 +1137,11 @@ function renderLog() {
           escapeHtml(time),
           escapeHtml(it.jobLabel || '—'),
         ].filter(Boolean);
-        return `<div class="progress-entry ${it.cls}"><div class="log-feed-primary">${primary}</div><div class="log-feed-meta">${metaParts.join(' · ')}</div></div>`;
+        const clickable = it.cls === 'asset_note' && it.jobId && it.assetKey;
+        const jobIdAttr = clickable ? String(it.jobId).replace(/'/g, '\\\'') : '';
+        const assetKeyAttr = clickable ? String(it.assetKey).replace(/'/g, '\\\'') : '';
+        const clickAttr = clickable ? ` onclick=\"goToNotesWithFilter('${jobIdAttr}','${assetKeyAttr}')\"` : '';
+        return `<div class="progress-entry ${it.cls}"${clickAttr}><div class="log-feed-primary">${primary}</div><div class="log-feed-meta">${metaParts.join(' · ')}</div></div>`;
       }).join('');
     }
   }
