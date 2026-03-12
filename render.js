@@ -1458,7 +1458,9 @@ function renderNotesSection() {
   if (prodEl) {
     prodEl.innerHTML = (job.notesLog || []).slice().reverse().map(e => {
       const time = new Date(e.timestamp).toLocaleString();
-      return `<div class="progress-entry"><strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
+      const asset = e.assetLabel || e.assetKey || '';
+      const assetHtml = asset ? `<div style="font-size:10px;color:var(--d3);text-align:right;margin-bottom:2px;">${escapeHtml(asset)}</div>` : '';
+      return `<div class="progress-entry">${assetHtml}<strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
     }).join('') || '<div class="progress-empty">No notes yet.</div>';
   }
   const asmEl = document.getElementById('assemblyLogList');
@@ -1520,13 +1522,33 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
     const job = S.jobs.find(j => j.id === selectedId);
     if (job) {
       ensureNotesLog(job);
-      (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, catalog: job.catalog || '', artist: job.artist || '', album: job.album || '', text: e.text, person: e.person, timestamp: e.timestamp }));
+      (job.notesLog || []).forEach(e => entries.push({
+        jobId: job.id,
+        catalog: job.catalog || '',
+        artist: job.artist || '',
+        album: job.album || '',
+        text: e.text,
+        person: e.person,
+        timestamp: e.timestamp,
+        assetLabel: e.assetLabel || null,
+        assetKey: e.assetKey || null,
+      }));
     }
     }
   } else {
     allJobs.forEach(job => {
       ensureNotesLog(job);
-      (job.notesLog || []).forEach(e => entries.push({ jobId: job.id, catalog: job.catalog || '', artist: job.artist || '', album: job.album || '', text: e.text, person: e.person, timestamp: e.timestamp }));
+      (job.notesLog || []).forEach(e => entries.push({
+        jobId: job.id,
+        catalog: job.catalog || '',
+        artist: job.artist || '',
+        album: job.album || '',
+        text: e.text,
+        person: e.person,
+        timestamp: e.timestamp,
+        assetLabel: e.assetLabel || null,
+        assetKey: e.assetKey || null,
+      }));
     });
   }
   entries.sort((a, b) => (new Date(b.timestamp) - new Date(a.timestamp)));
@@ -1541,6 +1563,8 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         e.artist || '',
         e.album || '',
         e.jobId || '',
+        e.assetLabel || '',
+        e.assetKey || '',
       ].join(' ').toLowerCase();
       return hay.includes(q);
     });
@@ -1567,7 +1591,9 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const meta = [escapeHtml(e.person || 'Unknown'), time].join(' · ');
         const cat = e.catalog ? escapeHtml(e.catalog) : escapeHtml(e.jobId || '—');
         const artist = e.artist ? escapeHtml(e.artist) : '—';
-        return `<div class="progress-entry"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-text">${escapeHtml(e.text)}</div><div class="notes-entry-meta">${meta}</div></div>`;
+        const asset = e.assetLabel || e.assetKey || '';
+        const assetHtml = asset ? `<div class="notes-entry-asset">${escapeHtml(asset)}</div>` : '';
+        return `<div class="progress-entry"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-text">${escapeHtml(e.text)}</div>${assetHtml}<div class="notes-entry-meta">${meta}</div></div>`;
       }).join('');
 
   const addAllowed = !!selectedId && (selectedId !== '!ALERT' || ((window.PMP?.userProfile?.email || '').toLowerCase().includes('piper') || (window.PMP?.userProfile?.display_name || '').toLowerCase().includes('piper')));

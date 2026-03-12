@@ -1951,6 +1951,13 @@
     margin-top: var(--space-xs);
     text-align: right;
     }
+    .notes-feed .notes-entry-asset {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--d3);
+    margin-top: var(--space-xs);
+    text-align: right;
+    }
     .notes-feed .progress-empty {
     padding: var(--space-lg) 0;
     color: var(--d3);

@@ -2083,8 +2083,7 @@ async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text) {
   const ts = new Date().toISOString();
   ensureNotesLog(job);
   const person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
-  const taggedText = assetLabel + ': ' + trimmed;
-  job.notesLog.push({ text: taggedText, person, timestamp: ts });
+  job.notesLog.push({ text: trimmed, person, timestamp: ts, assetLabel, assetKey });
   job.notes = trimmed;
   if (!Array.isArray(job.progressLog)) job.progressLog = [];
   job.progressLog.push({ qty: 0, stage: 'asset_note', person, timestamp: ts, asset_key: assetKey });
