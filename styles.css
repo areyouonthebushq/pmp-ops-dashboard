@@ -1888,29 +1888,44 @@
     padding: 0;
     }
     .notes-feed .progress-entry {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0;
     padding: var(--space-md) 0;
     border-bottom: 1px solid var(--b1);
-    display: block;
+    align-items: start;
     }
     .notes-feed .progress-entry:last-child { border-bottom: none; }
+    /* Zone 1: Identity — catalog (yellow) + artist (white), compact, top-left */
     .notes-feed .notes-entry-job {
     font-size: 10px;
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: var(--space-xs);
+    line-height: 1.3;
     }
     .notes-feed .notes-entry-cat { color: var(--w); }
     .notes-feed .notes-entry-artist { color: var(--d); }
-    .notes-feed .notes-entry-meta {
-    font-size: 11px;
-    color: var(--d3);
-    margin-bottom: var(--space-xs);
-    }
+    /* Zone 2: Payload — note text is main event, full row width, left-aligned */
     .notes-feed .notes-entry-text {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--d);
     font-family: 'Inconsolata', monospace;
-    line-height: 1.4;
+    line-height: 1.5;
+    margin: 0;
+    text-align: left;
+    word-break: break-word;
+    max-width: 100%;
+    padding-right: var(--space-md);
+    }
+    /* Zone 3: Provenance — person + timestamp, muted, bottom-right */
+    .notes-feed .notes-entry-meta {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--d3);
+    margin-top: var(--space-xs);
+    text-align: right;
     }
     .notes-feed .progress-empty {
     padding: var(--space-lg) 0;

@@ -1507,7 +1507,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const meta = [escapeHtml(e.person || 'Unknown'), time].join(' · ');
         const cat = e.catalog ? escapeHtml(e.catalog) : escapeHtml(e.jobId || '—');
         const artist = e.artist ? escapeHtml(e.artist) : '—';
-        return `<div class="progress-entry"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-meta">${meta}</div><div class="notes-entry-text">${escapeHtml(e.text)}</div></div>`;
+        return `<div class="progress-entry"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-text">${escapeHtml(e.text)}</div><div class="notes-entry-meta">${meta}</div></div>`;
       }).join('');
 
   const addAllowed = !!selectedId && (selectedId !== '!ALERT' || ((window.PMP?.userProfile?.email || '').toLowerCase().includes('piper') || (window.PMP?.userProfile?.display_name || '').toLowerCase().includes('piper')));
