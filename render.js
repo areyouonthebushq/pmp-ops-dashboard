@@ -1500,9 +1500,8 @@ function renderNotesPage() {
   const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
   const active = document.activeElement;
   if (pickerEl && !(active && active.id === 'notesJobSelect')) {
-    const email = (window.PMP?.userProfile?.email || '').toLowerCase();
-    const name = (window.PMP?.userProfile?.display_name || '').toLowerCase();
-    const canAlert = email.includes('piper') || name.includes('piper');
+    const role = (window.PMP?.userProfile?.role || '').toLowerCase();
+    const canAlert = role === 'admin';
     pickerEl.innerHTML = `<select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
 <option value="">Select job</option>
 <option value="!TEAM" ${selectedId === '!TEAM' ? 'selected' : ''}>!TEAM</option>
