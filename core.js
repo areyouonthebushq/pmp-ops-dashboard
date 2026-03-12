@@ -297,12 +297,26 @@ function assetHealth(job, assetDefs) {
   return { done: done.length, total: applicable.length, pct: applicable.length ? done.length / applicable.length : 0 };
 }
 
+/** Segmented asset bar: one chunk per asset slot; first `done` filled, rest empty. Width-only rule (same family as progress bar). */
+function assetBarSegmentedHTML(job) {
+  const { done, total } = assetHealth(job);
+  if (!total) {
+    return `<div class="ah-bar ah-bar-seg"><div class="ah-seg" style="width:100%"></div></div>`;
+  }
+  const segPct = 100 / total;
+  const segments = [];
+  for (let i = 0; i < total; i++) {
+    const filled = i < done;
+    segments.push(`<div class="ah-seg ${filled ? 'ah-seg-done' : ''}" style="width:${segPct}%"></div>`);
+  }
+  return `<div class="ah-bar ah-bar-seg">${segments.join('')}</div>`;
+}
+
 function ahHTML(job) {
-  const {done, total, pct} = assetHealth(job);
-  const cls = pct >= 1 ? 'full' : pct >= 0.7 ? 'most' : pct >= 0.4 ? 'half' : 'low';
+  const { done, total, pct } = assetHealth(job);
   return `<div class="ah">
-    <div class="ah-bar"><div class="ah-fill ${cls}" style="width:${Math.round(pct*100)}%"></div></div>
-    <span style="color:${pct >= 1 ? 'var(--g)' : pct >= 0.5 ? 'var(--w)' : 'var(--r)'}">${done}/${total}</span>
+    ${assetBarSegmentedHTML(job)}
+    <span class="ah-count" style="color:${pct >= 1 ? 'var(--g)' : pct >= 0.5 ? 'var(--w)' : 'var(--r)'}">${done}/${total}</span>
   </div>`;
 }
 
@@ -464,6 +478,7 @@ if (typeof globalThis !== 'undefined' && typeof document === 'undefined') {
     jobFieldsHash,
     findDuplicateJob,
     assetHealth,
+    assetBarSegmentedHTML,
     STATUS_ORDER,
     nextStatus,
     suggestedStatus,

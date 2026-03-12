@@ -111,7 +111,7 @@ function buildPressCardHTML(p, linkTo, showControls) {
     </div>
     <div class="pc-assets pc-assets-demoted" onclick="event.stopPropagation(); openAssetsOverlay('${job.id}')" style="cursor:pointer" title="View and edit assets">
       <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
-      ${ahHTML(job)}
+      ${assetBarSegmentedHTML(job)}
     </div>
     ` : (isPressStation ? `<div class="pc-job-link" onclick="openPressStation('${p.id}')" title="Open Press Station" style="cursor:pointer"><div class="pc-idle-msg">NO JOB ASSIGNED</div></div>` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>')}
     ${showControls ? `
