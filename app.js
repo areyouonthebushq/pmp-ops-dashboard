@@ -1447,18 +1447,29 @@ function editCompound(id) {
 }
 
 // PVC CSV import — template: number, code name, amount on hand, color, notes
+// Also maps common spreadsheet headers: No., Compound Name, Stock/Status, Description/Notes
 function mapPvcCsvHeaderToKey(h) {
   const t = (h || '').trim().toLowerCase().replace(/\s+/g, ' ');
   const map = {
     number: 'number',
+    no: 'number',
+    'no.': 'number',
     'code name': 'code_name',
+    'compound name': 'code_name',
     code_name: 'code_name',
     codename: 'code_name',
     'amount on hand': 'amount_on_hand',
+    'stock / status': 'amount_on_hand',
+    'stock/status': 'amount_on_hand',
+    stock: 'amount_on_hand',
+    status: 'amount_on_hand',
     amount_on_hand: 'amount_on_hand',
     amount: 'amount_on_hand',
     color: 'color',
     notes: 'notes',
+    'description / notes': 'notes',
+    'description/notes': 'notes',
+    description: 'notes',
   };
   return map[t] || null;
 }
@@ -1466,7 +1477,20 @@ function mapPvcCsvHeaderToKey(h) {
 function parsePvcCsvToCompounds(text) {
   const lines = typeof parseCSVLines === 'function' ? parseCSVLines(text) : [];
   if (lines.length < 2) return [];
-  const headers = lines[0].map(function (h) { return (h || '').trim(); });
+  // Find first row that has at least one recognized header (skip title/blank rows)
+  var headerRowIndex = 0;
+  for (var h = 0; h < Math.min(5, lines.length); h++) {
+    var row = lines[h];
+    if (!row || !row.length) continue;
+    for (var c = 0; c < row.length; c++) {
+      if (mapPvcCsvHeaderToKey((row[c] || '').trim())) {
+        headerRowIndex = h;
+        break;
+      }
+    }
+    if (headerRowIndex === h) break;
+  }
+  const headers = (lines[headerRowIndex] || []).map(function (h) { return (h || '').trim(); });
   const keyToCol = {};
   headers.forEach(function (h, i) {
     var k = mapPvcCsvHeaderToKey(h);
@@ -1474,7 +1498,7 @@ function parsePvcCsvToCompounds(text) {
   });
   const out = [];
   var baseId = 'cmp_csv_' + Date.now();
-  for (var i = 1; i < lines.length; i++) {
+  for (var i = headerRowIndex + 1; i < lines.length; i++) {
     var vals = lines[i];
     var number = (keyToCol.number >= 0 && vals[keyToCol.number] != null) ? String(vals[keyToCol.number]).trim() : '';
     var code_name = (keyToCol.code_name >= 0 && vals[keyToCol.code_name] != null) ? String(vals[keyToCol.code_name]).trim() : '';
