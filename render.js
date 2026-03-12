@@ -1470,6 +1470,7 @@ function renderNotesPage() {
   const pickerEl = document.getElementById('notesJobPicker');
   const selEl = document.getElementById('notesJobSelect');
   const feedEl = document.getElementById('notesFeed');
+  const filterEl = document.getElementById('notesFilterIndicator');
   const addBtn = document.getElementById('notesAddBtn');
   const addRow = document.getElementById('notesAddRow');
   const searchRow = document.getElementById('notesSearchRow');
@@ -1484,6 +1485,9 @@ function renderNotesPage() {
     S.notesPreloadFilter = null;
     selectedId = (pre.jobId || '').trim();
     if (searchEl) searchEl.value = pre.search || '';
+    if (pre.assetLabel) {
+      S.notesActiveAssetFilter = { jobId: selectedId, label: pre.assetLabel };
+    }
   }
 
   const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
@@ -1535,6 +1539,19 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
     });
   }
   if (searchCountEl) searchCountEl.textContent = q ? (entries.length + ' match') : '';
+
+  if (filterEl) {
+    if (S.notesActiveAssetFilter && S.notesActiveAssetFilter.label && selectedId) {
+      const job = S.jobs.find(function (j) { return j.id === selectedId; });
+      const jobLabel = job ? (job.catalog || '—') : selectedId;
+      const label = S.notesActiveAssetFilter.label;
+      filterEl.innerHTML = `FILTER: <span class="notes-filter-pill">${escapeHtml(jobLabel)} · ${escapeHtml(label)}</span> <button type="button" class="notes-filter-clear" onclick="clearNotesAssetFilter()">CLEAR</button>`;
+      filterEl.style.display = '';
+    } else {
+      filterEl.innerHTML = '';
+      filterEl.style.display = 'none';
+    }
+  }
 
   feedEl.innerHTML = entries.length === 0
     ? '<div class="progress-empty">No notes yet.</div>'

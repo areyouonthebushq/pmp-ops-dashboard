@@ -2118,8 +2118,13 @@ async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text) {
 }
 
 /** Navigate to NOTES with job selected and search preloaded (e.g. for asset filter). */
-function goToNotesWithFilter(jobId, searchText) {
-  S.notesPreloadFilter = { jobId: jobId || '', search: searchText || '' };
+function goToNotesWithFilter(jobId, assetKey) {
+  let label = assetKey || '';
+  if (typeof ASSET_DEFS !== 'undefined') {
+    const adef = ASSET_DEFS.find(function (x) { return x.key === assetKey; });
+    if (adef && adef.label) label = adef.label;
+  }
+  S.notesPreloadFilter = { jobId: jobId || '', search: label || '', assetLabel: label || '' };
   if (typeof closeAssetsOverlay === 'function') closeAssetsOverlay(true);
   goPg('notes');
 }
@@ -2154,6 +2159,17 @@ async function submitAssetNoteFromOverlay() {
   await addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text);
   if (textEl) textEl.value = '';
   if (typeof renderAssetsOverlay === 'function') renderAssetsOverlay();
+}
+
+/** Clear any active asset-jump filter on NOTES and return to full board. */
+function clearNotesAssetFilter() {
+  S.notesActiveAssetFilter = null;
+  S.notesPreloadFilter = null;
+  const selEl = document.getElementById('notesJobSelect');
+  const searchEl = document.getElementById('notesSearch');
+  if (selEl) selEl.value = '';
+  if (searchEl) searchEl.value = '';
+  if (typeof renderNotesPage === 'function') renderNotesPage();
 }
 
 function addAssemblyNote() {
@@ -2281,6 +2297,11 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (stationVisible) {
       doLogout();
+      e.preventDefault();
+      return;
+    }
+    if (currentPage === 'notes' && S.notesActiveAssetFilter) {
+      clearNotesAssetFilter();
       e.preventDefault();
       return;
     }
