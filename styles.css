@@ -1127,6 +1127,109 @@
     background: var(--s2); flex-shrink:0;
     }
 
+    /* ============================================================ COMPOUND LIBRARY */
+    .compound-shell {
+    max-width: 980px;
+    margin: 0 auto;
+    border: 1px solid var(--b2);
+    background: var(--s1);
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    }
+    .compound-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    border-bottom: 1px solid var(--b2);
+    padding-bottom: var(--space-md);
+    }
+    .compound-toolbar-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    }
+    .compound-title {
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--d2);
+    }
+    .compound-sub {
+    font-size: 11px;
+    color: var(--d3);
+    }
+    .compound-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) auto;
+    gap: var(--space-sm);
+    align-items: center;
+    }
+    @media (max-width: 900px) {
+      .compound-form {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .compound-list {
+    margin-top: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    }
+    .compound-card {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--s2);
+    border-left: 2px solid var(--b2);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    }
+    .compound-card:hover {
+    background: var(--s3);
+    border-left-color: var(--g);
+    }
+    .compound-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--b2);
+    background: var(--s2);
+    flex-shrink: 0;
+    }
+    .compound-thumb-hasimg {
+    background-size: cover;
+    background-position: center;
+    }
+    .compound-main {
+    flex: 1;
+    min-width: 0;
+    }
+    .compound-name {
+    font-size: 14px;
+    color: var(--d);
+    font-weight: 600;
+    margin-bottom: 2px;
+    }
+    .compound-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: 2px;
+    }
+    .compound-pill {
+    font-size: 10px;
+    letter-spacing: 1px;
+    padding: 1px 6px;
+    border: 1px solid var(--b2);
+    color: var(--d2);
+    }
+    .compound-notes {
+    font-size: 12px;
+    color: var(--d2);
+    }
+
     /* ============================================================ FORM SYSTEM */
     .fg { display:flex; flex-direction:column; gap: var(--space-xs); margin-bottom: var(--space-md); }
     .fl { font-size:10px; color: var(--d2); letter-spacing:2px; text-transform:uppercase; }
@@ -2161,6 +2264,36 @@
     .duplicate-job-title { font-family:'Special Elite',cursive; font-size:18px; color: var(--r); margin-bottom: var(--space-sm); }
     .duplicate-job-msg { font-size:13px; color: var(--d2); margin-bottom: var(--space-md); }
     .duplicate-job-btns { display:flex; flex-wrap:wrap; gap: var(--space-sm); }
+
+    .import-review-wrap { position:fixed; inset:0; z-index:550; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; }
+    .import-review-wrap.on { display:flex; }
+    .import-review-box { background: var(--s1); border:1px solid var(--b2); max-width:480px; width:92%; max-height:90vh; display:flex; flex-direction:column; }
+    .import-review-head { display:flex; align-items:center; justify-content:space-between; padding: var(--space-md) var(--space-lg); border-bottom:1px solid var(--b2); background: var(--s2); }
+    .import-review-title { font-family:'Special Elite',cursive; font-size:16px; color: var(--g); }
+    .import-review-body { padding: var(--space-lg); overflow-y:auto; flex:1; }
+    .import-review-sub { font-size:13px; color: var(--d2); margin-bottom: var(--space-sm); }
+    .import-review-msg { font-size:12px; color: var(--d3); margin-bottom: var(--space-md); letter-spacing:0.5px; }
+    .import-review-placeholder { padding: var(--space-md); border:1px dashed var(--b2); background: var(--s2); font-size:12px; color: var(--d3); }
+    .import-review-placeholder-meta { margin-top: var(--space-sm); font-size:11px; }
+    .import-review-row-block { margin-bottom: var(--space-lg); border: 1px solid var(--b2); background: var(--s2); padding: var(--space-md); }
+    .import-review-row-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-sm); flex-wrap: wrap; gap: var(--space-xs); }
+    .import-review-include-label { font-size: 12px; color: var(--d2); display: flex; align-items: center; gap: var(--space-xs); cursor: pointer; }
+    .import-review-include-cb { cursor: pointer; }
+    .import-review-row-title { font-size: 11px; letter-spacing: 1px; color: var(--d3); }
+    .import-review-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .import-review-tbl th { text-align: left; padding: var(--space-xs) var(--space-sm); border-bottom: 1px solid var(--b2); color: var(--d3); font-weight: 600; }
+    .import-review-tbl td { padding: var(--space-xs) var(--space-sm); border-bottom: 1px solid var(--b1); vertical-align: middle; }
+    .import-review-tbl tr.import-review-row-ignored td { opacity: 0.6; }
+    .import-review-tbl tr.import-review-row-ignored .import-review-input { background: var(--s1); color: var(--d3); }
+    .import-review-label { color: var(--d2); white-space: nowrap; }
+    .import-review-input { width: 100%; min-width: 0; padding: var(--space-xs) var(--space-sm); font-size: 12px; }
+    .import-review-status { font-size: 10px; letter-spacing: 0.5px; padding: 2px 6px; border: 1px solid; white-space: nowrap; }
+    .ir-status-found { border-color: var(--g2); color: var(--g); background: var(--g3); }
+    .ir-status-review { border-color: var(--w2); color: var(--w); background: var(--w2); }
+    .ir-status-notfound { border-color: var(--b2); color: var(--d3); background: var(--s1); }
+    .ir-status-conflict { border-color: var(--r2); color: var(--r); background: var(--r2); }
+    .import-review-ignore-btn { font-size: 11px; padding: 2px 8px; }
+    .import-review-foot { padding: var(--space-md) var(--space-lg); border-top:1px solid var(--b2); display:flex; gap: var(--space-sm); justify-content:flex-end; background: var(--s2); }
 
     .toast {
     position:fixed; top:60px; right: var(--space-lg); z-index:999;

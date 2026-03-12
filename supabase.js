@@ -187,13 +187,14 @@
 
     async loadAllData() {
       const client = getClient();
-      const [jobsRes, progressRes, pressesRes, todosRes, qcRes, devRes, channelsRes] = await Promise.all([
+      const [jobsRes, progressRes, pressesRes, todosRes, qcRes, devRes, compoundsRes, channelsRes] = await Promise.all([
         client.from('jobs').select('*').order('created_at', { ascending: true }),
         client.from('progress_log').select('*').order('timestamp', { ascending: true }),
         client.from('presses').select('*'),
         client.from('todos').select('*').order('sort_order', { ascending: true }),
         client.from('qc_log').select('*').order('created_at', { ascending: false }),
         client.from('dev_notes').select('*').order('timestamp', { ascending: true }),
+        client.from('compounds').select('*').order('created_at', { ascending: true }),
         client.from('notes_channels').select('*'),
       ]);
 
@@ -232,13 +233,22 @@
         timestamp: row.timestamp || null,
       }));
 
+      const compounds = (compoundsRes.data || []).map((row) => ({
+        id: row.id,
+        name: row.name || '',
+        imageUrl: row.image_url || '',
+        stock: row.stock || '',
+        location: row.location || '',
+        notes: row.notes || '',
+      }));
+
       const notesChannels = {};
       (channelsRes.data || []).forEach((row) => {
         if (!row || !row.id) return;
         notesChannels[row.id] = Array.isArray(row.log) ? row.log : [];
       });
 
-      return { jobs, presses, todos, qcLog, devNotes, notesChannels };
+      return { jobs, presses, todos, qcLog, devNotes, compounds, notesChannels };
     },
 
     async saveJob(job) {
@@ -399,6 +409,21 @@
       const { data, error } = await q;
       if (error) throw error;
       return data || [];
+    },
+
+    async saveCompounds(compounds) {
+      const client = getClient();
+      const rows = (compounds || []).map((c) => ({
+        id: c.id,
+        name: c.name || '',
+        image_url: c.imageUrl || null,
+        stock: c.stock || null,
+        location: c.location || null,
+        notes: c.notes || null,
+      }));
+      if (!rows.length) return;
+      const { error } = await client.from('compounds').upsert(rows, { onConflict: 'id' });
+      if (error) throw error;
     },
   };
 })();

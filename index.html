@@ -179,6 +179,7 @@
         <div class="nav-item" id="navTodos" data-pg="todos" onclick="goPg('todos')" style="display:none">✓ TODOS</div>
         <div class="nav-item" data-pg="log" onclick="goPg('log')">⬡ LOG <span class="badge" id="logBadge"></span></div>
         <div class="nav-item" data-pg="notes" onclick="goPg('notes')">◇ NOTES</div>
+        <div class="nav-item" data-pg="compounds" onclick="goPg('compounds')">◌ COMPOUND LIBRARY</div>
         <div class="nav-item" id="navAudit" data-pg="audit" onclick="goPg('audit')" style="display:none">▣ AUDIT</div>
         <div class="nav-item" id="navDev" data-pg="dev" onclick="goPg('dev')" style="display:none">♛ DEV</div>
     </div>
@@ -391,6 +392,27 @@
         <div class="dev-feed-wrap">
           <div class="log-recent dev-feed" id="devFeed"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- ======= COMPOUND LIBRARY PAGE ======= -->
+    <div class="pg" id="pg-compounds">
+      <div class="compound-shell">
+        <div class="compound-toolbar">
+          <div class="compound-toolbar-left">
+            <div class="compound-title">COMPOUND LIBRARY</div>
+            <div class="compound-sub">Visual reference for floor mixes</div>
+          </div>
+          <div class="compound-form">
+            <input id="compoundName" class="fi compound-name-input" placeholder="Name / label">
+            <input id="compoundImageUrl" class="fi compound-img-input" placeholder="Image URL (optional)">
+            <input id="compoundStock" class="fi compound-stock-input" placeholder="Stock (e.g. 1/2 tote)">
+            <input id="compoundLocation" class="fi compound-loc-input" placeholder="Location">
+            <input id="compoundNotes" class="fi compound-notes-input" placeholder="Notes (optional)">
+            <button type="button" id="compoundSubmitBtn" class="bar-btn go" onclick="compoundFormSubmit()">ADD</button>
+          </div>
+        </div>
+        <div class="compound-list" id="compoundList"></div>
       </div>
     </div>
 
@@ -727,12 +749,32 @@
     <div class="new-job-chooser-wrap" id="newJobChooserWrap" onclick="if(event.target===this)closeNewJobChooser()">
     <div class="new-job-chooser-box" onclick="event.stopPropagation()">
         <h3 class="new-job-chooser-title">New Job</h3>
-        <p class="new-job-chooser-hint">Add a single job or import from CSV.</p>
+        <p class="new-job-chooser-hint">Choose how to create the job. Imported data will be reviewed before creating.</p>
         <div class="new-job-chooser-btns">
             <button type="button" class="btn go" onclick="closeNewJobChooser();openWizard();">Manual Entry</button>
-            <button type="button" class="btn ghost" onclick="closeNewJobChooser();var e=document.getElementById('csvFileInput');if(e)e.click();">Import CSV</button>
+            <button type="button" class="btn ghost" onclick="closeNewJobChooser();triggerImportJobFile('csv');">Import CSV</button>
+            <button type="button" class="btn ghost" onclick="closeNewJobChooser();triggerImportJobFile('photo');">Import Photo</button>
+            <button type="button" class="btn ghost" onclick="closeNewJobChooser();triggerImportJobFile('pdf');">Import PDF</button>
         </div>
+        <input type="file" id="importJobCsvInput" accept=".csv" style="display:none" onchange="onImportJobFileSelected(this,'csv')">
+        <input type="file" id="importJobPhotoInput" accept="image/*" style="display:none" onchange="onImportJobFileSelected(this,'photo')">
+        <input type="file" id="importJobPdfInput" accept=".pdf" style="display:none" onchange="onImportJobFileSelected(this,'pdf')">
         <button type="button" class="new-job-chooser-close" onclick="closeNewJobChooser()" aria-label="Close">✕</button>
+    </div>
+    </div>
+
+    <!-- IMPORT REVIEW (CSV / Photo / PDF — review before creating jobs) -->
+    <div class="import-review-wrap" id="importReviewWrap" onclick="if(event.target===this)closeImportReview()">
+    <div class="import-review-box" onclick="event.stopPropagation()">
+        <div class="import-review-head">
+            <span class="import-review-title" id="importReviewTitle">Review import</span>
+            <button type="button" class="panel-close" onclick="closeImportReview()" aria-label="Close">✕</button>
+        </div>
+        <div class="import-review-body" id="importReviewBody"></div>
+        <div class="import-review-foot">
+            <button type="button" class="btn ghost" onclick="closeImportReview()">CANCEL</button>
+            <button type="button" class="btn go" id="importReviewConfirmBtn" onclick="confirmImportReview()" disabled>CREATE JOBS (0 rows)</button>
+        </div>
     </div>
     </div>
 
@@ -800,6 +842,9 @@
     <script src="storage.js"></script>
     <script src="render.js"></script>
     <script src="stations.js"></script>
+    <!-- Photo/PDF extraction (phase 1): PDF text, image OCR -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="app.js"></script>
     <script>
     if ('serviceWorker' in navigator) {

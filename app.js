@@ -90,6 +90,7 @@ let S = {
   todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)),
   qcLog: [],
   devNotes: [],
+  compounds: [],
   notesChannels: { '!TEAM': [], '!ALERT': [] },
   mode: 'floor',
   editId: null,
@@ -112,6 +113,8 @@ let S = {
   floorStatFilter: null,
   notesComposerOpen: false,
   notesUtilityOpen: null, // 'add' | 'search' | null
+  compoundEditId: null,
+  importSession: null, // { type, sourceRef, status, extractedRows } when CSV/Photo/PDF review is open
 };
 let saveTimer = null;
 let curAssets = {};
@@ -185,6 +188,11 @@ async function loadAll() {
       S.devNotes = data.devNotes;
     } else if (!Array.isArray(S.devNotes)) {
       S.devNotes = [];
+    }
+    if (Array.isArray(data.compounds)) {
+      S.compounds = data.compounds;
+    } else if (!Array.isArray(S.compounds)) {
+      S.compounds = [];
     }
     if (data.notesChannels && typeof data.notesChannels === 'object') {
       S.notesChannels = data.notesChannels;
@@ -1313,6 +1321,45 @@ function panelPoStarClick() {
   }
 }
 
+// ============================================================
+// COMPOUND LIBRARY — backstage reference
+// ============================================================
+
+function compoundFormSubmit() {
+  const nameEl = document.getElementById('compoundName');
+  const imgEl = document.getElementById('compoundImageUrl');
+  const stockEl = document.getElementById('compoundStock');
+  const locEl = document.getElementById('compoundLocation');
+  const notesEl = document.getElementById('compoundNotes');
+  if (!nameEl || !imgEl || !stockEl || !locEl || !notesEl) return;
+  const name = (nameEl.value || '').trim();
+  const imageUrl = (imgEl.value || '').trim();
+  const stock = (stockEl.value || '').trim();
+  const location = (locEl.value || '').trim();
+  const notes = (notesEl.value || '').trim();
+  if (!name) return;
+  const list = Array.isArray(S.compounds) ? S.compounds.slice() : [];
+  if (S.compoundEditId) {
+    const idx = list.findIndex((c) => c.id === S.compoundEditId);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], name, imageUrl, stock, location, notes };
+    }
+  } else {
+    const id = 'cmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    list.push({ id, name, imageUrl, stock, location, notes });
+  }
+  S.compounds = list;
+  S.compoundEditId = null;
+  Storage.saveCompounds(list).then(() => {
+    renderCompoundsPage();
+  }).catch(() => {});
+}
+
+function editCompound(id) {
+  S.compoundEditId = id;
+  renderCompoundsPage();
+}
+
 function openPoImageLightbox(src) {
   if (!src) return;
   let el = document.getElementById('poImageLightbox');
@@ -1625,6 +1672,436 @@ function openNewJobChooser() {
 function closeNewJobChooser() {
   const wrap = document.getElementById('newJobChooserWrap');
   if (wrap) wrap.classList.remove('on');
+}
+
+// ============================================================
+// IMPORT JOB ENTRY (CSV / Photo / PDF → review shell)
+// ============================================================
+// Phase 1 review fields (key = job field, label = display). Order matches review table.
+const IMPORT_REVIEW_FIELDS = [
+  { key: 'catalog', label: 'Catalog' },
+  { key: 'artist', label: 'Artist' },
+  { key: 'album', label: 'Album / Title' },
+  { key: 'qty', label: 'Quantity' },
+  { key: 'format', label: 'Format' },
+  { key: 'color', label: 'Color' },
+  { key: 'weight', label: 'Weight' },
+  { key: 'sleeve', label: 'Sleeve Type' },
+  { key: 'jacket', label: 'Jacket Type' },
+  { key: 'cpl', label: 'UPC' },
+  { key: 'due', label: 'Due Date' },
+  { key: 'location', label: 'Shipping / Destination' },
+];
+
+// Status: found | needs_review | not_found | conflict
+function buildEmptyExtractedRow(rowIndex) {
+  const fields = {};
+  IMPORT_REVIEW_FIELDS.forEach(({ key }) => {
+    fields[key] = { value: '', status: 'not_found', ignored: false, userEdited: false };
+  });
+  return { rowIndex, includeInCreate: true, fields };
+}
+
+// Phase 1: best-effort extraction from raw text (PDF/OCR). Conservative: prefer needs_review.
+// Returns { [fieldKey]: { value, status } } for fields that were extracted. Does not write to job.
+function extractFieldsFromText(text) {
+  const out = {};
+  if (typeof text !== 'string' || !text.trim()) return out;
+  const t = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = t.split(/\n/).map(l => l.trim()).filter(Boolean);
+
+  function matchLine(patterns, key, status) {
+    for (const line of lines) {
+      for (const { regex, group } of patterns) {
+        const m = line.match(regex);
+        if (m && m[group]) {
+          out[key] = { value: (m[group] || '').trim(), status: status || 'needs_review' };
+          return;
+        }
+      }
+    }
+  }
+
+  // Catalog: label then value (needs_review)
+  matchLine(
+    [
+      { regex: /catalog\s*#?\s*:?\s*(.+)/i, group: 1 },
+      { regex: /cat\.?\s*:?\s*(.+)/i, group: 1 },
+    ],
+    'catalog',
+    'needs_review'
+  );
+  // Artist (needs_review)
+  matchLine([{ regex: /artist\s*:?\s*(.+)/i, group: 1 }], 'artist', 'needs_review');
+  // Album / title (needs_review)
+  matchLine(
+    [
+      { regex: /album\s*\/?\s*title\s*:?\s*(.+)/i, group: 1 },
+      { regex: /title\s*:?\s*(.+)/i, group: 1 },
+      { regex: /album\s*:?\s*(.+)/i, group: 1 },
+    ],
+    'album',
+    'needs_review'
+  );
+  // Quantity (needs_review)
+  matchLine(
+    [
+      { regex: /qty\.?\s*:?\s*(\d+)/i, group: 1 },
+      { regex: /quantity\s*:?\s*(\d+)/i, group: 1 },
+    ],
+    'qty',
+    'needs_review'
+  );
+  // Format (needs_review)
+  matchLine(
+    [{ regex: /format\s*:?\s*(\S+)/i, group: 1 }, { regex: /(\d+LP|LP\s*\d+)/i, group: 1 }],
+    'format',
+    'needs_review'
+  );
+  // Color (needs_review)
+  matchLine([{ regex: /color\s*:?\s*(\S+)/i, group: 1 }, { regex: /colour\s*:?\s*(\S+)/i, group: 1 }], 'color', 'needs_review');
+  // Weight (needs_review)
+  matchLine(
+    [
+      { regex: /weight\s*:?\s*(\d+\s*g(?:ram)?s?)/i, group: 1 },
+      { regex: /(\d+)\s*g(?:ram)?s?(?=\s|$|,)/i, group: 1 },
+    ],
+    'weight',
+    'needs_review'
+  );
+  // Sleeve (needs_review)
+  matchLine([{ regex: /sleeve\s*:?\s*(\S+)/i, group: 1 }], 'sleeve', 'needs_review');
+  // Jacket (needs_review)
+  matchLine([{ regex: /jacket\s*:?\s*(\S+)/i, group: 1 }], 'jacket', 'needs_review');
+  // UPC / barcode: prefer labeled; 12–14 digits (found when labeled, else needs_review)
+  for (const line of lines) {
+    const labeled = line.match(/(?:upc|barcode|cpl)\s*:?\s*(\d{12,14})/i);
+    if (labeled && labeled[1]) {
+      out.cpl = { value: labeled[1].trim(), status: 'found' };
+      break;
+    }
+    const bare = line.match(/\b(\d{12,14})\b/);
+    if (bare && bare[1]) {
+      out.cpl = { value: bare[1].trim(), status: 'needs_review' };
+      break;
+    }
+  }
+  // Due date (needs_review)
+  matchLine(
+    [
+      { regex: /due\s*(?:date)?\s*:?\s*([\d/\-]+)/i, group: 1 },
+      { regex: /due\s*:?\s*(.+?)(?=\s|$)/i, group: 1 },
+    ],
+    'due',
+    'needs_review'
+  );
+  // Shipping / destination (needs_review)
+  matchLine(
+    [
+      { regex: /shipping\s*:?\s*(.+)/i, group: 1 },
+      { regex: /destination\s*:?\s*(.+)/i, group: 1 },
+      { regex: /ship\s*to\s*:?\s*(.+)/i, group: 1 },
+    ],
+    'location',
+    'needs_review'
+  );
+
+  return out;
+}
+
+// Build one extracted row from parsed fields (from extractFieldsFromText). Missing keys = not_found.
+function buildExtractedRowFromParsedFields(parsed, rowIndex) {
+  const fields = {};
+  IMPORT_REVIEW_FIELDS.forEach(({ key }) => {
+    const p = parsed[key];
+    if (p && (p.value || '').trim() !== '') {
+      fields[key] = { value: String(p.value).trim(), status: p.status || 'needs_review', ignored: false, userEdited: false };
+    } else {
+      fields[key] = { value: '', status: 'not_found', ignored: false, userEdited: false };
+    }
+  });
+  return { rowIndex: rowIndex ?? 0, includeInCreate: true, fields };
+}
+
+// Extract raw text from PDF (first page only in phase 1). Returns '' on failure or if PDF.js not loaded.
+function extractTextFromPdf(file) {
+  const lib = typeof window !== 'undefined' && window.pdfjsLib;
+  if (!lib || !file) return Promise.resolve('');
+  if (lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc) {
+    lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  }
+  return file
+    .arrayBuffer()
+    .then(function (buf) {
+      return lib.getDocument(buf).promise;
+    })
+    .then(function (doc) {
+      return doc.getPage(1);
+    })
+    .then(function (page) {
+      return page.getTextContent();
+    })
+    .then(function (content) {
+      const items = (content && content.items) || [];
+      return items.map(function (i) { return i.str || ''; }).join(' ');
+    })
+    .catch(function () {
+      return '';
+    });
+}
+
+// Extract text from image via OCR (Tesseract). Returns '' if Tesseract not loaded or on failure.
+function extractTextFromImage(file) {
+  const T = typeof window !== 'undefined' && window.Tesseract;
+  if (!T || !file) return Promise.resolve('');
+  return T.recognize(file)
+    .then(function (r) {
+      return (r && r.data && r.data.text) ? r.data.text : '';
+    })
+    .catch(function () {
+      return '';
+    });
+}
+
+// CSV header (lowercase) -> job field key
+function mapCsvHeaderToKey(h) {
+  const t = (h || '').trim().toLowerCase();
+  const map = {
+    catalog: 'catalog', matrix: 'catalog', cat: 'catalog',
+    artist: 'artist', 'artist name': 'artist',
+    album: 'album', title: 'album', 'album/title': 'album',
+    qty: 'qty', quantity: 'qty', 'qty ordered': 'qty',
+    format: 'format', 'vinyl format': 'format',
+    color: 'color', colour: 'color',
+    weight: 'weight',
+    sleeve: 'sleeve', 'sleeve type': 'sleeve',
+    jacket: 'jacket', 'jacket type': 'jacket',
+    upc: 'cpl', cpl: 'cpl', barcode: 'cpl',
+    due: 'due', 'due date': 'due',
+    location: 'location', shipping: 'location', destination: 'location',
+  };
+  return map[t] || null;
+}
+
+function parseCSVToExtractedRows(text) {
+  const lines = typeof parseCSVLines === 'function' ? parseCSVLines(text) : [];
+  if (lines.length < 2) return [];
+  const rawHeaders = lines[0].map(h => (h || '').trim());
+  const keyToCol = {};
+  rawHeaders.forEach((h, colIdx) => {
+    const k = mapCsvHeaderToKey(h);
+    if (k && keyToCol[k] === undefined) keyToCol[k] = colIdx;
+  });
+  const rows = [];
+  const openJobs = (S.jobs || []).filter(j => !isJobArchived(j));
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i];
+    const fields = {};
+    IMPORT_REVIEW_FIELDS.forEach(({ key }) => {
+      const colIdx = keyToCol[key];
+      const raw = (colIdx >= 0 && vals[colIdx] != null ? String(vals[colIdx]) : '').trim();
+      let status = raw ? 'found' : 'not_found';
+      if (key === 'catalog' && raw && openJobs.some(j => (j.catalog || '').toUpperCase() === raw.toUpperCase())) status = 'conflict';
+      fields[key] = { value: raw, status, ignored: false, userEdited: false };
+    });
+    rows.push({ rowIndex: i - 1, includeInCreate: true, fields });
+  }
+  return rows;
+}
+
+function triggerImportJobFile(type) {
+  const id = type === 'csv' ? 'importJobCsvInput' : type === 'photo' ? 'importJobPhotoInput' : 'importJobPdfInput';
+  const el = document.getElementById(id);
+  if (el) el.click();
+}
+
+function onImportJobFileSelected(input, type) {
+  const file = input && input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  startImportReview(type, file);
+}
+
+function startImportReview(type, file) {
+  const sourceRef = {
+    type,
+    name: file.name || 'Unknown file',
+    capturedAt: new Date().toISOString(),
+  };
+  if (type === 'csv') {
+    const r = new FileReader();
+    r.onload = function (e) {
+      const text = e.target && e.target.result;
+      const extractedRows = typeof text === 'string' ? parseCSVToExtractedRows(text) : [];
+      S.importSession = { type, sourceRef, status: 'reviewing', extractedRows };
+      openImportReview();
+    };
+    r.onerror = function () {
+      if (typeof toast === 'function') toast('Could not read file.');
+    };
+    r.readAsText(file);
+    return;
+  }
+  // Photo / PDF: best-effort extraction into review only (no direct job write)
+  if (typeof toast === 'function') toast('Extracting…');
+  const extractText = type === 'pdf' ? extractTextFromPdf(file) : extractTextFromImage(file);
+  extractText
+    .then(function (rawText) {
+      const parsed = extractFieldsFromText(rawText);
+      const row = Object.keys(parsed).length ? buildExtractedRowFromParsedFields(parsed, 0) : buildEmptyExtractedRow(0);
+      S.importSession = {
+        type,
+        sourceRef,
+        status: 'reviewing',
+        extractedRows: [row],
+      };
+      openImportReview();
+    })
+    .catch(function () {
+      S.importSession = {
+        type,
+        sourceRef,
+        status: 'reviewing',
+        extractedRows: [buildEmptyExtractedRow(0)],
+      };
+      openImportReview();
+      if (typeof toast === 'function') toast('Could not extract text; add details manually.');
+    });
+}
+
+function openImportReview() {
+  const wrap = document.getElementById('importReviewWrap');
+  if (wrap) wrap.classList.add('on');
+  renderImportReview();
+}
+
+function closeImportReview() {
+  const wrap = document.getElementById('importReviewWrap');
+  if (wrap) wrap.classList.remove('on');
+  S.importSession = null;
+}
+
+function setImportReviewFieldIgnore(rowIndex, fieldKey, ignored) {
+  const session = S.importSession;
+  if (!session || !session.extractedRows || !session.extractedRows[rowIndex]) return;
+  const field = session.extractedRows[rowIndex].fields[fieldKey];
+  if (field) field.ignored = !!ignored;
+  renderImportReview();
+}
+
+function setImportReviewFieldValue(rowIndex, fieldKey, value) {
+  const session = S.importSession;
+  if (!session || !session.extractedRows || !session.extractedRows[rowIndex]) return;
+  const field = session.extractedRows[rowIndex].fields[fieldKey];
+  if (field) {
+    field.value = value;
+    field.userEdited = true;
+  }
+  renderImportReview();
+}
+
+function setImportReviewRowInclude(rowIndex, include) {
+  const session = S.importSession;
+  if (!session || !session.extractedRows || !session.extractedRows[rowIndex]) return;
+  session.extractedRows[rowIndex].includeInCreate = !!include;
+  renderImportReview();
+}
+
+function renderImportReview() {
+  const titleEl = document.getElementById('importReviewTitle');
+  const bodyEl = document.getElementById('importReviewBody');
+  const btnEl = document.getElementById('importReviewConfirmBtn');
+  if (!bodyEl) return;
+  const session = S.importSession;
+  if (!session) return;
+  const typeLabel = session.type === 'csv' ? 'CSV' : session.type === 'photo' ? 'Photo' : 'PDF';
+  if (titleEl) titleEl.textContent = 'Review import';
+  const name = session.sourceRef && session.sourceRef.name ? session.sourceRef.name : '—';
+  const rows = Array.isArray(session.extractedRows) ? session.extractedRows : [];
+  const includeCount = rows.filter(r => r.includeInCreate).length;
+
+  let html = `
+    <p class="import-review-sub">${typeLabel}: <strong>${escapeHtml(name)}</strong></p>
+    <p class="import-review-msg">Review and edit values below. Ignore fields you do not want on the job. No job is created until you confirm.</p>
+  `;
+  rows.forEach((row, ri) => {
+    const rowId = `ir-row-${ri}`;
+    html += `<div class="import-review-row-block" data-row="${ri}">
+      <div class="import-review-row-head">
+        <label class="import-review-include-label"><input type="checkbox" class="import-review-include-cb" ${row.includeInCreate ? 'checked' : ''} onchange="setImportReviewRowInclude(${ri}, this.checked)"> Include this row</label>
+        <span class="import-review-row-title">Row ${ri + 1}</span>
+      </div>
+      <table class="import-review-tbl"><thead><tr><th>Field</th><th>Value</th><th>Status</th><th></th></tr></thead><tbody>`;
+    IMPORT_REVIEW_FIELDS.forEach(({ key, label }) => {
+      const f = row.fields[key];
+      if (!f) return;
+      const statusCls = f.status === 'conflict' ? 'ir-status-conflict' : f.status === 'found' ? 'ir-status-found' : f.status === 'needs_review' ? 'ir-status-review' : 'ir-status-notfound';
+      const statusLabel = f.status === 'conflict' ? 'Conflict' : f.status === 'found' ? 'Found' : f.status === 'needs_review' ? 'Review' : 'Not found';
+      const ignored = f.ignored;
+      const inputVal = escapeHtml((f.value || '').replace(/"/g, '&quot;'));
+      html += `
+        <tr class="${ignored ? 'import-review-row-ignored' : ''}">
+          <td class="import-review-label">${escapeHtml(label)}</td>
+          <td><input type="text" class="fi import-review-input" value="${inputVal}" placeholder="—" onchange="setImportReviewFieldValue(${ri}, '${key}', this.value)" ${ignored ? 'readonly' : ''}></td>
+          <td><span class="import-review-status ${statusCls}">${statusLabel}</span></td>
+          <td><button type="button" class="btn ghost import-review-ignore-btn" onclick="setImportReviewFieldIgnore(${ri}, '${key}', ${!ignored})">${ignored ? 'Use' : 'Ignore'}</button></td>
+        </tr>`;
+    });
+    html += '</tbody></table></div>';
+  });
+  bodyEl.innerHTML = html;
+
+  if (btnEl) {
+    btnEl.disabled = includeCount === 0;
+    btnEl.textContent = includeCount === 0 ? 'CREATE JOBS (0 rows)' : `CREATE JOBS (${includeCount} row${includeCount !== 1 ? 's' : ''})`;
+  }
+}
+
+async function confirmImportReview() {
+  const session = S.importSession;
+  if (!session || !Array.isArray(session.extractedRows)) return;
+  const toCreate = session.extractedRows.filter(r => r.includeInCreate);
+  if (toCreate.length === 0) return;
+  const openJobs = (S.jobs || []).filter(j => !isJobArchived(j));
+  let created = 0;
+  for (let i = 0; i < toCreate.length; i++) {
+    const row = toCreate[i];
+    const job = {
+      id: 'j' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 6),
+      status: 'queue',
+      press: '',
+      notes: '',
+      assembly: '',
+      assets: {},
+      progressLog: [],
+      notesLog: [],
+      assemblyLog: [],
+    };
+    IMPORT_REVIEW_FIELDS.forEach(({ key }) => {
+      const f = row.fields[key];
+      if (!f || f.ignored) return;
+      const v = (f.value || '').trim();
+      if (key === 'qty') job.qty = v;
+      else if (key === 'due') job.due = v || null;
+      else job[key] = v;
+    });
+    if (!job.poContract || typeof job.poContract !== 'object') job.poContract = {};
+    job.poContract.sourceImport = session.sourceRef || {};
+    const cat = (job.catalog || '').toUpperCase();
+    const dupes = openJobs.filter(j => (j.catalog || '').toUpperCase() === cat && cat);
+    if (dupes.length > 0 && !(job.artist || job.album)) continue;
+    ensureJobProgressLog(job);
+    S.jobs.unshift(job);
+    try {
+      await Storage.saveJob(job);
+      created++;
+    } catch (e) {
+      console.error('[PMP] Import create failed', e);
+    }
+  }
+  closeImportReview();
+  if (typeof toast === 'function') toast(created ? `${created} JOB${created !== 1 ? 'S' : ''} CREATED` : 'No jobs created.');
+  if (created) renderAll();
 }
 
 // ============================================================
@@ -2376,6 +2853,12 @@ document.addEventListener('keydown', e => {
     const wizardOpen = document.getElementById('wizardWrap')?.classList.contains('on');
     if (wizardOpen) {
       closeWizard();
+      e.preventDefault();
+      return;
+    }
+    const importReviewOpen = document.getElementById('importReviewWrap')?.classList.contains('on');
+    if (importReviewOpen) {
+      closeImportReview();
       e.preventDefault();
       return;
     }

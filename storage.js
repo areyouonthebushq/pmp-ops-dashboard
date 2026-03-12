@@ -208,7 +208,7 @@ const Storage = {
       return data;
     }
     const raw = await safeGet(STORE_KEY);
-    if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], devNotes: [], lastReset: null, notesChannels: null };
+    if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], devNotes: [], compounds: [], lastReset: null, notesChannels: null };
     const data = JSON.parse(raw);
     return {
       jobs: data.jobs || [],
@@ -216,6 +216,7 @@ const Storage = {
       todos: data.todos || { daily: [], weekly: [], standing: [] },
       qcLog: data.qcLog || [],
       devNotes: data.devNotes || [],
+      compounds: data.compounds || [],
       lastReset: data.lastReset || null,
       notesChannels: data.notesChannels || null,
     };
@@ -407,6 +408,25 @@ const Storage = {
     S.devNotes.push(note);
     return flushLocalSave();
   },
+  saveCompounds(compounds) {
+    const list = Array.isArray(compounds) ? compounds : [];
+    if (useSupabase()) {
+      saveInFlight = true;
+      return supabaseWithRetry(function () { return window.PMP.Supabase.saveCompounds(list); })
+        .then(function () {
+          S.lastLocalWriteAt = Date.now();
+          setSyncState('synced');
+        })
+        .catch(function (e) {
+          console.error(e);
+          setSyncState('error', { toast: 'SAVE FAILED' });
+          return Promise.reject(e);
+        })
+        .finally(function () { saveInFlight = false; });
+    }
+    S.compounds = list;
+    return flushLocalSave();
+  },
   saveSnapshot() {
     if (!useSupabase()) scheduleSave();
   },
@@ -430,6 +450,8 @@ function flushLocalSave() {
     presses: S.presses,
     todos: S.todos,
     qcLog: S.qcLog,
+    devNotes: S.devNotes || [],
+    compounds: S.compounds || [],
     lastReset: S._lastReset || new Date().toDateString(),
     notesChannels: S.notesChannels || null,
   };
@@ -446,6 +468,8 @@ function scheduleSave() {
       presses: S.presses,
       todos: S.todos,
       qcLog: S.qcLog,
+      devNotes: S.devNotes || [],
+      compounds: S.compounds || [],
       lastReset: S._lastReset || new Date().toDateString(),
       notesChannels: S.notesChannels || null,
     });
