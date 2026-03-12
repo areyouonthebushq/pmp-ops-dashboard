@@ -1562,6 +1562,20 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
       assetLabel: null,
       assetKey: null,
     }));
+    const alertCh = (S.notesChannels && Array.isArray(S.notesChannels['!ALERT']))
+      ? S.notesChannels['!ALERT']
+      : [];
+    alertCh.forEach(e => entries.push({
+      jobId: '!ALERT',
+      catalog: '!ALERT',
+      artist: '',
+      album: '',
+      text: e.text,
+      person: e.person,
+      timestamp: e.timestamp,
+      assetLabel: null,
+      assetKey: null,
+    }));
   }
   entries.sort((a, b) => (new Date(b.timestamp) - new Date(a.timestamp)));
 
@@ -1605,7 +1619,8 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const artist = e.artist ? escapeHtml(e.artist) : '—';
         const asset = e.assetLabel || e.assetKey || '';
         const assetHtml = asset ? `<div class="notes-entry-asset">${escapeHtml(asset)}</div>` : '';
-        return `<div class="progress-entry"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-text">${escapeHtml(e.text)}</div>${assetHtml}<div class="notes-entry-meta">${meta}</div></div>`;
+        const rowCls = e.jobId === '!ALERT' ? ' notes-row-alert' : '';
+        return `<div class="progress-entry${rowCls}"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-text">${escapeHtml(e.text)}</div>${assetHtml}<div class="notes-entry-meta">${meta}</div></div>`;
       }).join('');
 
   const addAllowed = !!selectedId && (selectedId !== '!ALERT' || ((window.PMP?.userProfile?.email || '').toLowerCase().includes('piper') || (window.PMP?.userProfile?.display_name || '').toLowerCase().includes('piper')));

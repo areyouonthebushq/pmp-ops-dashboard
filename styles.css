@@ -1959,6 +1959,13 @@
     margin-top: var(--space-xs);
     text-align: right;
     }
+    .notes-feed .progress-entry.notes-row-alert {
+    background: rgba(58, 0, 0, 0.75);
+    border-left: 2px solid var(--r2);
+    }
+    .notes-feed .progress-entry.notes-row-alert .notes-entry-cat {
+    color: var(--r);
+    }
     .notes-feed .notes-entry-asset {
     font-size: 10px;
     letter-spacing: 0.5px;
