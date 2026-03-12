@@ -1016,7 +1016,7 @@
     display:flex; align-items:center; justify-content:center;
     }
     .panel-close:hover { border-color: var(--r); color: var(--r); }
-    #panelEditBtn { font-size: 10px; letter-spacing: 1px; width: auto; padding: 0 12px; }
+    #panelEditBtn { font-size: 16px; letter-spacing: 0; width:30px; height:30px; padding:0; }
     #panelEditBtn:hover { border-color: var(--g); color: var(--g); }
     #panelEditBtn.editing { border-color: var(--g); color: var(--g); }
 
