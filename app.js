@@ -2021,9 +2021,8 @@ async function addNoteFromNotesPage() {
     const text = textEl && textEl.value ? textEl.value.trim() : '';
     if (!text) return;
     if (jobId === '!ALERT') {
-      const email = (window.PMP?.userProfile?.email || '').toLowerCase();
-      const name = (window.PMP?.userProfile?.display_name || '').toLowerCase();
-      const ok = email.includes('piper') || name.includes('piper');
+      const role = (window.PMP?.userProfile?.role || '').toLowerCase();
+      const ok = role === 'admin';
       if (!ok) return;
     }
     if (!S.notesChannels || typeof S.notesChannels !== 'object') S.notesChannels = { '!TEAM': [], '!ALERT': [] };
