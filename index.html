@@ -326,7 +326,7 @@
             </div>
             <div class="notes-utility-row" id="notesAddRow" style="display:none;">
                 <textarea class="fta notes-textarea" id="notesNewText" placeholder="Add note" onkeydown="notesComposerKeydown(event)"></textarea>
-                <button type="button" class="bar-btn go notes-utility-action" onclick="addNoteFromNotesPage()">ADD</button>
+                <button type="button" class="bar-btn notes-utility-action" onclick="addNoteFromNotesPage()">ADD</button>
                 <div></div>
             </div>
             <div class="notes-utility-row" id="notesSearchRow" style="display:none;">
@@ -335,7 +335,7 @@
                     <span class="search-count" id="notesSearchCount"></span>
                 </div>
                 <div></div>
-                <button type="button" class="bar-btn go notes-utility-action" onclick="notesSearchAction()">SEARCH</button>
+                <button type="button" class="bar-btn notes-utility-action" onclick="notesSearchAction()">SEARCH</button>
             </div>
             <div class="notes-feed-sec">NOTES</div>
             <div class="notes-filter-indicator" id="notesFilterIndicator" style="display:none;"></div>
@@ -729,8 +729,8 @@
         <h3 class="duplicate-job-title">Job already exists</h3>
         <p class="duplicate-job-msg" id="duplicateJobMsg"></p>
         <div class="duplicate-job-btns">
-            <button type="button" class="btn go" id="duplicateOpenExistingBtn">Open Existing Job</button>
-            <button type="button" class="btn ghost" id="duplicateCreateAnywayBtn">Create Anyway</button>
+            <button type="button" class="btn ghost" id="duplicateOpenExistingBtn">Open Existing Job</button>
+            <button type="button" class="btn go" id="duplicateCreateAnywayBtn">Create Anyway</button>
             <button type="button" class="btn ghost" onclick="closeDuplicateModal()">Cancel</button>
         </div>
     </div>

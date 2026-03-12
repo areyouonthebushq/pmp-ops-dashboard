@@ -2262,33 +2262,76 @@ document.addEventListener('keydown', e => {
   const stationVisible = isStationShellVisible();
 
   if (e.key === 'Escape') {
+    // 1. Topmost full-screen / station shell
     if (stationVisible) {
       doLogout();
       e.preventDefault();
       return;
     }
-    if (currentPage === 'notes' && S.notesActiveAssetFilter) {
-      clearNotesAssetFilter();
-      e.preventDefault();
-      return;
-    }
-    if (document.getElementById('newJobChooserWrap')?.classList.contains('on')) {
+    // 2. Highest-priority overlays / modals (new job chooser, wizard, confirm)
+    const newJobOpen = document.getElementById('newJobChooserWrap')?.classList.contains('on');
+    if (newJobOpen) {
       closeNewJobChooser();
       e.preventDefault();
       return;
     }
-    if (document.getElementById('wizardWrap')?.classList.contains('on')) {
+    const wizardOpen = document.getElementById('wizardWrap')?.classList.contains('on');
+    if (wizardOpen) {
       closeWizard();
       e.preventDefault();
       return;
     }
-    if (document.getElementById('confirmWrap').classList.contains('open')) closeConfirm();
-    else if (panelOpen) closePanel();
-    else if (document.body.classList.contains('tv')) exitTV();
+    const confirmEl = document.getElementById('confirmWrap');
+    if (confirmEl && confirmEl.classList.contains('open')) {
+      closeConfirm();
+      e.preventDefault();
+      return;
+    }
+    // 3. Assets overlay
+    const assetsEl = document.getElementById('assetsOverlay');
+    if (assetsEl && assetsEl.classList.contains('on')) {
+      // Skip save on ESC; behave like click-outside cancel
+      if (typeof closeAssetsOverlay === 'function') closeAssetsOverlay(true);
+      e.preventDefault();
+      return;
+    }
+    // 4. NOTES-specific transient state: asset filter, add/search utilities
+    if (currentPage === 'notes') {
+      if (S.notesActiveAssetFilter) {
+        clearNotesAssetFilter();
+        e.preventDefault();
+        return;
+      }
+      if (S.notesUtilityOpen === 'add' || S.notesUtilityOpen === 'search') {
+        S.notesUtilityOpen = null;
+        S.notesComposerOpen = false;
+        const searchEl = document.getElementById('notesSearch');
+        const textEl = document.getElementById('notesNewText');
+        if (searchEl) searchEl.value = '';
+        if (textEl) textEl.value = '';
+        if (typeof renderNotesPage === 'function') renderNotesPage();
+        e.preventDefault();
+        return;
+      }
+    }
+    // 5. Panel, then TV mode
+    if (panelOpen) {
+      closePanel();
+      e.preventDefault();
+      return;
+    }
+    if (document.body.classList.contains('tv')) {
+      exitTV();
+      e.preventDefault();
+      return;
+    }
+    // 6. Focused search inputs (Jobs/Floor) — clear and reset lists
     if (isTyping && document.activeElement.classList.contains('search-input')) {
       document.activeElement.value = '';
       document.activeElement.blur();
       renderFloor(); renderJobs();
+      e.preventDefault();
+      return;
     }
     return;
   }
