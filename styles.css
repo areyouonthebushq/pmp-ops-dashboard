@@ -399,6 +399,97 @@
     .pg.on { display:block; animation: pgIn 0.25s ease; }
     @keyframes pgIn { from { opacity:0; } to { opacity:1; } }
 
+    /* ============================================================ DEV PAGE — backstage product memory */
+    .dev-terminal {
+    border: 1px solid var(--b2);
+    background: var(--s1);
+    max-width: 980px;
+    margin: 0 auto;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    }
+    .dev-control-rail {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-md);
+    border-bottom: 1px solid var(--b2);
+    padding-bottom: var(--space-sm);
+    }
+    .dev-rail-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--d3);
+    }
+    .dev-toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    }
+    .dev-area-select {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 13px;
+    background: var(--b3);
+    border: 1px solid var(--b4);
+    color: var(--d);
+    }
+    .dev-utility-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-sm);
+    align-items: flex-start;
+    }
+    .dev-textarea {
+    min-height: 56px;
+    max-height: 160px;
+    resize: vertical;
+    }
+    .dev-add-btn {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+    .dev-feed-sec {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--d3);
+    }
+    .dev-feed-wrap {
+    border: 1px solid var(--b2);
+    background: var(--s2);
+    max-height: 420px;
+    overflow-y: auto;
+    }
+    .dev-feed {
+    padding: var(--space-sm);
+    }
+    .dev-entry {
+    border-bottom: 1px solid var(--b3);
+    padding: var(--space-sm) var(--space-xs);
+    }
+    .dev-entry:last-child {
+    border-bottom: none;
+    }
+    .dev-entry-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: 2px;
+    font-size: 11px;
+    color: var(--d3);
+    }
+    .dev-entry-area {
+    color: var(--w);
+    }
+    .dev-entry-text {
+    font-size: 13px;
+    color: var(--d);
+    line-height: 1.4;
+    }
+
     /* ============================================================ SIGNAL PILLS */
     .pill {
     display:inline-flex; align-items:center; gap: var(--space-xs);

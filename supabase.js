@@ -187,12 +187,13 @@
 
     async loadAllData() {
       const client = getClient();
-      const [jobsRes, progressRes, pressesRes, todosRes, qcRes, channelsRes] = await Promise.all([
+      const [jobsRes, progressRes, pressesRes, todosRes, qcRes, devRes, channelsRes] = await Promise.all([
         client.from('jobs').select('*').order('created_at', { ascending: true }),
         client.from('progress_log').select('*').order('timestamp', { ascending: true }),
         client.from('presses').select('*'),
         client.from('todos').select('*').order('sort_order', { ascending: true }),
         client.from('qc_log').select('*').order('created_at', { ascending: false }),
+        client.from('dev_notes').select('*').order('timestamp', { ascending: true }),
         client.from('notes_channels').select('*'),
       ]);
 
@@ -224,13 +225,20 @@
         date: row.date,
       }));
 
+      const devNotes = (devRes.data || []).map((row) => ({
+        area: row.area || '',
+        text: row.text || '',
+        person: row.person || '',
+        timestamp: row.timestamp || null,
+      }));
+
       const notesChannels = {};
       (channelsRes.data || []).forEach((row) => {
         if (!row || !row.id) return;
         notesChannels[row.id] = Array.isArray(row.log) ? row.log : [];
       });
 
-      return { jobs, presses, todos, qcLog, notesChannels };
+      return { jobs, presses, todos, qcLog, devNotes, notesChannels };
     },
 
     async saveJob(job) {
@@ -290,6 +298,18 @@
       const client = getClient();
       const row = { time: entry.time, type: entry.type, job: entry.job, date: entry.date };
       const { error } = await client.from('qc_log').insert(row);
+      if (error) throw error;
+    },
+
+    async logDevNote(entry) {
+      const client = getClient();
+      const row = {
+        area: entry.area,
+        text: entry.text,
+        person: entry.person || 'Unknown',
+        timestamp: entry.timestamp || new Date().toISOString(),
+      };
+      const { error } = await client.from('dev_notes').insert(row);
       if (error) throw error;
     },
 

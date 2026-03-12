@@ -162,7 +162,74 @@ function renderAdminShell() {
   renderTodos();
   renderLog();
   renderNotesPage();
+  renderDevPage();
   renderTV();
+}
+
+// ============================================================
+// DEV PAGE — backstage product memory
+// ============================================================
+
+const DEV_AREAS = [
+  'JOBS',
+  'FLOOR',
+  'LOG',
+  'NOTES',
+  'AUDIT',
+  'PANEL',
+  'ASSETS',
+  'TV',
+  'AUTH / LAUNCHER',
+  'DEV',
+];
+
+function getDevAreaFilter() {
+  const sel = document.getElementById('devAreaSelect');
+  if (!sel) return '';
+  return sel.value || '';
+}
+
+function renderDevPage() {
+  const shell = document.getElementById('pg-dev');
+  if (!shell) return;
+  const isAdmin = S.mode === 'admin';
+  shell.style.display = isAdmin ? '' : 'none';
+
+  const sel = document.getElementById('devAreaSelect');
+  if (sel && !sel.dataset.bound) {
+    sel.innerHTML = [''].concat(DEV_AREAS).map(v => {
+      if (!v) return '<option value="">ALL AREAS</option>';
+      return `<option value="${v}">${v}</option>`;
+    }).join('');
+    sel.dataset.bound = '1';
+  }
+
+  const feedEl = document.getElementById('devFeed');
+  if (!feedEl) return;
+  const filter = getDevAreaFilter();
+  const notes = (Array.isArray(S.devNotes) ? S.devNotes : []).slice().sort((a, b) => {
+    return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
+  });
+  const filtered = filter ? notes.filter(n => (n.area || '') === filter) : notes;
+  if (!filtered.length) {
+    feedEl.innerHTML = '<div class="empty">NO DEV NOTES YET</div>';
+    return;
+  }
+  feedEl.innerHTML = filtered.map(n => {
+    const ts = n.timestamp ? new Date(n.timestamp).toLocaleString() : '';
+    const area = n.area || '';
+    const person = n.person || '';
+    const text = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `
+      <div class="dev-entry">
+        <div class="dev-entry-head">
+          <span class="dev-entry-area">${area}</span>
+          <span class="dev-entry-meta">${person || '—'} · ${ts}</span>
+        </div>
+        <div class="dev-entry-text">${text.replace(/\n/g, '<br>')}</div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ============================================================

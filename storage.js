@@ -80,7 +80,15 @@ function getOfflineSnapshot() {
 function setOfflineSnapshot(data) {
   try {
     if (!data) return;
-    const payload = { jobs: data.jobs || [], presses: data.presses || [], todos: data.todos || null, qcLog: data.qcLog || [], lastReset: data.lastReset || null, fetchedAt: new Date().toISOString() };
+    const payload = {
+      jobs: data.jobs || [],
+      presses: data.presses || [],
+      todos: data.todos || null,
+      qcLog: data.qcLog || [],
+      devNotes: data.devNotes || [],
+      lastReset: data.lastReset || null,
+      fetchedAt: new Date().toISOString(),
+    };
     localStorage.setItem(OFFLINE_SNAPSHOT_KEY, JSON.stringify(payload));
   } catch {}
 }
@@ -200,13 +208,14 @@ const Storage = {
       return data;
     }
     const raw = await safeGet(STORE_KEY);
-    if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], lastReset: null, notesChannels: null };
+    if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], devNotes: [], lastReset: null, notesChannels: null };
     const data = JSON.parse(raw);
     return {
       jobs: data.jobs || [],
       presses: data.presses || [],
       todos: data.todos || { daily: [], weekly: [], standing: [] },
       qcLog: data.qcLog || [],
+      devNotes: data.devNotes || [],
       lastReset: data.lastReset || null,
       notesChannels: data.notesChannels || null,
     };
@@ -360,6 +369,42 @@ const Storage = {
         .catch(function (e) { console.error(e); setSyncState('error', { toast: 'QC LOG FAILED' }); return Promise.reject(e); })
         .finally(function () { saveInFlight = false; });
     }
+    return flushLocalSave();
+  },
+  logDevNote(entry) {
+    if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'logDevNote: ' + (entry.area || '?'), level: 'info' });
+    const note = {
+      area: entry.area || '',
+      text: entry.text || '',
+      person: entry.person || '',
+      timestamp: entry.timestamp || new Date().toISOString(),
+    };
+    if (useSupabase()) {
+      if (isOffline()) {
+        // For phase 1, DEV notes written while offline are kept local only.
+        if (!Array.isArray(S.devNotes)) S.devNotes = [];
+        S.devNotes.push(note);
+        S.offlineMode = true;
+        setSyncState('offline');
+        return Promise.resolve();
+      }
+      saveInFlight = true;
+      return supabaseWithRetry(function () { return window.PMP.Supabase.logDevNote(note); })
+        .then(function () {
+          if (!Array.isArray(S.devNotes)) S.devNotes = [];
+          S.devNotes.push(note);
+          S.lastLocalWriteAt = Date.now();
+          setSyncState('synced');
+        })
+        .catch(function (e) {
+          console.error(e);
+          setSyncState('error', { toast: 'DEV NOTE FAILED' });
+          return Promise.reject(e);
+        })
+        .finally(function () { saveInFlight = false; });
+    }
+    if (!Array.isArray(S.devNotes)) S.devNotes = [];
+    S.devNotes.push(note);
     return flushLocalSave();
   },
   saveSnapshot() {

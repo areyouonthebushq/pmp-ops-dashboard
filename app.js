@@ -89,6 +89,7 @@ let S = {
   presses: JSON.parse(JSON.stringify(DEFAULT_PRESSES)),
   todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)),
   qcLog: [],
+  devNotes: [],
   notesChannels: { '!TEAM': [], '!ALERT': [] },
   mode: 'floor',
   editId: null,
@@ -180,6 +181,11 @@ async function loadAll() {
       console.warn('[PMP] Supabase returned 0 jobs but local state has', S.jobs.length, '— keeping local state (possible transient failure)');
     }
     if (data.lastReset) S._lastReset = data.lastReset;
+    if (Array.isArray(data.devNotes)) {
+      S.devNotes = data.devNotes;
+    } else if (!Array.isArray(S.devNotes)) {
+      S.devNotes = [];
+    }
     if (data.notesChannels && typeof data.notesChannels === 'object') {
       S.notesChannels = data.notesChannels;
     }
@@ -226,6 +232,64 @@ async function loadAll() {
   if (syncEl && syncEl.textContent === 'loading') {
     setSyncState('synced');
   }
+}
+
+// ============================================================
+// DEV PAGE — backstage product memory
+// ============================================================
+
+function currentDevPersonLabel() {
+  const surface = window.PMP?.userProfile?.display_name || window.PMP?.userProfile?.email || '';
+  if (!surface) return S.mode === 'admin' ? 'Admin' : 'Operator';
+  return surface;
+}
+
+function addDevNote() {
+  const areaEl = document.getElementById('devAreaSelect');
+  const textEl = document.getElementById('devText');
+  if (!areaEl || !textEl) return;
+  const area = (areaEl.value || '').trim();
+  const text = (textEl.value || '').trim();
+  if (!area || !text) return;
+  const person = currentDevPersonLabel();
+  const timestamp = new Date().toISOString();
+  Storage.logDevNote({ area, text, person, timestamp })
+    .then(() => {
+      textEl.value = '';
+      renderDevPage();
+    })
+    .catch(() => {});
+}
+
+function onDevAreaChange() {
+  renderDevPage();
+}
+
+function exportDevNotes() {
+  const notes = Array.isArray(S.devNotes) ? S.devNotes.slice() : [];
+  if (!notes.length) return;
+  const rows = [['area', 'timestamp', 'person', 'text']];
+  notes
+    .slice()
+    .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0))
+    .forEach(n => {
+      rows.push([
+        (n.area || '').replace(/"/g, '""'),
+        n.timestamp || '',
+        (n.person || '').replace(/"/g, '""'),
+        (n.text || '').replace(/"/g, '""'),
+      ]);
+    });
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'pmp_dev_notes.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 function checkTodoReset() {
@@ -485,13 +549,18 @@ function enterByLauncher(choice, pressId) {
     hideAllShells();
     setLastLauncherChoice({ stationType: null });
     const navAudit = document.getElementById('navAudit');
-    if (navAudit) navAudit.style.display = getAuthRole() === 'admin' ? '' : 'none';
+    const navDev = document.getElementById('navDev');
+    const isAdminRole = getAuthRole() === 'admin';
+    if (navAudit) navAudit.style.display = isAdminRole ? '' : 'none';
+    if (navDev) navDev.style.display = isAdminRole ? '' : 'none';
     renderAll();
     return;
   }
   if (appEl) appEl.style.display = 'block';
   const navAudit = document.getElementById('navAudit');
+  const navDev = document.getElementById('navDev');
   if (navAudit) navAudit.style.display = 'none';
+  if (navDev) navDev.style.display = 'none';
   if (choice === 'floor_manager') {
     setLastLauncherChoice({ stationType: 'floor_manager' });
     openFloorManager();
@@ -511,7 +580,9 @@ function enterByLauncher(choice, pressId) {
       if (badgeEl) { badgeEl.textContent = 'ADMIN'; badgeEl.className = 'bar-mode admin'; }
       if (exportBtn) exportBtn.style.display = '';
       const navAuditEl = document.getElementById('navAudit');
+      const navDevEl = document.getElementById('navDev');
       if (navAuditEl) navAuditEl.style.display = '';
+      if (navDevEl) navDevEl.style.display = '';
     }
     hideAllShells();
     goPg('log');
