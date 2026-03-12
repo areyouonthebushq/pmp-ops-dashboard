@@ -1548,6 +1548,20 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         assetKey: e.assetKey || null,
       }));
     });
+    const teamCh = (S.notesChannels && Array.isArray(S.notesChannels['!TEAM']))
+      ? S.notesChannels['!TEAM']
+      : [];
+    teamCh.forEach(e => entries.push({
+      jobId: '!TEAM',
+      catalog: '!TEAM',
+      artist: '',
+      album: '',
+      text: e.text,
+      person: e.person,
+      timestamp: e.timestamp,
+      assetLabel: null,
+      assetKey: null,
+    }));
   }
   entries.sort((a, b) => (new Date(b.timestamp) - new Date(a.timestamp)));
 

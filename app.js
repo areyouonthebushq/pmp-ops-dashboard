@@ -182,12 +182,12 @@ async function loadAll() {
     if (data.lastReset) S._lastReset = data.lastReset;
     if (data.notesChannels && typeof data.notesChannels === 'object') {
       S.notesChannels = data.notesChannels;
-    } else if (!S.notesChannels || typeof S.notesChannels !== 'object') {
-      S.notesChannels = { '!TEAM': [], '!ALERT': [] };
-    } else {
-      if (!Array.isArray(S.notesChannels['!TEAM'])) S.notesChannels['!TEAM'] = [];
-      if (!Array.isArray(S.notesChannels['!ALERT'])) S.notesChannels['!ALERT'] = [];
     }
+    if (!S.notesChannels || typeof S.notesChannels !== 'object') {
+      S.notesChannels = {};
+    }
+    if (!Array.isArray(S.notesChannels['!TEAM'])) S.notesChannels['!TEAM'] = [];
+    if (!Array.isArray(S.notesChannels['!ALERT'])) S.notesChannels['!ALERT'] = [];
     S.jobs.forEach(ensureJobProgressLog);
     syncJobPressFromPresses();
     checkTodoReset();
