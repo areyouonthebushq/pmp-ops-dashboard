@@ -642,6 +642,17 @@ function openLastLauncherChoice() {
   }
 }
 
+/** Try to restore last launcher choice (skip choose-station). Returns true if we entered a station, false otherwise. */
+function tryRestoreLastLauncherChoice() {
+  const last = getLastLauncherChoice();
+  if (!last) return false;
+  const choice = last.stationType === null ? 'admin' : last.stationType;
+  const pressId = last.assignedPressId || null;
+  if (typeof mayEnterStation !== 'function' || !mayEnterStation(choice, pressId)) return false;
+  openLastLauncherChoice();
+  return true;
+}
+
 function renderLauncherLast() {
   const row = document.getElementById('launcherLastRow');
   const label = document.getElementById('launcherLastLabel');
@@ -714,10 +725,19 @@ function hideLoginScreen() {
   }
 }
 
-function showLauncher() {
+/** @param {boolean} [skipRestore] - If true, show choose-station only (e.g. after user clicked BACK). If false, try restore last or default to floor. */
+function showLauncher(skipRestore) {
   hideLoginScreen();
   const banner = document.getElementById('localModeBanner');
   if (banner) banner.style.display = 'none';
+  if (!skipRestore) {
+    if (tryRestoreLastLauncherChoice()) return;
+    const last = getLastLauncherChoice();
+    if (!last && typeof mayEnterStation === 'function' && mayEnterStation('floor_manager', null)) {
+      enterByLauncher('floor_manager');
+      return;
+    }
+  }
   const modeScreen = getModeScreenEl();
   if (modeScreen) modeScreen.style.display = 'flex';
   document.getElementById('app').style.display = 'none';
@@ -933,7 +953,7 @@ function doLogout() {
   document.getElementById('fab').style.display = 'none';
   document.body.classList.remove('tv');
   stopDataSync();
-  showLauncher();
+  showLauncher(true);
 }
 
 async function signOutFully() {
