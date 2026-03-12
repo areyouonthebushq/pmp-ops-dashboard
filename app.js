@@ -2080,25 +2080,39 @@ async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text) {
   if (!job || !(assetLabel && text)) return;
   const trimmed = String(text).trim();
   if (!trimmed) return;
+  const ts = new Date().toISOString();
   ensureNotesLog(job);
   const person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
   const taggedText = assetLabel + ': ' + trimmed;
-  job.notesLog.push({ text: taggedText, person, timestamp: new Date().toISOString() });
+  job.notesLog.push({ text: taggedText, person, timestamp: ts });
   job.notes = trimmed;
+  if (!Array.isArray(job.progressLog)) job.progressLog = [];
+  job.progressLog.push({ qty: 0, stage: 'asset_note', person, timestamp: ts, asset_key: assetKey });
   try {
     await Storage.saveJob(job);
   } catch (e) {
     if (typeof toastError === 'function') toastError(e?.message || 'Save failed');
     return;
   }
-  await Storage.logProgress({
-    job_id: jobId,
-    qty: 0,
-    stage: 'asset_note',
-    person,
-    timestamp: new Date().toISOString(),
-    asset_key: assetKey,
-  }).catch(() => {});
+  try {
+    await Storage.logProgress({
+      job_id: jobId,
+      qty: 0,
+      stage: 'asset_note',
+      person,
+      timestamp: ts,
+      asset_key: assetKey,
+    });
+  } catch (e) {
+    console.error('[PMP] Asset note logProgress failed', e);
+    if (typeof toastError === 'function') toastError('LOG WRITE FAILED (NOTE SAVED)');
+  }
+  if (typeof renderNotesPage === 'function' && currentPage === 'notes') {
+    renderNotesPage();
+  }
+  if (typeof renderLog === 'function' && (currentPage === 'log' || currentPage === 'qc')) {
+    renderLog();
+  }
   if (typeof renderAssetsOverlay === 'function') renderAssetsOverlay();
   if (typeof toast === 'function') toast('NOTE LOGGED');
 }
