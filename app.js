@@ -2171,6 +2171,15 @@ function notesComposerKeydown(e) {
   }
 }
 
+function assetNoteComposerKeydown(e) {
+  if (!e) return;
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    submitAssetNoteFromOverlay();
+    return;
+  }
+}
+
 function toggleNotesUtility(which) {
   if (which !== 'add' && which !== 'search') return;
   const selEl = document.getElementById('notesJobSelect');

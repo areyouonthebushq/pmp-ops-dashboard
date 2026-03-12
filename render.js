@@ -526,13 +526,12 @@ function renderAssetsOverlay() {
         <div class="awho">${d.person || ''}</div>
         <button type="button" class="asset-row-btn" onclick="event.stopPropagation();openAssetNoteComposer('${jobId}','${a.key}')" title="Add note">+</button>
         <button type="button" class="asset-row-btn" onclick="event.stopPropagation();goToNotesWithFilter('${jobId}','${a.key}')" title="View notes for this asset">⌕</button>
-        <button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayNA('${a.key}')">${d.na ? 'RESTORE' : 'N/A'}</button>
       </div>
       </div>
       ${addingNote ? `
       <div class="asset-note-composer">
-        <textarea id="assetNoteComposerText" class="fta notes-textarea" placeholder="Add note (lands in NOTES)…" rows="2" style="min-height:38px;max-height:120px;resize:vertical"></textarea>
-        <button type="button" class="bar-btn go" onclick="submitAssetNoteFromOverlay()">ADD</button>
+        <textarea id="assetNoteComposerText" class="fta notes-textarea" placeholder="Add note (lands in NOTES)…" rows="2" onkeydown="assetNoteComposerKeydown(event)"></textarea>
+        <button type="button" class="bar-btn notes-utility-action" onclick="submitAssetNoteFromOverlay()">ADD</button>
       </div>
       ` : ''}
       <div class="asset-detail" id="ado-${a.key}">
@@ -583,9 +582,26 @@ function updateAssetsOverlay(key, field, val) {
   assetsOverlayState.data[key][field] = val;
 }
 
-function saveAssetsOverlay() {
+async function saveAssetsOverlay() {
   if (!assetsOverlayState) return;
   flushAssetsOverlayInputs();
+  // If an asset note composer is open with text, log that note before saving assets.
+  if (S.assetsOverlayNoteJobId && S.assetsOverlayAddingNoteKey) {
+    const textEl = document.getElementById('assetNoteComposerText');
+    const text = textEl && textEl.value ? textEl.value.trim() : '';
+    if (text) {
+      const jobId = S.assetsOverlayNoteJobId;
+      const assetKey = S.assetsOverlayAddingNoteKey;
+      const assetLabel = S.assetsOverlayNoteLabel || assetKey;
+      S.assetsOverlayAddingNoteKey = null;
+      S.assetsOverlayNoteJobId = null;
+      S.assetsOverlayNoteLabel = null;
+      if (typeof addAssetNoteFromOverlay === 'function') {
+        await addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text);
+      }
+      if (textEl) textEl.value = '';
+    }
+  }
   const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
   if (!job) { closeAssetsOverlay(true); return; }
   job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
