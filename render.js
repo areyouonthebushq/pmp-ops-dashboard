@@ -553,17 +553,36 @@ function closeProgressDetail() {
 let assetsOverlayState = null;
 
 function openAssetsOverlay(jobId) {
+  clearAssetsOverlayPulseTimers();
   const job = S.jobs.find(j => j.id === jobId);
   if (!job) return;
-  assetsOverlayState = { jobId, data: JSON.parse(JSON.stringify(job.assets || {})) };
+  const raw = JSON.parse(JSON.stringify(job.assets || {}));
+  ASSET_DEFS.forEach(a => {
+    const d = raw[a.key] || {};
+    const status = typeof getAssetStatus === 'function' ? getAssetStatus(d) : (d.received ? 'received' : d.na ? 'na' : '');
+    raw[a.key] = { status, date: d.date || '', person: d.person || '', note: d.note || '', received: status === 'received', na: status === 'na', cautionSince: d.cautionSince || '' };
+  });
+  assetsOverlayState = { jobId, data: raw };
   document.getElementById('assetsOverlayTitle').textContent = `${job.catalog || '—'} · ${job.artist || '—'}`;
   renderAssetsOverlay();
   document.getElementById('assetsOverlay').classList.add('on');
 }
 
+function clearAssetsOverlayPulseTimers() {
+  const timeouts = S.assetsOverlayPulseTimeouts;
+  if (timeouts && typeof timeouts === 'object') {
+    Object.keys(timeouts).forEach(function (k) {
+      if (timeouts[k] != null) clearTimeout(timeouts[k]);
+    });
+  }
+  if (S.assetsOverlayPulseTimeouts) S.assetsOverlayPulseTimeouts = {};
+  if (S.assetsOverlayPulseKeys) S.assetsOverlayPulseKeys = {};
+}
+
 function closeAssetsOverlay(skipSave) {
   if (!assetsOverlayState) {
     assetsOverlayState = null;
+    clearAssetsOverlayPulseTimers();
     const el = document.getElementById('assetsOverlay');
     if (el) el.classList.remove('on');
     return;
@@ -572,6 +591,7 @@ function closeAssetsOverlay(skipSave) {
   const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
   if (!job) {
     assetsOverlayState = null;
+    clearAssetsOverlayPulseTimers();
     const el = document.getElementById('assetsOverlay');
     if (el) el.classList.remove('on');
     return;
@@ -579,11 +599,13 @@ function closeAssetsOverlay(skipSave) {
   job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
   if (skipSave) {
     assetsOverlayState = null;
+    clearAssetsOverlayPulseTimers();
     const el = document.getElementById('assetsOverlay');
     if (el) el.classList.remove('on');
     renderAll();
     return;
   }
+  clearAssetsOverlayPulseTimers();
   Storage.updateJobAssets(job.id, job.assets)
     .then(() => {
       assetsOverlayState = null;
@@ -603,7 +625,7 @@ function flushAssetsOverlayInputs() {
     const detailEl = document.getElementById('ado-' + a.key);
     if (!detailEl || !detailEl.classList.contains('open')) return;
     const inputs = detailEl.querySelectorAll('input[type="date"], input[type="text"]');
-    if (!assetsOverlayState.data[a.key]) assetsOverlayState.data[a.key] = { received: false, date: '', person: '', na: false, note: '' };
+    if (!assetsOverlayState.data[a.key]) assetsOverlayState.data[a.key] = { status: '', date: '', person: '', note: '', received: false, na: false, cautionSince: '' };
     if (inputs.length >= 1) assetsOverlayState.data[a.key].date = (inputs[0].value || '').trim();
     if (inputs.length >= 2) assetsOverlayState.data[a.key].person = (inputs[1].value || '').trim();
     if (inputs.length >= 3) assetsOverlayState.data[a.key].note = (inputs[2].value || '').trim();
@@ -613,33 +635,88 @@ function flushAssetsOverlayInputs() {
 function renderAssetsOverlay() {
   if (!assetsOverlayState) return;
   const data = assetsOverlayState.data;
-  const received = ASSET_DEFS.filter(a => data[a.key]?.received).length;
-  const na = ASSET_DEFS.filter(a => data[a.key]?.na).length;
-  const remaining = ASSET_DEFS.length - received - na;
-  const allDone = remaining === 0;
+  const getStatus = typeof getAssetStatus === 'function' ? getAssetStatus : function (d) { return d.received ? 'received' : d.na ? 'na' : ''; };
+  const received = ASSET_DEFS.filter(a => getStatus(data[a.key]) === 'received').length;
+  const na = ASSET_DEFS.filter(a => getStatus(data[a.key]) === 'na').length;
+  const caution = ASSET_DEFS.filter(a => getStatus(data[a.key]) === 'caution').length;
+  const remaining = ASSET_DEFS.filter(a => !getStatus(data[a.key]) || getStatus(data[a.key]) === '').length;
+  const allDone = remaining === 0 && caution === 0;
   let summaryHTML = `<div class="asset-summary">
     <span class="as-received"><span class="as-num">${received}</span> received</span>
     <span class="as-na"><span class="as-num">${na}</span> N/A</span>
+    <span class="as-caution"><span class="as-num">${caution}</span> caution</span>
     <span class="as-remaining"><span class="as-num">${remaining}</span> remaining</span>
     ${allDone ? '<span class="as-complete">✓ ALL ASSETS READY</span>' : ''}
   </div>`;
+  const job = (S.jobs || []).find(function (j) { return j.id === assetsOverlayState.jobId; });
+  const notesLog = (job && job.notesLog) || [];
+  if (!S.assetsOverlayPulseKeys) S.assetsOverlayPulseKeys = {};
+  if (!S.assetsOverlayPulseTimeouts) S.assetsOverlayPulseTimeouts = {};
+  const pulseActive = {};
+  const now = Date.now();
+  ASSET_DEFS.forEach(function (a) {
+    const d = data[a.key] || { status: '', date: '', person: '', note: '', received: false, na: false, cautionSince: '' };
+    const status = getStatus(d);
+    const cautionSince = (d.cautionSince || '').trim();
+    const hasNewNoteSinceCaution = cautionSince && notesLog.some(function (n) { return n.assetKey === a.key && n.timestamp && n.timestamp >= cautionSince; });
+    const cautionLocked = status === 'caution' && cautionSince && !hasNewNoteSinceCaution;
+    if (cautionLocked) {
+      const elapsed = now - new Date(cautionSince).getTime();
+      if (elapsed >= 1500 || S.assetsOverlayPulseKeys[a.key]) {
+        pulseActive[a.key] = true;
+      } else {
+        if (!S.assetsOverlayPulseTimeouts[a.key]) {
+          S.assetsOverlayPulseTimeouts[a.key] = setTimeout(function () {
+            S.assetsOverlayPulseKeys[a.key] = true;
+            if (S.assetsOverlayPulseTimeouts) delete S.assetsOverlayPulseTimeouts[a.key];
+            renderAssetsOverlay();
+          }, 1500 - elapsed);
+        }
+      }
+    } else {
+      if (S.assetsOverlayPulseTimeouts[a.key]) {
+        clearTimeout(S.assetsOverlayPulseTimeouts[a.key]);
+        delete S.assetsOverlayPulseTimeouts[a.key];
+      }
+      delete S.assetsOverlayPulseKeys[a.key];
+    }
+  });
   const listEl = document.getElementById('assetsOverlayList');
   if (!listEl) return;
   listEl.innerHTML = summaryHTML + ASSET_DEFS.map(a => {
-    const d = data[a.key] || { received: false, date: '', person: '', note: '', na: false };
+    const d = data[a.key] || { status: '', date: '', person: '', note: '', received: false, na: false, cautionSince: '' };
+    const status = getStatus(d);
+    const cautionSince = (d.cautionSince || '').trim();
+    const hasNewNoteSinceCaution = cautionSince && notesLog.some(function (n) { return n.assetKey === a.key && n.timestamp && n.timestamp >= cautionSince; });
+    const cautionLocked = status === 'caution' && cautionSince && !hasNewNoteSinceCaution;
+    const showPulse = cautionLocked && (pulseActive[a.key] || S.assetsOverlayPulseKeys[a.key]);
+    const rowClass = status === 'received' ? 'asset-row-received' : status === 'na' ? 'asset-row-na' : status === 'caution' ? 'asset-row-caution' : '';
+    const lockedClass = cautionLocked ? ' asset-row-caution-locked' : '';
+    const icon = status === 'received' ? '✓' : status === 'na' ? '−' : status === 'caution' ? '⚠' : '';
+    const statClass = status === 'received' ? 'astat astat-received' : status === 'na' ? 'astat astat-na' : status === 'caution' ? 'astat astat-caution' : 'astat';
     const addingNote = S.assetsOverlayAddingNoteKey === a.key;
     const jobId = assetsOverlayState.jobId || '';
+    const viewNotesBtn = cautionLocked
+      ? '<button type="button" class="asset-row-btn asset-row-btn-disabled" disabled title="Add a note first (use +)">⌕</button>'
+      : '<button type="button" class="asset-row-btn" onclick="event.stopPropagation();goToNotesWithFilter(\'' + jobId + '\',\'' + a.key + '\')" title="View notes for this asset">⌕</button>';
+    const detailSection = cautionLocked
+      ? ''
+      : '<div class="asset-detail" id="ado-' + a.key + '">' +
+      '<div><div class="adl">DATE RECEIVED</div><input type="date" value="' + (d.date || '') + '" onchange="updateAssetsOverlay(\'' + a.key + '\',\'date\',this.value)"></div>' +
+      '<div><div class="adl">RECEIVED BY</div><input type="text" value="' + escapeHtml(d.person || '') + '" placeholder="Name" onchange="updateAssetsOverlay(\'' + a.key + '\',\'person\',this.value)"></div>' +
+      '<div style="grid-column:1/-1"><div class="adl">NOTE</div><input type="text" value="' + escapeHtml(d.note || '') + '" placeholder="Note…" onchange="updateAssetsOverlay(\'' + a.key + '\',\'note\',this.value)"></div>' +
+      '</div>';
+    const addBtnClass = showPulse ? ' asset-row-btn-pulse' : '';
     return `
     <div>
-      <div class="asset-row ${d.received ? 'got' : ''} ${d.na ? 'na' : ''}"
-          onclick="${d.na ? '' : "toggleAssetsOverlayReceived('" + a.key + "')"}">
-      <div class="acheck">${d.received ? '✓' : ''}</div>
+      <div class="asset-row ${rowClass}${lockedClass}" onclick="cycleAssetsOverlayStatus('${a.key}')">
+      <div class="${statClass}">${icon}</div>
       <div class="aname">${a.label}</div>
       <div class="adate">${d.date || ''}</div>
       <div style="display:flex;gap: var(--space-sm);align-items:center">
         <div class="awho">${d.person || ''}</div>
-        <button type="button" class="asset-row-btn" onclick="event.stopPropagation();openAssetNoteComposer('${jobId}','${a.key}')" title="Add note">+</button>
-        <button type="button" class="asset-row-btn" onclick="event.stopPropagation();goToNotesWithFilter('${jobId}','${a.key}')" title="View notes for this asset">⌕</button>
+        <button type="button" class="asset-row-btn${addBtnClass}" onclick="event.stopPropagation();openAssetNoteComposer('${jobId}','${a.key}')" title="Add note">+</button>
+        ${viewNotesBtn}
       </div>
       </div>
       ${addingNote ? `
@@ -648,40 +725,30 @@ function renderAssetsOverlay() {
         <button type="button" class="bar-btn notes-utility-action" onclick="submitAssetNoteFromOverlay()">ADD</button>
       </div>
       ` : ''}
-      <div class="asset-detail" id="ado-${a.key}">
-      <div>
-        <div class="adl">DATE RECEIVED</div>
-        <input type="date" value="${d.date || ''}" onchange="updateAssetsOverlay('${a.key}','date',this.value)">
-      </div>
-      <div>
-        <div class="adl">RECEIVED BY</div>
-        <input type="text" value="${escapeHtml(d.person || '')}" placeholder="Name" onchange="updateAssetsOverlay('${a.key}','person',this.value)">
-      </div>
-      <div style="grid-column:1/-1">
-        <div class="adl">NOTE</div>
-        <input type="text" value="${escapeHtml(d.note || '')}" placeholder="Note…" onchange="updateAssetsOverlay('${a.key}','note',this.value)">
-      </div>
-      </div>
+      ${detailSection}
     </div>
     `;
   }).join('');
 }
 
-function toggleAssetsOverlayReceived(key) {
+/** Cycle asset status: '' → received → na → caution → '' */
+function cycleAssetsOverlayStatus(key) {
   if (!assetsOverlayState) return;
   flushAssetsOverlayInputs();
-  const d = assetsOverlayState.data[key] || { received: false, date: '', person: '', na: false };
-  assetsOverlayState.data[key] = { ...d, received: !d.received, na: d.na ? false : d.na };
-  if (assetsOverlayState.data[key].received && !assetsOverlayState.data[key].date)
+  const d = assetsOverlayState.data[key] || { status: '', date: '', person: '', note: '', received: false, na: false, cautionSince: '' };
+  const getStatus = typeof getAssetStatus === 'function' ? getAssetStatus : function (x) { return x.received ? 'received' : x.na ? 'na' : ''; };
+  const cur = getStatus(d);
+  const next = cur === '' ? 'received' : cur === 'received' ? 'na' : cur === 'na' ? 'caution' : '';
+  const cautionSince = next === 'caution' ? new Date().toISOString() : '';
+  assetsOverlayState.data[key] = {
+    ...d,
+    status: next,
+    received: next === 'received',
+    na: next === 'na',
+    cautionSince: cautionSince,
+  };
+  if (next === 'received' && !assetsOverlayState.data[key].date)
     assetsOverlayState.data[key].date = new Date().toISOString().split('T')[0];
-  renderAssetsOverlay();
-}
-
-function toggleAssetsOverlayNA(key) {
-  if (!assetsOverlayState) return;
-  flushAssetsOverlayInputs();
-  const d = assetsOverlayState.data[key] || { received: false, date: '', person: '', na: false, note: '' };
-  assetsOverlayState.data[key] = { ...d, na: !d.na, received: d.na ? d.received : false };
   renderAssetsOverlay();
 }
 
@@ -692,7 +759,7 @@ function toggleAssetsOverlayDetail(key) {
 
 function updateAssetsOverlay(key, field, val) {
   if (!assetsOverlayState) return;
-  if (!assetsOverlayState.data[key]) assetsOverlayState.data[key] = { received: false, date: '', person: '', na: false, note: '' };
+  if (!assetsOverlayState.data[key]) assetsOverlayState.data[key] = { status: '', date: '', person: '', note: '', received: false, na: false, cautionSince: '' };
   assetsOverlayState.data[key][field] = val;
 }
 

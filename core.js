@@ -290,10 +290,20 @@ function findDuplicateJob(jobs, catalog, artist, album, excludeId) {
   });
 }
 
+/** Canonical asset status: received | na | caution | '' (unset). Derives from legacy received/na when status not set. */
+function getAssetStatus(asset) {
+  if (!asset || typeof asset !== 'object') return '';
+  const s = (asset.status || '').toLowerCase().trim();
+  if (s === 'received' || s === 'na' || s === 'caution') return s;
+  if (asset.received === true) return 'received';
+  if (asset.na === true) return 'na';
+  return '';
+}
+
 function assetHealth(job, assetDefs) {
   const defs = assetDefs != null ? assetDefs : ASSET_DEFS;
-  const applicable = defs.filter(a => !job.assets || job.assets[a.key]?.na !== true);
-  const done = applicable.filter(a => job.assets && job.assets[a.key]?.received);
+  const applicable = defs.filter(a => getAssetStatus(job.assets && job.assets[a.key]) !== 'na');
+  const done = applicable.filter(a => getAssetStatus(job.assets && job.assets[a.key]) === 'received');
   return { done: done.length, total: applicable.length, pct: applicable.length ? done.length / applicable.length : 0 };
 }
 

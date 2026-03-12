@@ -609,7 +609,8 @@
     .asset-summary .as-num { font-weight:700; font-size:16px; }
     .asset-summary .as-received .as-num { color: var(--g); }
     .asset-summary .as-na .as-num { color: var(--d3); }
-    .asset-summary .as-remaining .as-num { color: var(--w); }
+    .asset-summary .as-caution .as-num { color: var(--w); }
+    .asset-summary .as-remaining .as-num { color: var(--d2); }
     .asset-summary .as-complete { color: var(--g); font-weight:700; letter-spacing:2px; }
 
     /* ============================================================ QC KEYBOARD HINTS
@@ -1296,18 +1297,27 @@
     transition:all 0.15s; cursor:pointer;
     }
     .asset-row:hover { background: var(--s3); }
-    .asset-row.got { border-left-color: var(--g); background:rgba(0,230,118,0.03); }
-    .asset-row.na  { opacity:0.35; cursor:default; }
+    .asset-row.got,
+    .asset-row-received { border-left-color: var(--g); background:rgba(0,230,118,0.03); }
+    .asset-row.na,
+    .asset-row-na { opacity:0.7; border-left-color: var(--d3); }
+    .asset-row-caution { border-left-color: var(--w); background: rgba(255,193,7,0.08); }
 
-    .acheck {
+    .acheck,
+    .astat {
     width:20px; height:20px; border:1px solid var(--d3);
     display:flex; align-items:center; justify-content:center;
     font-size:12px; transition:all 0.15s; flex-shrink:0;
     }
-    .asset-row.got .acheck { background: var(--g); border-color: var(--g); color:#000; }
+    .asset-row.got .acheck,
+    .astat-received { background: var(--g); border-color: var(--g); color:#000; }
+    .astat-na { background: var(--s2); border-color: var(--d3); color: var(--d3); }
+    .astat-caution { background: var(--w2); border-color: var(--w); color: #000; }
 
     .aname { font-size:13px; color: var(--d); }
-    .asset-row.got .aname { color: var(--g); }
+    .asset-row.got .aname,
+    .asset-row-received .aname { color: var(--g); }
+    .asset-row-caution .aname { color: var(--d); }
     .adate { font-size:11px; color: var(--d3); }
     .asset-row.got .adate { color: var(--d2); }
     .awho { font-size:11px; color: var(--d3); text-align:right; }
@@ -1363,6 +1373,18 @@
     font-family: 'Inconsolata', monospace; transition: all 0.15s;
     }
     .asset-row-btn:hover { border-color: var(--g); color: var(--g); }
+    .asset-row-btn-disabled { opacity: 0.5; cursor: not-allowed; }
+    .asset-row-btn-pulse {
+    border-color: var(--w);
+    color: var(--w);
+    box-shadow: var(--gw);
+    animation: asset-btn-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes asset-btn-pulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(255,179,0,0.4); }
+    50% { box-shadow: 0 0 12px rgba(255,179,0,0.7); }
+    }
+    .asset-row-caution-locked .aname::after { content: ' — add note or change state'; font-size: 10px; color: var(--d3); font-weight: normal; }
     .asset-note-composer {
     display: flex; gap: var(--space-sm); align-items: flex-start; margin-top: var(--space-xs);
     padding: var(--space-sm); background: var(--s2); border: 1px solid var(--b1); border-radius: var(--radius);
