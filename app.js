@@ -2071,26 +2071,11 @@ async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text) {
   const person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
   job.notesLog.push({ text: trimmed, person, timestamp: ts, assetLabel, assetKey });
   job.notes = trimmed;
-  if (!Array.isArray(job.progressLog)) job.progressLog = [];
-  job.progressLog.push({ qty: 0, stage: 'asset_note', person, timestamp: ts, asset_key: assetKey });
   try {
     await Storage.saveJob(job);
   } catch (e) {
     if (typeof toastError === 'function') toastError(e?.message || 'Save failed');
     return;
-  }
-  try {
-    await Storage.logProgress({
-      job_id: jobId,
-      qty: 0,
-      stage: 'asset_note',
-      person,
-      timestamp: ts,
-      asset_key: assetKey,
-    });
-  } catch (e) {
-    console.error('[PMP] Asset note logProgress failed', e);
-    if (typeof toastError === 'function') toastError('LOG WRITE FAILED (NOTE SAVED)');
   }
   if (typeof renderNotesPage === 'function' && currentPage === 'notes') {
     renderNotesPage();
@@ -2287,6 +2272,13 @@ document.addEventListener('keydown', e => {
       e.preventDefault();
       return;
     }
+    // Progress detail overlay (LOG/Floor/Jobs)
+    const progDetailEl = document.getElementById('progressDetailOverlay');
+    if (progDetailEl && progDetailEl.classList.contains('on')) {
+      if (typeof closeProgressDetail === 'function') closeProgressDetail();
+      e.preventDefault();
+      return;
+    }
     // 3. Assets overlay
     const assetsEl = document.getElementById('assetsOverlay');
     if (assetsEl && assetsEl.classList.contains('on')) {
@@ -2296,12 +2288,15 @@ document.addEventListener('keydown', e => {
       return;
     }
     // 4. NOTES-specific transient state: asset filter, add/search utilities
-    if (currentPage === 'notes') {
+    const notesPg = document.getElementById('pg-notes');
+    if (notesPg && notesPg.classList.contains('on')) {
+      // 4a. Clear asset jump filter
       if (S.notesActiveAssetFilter) {
         clearNotesAssetFilter();
         e.preventDefault();
         return;
       }
+      // 4b. Close add/search utilities
       if (S.notesUtilityOpen === 'add' || S.notesUtilityOpen === 'search') {
         S.notesUtilityOpen = null;
         S.notesComposerOpen = false;
@@ -2309,6 +2304,16 @@ document.addEventListener('keydown', e => {
         const textEl = document.getElementById('notesNewText');
         if (searchEl) searchEl.value = '';
         if (textEl) textEl.value = '';
+        if (typeof renderNotesPage === 'function') renderNotesPage();
+        e.preventDefault();
+        return;
+      }
+      // 4c. Clear selected channel/job (return to full board)
+      const selEl = document.getElementById('notesJobSelect');
+      if (selEl && selEl.value) {
+        selEl.value = '';
+        const searchEl = document.getElementById('notesSearch');
+        if (searchEl) searchEl.value = '';
         if (typeof renderNotesPage === 'function') renderNotesPage();
         e.preventDefault();
         return;

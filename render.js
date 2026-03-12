@@ -1061,26 +1061,8 @@ function renderLog() {
         if (!e || !e.timestamp) return;
         const d = new Date(e.timestamp).toDateString();
         if (d !== viewDate) return;
+        if (e.stage === 'asset_note') return;
         if (e.stage === 'rejected') return; // reject rows rendered from qcLog with defect type
-        if (e.stage === 'asset_note') {
-          const adef = typeof ASSET_DEFS !== 'undefined' ? ASSET_DEFS.find(function (x) { return x.key === e.asset_key; }) : null;
-          const assetLabel = (adef && adef.label) ? adef.label : (e.asset_key || '—');
-          const sw = parseSurfaceWho(e.person || '');
-          items.push({
-            ts: e.timestamp,
-            qty: 0,
-            action: 'NOTE',
-            defect: assetLabel,
-            cls: 'asset_note',
-            source: sw.surface || '—',
-            who: sw.who || '',
-            press: (j.press || '').split(',')[0].trim(),
-            jobLabel: `${j.catalog || '—'} · ${j.artist || '—'}`,
-            jobId: j.id,
-            assetKey: e.asset_key || '',
-          });
-          return;
-        }
         const action = e.stage === 'pressed' ? 'PRESS' : e.stage === 'qc_passed' ? 'PASS' : 'LOG';
         const cls = e.stage === 'pressed' ? 'pressed' : e.stage === 'qc_passed' ? 'qc_passed' : '';
         const sw = parseSurfaceWho(e.person || '');
