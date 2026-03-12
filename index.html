@@ -675,49 +675,6 @@
         </div>
         </div>
 
-        <div class="form-section form-section--recede"><span class="fs-num">5</span> NOTES</div>
-        <div class="panel-notes">
-        <div class="fg">
-            <label class="fl">Production Notes</label>
-            <div id="notesLogList" class="progress-recent" style="max-height:200px;overflow-y:auto;margin-bottom:8px;"></div>
-            <textarea class="fta" id="jNotesInput" placeholder="Production notes (job metadata)…"></textarea>
-        </div>
-        <div class="fg">
-            <label class="fl">Assembly / Location Notes</label>
-            <div id="assemblyLogList" class="progress-recent" style="max-height:200px;overflow-y:auto;margin-bottom:8px;"></div>
-            <textarea class="fta" id="jAssemblyInput" placeholder="Assembly/location notes (job metadata)…"></textarea>
-        </div>
-        <button type="button" class="btn go" onclick="openNotesForCurrentJob()" style="margin-top:4px;">OPEN NOTES FOR THIS JOB</button>
-        </div>
-
-        <div class="form-section form-section--recede"><span class="fs-num">6</span> BILLING</div>
-        <div class="billing-toggle" id="billingToggle" onclick="toggleBilling()">
-            <span class="bt-arrow">▸</span>
-            <span>BILLING DETAILS</span>
-            <span class="billing-toggle-hint">OPTIONAL</span>
-        </div>
-        <div class="billing-body" id="billingBody">
-            <div class="frow c2" style="margin-top: var(--space-md)">
-            <div class="fg">
-                <label class="fl">Invoice Date Sent</label>
-                <input class="fi" type="date" id="jInvDate">
-            </div>
-            <div class="fg">
-                <label class="fl">Deposit Paid</label>
-                <input class="fi" type="date" id="jDep">
-            </div>
-            </div>
-            <div class="frow c2">
-            <div class="fg">
-                <label class="fl">2nd Invoice Sent</label>
-                <input class="fi" type="date" id="jInv2">
-            </div>
-            <div class="fg">
-                <label class="fl">2nd Payment Received</label>
-                <input class="fi" type="date" id="jPay2">
-            </div>
-            </div>
-        </div>
         </div>
         <div class="panel-foot">
         <button class="btn ghost" onclick="closePanel()">CANCEL</button>
