@@ -513,6 +513,8 @@ function renderAssetsOverlay() {
   if (!listEl) return;
   listEl.innerHTML = summaryHTML + ASSET_DEFS.map(a => {
     const d = data[a.key] || { received: false, date: '', person: '', note: '', na: false };
+    const addingNote = S.assetsOverlayAddingNoteKey === a.key;
+    const jobId = assetsOverlayState.jobId || '';
     return `
     <div>
       <div class="asset-row ${d.received ? 'got' : ''} ${d.na ? 'na' : ''}"
@@ -522,10 +524,18 @@ function renderAssetsOverlay() {
       <div class="adate">${d.date || ''}</div>
       <div style="display:flex;gap: var(--space-sm);align-items:center">
         <div class="awho">${d.person || ''}</div>
+        <button type="button" class="asset-row-btn" onclick="event.stopPropagation();openAssetNoteComposer('${jobId}','${a.key}')" title="Add note">+</button>
+        <button type="button" class="asset-row-btn" onclick="event.stopPropagation();goToNotesWithFilter('${jobId}','${a.key}')" title="View notes for this asset">⌕</button>
         <button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayNA('${a.key}')">${d.na ? 'RESTORE' : 'N/A'}</button>
         ${d.received ? `<button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayDetail('${a.key}')">▾</button>` : ''}
       </div>
       </div>
+      ${addingNote ? `
+      <div class="asset-note-composer">
+        <textarea id="assetNoteComposerText" class="fta notes-textarea" placeholder="Add note (lands in NOTES)…" rows="2" style="min-height:38px;max-height:120px;resize:vertical"></textarea>
+        <button type="button" class="bar-btn go" onclick="submitAssetNoteFromOverlay()">ADD</button>
+      </div>
+      ` : ''}
       <div class="asset-detail" id="ado-${a.key}">
       <div>
         <div class="adl">DATE RECEIVED</div>
@@ -1053,6 +1063,23 @@ function renderLog() {
         const d = new Date(e.timestamp).toDateString();
         if (d !== viewDate) return;
         if (e.stage === 'rejected') return; // reject rows rendered from qcLog with defect type
+        if (e.stage === 'asset_note') {
+          const adef = typeof ASSET_DEFS !== 'undefined' ? ASSET_DEFS.find(function (x) { return x.key === e.asset_key; }) : null;
+          const assetLabel = (adef && adef.label) ? adef.label : (e.asset_key || '—');
+          const sw = parseSurfaceWho(e.person || '');
+          items.push({
+            ts: e.timestamp,
+            qty: 0,
+            action: 'NOTE',
+            defect: assetLabel,
+            cls: 'asset_note',
+            source: sw.surface || '—',
+            who: sw.who || '',
+            press: (j.press || '').split(',')[0].trim(),
+            jobLabel: `${j.catalog || '—'} · ${j.artist || '—'}`,
+          });
+          return;
+        }
         const action = e.stage === 'pressed' ? 'PRESS' : e.stage === 'qc_passed' ? 'PASS' : 'LOG';
         const cls = e.stage === 'pressed' ? 'pressed' : e.stage === 'qc_passed' ? 'qc_passed' : '';
         const sw = parseSurfaceWho(e.person || '');
@@ -1096,7 +1123,9 @@ function renderLog() {
     } else {
       feedEl.innerHTML = items.map(it => {
         const time = new Date(it.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-        const primary = `+${(it.qty || 0).toLocaleString()} ${it.action}${it.defect ? ' · ' + escapeHtml(it.defect) : ''}`;
+        const primary = it.action === 'NOTE'
+          ? ('NOTE' + (it.defect ? ' · ' + escapeHtml(it.defect) : ''))
+          : (`+${(it.qty || 0).toLocaleString()} ${it.action}${it.defect ? ' · ' + escapeHtml(it.defect) : ''}`);
         const metaParts = [
           escapeHtml(it.source || '—'),
           it.press ? escapeHtml(it.press) : null,
@@ -1447,10 +1476,17 @@ function renderNotesPage() {
   const searchBtn = document.getElementById('notesSearchBtn');
   const searchEl = document.getElementById('notesSearch');
   const searchCountEl = document.getElementById('notesSearchCount');
-  if (!selEl || !feedEl) return;
+  if (!feedEl) return;
+
+  let selectedId = (selEl && (selEl.value || '').trim()) || '';
+  if (S.notesPreloadFilter) {
+    const pre = S.notesPreloadFilter;
+    S.notesPreloadFilter = null;
+    selectedId = (pre.jobId || '').trim();
+    if (searchEl) searchEl.value = pre.search || '';
+  }
 
   const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
-  const selectedId = (selEl.value || '').trim();
   const active = document.activeElement;
   if (pickerEl && !(active && active.id === 'notesJobSelect')) {
     const email = (window.PMP?.userProfile?.email || '').toLowerCase();

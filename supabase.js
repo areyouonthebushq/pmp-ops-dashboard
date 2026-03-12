@@ -105,6 +105,7 @@
       stage: row.stage,
       person: row.person,
       timestamp: row.timestamp,
+      asset_key: row.asset_key || null,
     };
   }
 
@@ -280,6 +281,7 @@
         person: entry.person || 'Unknown',
         timestamp: entry.timestamp || new Date().toISOString(),
       };
+      if (entry.asset_key != null && entry.asset_key !== '') row.asset_key = entry.asset_key;
       const { error } = await client.from('progress_log').insert(row);
       if (error) throw error;
     },

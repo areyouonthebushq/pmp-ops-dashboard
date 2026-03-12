@@ -2074,6 +2074,74 @@ async function addNoteFromNotesPage() {
   toast('NOTE LOGGED');
 }
 
+/** Asset-originated note: lands in NOTES (job.notesLog with asset tag) and LOG (progress_log asset_note). */
+async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text) {
+  const job = S.jobs.find(j => j.id === jobId);
+  if (!job || !(assetLabel && text)) return;
+  const trimmed = String(text).trim();
+  if (!trimmed) return;
+  ensureNotesLog(job);
+  const person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
+  const taggedText = assetLabel + ': ' + trimmed;
+  job.notesLog.push({ text: taggedText, person, timestamp: new Date().toISOString() });
+  job.notes = trimmed;
+  try {
+    await Storage.saveJob(job);
+  } catch (e) {
+    if (typeof toastError === 'function') toastError(e?.message || 'Save failed');
+    return;
+  }
+  await Storage.logProgress({
+    job_id: jobId,
+    qty: 0,
+    stage: 'asset_note',
+    person,
+    timestamp: new Date().toISOString(),
+    asset_key: assetKey,
+  }).catch(() => {});
+  if (typeof renderAssetsOverlay === 'function') renderAssetsOverlay();
+  if (typeof toast === 'function') toast('NOTE LOGGED');
+}
+
+/** Navigate to NOTES with job selected and search preloaded (e.g. for asset filter). */
+function goToNotesWithFilter(jobId, searchText) {
+  S.notesPreloadFilter = { jobId: jobId || '', search: searchText || '' };
+  if (typeof closeAssetsOverlay === 'function') closeAssetsOverlay(true);
+  goPg('notes');
+}
+
+/** Open inline asset-note composer for this asset row (called from Assets overlay). */
+function openAssetNoteComposer(jobId, assetKey) {
+  S.assetsOverlayAddingNoteKey = assetKey;
+  S.assetsOverlayNoteJobId = jobId;
+  const adef = typeof ASSET_DEFS !== 'undefined' ? ASSET_DEFS.find(function (x) { return x.key === assetKey; }) : null;
+  S.assetsOverlayNoteLabel = (adef && adef.label) ? adef.label : assetKey;
+  if (typeof renderAssetsOverlay === 'function') renderAssetsOverlay();
+  setTimeout(function () {
+    const el = document.getElementById('assetNoteComposerText');
+    if (el) el.focus();
+  }, 80);
+}
+
+/** Submit asset note from overlay composer; clears composer state. */
+async function submitAssetNoteFromOverlay() {
+  const textEl = document.getElementById('assetNoteComposerText');
+  const text = textEl && textEl.value ? textEl.value.trim() : '';
+  const jobId = S.assetsOverlayNoteJobId;
+  const assetKey = S.assetsOverlayAddingNoteKey;
+  const assetLabel = S.assetsOverlayNoteLabel || assetKey;
+  S.assetsOverlayAddingNoteKey = null;
+  S.assetsOverlayNoteJobId = null;
+  S.assetsOverlayNoteLabel = null;
+  if (!jobId || !assetKey || !text) {
+    if (typeof renderAssetsOverlay === 'function') renderAssetsOverlay();
+    return;
+  }
+  await addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text);
+  if (textEl) textEl.value = '';
+  if (typeof renderAssetsOverlay === 'function') renderAssetsOverlay();
+}
+
 function addAssemblyNote() {
   const job = S.jobs.find(j => j.id === S.editId);
   if (!job) return;
