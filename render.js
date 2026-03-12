@@ -527,7 +527,6 @@ function renderAssetsOverlay() {
         <button type="button" class="asset-row-btn" onclick="event.stopPropagation();openAssetNoteComposer('${jobId}','${a.key}')" title="Add note">+</button>
         <button type="button" class="asset-row-btn" onclick="event.stopPropagation();goToNotesWithFilter('${jobId}','${a.key}')" title="View notes for this asset">⌕</button>
         <button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayNA('${a.key}')">${d.na ? 'RESTORE' : 'N/A'}</button>
-        ${d.received ? `<button class="na-btn" onclick="event.stopPropagation();toggleAssetsOverlayDetail('${a.key}')">▾</button>` : ''}
       </div>
       </div>
       ${addingNote ? `
