@@ -1456,7 +1456,7 @@ function renderNotesSection() {
   ensureNotesLog(job);
   const prodEl = document.getElementById('notesLogList');
   if (prodEl) {
-    prodEl.innerHTML = (job.notesLog || []).slice().reverse().map(e => {
+    prodEl.innerHTML = (job.notesLog || []).slice().reverse().slice(0, 5).map(e => {
       const time = new Date(e.timestamp).toLocaleString();
       const asset = e.assetLabel || e.assetKey || '';
       const assetHtml = asset ? `<div style="font-size:10px;color:var(--d3);text-align:right;margin-bottom:2px;">${escapeHtml(asset)}</div>` : '';
@@ -1465,7 +1465,7 @@ function renderNotesSection() {
   }
   const asmEl = document.getElementById('assemblyLogList');
   if (asmEl) {
-    asmEl.innerHTML = (job.assemblyLog || []).slice().reverse().map(e => {
+    asmEl.innerHTML = (job.assemblyLog || []).slice().reverse().slice(0, 5).map(e => {
       const time = new Date(e.timestamp).toLocaleString();
       return `<div class="progress-entry"><strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
     }).join('') || '<div class="progress-empty">No notes yet.</div>';

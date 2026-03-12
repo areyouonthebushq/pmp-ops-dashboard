@@ -2010,21 +2010,7 @@ async function submitProgressLog() {
   }
 }
 
-function addProductionNote() {
-  const job = S.jobs.find(j => j.id === S.editId);
-  if (!job) return;
-  const el = document.getElementById('jNotesInput');
-  const text = el && el.value ? el.value.trim() : '';
-  if (!text) return;
-  ensureNotesLog(job);
-  const person = S.mode === 'admin' ? 'Admin' : 'Operator';
-  job.notesLog.push({ text, person, timestamp: new Date().toISOString() });
-  job.notes = text;
-  if (el) el.value = '';
-  Storage.saveJob(job);
-  renderNotesSection();
-  toast('NOTE LOGGED');
-}
+function addProductionNote() {}
 
 async function addNoteFromNotesPage() {
   const selEl = document.getElementById('notesJobSelect');
@@ -2171,30 +2157,12 @@ function clearNotesAssetFilter() {
   if (typeof renderNotesPage === 'function') renderNotesPage();
 }
 
-function addAssemblyNote() {
-  const job = S.jobs.find(j => j.id === S.editId);
-  if (!job) return;
-  const el = document.getElementById('jAssemblyInput');
-  const text = el && el.value ? el.value.trim() : '';
-  if (!text) return;
-  ensureNotesLog(job);
-  const person = S.mode === 'admin' ? 'Admin' : 'Operator';
-  job.assemblyLog.push({ text, person, timestamp: new Date().toISOString() });
-  job.assembly = text;
-  if (el) el.value = '';
-  Storage.saveJob(job);
-  renderNotesSection();
-  toast('NOTE LOGGED');
-}
+function addAssemblyNote() {}
 
-function panelAddNote() {
-  const prod = document.getElementById('jNotesInput');
-  const asm = document.getElementById('jAssemblyInput');
-  const prodText = prod && prod.value ? prod.value.trim() : '';
-  const asmText = asm && asm.value ? asm.value.trim() : '';
-  const activeId = document.activeElement ? document.activeElement.id : '';
-  if (activeId === 'jAssemblyInput' || (!prodText && asmText)) addAssemblyNote();
-  else addProductionNote();
+function openNotesForCurrentJob() {
+  if (!S.editId) return;
+  S.notesPreloadFilter = { jobId: S.editId, search: '', assetLabel: '' };
+  goPg('notes');
 }
 
 function notesComposerKeydown(e) {
