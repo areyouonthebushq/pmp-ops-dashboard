@@ -1694,12 +1694,13 @@ const IMPORT_REVIEW_FIELDS = [
 ];
 
 // Status: found | needs_review | not_found | conflict
+// Row action: create | update. When update, updateJobId must be set for confirm.
 function buildEmptyExtractedRow(rowIndex) {
   const fields = {};
   IMPORT_REVIEW_FIELDS.forEach(({ key }) => {
     fields[key] = { value: '', status: 'not_found', ignored: false, userEdited: false };
   });
-  return { rowIndex, includeInCreate: true, fields };
+  return { rowIndex, includeInCreate: true, action: 'create', updateJobId: null, fields };
 }
 
 // Phase 1: best-effort extraction from raw text (PDF/OCR). Conservative: prefer needs_review.
@@ -1820,7 +1821,7 @@ function buildExtractedRowFromParsedFields(parsed, rowIndex) {
       fields[key] = { value: '', status: 'not_found', ignored: false, userEdited: false };
     }
   });
-  return { rowIndex: rowIndex ?? 0, includeInCreate: true, fields };
+  return { rowIndex: rowIndex ?? 0, includeInCreate: true, action: 'create', updateJobId: null, fields };
 }
 
 // Extract raw text from PDF (first page only in phase 1). Returns '' on failure or if PDF.js not loaded.
@@ -1904,7 +1905,7 @@ function parseCSVToExtractedRows(text) {
       if (key === 'catalog' && raw && openJobs.some(j => (j.catalog || '').toUpperCase() === raw.toUpperCase())) status = 'conflict';
       fields[key] = { value: raw, status, ignored: false, userEdited: false };
     });
-    rows.push({ rowIndex: i - 1, includeInCreate: true, fields });
+    rows.push({ rowIndex: i - 1, includeInCreate: true, action: 'create', updateJobId: null, fields });
   }
   return rows;
 }
@@ -2007,6 +2008,14 @@ function setImportReviewRowInclude(rowIndex, include) {
   renderImportReview();
 }
 
+function setImportReviewRowAction(rowIndex, action, updateJobId) {
+  const session = S.importSession;
+  if (!session || !session.extractedRows || !session.extractedRows[rowIndex]) return;
+  session.extractedRows[rowIndex].action = action === 'update' ? 'update' : 'create';
+  session.extractedRows[rowIndex].updateJobId = (action === 'update' && updateJobId) ? String(updateJobId) : null;
+  renderImportReview();
+}
+
 function renderImportReview() {
   const titleEl = document.getElementById('importReviewTitle');
   const bodyEl = document.getElementById('importReviewBody');
@@ -2018,54 +2027,118 @@ function renderImportReview() {
   if (titleEl) titleEl.textContent = 'Review import';
   const name = session.sourceRef && session.sourceRef.name ? session.sourceRef.name : '—';
   const rows = Array.isArray(session.extractedRows) ? session.extractedRows : [];
-  const includeCount = rows.filter(r => r.includeInCreate).length;
+  const openJobs = typeof sortJobsByCatalogAsc === 'function'
+    ? sortJobsByCatalogAsc((S.jobs || []).filter(function (j) { return !isJobArchived(j); }))
+    : (S.jobs || []).filter(function (j) { return !isJobArchived(j); });
+  const toProcess = rows.filter(function (r) {
+    return r.includeInCreate && (r.action !== 'update' || r.updateJobId);
+  });
+  const hasIncompleteUpdate = rows.some(function (r) {
+    return r.includeInCreate && r.action === 'update' && !r.updateJobId;
+  });
+  const createCount = toProcess.filter(function (r) { return r.action === 'create'; }).length;
+  const updateCount = toProcess.filter(function (r) { return r.action === 'update'; }).length;
 
   let html = `
     <p class="import-review-sub">${typeLabel}: <strong>${escapeHtml(name)}</strong></p>
-    <p class="import-review-msg">Review and edit values below. Ignore fields you do not want on the job. No job is created until you confirm.</p>
+    <p class="import-review-msg">Review and edit values below. Choose Create new job or Update existing. Ignore fields you do not want applied. No changes are saved until you confirm.</p>
   `;
-  rows.forEach((row, ri) => {
-    const rowId = `ir-row-${ri}`;
-    html += `<div class="import-review-row-block" data-row="${ri}">
-      <div class="import-review-row-head">
-        <label class="import-review-include-label"><input type="checkbox" class="import-review-include-cb" ${row.includeInCreate ? 'checked' : ''} onchange="setImportReviewRowInclude(${ri}, this.checked)"> Include this row</label>
-        <span class="import-review-row-title">Row ${ri + 1}</span>
-      </div>
-      <table class="import-review-tbl"><thead><tr><th>Field</th><th>Value</th><th>Status</th><th></th></tr></thead><tbody>`;
-    IMPORT_REVIEW_FIELDS.forEach(({ key, label }) => {
+  rows.forEach(function (row, ri) {
+    const action = row.action || 'create';
+    const updateJobId = row.updateJobId || '';
+    const existingJob = (action === 'update' && updateJobId) ? (S.jobs || []).find(function (j) { return j.id === updateJobId; }) : null;
+    html += '<div class="import-review-row-block" data-row="' + ri + '">';
+    html += '<div class="import-review-row-head">';
+    html += '<label class="import-review-include-label"><input type="checkbox" class="import-review-include-cb" ' + (row.includeInCreate ? 'checked' : '') + ' onchange="setImportReviewRowInclude(' + ri + ', this.checked)"> Include this row</label>';
+    html += '<span class="import-review-row-title">Row ' + (ri + 1) + '</span>';
+    html += '<div class="import-review-row-action">';
+    html += '<label class="import-review-action-option"><input type="radio" name="ir-action-' + ri + '" value="create" ' + (action === 'create' ? 'checked' : '') + ' onchange="setImportReviewRowAction(' + ri + ', \'create\', null)"> Create new job</label>';
+    html += '<label class="import-review-action-option"><input type="radio" name="ir-action-' + ri + '" value="update" ' + (action === 'update' ? 'checked' : '') + ' onchange="setImportReviewRowAction(' + ri + ', \'update\', null)"> Update existing</label>';
+    if (action === 'update') {
+      html += '<select class="fi import-review-job-select" onchange="setImportReviewRowAction(' + ri + ', \'update\', this.value)">';
+      html += '<option value="">Choose job…</option>';
+      openJobs.forEach(function (j) {
+        const lab = (j.catalog || '—') + ' · ' + (j.artist || '—');
+        html += '<option value="' + escapeHtml(j.id) + '" ' + (j.id === updateJobId ? 'selected' : '') + '>' + escapeHtml(lab) + '</option>';
+      });
+      html += '</select>';
+    }
+    html += '</div></div>';
+    html += '<table class="import-review-tbl"><thead><tr><th>Field</th><th>Value</th><th>Status</th><th></th></tr></thead><tbody>';
+    IMPORT_REVIEW_FIELDS.forEach(function (_) {
+      const key = _.key;
+      const label = _.label;
       const f = row.fields[key];
       if (!f) return;
-      const statusCls = f.status === 'conflict' ? 'ir-status-conflict' : f.status === 'found' ? 'ir-status-found' : f.status === 'needs_review' ? 'ir-status-review' : 'ir-status-notfound';
-      const statusLabel = f.status === 'conflict' ? 'Conflict' : f.status === 'found' ? 'Found' : f.status === 'needs_review' ? 'Review' : 'Not found';
+      const existingVal = existingJob ? String(existingJob[key] != null ? existingJob[key] : '') : '';
+      const importedVal = (f.value || '').trim();
+      const isConflict = action === 'update' && existingJob && (existingVal.trim() !== importedVal);
+      const statusCls = isConflict ? 'ir-status-conflict' : (f.status === 'conflict' ? 'ir-status-conflict' : f.status === 'found' ? 'ir-status-found' : f.status === 'needs_review' ? 'ir-status-review' : 'ir-status-notfound');
+      const statusLabel = isConflict ? 'Conflict' : (f.status === 'conflict' ? 'Conflict' : f.status === 'found' ? 'Found' : f.status === 'needs_review' ? 'Review' : 'Not found');
       const ignored = f.ignored;
       const inputVal = escapeHtml((f.value || '').replace(/"/g, '&quot;'));
-      html += `
-        <tr class="${ignored ? 'import-review-row-ignored' : ''}">
-          <td class="import-review-label">${escapeHtml(label)}</td>
-          <td><input type="text" class="fi import-review-input" value="${inputVal}" placeholder="—" onchange="setImportReviewFieldValue(${ri}, '${key}', this.value)" ${ignored ? 'readonly' : ''}></td>
-          <td><span class="import-review-status ${statusCls}">${statusLabel}</span></td>
-          <td><button type="button" class="btn ghost import-review-ignore-btn" onclick="setImportReviewFieldIgnore(${ri}, '${key}', ${!ignored})">${ignored ? 'Use' : 'Ignore'}</button></td>
-        </tr>`;
+      const existingLine = isConflict ? '<div class="import-review-existing">Existing: ' + escapeHtml(existingVal || '—') + '</div>' : '';
+      html += '<tr class="' + (ignored ? 'import-review-row-ignored' : '') + '">';
+      html += '<td class="import-review-label">' + escapeHtml(label) + '</td>';
+      html += '<td><input type="text" class="fi import-review-input" value="' + inputVal + '" placeholder="—" onchange="setImportReviewFieldValue(' + ri + ', \'' + key + '\', this.value)" ' + (ignored ? 'readonly' : '') + '>' + existingLine + '</td>';
+      html += '<td><span class="import-review-status ' + statusCls + '">' + statusLabel + '</span></td>';
+      html += '<td><button type="button" class="btn ghost import-review-ignore-btn" onclick="setImportReviewFieldIgnore(' + ri + ', \'' + key + '\', ' + !ignored + ')">' + (ignored ? 'Use' : 'Ignore') + '</button></td>';
+      html += '</tr>';
     });
     html += '</tbody></table></div>';
   });
   bodyEl.innerHTML = html;
 
   if (btnEl) {
-    btnEl.disabled = includeCount === 0;
-    btnEl.textContent = includeCount === 0 ? 'CREATE JOBS (0 rows)' : `CREATE JOBS (${includeCount} row${includeCount !== 1 ? 's' : ''})`;
+    btnEl.disabled = toProcess.length === 0 || hasIncompleteUpdate;
+    if (hasIncompleteUpdate) {
+      btnEl.textContent = 'Select job for update row(s)';
+    } else if (toProcess.length === 0) {
+      btnEl.textContent = 'CONFIRM (0 rows)';
+    } else if (createCount && updateCount) {
+      btnEl.textContent = 'CONFIRM (' + createCount + ' create, ' + updateCount + ' update)';
+    } else if (updateCount) {
+      btnEl.textContent = 'UPDATE ' + updateCount + ' JOB' + (updateCount !== 1 ? 'S' : '');
+    } else {
+      btnEl.textContent = 'CREATE ' + createCount + ' JOB' + (createCount !== 1 ? 'S' : '');
+    }
   }
 }
 
 async function confirmImportReview() {
   const session = S.importSession;
   if (!session || !Array.isArray(session.extractedRows)) return;
-  const toCreate = session.extractedRows.filter(r => r.includeInCreate);
-  if (toCreate.length === 0) return;
-  const openJobs = (S.jobs || []).filter(j => !isJobArchived(j));
+  const toProcess = session.extractedRows.filter(function (r) {
+    return r.includeInCreate && (r.action !== 'update' || r.updateJobId);
+  });
+  if (toProcess.length === 0) return;
+  const openJobs = (S.jobs || []).filter(function (j) { return !isJobArchived(j); });
   let created = 0;
-  for (let i = 0; i < toCreate.length; i++) {
-    const row = toCreate[i];
+  let updated = 0;
+  for (let i = 0; i < toProcess.length; i++) {
+    const row = toProcess[i];
+    if (row.action === 'update' && row.updateJobId) {
+      const job = openJobs.find(function (j) { return j.id === row.updateJobId; });
+      if (!job) continue;
+      IMPORT_REVIEW_FIELDS.forEach(function (_) {
+        const key = _.key;
+        const f = row.fields[key];
+        if (!f || f.ignored) return;
+        const v = (f.value || '').trim();
+        if (key === 'qty') job.qty = v;
+        else if (key === 'due') job.due = v || null;
+        else job[key] = v;
+      });
+      if (!job.poContract || typeof job.poContract !== 'object') job.poContract = {};
+      job.poContract.sourceImport = session.sourceRef || {};
+      try {
+        await Storage.saveJob(job);
+        updated++;
+      } catch (e) {
+        console.error('[PMP] Import update failed', e);
+      }
+      continue;
+    }
     const job = {
       id: 'j' + Date.now() + '_' + i + '_' + Math.random().toString(36).slice(2, 6),
       status: 'queue',
@@ -2077,7 +2150,8 @@ async function confirmImportReview() {
       notesLog: [],
       assemblyLog: [],
     };
-    IMPORT_REVIEW_FIELDS.forEach(({ key }) => {
+    IMPORT_REVIEW_FIELDS.forEach(function (_) {
+      const key = _.key;
       const f = row.fields[key];
       if (!f || f.ignored) return;
       const v = (f.value || '').trim();
@@ -2088,7 +2162,7 @@ async function confirmImportReview() {
     if (!job.poContract || typeof job.poContract !== 'object') job.poContract = {};
     job.poContract.sourceImport = session.sourceRef || {};
     const cat = (job.catalog || '').toUpperCase();
-    const dupes = openJobs.filter(j => (j.catalog || '').toUpperCase() === cat && cat);
+    const dupes = openJobs.filter(function (j) { return (j.catalog || '').toUpperCase() === cat && cat; });
     if (dupes.length > 0 && !(job.artist || job.album)) continue;
     ensureJobProgressLog(job);
     S.jobs.unshift(job);
@@ -2100,8 +2174,11 @@ async function confirmImportReview() {
     }
   }
   closeImportReview();
-  if (typeof toast === 'function') toast(created ? `${created} JOB${created !== 1 ? 'S' : ''} CREATED` : 'No jobs created.');
-  if (created) renderAll();
+  var msg = [];
+  if (created) msg.push(created + ' JOB' + (created !== 1 ? 'S' : '') + ' CREATED');
+  if (updated) msg.push(updated + ' JOB' + (updated !== 1 ? 'S' : '') + ' UPDATED');
+  if (typeof toast === 'function') toast(msg.length ? msg.join(' · ') : 'No changes saved.');
+  if (created || updated) renderAll();
 }
 
 // ============================================================
