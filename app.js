@@ -465,7 +465,7 @@ function setPanelEditMode(enabled) {
   if (foot) foot.style.display = enabled ? 'flex' : 'none';
 
   const editBtn = document.getElementById('panelEditBtn');
-  if (editBtn) { editBtn.textContent = enabled ? 'EDITING' : 'EDIT'; editBtn.classList.toggle('editing', enabled); }
+  if (editBtn) { editBtn.textContent = enabled ? 'EDITING' : '+'; editBtn.classList.toggle('editing', enabled); }
 
   body.querySelectorAll('button.btn.go').forEach(el => {
     if (enabled) {
@@ -498,7 +498,10 @@ function setPanelEditMode(enabled) {
   }
   if (S.editId) {
     const j = S.jobs.find(x => x.id === S.editId);
-    if (j) updatePoImageUI(j);
+    if (j) {
+      updatePoImageUI(j);
+      updatePanelPoStar(j);
+    }
   }
 }
 
@@ -1288,6 +1291,28 @@ function updatePoImageUI(job) {
   input.value = '';
 }
 
+function updatePanelPoStar(job) {
+  const btn = document.getElementById('panelPoStarBtn');
+  if (!btn) return;
+  const hasImage = !!(job && job.poContract && job.poContract.imageUrl);
+  btn.textContent = hasImage ? '★' : '☆';
+  btn.title = hasImage ? 'View PO / contract image' : 'Add PO / contract image';
+}
+
+function panelPoStarClick() {
+  const jobId = S.editId;
+  if (!jobId) return;
+  const j = S.jobs.find(function (x) { return x.id === jobId; });
+  if (!j) return;
+  const hasImage = !!(j.poContract && j.poContract.imageUrl);
+  if (hasImage) {
+    openPoImageLightbox(j.poContract.imageUrl);
+  } else {
+    const input = document.getElementById('jPoImageInput');
+    if (input) input.click();
+  }
+}
+
 function openPoImageLightbox(src) {
   if (!src) return;
   let el = document.getElementById('poImageLightbox');
@@ -1343,6 +1368,7 @@ async function onPoImageFileSelected(input) {
     j.poContract.imagePath = path;
     await Storage.saveJob(j);
     updatePoImageUI(j);
+    updatePanelPoStar(j);
     if (typeof toast === 'function') toast('PO image uploaded');
   } catch (e) {
     console.error('[PMP] PO image upload failed', e);
@@ -1365,6 +1391,7 @@ async function removePoImage() {
     delete j.poContract.imagePath;
     await Storage.saveJob(j);
     updatePoImageUI(j);
+    updatePanelPoStar(j);
     if (typeof toast === 'function') toast('PO image removed');
   } catch (e) {
     console.error('[PMP] PO image remove failed', e);

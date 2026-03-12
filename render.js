@@ -198,7 +198,7 @@ function renderDevPage() {
   const sel = document.getElementById('devAreaSelect');
   if (sel && !sel.dataset.bound) {
     sel.innerHTML = [''].concat(DEV_AREAS).map(v => {
-      if (!v) return '<option value="">ALL AREAS</option>';
+      if (!v) return '<option value="">ALL CHANNELS</option>';
       return `<option value="${v}">${v}</option>`;
     }).join('');
     sel.dataset.bound = '1';
