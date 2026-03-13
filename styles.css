@@ -2950,7 +2950,7 @@
     #pg-notes.on {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     }
     .notes-terminal {
     width: 100%;
