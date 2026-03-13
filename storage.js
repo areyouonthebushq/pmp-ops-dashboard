@@ -86,6 +86,9 @@ function setOfflineSnapshot(data) {
       todos: data.todos || null,
       qcLog: data.qcLog || [],
       devNotes: data.devNotes || [],
+      compounds: data.compounds || [],
+      employees: data.employees || [],
+      scheduleEntries: data.scheduleEntries || [],
       lastReset: data.lastReset || null,
       fetchedAt: new Date().toISOString(),
     };
@@ -208,7 +211,7 @@ const Storage = {
       return data;
     }
     const raw = await safeGet(STORE_KEY);
-    if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], devNotes: [], compounds: [], lastReset: null, notesChannels: null };
+    if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], devNotes: [], compounds: [], employees: [], scheduleEntries: [], lastReset: null, notesChannels: null };
     const data = JSON.parse(raw);
     return {
       jobs: data.jobs || [],
@@ -217,6 +220,8 @@ const Storage = {
       qcLog: data.qcLog || [],
       devNotes: data.devNotes || [],
       compounds: data.compounds || [],
+      employees: data.employees || [],
+      scheduleEntries: data.scheduleEntries || [],
       lastReset: data.lastReset || null,
       notesChannels: data.notesChannels || null,
     };
@@ -427,6 +432,44 @@ const Storage = {
     S.compounds = list;
     return flushLocalSave();
   },
+  saveEmployees(employees) {
+    const list = Array.isArray(employees) ? employees : [];
+    if (useSupabase()) {
+      saveInFlight = true;
+      return supabaseWithRetry(function () { return window.PMP.Supabase.saveEmployees(list); })
+        .then(function () {
+          S.lastLocalWriteAt = Date.now();
+          setSyncState('synced');
+        })
+        .catch(function (e) {
+          console.error(e);
+          setSyncState('error', { toast: 'SAVE FAILED' });
+          return Promise.reject(e);
+        })
+        .finally(function () { saveInFlight = false; });
+    }
+    S.employees = list;
+    return flushLocalSave();
+  },
+  saveScheduleEntries(entries) {
+    const list = Array.isArray(entries) ? entries : [];
+    if (useSupabase()) {
+      saveInFlight = true;
+      return supabaseWithRetry(function () { return window.PMP.Supabase.saveScheduleEntries(list); })
+        .then(function () {
+          S.lastLocalWriteAt = Date.now();
+          setSyncState('synced');
+        })
+        .catch(function (e) {
+          console.error(e);
+          setSyncState('error', { toast: 'SAVE FAILED' });
+          return Promise.reject(e);
+        })
+        .finally(function () { saveInFlight = false; });
+    }
+    S.scheduleEntries = list;
+    return flushLocalSave();
+  },
   saveSnapshot() {
     if (!useSupabase()) scheduleSave();
   },
@@ -452,6 +495,8 @@ function flushLocalSave() {
     qcLog: S.qcLog,
     devNotes: S.devNotes || [],
     compounds: S.compounds || [],
+    employees: S.employees || [],
+    scheduleEntries: S.scheduleEntries || [],
     lastReset: S._lastReset || new Date().toDateString(),
     notesChannels: S.notesChannels || null,
   };
@@ -470,6 +515,8 @@ function scheduleSave() {
       qcLog: S.qcLog,
       devNotes: S.devNotes || [],
       compounds: S.compounds || [],
+      employees: S.employees || [],
+      scheduleEntries: S.scheduleEntries || [],
       lastReset: S._lastReset || new Date().toDateString(),
       notesChannels: S.notesChannels || null,
     });

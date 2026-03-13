@@ -51,7 +51,7 @@
     overflow-x: hidden;
     }
 
-    /* Scanlines — TV only; stronger when party mode on */
+    /* Scanlines — TV only; stronger when PIZZAZ (tv-party) on; CRT / diagnostic feel */
     body.tv::after {
     content:'';
     position:fixed; inset:0; z-index:9998; pointer-events:none;
@@ -63,14 +63,15 @@
     body.tv.tv-party::after {
     background: repeating-linear-gradient(
         0deg, transparent, transparent 2px,
-        rgba(0,0,0,0.14) 2px, rgba(0,0,0,0.14) 4px
+        rgba(0,8,4,0.12) 2px, rgba(0,8,4,0.12) 4px
     );
     }
 
-    /* Matrix rain — TV only; opacity controlled by party toggle */
+    /* Matrix rain — TV only; PIZZAZ = background signal; fade on toggle */
     #rain {
     position:fixed; inset:0; z-index:0; pointer-events:none;
     opacity:0;
+    transition: opacity 0.5s ease;
     }
 
     /* ============================================================ LOGIN SCREEN (Supabase auth) */
@@ -1296,6 +1297,43 @@
     color: var(--d2);
     }
 
+    /* ============================================================ CREW — operational directory */
+    .crew-shell { padding: 0; }
+    .crew-toolbar {
+    display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap;
+    margin-bottom: var(--space-md);
+    }
+    .crew-tbl { width: 100%; border-collapse: collapse; }
+    .crew-tbl th {
+    text-align: left; padding: var(--space-sm) var(--space-md);
+    font-size: 10px; letter-spacing: 1px; color: var(--d2); text-transform: uppercase;
+    border-bottom: 1px solid var(--b2);
+    }
+    .crew-tbl td { padding: var(--space-md) var(--space-md); border-bottom: 1px solid var(--b1); font-size: 13px; vertical-align: middle; }
+    .crew-row:hover { background: var(--s2); }
+    .crew-cell-thumb { width: 44px; padding-right: var(--space-sm); vertical-align: middle; }
+    .crew-thumb {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--b3); border: 1px solid var(--b1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: var(--d2); letter-spacing: 0.02em;
+    background-size: cover; background-position: center;
+    }
+    .crew-thumb-img { background-color: var(--b2); }
+    .crew-cell-name { font-weight: 600; color: var(--d); }
+    .crew-cell-role, .crew-cell-specialty { color: var(--d2); }
+    .crew-cell-phone, .crew-cell-email { font-variant-numeric: tabular-nums; }
+    .crew-contact-link { color: var(--d); text-decoration: none; }
+    .crew-contact-link:hover { color: var(--g); text-decoration: underline; }
+    .crew-contact-empty { color: var(--d3); }
+    .crew-cell-notes { max-width: 180px; color: var(--d2); font-size: 12px; line-height: 1.35; }
+    .crew-cell-action { white-space: nowrap; }
+    .crew-today-sec { margin-top: var(--space-lg); }
+    .crew-today-toolbar { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md); }
+    .crew-today-date { font-size: 13px; color: var(--d2); }
+    .crew-today-tbl-wrap { margin-bottom: var(--space-md); }
+    .crew-today-tbl .crew-cell-notes { max-width: 200px; }
+
     /* ============================================================ FORM SYSTEM */
     .fg { display:flex; flex-direction:column; gap: var(--space-xs); margin-bottom: var(--space-md); }
     .fl { font-size:10px; color: var(--d2); letter-spacing:2px; text-transform:uppercase; }
@@ -1925,11 +1963,72 @@
     .qc-sum-pill .qsp-l { color: var(--d2); }
 
     /* ============================================================ TV MODE — operations board
-    Main signal: production progress (press cards + queue). Secondary info receded. */
+    Main signal: production progress (press cards + queue). Secondary info receded.
+    PIZZAZ (tv-party) = DOS × Pip-Boy × Matrix diagnostic show mode: phosphor, instrument panel, restrained. */
     body.tv #app { display:none!important; }
     body.tv #rain { opacity:0.1; }
-    body.tv.tv-party #rain { opacity:0.52; }
-    body.tv.tv-party #tv { box-shadow: inset 0 0 120px rgba(0,230,118,0.04); }
+    body.tv.tv-party #rain { opacity:0.28; }
+    body.tv.tv-party #tv {
+    box-shadow: inset 0 0 140px rgba(0,230,118,0.035), 0 0 0 1px rgba(0,230,118,0.09);
+    }
+    body.tv.tv-party #tv::before {
+    content: '';
+    position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: rgba(0,230,118,0.015);
+    }
+    body.tv.tv-party .tv-bar {
+    border-bottom: 1px solid rgba(0,230,118,0.2);
+    box-shadow: 0 1px 0 rgba(0,230,118,0.04);
+    }
+    body.tv.tv-party .tv-stats {
+    border-bottom-color: rgba(0,230,118,0.15);
+    }
+    body.tv.tv-party .tv-stat {
+    border-color: rgba(0,230,118,0.12);
+    background: rgba(0,12,6,0.25);
+    }
+    body.tv.tv-party .tv-press {
+    border-color: rgba(0,230,118,0.1);
+    background: rgba(0,12,6,0.2);
+    }
+    body.tv.tv-party .tv-press.online { border-left-color: var(--g); box-shadow: inset 1px 0 0 rgba(0,230,118,0.15); }
+    body.tv.tv-party .tv-press.warning { border-left-color: var(--w); }
+    body.tv.tv-party .tv-press.offline { border-left-color: var(--r); }
+    body.tv.tv-party .tv-queue-title { color: rgba(200,214,200,0.5); }
+    body.tv.tv-party .tv-tbl th { border-bottom-color: rgba(0,230,118,0.18); color: rgba(200,214,200,0.55); }
+    body.tv.tv-party .tv-ticker { border-top-color: rgba(0,230,118,0.12); }
+
+    /* PIZZAZ diagnostic emphasis — key readouts only, restrained */
+    body.tv.tv-party .tv-clock {
+    text-shadow: 0 0 14px rgba(0,230,118,0.22);
+    }
+    body.tv.tv-party .tv-stat-num {
+    text-shadow: 0 0 8px rgba(200,214,200,0.18);
+    }
+    body.tv.tv-party .tv-stat-num.g { text-shadow: 0 0 10px rgba(0,230,118,0.28); }
+    body.tv.tv-party .tv-stat-num.w { text-shadow: 0 0 10px rgba(255,179,0,0.22); }
+    body.tv.tv-party .tv-stat-num.r { text-shadow: 0 0 10px rgba(255,61,61,0.22); }
+    body.tv.tv-party .tv-progress-num {
+    text-shadow: 0 0 10px rgba(0,230,118,0.24);
+    }
+    body.tv.tv-party .tv-progress-label {
+    color: rgba(200,214,200,0.7);
+    }
+    body.tv.tv-party .tv-dl-bar.dl-bar.tv {
+    box-shadow: inset 0 0 8px rgba(0,230,118,0.06);
+    }
+    body.tv.tv-party .tv-assets-fill {
+    box-shadow: 0 0 6px rgba(0,230,118,0.2);
+    }
+    body.tv.tv-party .tv-pjob {
+    text-shadow: 0 0 6px rgba(255,179,0,0.15);
+    }
+    body.tv.tv-party .tv-tbl .tc {
+    text-shadow: 0 0 4px rgba(255,179,0,0.12);
+    }
+    body.tv.tv-party .tv-ticker {
+    box-shadow: inset 0 -1px 0 rgba(0,230,118,0.06);
+    }
 
     #tv {
     display:none; position:fixed; inset:0; z-index:500;
@@ -2020,10 +2119,15 @@
     background:none; border:1px solid var(--b1); color: var(--d3);
     padding: var(--space-xs) var(--space-md); font-size:10px; cursor:pointer;
     font-family:'Inconsolata',monospace; letter-spacing:1.5px;
-    opacity:0.7; transition: opacity 0.2s, color 0.2s, border-color 0.2s;
+    opacity:0.7;
+    transition: opacity 0.25s ease, color 0.25s ease, border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
     }
     .tv-pizzaz-btn:hover { opacity:1; color: var(--d2); border-color: var(--b2); }
-    body.tv.tv-party .tv-pizzaz-btn { color: var(--g); border-color: var(--g2); opacity:1; }
+    body.tv.tv-party .tv-pizzaz-btn {
+    color: var(--g); border-color: var(--g2); opacity:1;
+    background: rgba(0,230,118,0.06);
+    box-shadow: 0 0 12px rgba(0,230,118,0.18);
+    }
 
     /* ============================================================ SYNC BAR — system status line
     Integrated instrument strip: status (primary) left, version (secondary) right.
@@ -2618,9 +2722,29 @@
     body.theme-minimal .fab:hover { box-shadow: none; }
     body.theme-minimal.tv #rain { opacity: 0 !important; }
     body.theme-minimal.tv::after { background: none !important; }
-    body.theme-minimal.tv.tv-party #rain { opacity: 0.08 !important; }
+    body.theme-minimal.tv.tv-party #rain { opacity: 0.06 !important; }
     body.theme-minimal.tv.tv-party::after { background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px) !important; }
     body.theme-minimal.tv.tv-party #tv { box-shadow: none !important; }
+    body.theme-minimal.tv.tv-party #tv::before { background: rgba(0,230,118,0.008) !important; }
+    body.theme-minimal.tv.tv-party .tv-bar,
+    body.theme-minimal.tv.tv-party .tv-stats,
+    body.theme-minimal.tv.tv-party .tv-stat,
+    body.theme-minimal.tv.tv-party .tv-press { border-color: var(--b1) !important; box-shadow: none !important; background: var(--s1) !important; }
+    body.theme-minimal.tv.tv-party .tv-queue-title,
+    body.theme-minimal.tv.tv-party .tv-tbl th { color: var(--d3) !important; }
+    body.theme-minimal.tv.tv-party .tv-ticker { border-top-color: var(--b1) !important; box-shadow: none !important; }
+    body.theme-minimal.tv.tv-party .tv-clock,
+    body.theme-minimal.tv.tv-party .tv-stat-num,
+    body.theme-minimal.tv.tv-party .tv-stat-num.g,
+    body.theme-minimal.tv.tv-party .tv-stat-num.w,
+    body.theme-minimal.tv.tv-party .tv-stat-num.r,
+    body.theme-minimal.tv.tv-party .tv-progress-num,
+    body.theme-minimal.tv.tv-party .tv-pjob,
+    body.theme-minimal.tv.tv-party .tv-tbl .tc { text-shadow: none !important; }
+    body.theme-minimal.tv.tv-party .tv-progress-label { color: var(--d2) !important; }
+    body.theme-minimal.tv.tv-party .tv-dl-bar.dl-bar.tv,
+    body.theme-minimal.tv.tv-party .tv-assets-fill { box-shadow: none !important; }
+    body.theme-minimal.tv.tv-party .tv-pizzaz-btn { background: transparent !important; box-shadow: none !important; }
 
     /* Floor card — full-screen statboard overlay */
     .floor-card-overlay {

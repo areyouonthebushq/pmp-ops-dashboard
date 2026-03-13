@@ -117,6 +117,61 @@
     return { id: row.id, name: row.name, type: row.type, status: row.status, job_id: row.job_id, on_deck_job_id: row.on_deck_job_id || null };
   }
 
+  function employeeToRow(e) {
+    return {
+      id: e.id,
+      name: e.name || '',
+      role: (e.role != null && e.role !== '') ? String(e.role) : null,
+      phone: (e.phone != null && e.phone !== '') ? String(e.phone) : null,
+      email: (e.email != null && e.email !== '') ? String(e.email) : null,
+      specialty: (e.specialty != null && e.specialty !== '') ? String(e.specialty) : null,
+      photo_url: (e.photo_url != null && e.photo_url !== '') ? String(e.photo_url) : null,
+      notes: (e.notes != null && e.notes !== '') ? String(e.notes) : null,
+      active: e.active !== false,
+    };
+  }
+
+  function rowToEmployee(row) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      name: row.name || '',
+      role: row.role != null ? String(row.role) : '',
+      phone: row.phone != null ? String(row.phone) : '',
+      email: row.email != null ? String(row.email) : '',
+      specialty: row.specialty != null ? String(row.specialty) : '',
+      photo_url: (row.photo_url != null && row.photo_url !== '') ? String(row.photo_url) : '',
+      notes: row.notes != null ? String(row.notes) : '',
+      active: row.active !== false,
+    };
+  }
+
+  function scheduleEntryToRow(entry) {
+    return {
+      id: entry.id,
+      employee_id: entry.employee_id || '',
+      date: entry.date || null,
+      shift_label: (entry.shift_label != null && entry.shift_label !== '') ? String(entry.shift_label) : null,
+      area: (entry.area != null && entry.area !== '') ? String(entry.area) : null,
+      notes: (entry.notes != null && entry.notes !== '') ? String(entry.notes) : null,
+      sort_order: typeof entry.sort_order === 'number' ? entry.sort_order : 0,
+    };
+  }
+
+  function rowToScheduleEntry(row) {
+    if (!row) return null;
+    const d = row.date;
+    return {
+      id: row.id,
+      employee_id: row.employee_id || '',
+      date: d != null ? (typeof d === 'string' ? d.slice(0, 10) : new Date(d).toISOString().slice(0, 10)) : '',
+      shift_label: row.shift_label != null ? String(row.shift_label) : '',
+      area: row.area != null ? String(row.area) : '',
+      notes: row.notes != null ? String(row.notes) : '',
+      sort_order: typeof row.sort_order === 'number' ? row.sort_order : 0,
+    };
+  }
+
   function todoToRow(t, category) {
     return { id: t.id, category, text: t.text, done: !!t.done, who: t.who || '', sort_order: 0 };
   }
@@ -187,7 +242,7 @@
 
     async loadAllData() {
       const client = getClient();
-      const [jobsRes, progressRes, pressesRes, todosRes, qcRes, devRes, compoundsRes, channelsRes] = await Promise.all([
+      const [jobsRes, progressRes, pressesRes, todosRes, qcRes, devRes, compoundsRes, channelsRes, employeesRes, scheduleRes] = await Promise.all([
         client.from('jobs').select('*').order('created_at', { ascending: true }),
         client.from('progress_log').select('*').order('timestamp', { ascending: true }),
         client.from('presses').select('*'),
@@ -196,6 +251,8 @@
         client.from('dev_notes').select('*').order('timestamp', { ascending: true }),
         client.from('compounds').select('*').order('created_at', { ascending: true }),
         client.from('notes_channels').select('*'),
+        client.from('employees').select('*').order('name', { ascending: true }),
+        client.from('schedule_entries').select('*').order('date', { ascending: false }).order('sort_order', { ascending: true }),
       ]);
 
       const jobs = (jobsRes.data || []).map(rowToJob);
@@ -249,7 +306,10 @@
         notesChannels[row.id] = Array.isArray(row.log) ? row.log : [];
       });
 
-      return { jobs, presses, todos, qcLog, devNotes, compounds, notesChannels };
+      const employees = (employeesRes.data || []).map(rowToEmployee);
+      const scheduleEntries = (scheduleRes.data || []).map(rowToScheduleEntry);
+
+      return { jobs, presses, todos, qcLog, devNotes, compounds, notesChannels, employees, scheduleEntries };
     },
 
     async saveJob(job) {
@@ -455,6 +515,22 @@
       }));
       if (!rows.length) return;
       const { error } = await client.from('compounds').upsert(rows, { onConflict: 'id' });
+      if (error) throw error;
+    },
+
+    async saveEmployees(employees) {
+      const client = getClient();
+      const rows = (employees || []).map(employeeToRow);
+      if (!rows.length) return;
+      const { error } = await client.from('employees').upsert(rows, { onConflict: 'id' });
+      if (error) throw error;
+    },
+
+    async saveScheduleEntries(entries) {
+      const client = getClient();
+      const rows = (entries || []).map(scheduleEntryToRow);
+      if (!rows.length) return;
+      const { error } = await client.from('schedule_entries').upsert(rows, { onConflict: 'id' });
       if (error) throw error;
     },
   };

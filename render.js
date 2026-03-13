@@ -189,6 +189,7 @@ function renderAdminShell() {
   renderTodos();
   renderLog();
   renderNotesPage();
+  renderCrewPage();
   renderCompoundsPage();
   renderDevPage();
   renderTV();
@@ -251,6 +252,130 @@ function renderCompoundsPage() {
       '</div></div>'
     );
   }).join('');
+}
+
+// ============================================================
+// CREW — operational directory
+// ============================================================
+
+function getCrewSearchQuery() {
+  const el = document.getElementById('crewSearch');
+  return (el && el.value) ? el.value.trim().toLowerCase() : '';
+}
+
+function renderCrewPage() {
+  const bodyEl = document.getElementById('crewBody');
+  const countEl = document.getElementById('crewCount');
+  const emptyEl = document.getElementById('crewEmpty');
+  if (!bodyEl) return;
+  const raw = Array.isArray(S.employees) ? S.employees : [];
+  const q = getCrewSearchQuery();
+  const list = q
+    ? raw.filter(function (e) {
+        return (
+          (e.name || '').toLowerCase().includes(q) ||
+          (e.role || '').toLowerCase().includes(q) ||
+          (e.specialty || '').toLowerCase().includes(q) ||
+          (e.phone || '').toLowerCase().includes(q) ||
+          (e.email || '').toLowerCase().includes(q) ||
+          (e.notes || '').toLowerCase().includes(q)
+        );
+      })
+    : raw;
+  if (countEl) countEl.textContent = list.length + (raw.length ? ' / ' + raw.length : '');
+  if (emptyEl) {
+    emptyEl.style.display = list.length === 0 && raw.length === 0 ? 'block' : 'none';
+  }
+  if (list.length === 0) {
+    bodyEl.innerHTML = '';
+    return;
+  }
+  bodyEl.innerHTML = list.map(function (e) {
+    var name = (e.name || '').trim() || '—';
+    var role = (e.role || '').trim() || '—';
+    var specialty = (e.specialty || '').trim() || '—';
+    var phoneRaw = (e.phone || '').trim();
+    var emailRaw = (e.email || '').trim();
+    var phone = phoneRaw || '—';
+    var email = emailRaw || '—';
+    var notes = (e.notes || '').trim();
+    var notesShort = notes.length > 40 ? notes.slice(0, 37) + '…' : notes;
+    var photoUrl = (e.photo_url || '').trim();
+    var thumb = '';
+    if (photoUrl) {
+      thumb = '<div class="crew-thumb crew-thumb-img" style="background-image:url(\'' + photoUrl.replace(/'/g, "\\'") + '\')" role="img" aria-label="Photo"></div>';
+    } else {
+      var initial = name.charAt(0).toUpperCase();
+      thumb = '<div class="crew-thumb crew-thumb-initial">' + (typeof escapeHtml === 'function' ? escapeHtml(initial) : initial) + '</div>';
+    }
+    var esc = function (s) { return typeof escapeHtml === 'function' ? escapeHtml(s) : s; };
+    function attrEsc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    var phoneHtml = phoneRaw
+      ? '<a class="crew-contact-link" href="tel:' + attrEsc(phoneRaw) + '">' + esc(phoneRaw) + '</a>'
+      : '<span class="crew-contact-empty">—</span>';
+    var emailHtml = emailRaw
+      ? '<a class="crew-contact-link" href="mailto:' + attrEsc(emailRaw) + '">' + esc(emailRaw) + '</a>'
+      : '<span class="crew-contact-empty">—</span>';
+    var idEsc = (e.id || '').replace(/'/g, "\\'");
+    return (
+      '<tr class="crew-row">' +
+      '<td class="crew-cell-thumb">' + thumb + '</td>' +
+      '<td class="crew-cell-name">' + esc(name) + '</td>' +
+      '<td class="crew-cell-role">' + esc(role) + '</td>' +
+      '<td class="crew-cell-specialty">' + esc(specialty) + '</td>' +
+      '<td class="crew-cell-phone">' + phoneHtml + '</td>' +
+      '<td class="crew-cell-email">' + emailHtml + '</td>' +
+      '<td class="crew-cell-notes" title="' + esc(notes).replace(/"/g, '&quot;') + '">' + esc(notesShort) + '</td>' +
+      '<td class="crew-cell-action"><button type="button" class="bar-btn" onclick="editEmployee(\'' + idEsc + '\')">EDIT</button></td>' +
+      '</tr>'
+    );
+  }).join('');
+
+  // TODAY block
+  var todayDateEl = document.getElementById('crewTodayDate');
+  var todayBodyEl = document.getElementById('crewTodayBody');
+  var todayEmptyEl = document.getElementById('crewTodayEmpty');
+  if (todayDateEl || todayBodyEl) {
+    var todayISO = typeof getTodayDateISO === 'function' ? getTodayDateISO() : new Date().toISOString().slice(0, 10);
+    if (todayDateEl) {
+      var d = new Date(todayISO + 'T12:00:00');
+      todayDateEl.textContent = d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+    var allEntries = Array.isArray(S.scheduleEntries) ? S.scheduleEntries : [];
+    var todayEntries = allEntries.filter(function (s) { return (s.date || '').slice(0, 10) === todayISO; });
+    var employeesById = {};
+    (Array.isArray(S.employees) ? S.employees : []).forEach(function (e) { if (e.id) employeesById[e.id] = e; });
+    todayEntries.sort(function (a, b) {
+      if (a.sort_order !== b.sort_order) return (a.sort_order || 0) - (b.sort_order || 0);
+      var na = (employeesById[a.employee_id] && employeesById[a.employee_id].name) || '';
+      var nb = (employeesById[b.employee_id] && employeesById[b.employee_id].name) || '';
+      return na.localeCompare(nb);
+    });
+    if (todayEmptyEl) todayEmptyEl.style.display = todayEntries.length === 0 ? 'block' : 'none';
+    if (todayBodyEl) {
+      if (todayEntries.length === 0) {
+        todayBodyEl.innerHTML = '';
+      } else {
+        todayBodyEl.innerHTML = todayEntries.map(function (s) {
+          var emp = employeesById[s.employee_id];
+          var name = (emp && emp.name) ? (typeof escapeHtml === 'function' ? escapeHtml(emp.name) : emp.name) : '—';
+          var shift = (s.shift_label || '').trim() || '—';
+          var area = (s.area || '').trim() || '—';
+          var notes = (s.notes || '').trim() || '—';
+          var idEsc = (s.id || '').replace(/'/g, "\\'");
+          return (
+            '<tr class="crew-row crew-today-row">' +
+            '<td class="crew-cell-name">' + name + '</td>' +
+            '<td class="crew-cell-role">' + (typeof escapeHtml === 'function' ? escapeHtml(shift) : shift) + '</td>' +
+            '<td class="crew-cell-specialty">' + (typeof escapeHtml === 'function' ? escapeHtml(area) : area) + '</td>' +
+            '<td class="crew-cell-notes">' + (typeof escapeHtml === 'function' ? escapeHtml(notes) : notes) + '</td>' +
+            '<td class="crew-cell-action"><button type="button" class="bar-btn" onclick="editScheduleEntry(\'' + idEsc + '\')">EDIT</button></td>' +
+            '</tr>'
+          );
+        }).join('');
+      }
+    }
+  }
 }
 
 // ============================================================
@@ -600,6 +725,7 @@ function openAssetsOverlay(jobId) {
   clearAssetsOverlayPulseTimers();
   const job = S.jobs.find(j => j.id === jobId);
   if (!job) return;
+  S.assetsOverlayJobId = jobId;
   const raw = JSON.parse(JSON.stringify(job.assets || {}));
   ASSET_DEFS.forEach(a => {
     const d = raw[a.key] || {};
@@ -643,6 +769,7 @@ function closeAssetsOverlay(skipSave) {
   job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
   if (skipSave) {
     assetsOverlayState = null;
+    if (S) S.assetsOverlayJobId = null;
     clearAssetsOverlayPulseTimers();
     const el = document.getElementById('assetsOverlay');
     if (el) el.classList.remove('on');
@@ -653,6 +780,7 @@ function closeAssetsOverlay(skipSave) {
   Storage.updateJobAssets(job.id, job.assets)
     .then(() => {
       assetsOverlayState = null;
+      if (S) S.assetsOverlayJobId = null;
       const el = document.getElementById('assetsOverlay');
       if (el) el.classList.remove('on');
       renderAll();

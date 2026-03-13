@@ -114,6 +114,10 @@ let S = {
   notesComposerOpen: false,
   notesUtilityOpen: null, // 'add' | 'search' | null
   compoundEditId: null,
+  employees: [],
+  employeeEditId: null,
+  scheduleEntries: [],
+  scheduleEntryEditId: null,
   importSession: null, // { type, sourceRef, status, extractedRows } when CSV/Photo/PDF review is open
 };
 let saveTimer = null;
@@ -194,6 +198,16 @@ async function loadAll() {
     } else if (!Array.isArray(S.compounds)) {
       S.compounds = [];
     }
+    if (Array.isArray(data.employees)) {
+      S.employees = data.employees;
+    } else if (!Array.isArray(S.employees)) {
+      S.employees = [];
+    }
+    if (Array.isArray(data.scheduleEntries)) {
+      S.scheduleEntries = data.scheduleEntries;
+    } else if (!Array.isArray(S.scheduleEntries)) {
+      S.scheduleEntries = [];
+    }
     if (data.notesChannels && typeof data.notesChannels === 'object') {
       S.notesChannels = data.notesChannels;
     }
@@ -223,6 +237,8 @@ async function loadAll() {
         if (snap.todos) S.todos = snap.todos;
         if (snap.qcLog && snap.qcLog.length) S.qcLog = snap.qcLog;
         if (snap.lastReset) S._lastReset = snap.lastReset;
+        if (Array.isArray(snap.employees)) S.employees = snap.employees;
+        if (Array.isArray(snap.scheduleEntries)) S.scheduleEntries = snap.scheduleEntries;
         S.jobs.forEach(ensureJobProgressLog);
         syncJobPressFromPresses();
         S.offlineMode = true;
@@ -1033,7 +1049,7 @@ function updateFAB() {
     fab.style.display = 'flex';
     fab.textContent = '+';
     if (label) { label.textContent = 'NEW JOB [N]'; }
-  } else if (currentPage === 'audit') {
+  } else if (currentPage === 'audit' || currentPage === 'crew') {
     fab.style.display = 'none';
   } else {
     fab.style.display = 'none';
@@ -1054,6 +1070,7 @@ function enterTV() {
   document.body.classList.add('tv');
   if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('tvParty') === '1') document.body.classList.add('tv-party');
   renderTV();
+  updatePizzazButtonState();
   const el = document.documentElement;
   if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
   else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
@@ -1081,9 +1098,19 @@ document.addEventListener('webkitfullscreenchange', () => {
   }
 });
 
+function updatePizzazButtonState() {
+  const btn = document.getElementById('tvPizzazBtn');
+  if (!btn) return;
+  const on = document.body.classList.contains('tv-party');
+  btn.textContent = on ? '◇ PIZZAZ ON' : '◇ PIZZAZ';
+  btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  btn.title = on ? 'Diagnostic show mode on — click to turn off' : 'Turn on matrix / diagnostic show mode';
+}
+
 function toggleTVParty() {
   document.body.classList.toggle('tv-party');
   try { sessionStorage.setItem('tvParty', document.body.classList.contains('tv-party') ? '1' : '0'); } catch (e) {}
+  updatePizzazButtonState();
 }
 
 // ============================================================
@@ -1463,6 +1490,209 @@ function editCompound(id) {
   };
   renderCompoundWizard();
   const wrap = document.getElementById('compoundWizardWrap');
+  if (wrap) wrap.classList.add('on');
+}
+
+// ============================================================
+// CREW — operational directory; add/edit person
+// ============================================================
+
+function openEmployeeWizard() {
+  S.employeeEditId = null;
+  S.employeeWizardData = { name: '', role: '', phone: '', email: '', specialty: '', photo_url: '', notes: '' };
+  renderEmployeeWizard();
+  const wrap = document.getElementById('employeeWizardWrap');
+  if (wrap) wrap.classList.add('on');
+}
+
+function closeEmployeeWizard() {
+  const wrap = document.getElementById('employeeWizardWrap');
+  if (wrap) wrap.classList.remove('on');
+  S.employeeEditId = null;
+  if (typeof renderCrewPage === 'function') renderCrewPage();
+}
+
+function renderEmployeeWizard() {
+  const titleEl = document.getElementById('employeeWizardTitle');
+  const bodyEl = document.getElementById('employeeWizardBody');
+  const footEl = document.getElementById('employeeWizardFoot');
+  if (!bodyEl || !footEl) return;
+  const data = S.employeeWizardData || { name: '', role: '', phone: '', email: '', specialty: '', photo_url: '', notes: '' };
+  const isEdit = !!S.employeeEditId;
+  if (titleEl) titleEl.textContent = isEdit ? 'Edit Person' : 'New Person';
+  function esc(v) { return (v || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  bodyEl.innerHTML = [
+    '<div class="fg"><label class="fl">Name</label><input class="fi" id="eWizName" placeholder="Full name" value="' + esc(data.name) + '"></div>',
+    '<div class="fg"><label class="fl">Role</label><input class="fi" id="eWizRole" placeholder="e.g. Press, QC, Floor Manager" value="' + esc(data.role) + '"></div>',
+    '<div class="fg"><label class="fl">Phone</label><input class="fi" id="eWizPhone" placeholder="Phone" value="' + esc(data.phone) + '"></div>',
+    '<div class="fg"><label class="fl">Email</label><input class="fi" id="eWizEmail" placeholder="Email" value="' + esc(data.email) + '"></div>',
+    '<div class="fg"><label class="fl">Specialty / station</label><input class="fi" id="eWizSpecialty" placeholder="e.g. P1, QC, Shipping" value="' + esc(data.specialty) + '"></div>',
+    '<div class="fg"><label class="fl">Photo URL</label><input class="fi" id="eWizPhotoUrl" placeholder="Optional image URL" value="' + esc(data.photo_url) + '"></div>',
+    '<div class="fg"><label class="fl">Notes</label><textarea class="fi fta" id="eWizNotes" rows="2" placeholder="Optional notes">' + esc(data.notes) + '</textarea></div>',
+  ].join('');
+  footEl.innerHTML = '<div class="wizard-foot-inner"><button type="button" class="btn ghost" onclick="closeEmployeeWizard()">Cancel</button><button type="button" class="btn go" onclick="employeeWizardSave()">' + (isEdit ? 'Save' : 'Add') + '</button></div>';
+}
+
+function employeeWizardSave() {
+  const nameEl = document.getElementById('eWizName');
+  const roleEl = document.getElementById('eWizRole');
+  const phoneEl = document.getElementById('eWizPhone');
+  const emailEl = document.getElementById('eWizEmail');
+  const specialtyEl = document.getElementById('eWizSpecialty');
+  const photoUrlEl = document.getElementById('eWizPhotoUrl');
+  const notesEl = document.getElementById('eWizNotes');
+  if (!nameEl) return;
+  const name = (nameEl.value || '').trim();
+  if (!name) {
+    if (typeof toast === 'function') toast('Name is required.');
+    return;
+  }
+  const role = (roleEl && roleEl.value) ? roleEl.value.trim() : '';
+  const phone = (phoneEl && phoneEl.value) ? phoneEl.value.trim() : '';
+  const email = (emailEl && emailEl.value) ? emailEl.value.trim() : '';
+  const specialty = (specialtyEl && specialtyEl.value) ? specialtyEl.value.trim() : '';
+  const photo_url = (photoUrlEl && photoUrlEl.value) ? photoUrlEl.value.trim() : '';
+  const notes = (notesEl && notesEl.value) ? notesEl.value.trim() : '';
+  const list = Array.isArray(S.employees) ? S.employees.slice() : [];
+  if (S.employeeEditId) {
+    const idx = list.findIndex(function (e) { return e.id === S.employeeEditId; });
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], name, role, phone, email, specialty, photo_url, notes };
+    }
+  } else {
+    const id = 'emp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    list.push({ id, name, role, phone, email, specialty, photo_url, notes, active: true });
+  }
+  S.employees = list.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+  S.employeeEditId = null;
+  Storage.saveEmployees(S.employees).then(function () {
+    closeEmployeeWizard();
+    if (typeof renderCrewPage === 'function') renderCrewPage();
+    if (typeof toast === 'function') toast('Saved.');
+  }).catch(function () {
+    if (typeof toast === 'function') toast('Save failed.');
+  });
+}
+
+function editEmployee(id) {
+  const e = (S.employees || []).find(function (x) { return x.id === id; });
+  if (!e) return;
+  S.employeeEditId = id;
+  S.employeeWizardData = {
+    name: e.name || '',
+    role: e.role || '',
+    phone: e.phone || '',
+    email: e.email || '',
+    specialty: e.specialty || '',
+    photo_url: e.photo_url || '',
+    notes: e.notes || '',
+  };
+  renderEmployeeWizard();
+  const wrap = document.getElementById('employeeWizardWrap');
+  if (wrap) wrap.classList.add('on');
+}
+
+function getTodayDateISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// ============================================================
+// SCHEDULE ENTRY (TODAY add/edit)
+// ============================================================
+
+function openScheduleEntryWizard() {
+  S.scheduleEntryEditId = null;
+  S.scheduleEntryWizardData = { employee_id: '', shift_label: '', area: '', notes: '' };
+  S.scheduleEntryWizardDate = getTodayDateISO();
+  renderScheduleEntryWizard();
+  const wrap = document.getElementById('scheduleEntryWizardWrap');
+  if (wrap) wrap.classList.add('on');
+}
+
+function closeScheduleEntryWizard() {
+  const wrap = document.getElementById('scheduleEntryWizardWrap');
+  if (wrap) wrap.classList.remove('on');
+  S.scheduleEntryEditId = null;
+  if (typeof renderCrewPage === 'function') renderCrewPage();
+}
+
+function renderScheduleEntryWizard() {
+  const titleEl = document.getElementById('scheduleEntryWizardTitle');
+  const bodyEl = document.getElementById('scheduleEntryWizardBody');
+  const footEl = document.getElementById('scheduleEntryWizardFoot');
+  if (!bodyEl || !footEl) return;
+  const data = S.scheduleEntryWizardData || { employee_id: '', shift_label: '', area: '', notes: '' };
+  const isEdit = !!S.scheduleEntryEditId;
+  const todayStr = S.scheduleEntryWizardDate || getTodayDateISO();
+  if (titleEl) titleEl.textContent = isEdit ? 'Edit entry' : 'Add to today';
+  function esc(v) { return (v || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  const employees = Array.isArray(S.employees) ? S.employees : [];
+  const options = employees.map(function (e) {
+    var sel = e.id === data.employee_id ? ' selected' : '';
+    return '<option value="' + (e.id || '').replace(/"/g, '&quot;') + '"' + sel + '>' + esc(e.name || '—') + '</option>';
+  }).join('');
+  const employeeSelect = '<div class="fg"><label class="fl">Employee</label><select class="fi fs" id="sWizEmployeeId">' +
+    '<option value="">Select…</option>' + options + '</select></div>';
+  bodyEl.innerHTML = [
+    employeeSelect,
+    '<div class="fg"><label class="fl">Shift / time</label><input class="fi" id="sWizShift" placeholder="e.g. 8–4, AM, 9–5" value="' + esc(data.shift_label) + '"></div>',
+    '<div class="fg"><label class="fl">Area / station</label><input class="fi" id="sWizArea" placeholder="e.g. Press 1, QC, Floor" value="' + esc(data.area) + '"></div>',
+    '<div class="fg"><label class="fl">Note</label><textarea class="fi fta" id="sWizNotes" rows="2" placeholder="Optional short note">' + esc(data.notes) + '</textarea></div>',
+    '<div class="fg"><label class="fl">Date</label><input class="fi" id="sWizDate" type="date" value="' + esc(todayStr) + '"></div>',
+  ].join('');
+  footEl.innerHTML = '<div class="wizard-foot-inner"><button type="button" class="btn ghost" onclick="closeScheduleEntryWizard()">Cancel</button><button type="button" class="btn go" onclick="scheduleEntryWizardSave()">' + (isEdit ? 'Save' : 'Add') + '</button></div>';
+}
+
+function scheduleEntryWizardSave() {
+  const employeeEl = document.getElementById('sWizEmployeeId');
+  const shiftEl = document.getElementById('sWizShift');
+  const areaEl = document.getElementById('sWizArea');
+  const notesEl = document.getElementById('sWizNotes');
+  const dateEl = document.getElementById('sWizDate');
+  if (!employeeEl) return;
+  const employee_id = (employeeEl.value || '').trim();
+  if (!employee_id) {
+    if (typeof toast === 'function') toast('Select an employee.');
+    return;
+  }
+  const shift_label = (shiftEl && shiftEl.value) ? shiftEl.value.trim() : '';
+  const area = (areaEl && areaEl.value) ? areaEl.value.trim() : '';
+  const notes = (notesEl && notesEl.value) ? notesEl.value.trim() : '';
+  const dateStr = (dateEl && dateEl.value) ? dateEl.value.trim().slice(0, 10) : getTodayDateISO();
+  const list = Array.isArray(S.scheduleEntries) ? S.scheduleEntries.slice() : [];
+  if (S.scheduleEntryEditId) {
+    const idx = list.findIndex(function (s) { return s.id === S.scheduleEntryEditId; });
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], employee_id, shift_label, area, notes, date: dateStr };
+    }
+  } else {
+    const id = 'sched_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    list.push({ id, employee_id, date: dateStr, shift_label, area, notes, sort_order: list.length });
+  }
+  S.scheduleEntries = list;
+  S.scheduleEntryEditId = null;
+  Storage.saveScheduleEntries(S.scheduleEntries).then(function () {
+    closeScheduleEntryWizard();
+    if (typeof renderCrewPage === 'function') renderCrewPage();
+    if (typeof toast === 'function') toast('Saved.');
+  }).catch(function () {
+    if (typeof toast === 'function') toast('Save failed.');
+  });
+}
+
+function editScheduleEntry(id) {
+  const s = (S.scheduleEntries || []).find(function (x) { return x.id === id; });
+  if (!s) return;
+  S.scheduleEntryEditId = id;
+  S.scheduleEntryWizardData = {
+    employee_id: s.employee_id || '',
+    shift_label: s.shift_label || '',
+    area: s.area || '',
+    notes: s.notes || '',
+  };
+  S.scheduleEntryWizardDate = s.date || getTodayDateISO();
+  renderScheduleEntryWizard();
+  const wrap = document.getElementById('scheduleEntryWizardWrap');
   if (wrap) wrap.classList.add('on');
 }
 
@@ -3179,6 +3409,108 @@ function notesSearchAction() {
 }
 
 // ============================================================
+// GLOBAL + / = SHORTCUTS — add action and search/inspect
+// ============================================================
+
+/** Job id to preselect when routing + to NOTES (panel edit, or assets overlay). */
+function getContextJobIdForNotes() {
+  const assetsOpen = document.getElementById('assetsOverlay')?.classList.contains('on');
+  if (assetsOpen && S.assetsOverlayJobId) return S.assetsOverlayJobId;
+  if (panelOpen && S.editId) return S.editId;
+  return null;
+}
+
+/** True if current page/surface has a visible + action we can trigger. */
+function hasLocalPlusAction() {
+  const chooserOrWizardOpen = document.getElementById('newJobChooserWrap')?.classList.contains('on') || document.getElementById('wizardWrap')?.classList.contains('on');
+  if (chooserOrWizardOpen) return false;
+  if (currentPage === 'floor' || currentPage === 'jobs') return true;
+  if (currentPage === 'notes') return true;
+  if (currentPage === 'crew') return true;
+  if (currentPage === 'compounds') return true;
+  return false;
+}
+
+/** Run the local + action for the current page. */
+function triggerLocalPlusAction() {
+  if (currentPage === 'floor' || currentPage === 'jobs') {
+    openNewJobChooser();
+    return;
+  }
+  if (currentPage === 'notes') {
+    toggleNotesUtility('add');
+    return;
+  }
+  if (currentPage === 'crew') {
+    openEmployeeWizard();
+    return;
+  }
+  if (currentPage === 'compounds') {
+    openCompoundWizard();
+    return;
+  }
+}
+
+/** True if current page has a visible search / magnifying-glass action. */
+function hasLocalSearchAction() {
+  if (currentPage === 'notes') return true;
+  if (currentPage === 'floor' && document.getElementById('floorSearch')) return true;
+  if (currentPage === 'jobs' && document.getElementById('jobSearch')) return true;
+  if (currentPage === 'crew' && document.getElementById('crewSearch')) return true;
+  const fmShell = document.getElementById('floorManagerShell');
+  if (fmShell && fmShell.classList.contains('on') && document.getElementById('fmFloorSearch')) return true;
+  return false;
+}
+
+/** Run the local search/magnifying-glass action for the current page. */
+function triggerLocalSearchAction() {
+  if (currentPage === 'notes') {
+    toggleNotesUtility('search');
+    return;
+  }
+  const floorSearch = document.getElementById('floorSearch');
+  const jobSearch = document.getElementById('jobSearch');
+  const crewSearch = document.getElementById('crewSearch');
+  const fmSearch = document.getElementById('fmFloorSearch');
+  const floorPg = document.getElementById('pg-floor');
+  const fmShell = document.getElementById('floorManagerShell');
+  if (fmShell && fmShell.classList.contains('on') && fmSearch) {
+    fmSearch.focus();
+  } else if (floorPg && floorPg.classList.contains('on') && floorSearch) {
+    floorSearch.focus();
+  } else if (currentPage === 'jobs' && jobSearch) {
+    jobSearch.focus();
+  } else if (currentPage === 'crew' && crewSearch) {
+    crewSearch.focus();
+  } else if (floorSearch) {
+    floorSearch.focus();
+  } else if (jobSearch) {
+    jobSearch.focus();
+  }
+}
+
+/** Go to NOTES, preselect job if provided, and open the add-note utility. */
+function goToNotesAndOpenAdd(contextJobId) {
+  goPg('notes');
+  setTimeout(function () {
+    const selEl = document.getElementById('notesJobSelect');
+    if (selEl && contextJobId) {
+      selEl.value = contextJobId;
+      if (typeof renderNotesPage === 'function') renderNotesPage();
+    }
+    if (contextJobId || (selEl && selEl.value)) {
+      toggleNotesUtility('add');
+    } else {
+      S.notesUtilityOpen = 'add';
+      S.notesComposerOpen = true;
+      if (typeof renderNotesPage === 'function') renderNotesPage();
+      const t = document.getElementById('notesNewText');
+      if (t) t.focus();
+    }
+  }, 0);
+}
+
+// ============================================================
 // TOAST
 // ============================================================
 function toast(msg) {
@@ -3226,6 +3558,18 @@ document.addEventListener('keydown', e => {
     const compoundWizardOpen = document.getElementById('compoundWizardWrap')?.classList.contains('on');
     if (compoundWizardOpen) {
       closeCompoundWizard();
+      e.preventDefault();
+      return;
+    }
+    const employeeWizardOpen = document.getElementById('employeeWizardWrap')?.classList.contains('on');
+    if (employeeWizardOpen) {
+      closeEmployeeWizard();
+      e.preventDefault();
+      return;
+    }
+    const scheduleEntryWizardOpen = document.getElementById('scheduleEntryWizardWrap')?.classList.contains('on');
+    if (scheduleEntryWizardOpen) {
+      closeScheduleEntryWizard();
       e.preventDefault();
       return;
     }
@@ -3314,6 +3658,47 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     toggleFullscreen();
     return;
+  }
+
+  // + (add) and = (search) — global shortcuts; skip when typing or when a modal has focus
+  const anyOverlayOpen = panelOpen ||
+    document.getElementById('assetsOverlay')?.classList.contains('on') ||
+    document.getElementById('newJobChooserWrap')?.classList.contains('on') ||
+    document.getElementById('wizardWrap')?.classList.contains('on') ||
+    document.getElementById('compoundWizardWrap')?.classList.contains('on') ||
+    document.getElementById('employeeWizardWrap')?.classList.contains('on') ||
+    document.getElementById('scheduleEntryWizardWrap')?.classList.contains('on') ||
+    document.getElementById('importReviewWrap')?.classList.contains('on') ||
+    (document.getElementById('confirmWrap') && document.getElementById('confirmWrap').classList.contains('open'));
+  const formOverlayOpen = document.getElementById('newJobChooserWrap')?.classList.contains('on') ||
+    document.getElementById('wizardWrap')?.classList.contains('on') ||
+    document.getElementById('compoundWizardWrap')?.classList.contains('on') ||
+    document.getElementById('employeeWizardWrap')?.classList.contains('on') ||
+    document.getElementById('scheduleEntryWizardWrap')?.classList.contains('on') ||
+    document.getElementById('importReviewWrap')?.classList.contains('on') ||
+    (document.getElementById('confirmWrap') && document.getElementById('confirmWrap').classList.contains('open'));
+  if (!isTyping && !stationVisible) {
+    const isPlusKey = (e.key === '+' || (e.key === '=' && e.shiftKey));
+    const isEqualsKey = (e.key === '=' && !e.shiftKey);
+    if (isPlusKey && !formOverlayOpen) {
+      e.preventDefault();
+      // Panel or assets overlay: route to NOTES with context job. Else use local + or fallback to NOTES.
+      if (panelOpen || document.getElementById('assetsOverlay')?.classList.contains('on')) {
+        goToNotesAndOpenAdd(getContextJobIdForNotes());
+      } else if (hasLocalPlusAction()) {
+        triggerLocalPlusAction();
+      } else {
+        goToNotesAndOpenAdd(getContextJobIdForNotes());
+      }
+      return;
+    }
+    if (isEqualsKey && !anyOverlayOpen) {
+      e.preventDefault();
+      if (hasLocalSearchAction()) {
+        triggerLocalSearchAction();
+      }
+      return;
+    }
   }
 
   if (!isTyping && !panelOpen && !stationVisible) {
