@@ -1451,9 +1451,32 @@ function panelPoStarClick() {
   if (hasImage) {
     openPoImageLightbox(j.poContract.imageUrl);
   } else {
-    const input = document.getElementById('jPoImageInput');
-    if (input) input.click();
+    openPoUploadPrompt();
   }
+}
+
+function openPoUploadPrompt() {
+  var el = document.getElementById('poUploadPrompt');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'poUploadPrompt';
+    el.className = 'po-upload-prompt';
+    el.innerHTML =
+      '<div class="po-upload-prompt-card">' +
+        '<div class="po-upload-prompt-title">Source of Truth</div>' +
+        '<div class="po-upload-prompt-sub">Add official Job PO only</div>' +
+        '<button type="button" class="po-upload-prompt-btn" onclick="closePoUploadPrompt(); document.getElementById(\'jPoImageInput\').click();">Upload Image</button>' +
+        '<button type="button" class="po-upload-prompt-cancel" onclick="closePoUploadPrompt()">Cancel</button>' +
+      '</div>';
+    el.onclick = function (e) { if (e.target === el) closePoUploadPrompt(); };
+    document.body.appendChild(el);
+  }
+  el.classList.add('open');
+}
+
+function closePoUploadPrompt() {
+  var el = document.getElementById('poUploadPrompt');
+  if (el) el.classList.remove('open');
 }
 
 // ============================================================
