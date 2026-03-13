@@ -133,6 +133,8 @@ const QC_TYPES = ['FLASH','BLEMISH','OFF-CENTER','AUDIO','UNTRIMMED','BISCUIT/FL
 
 const HELD_REASONS = ['BILLING HOLD','CUSTOMER HOLD','DAMAGE','SHORT COUNT','WRONG CONFIG','OTHER'];
 
+const QUACK_ICON = '<svg class="quack-ico" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-.125em"><path fill-rule="evenodd" d="M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm11 7h-5v2h5v-2zM12.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>';
+
 const FLOOR_COLUMNS = [
   { key: 'catalog', label: 'CATALOG' },
   { key: 'artistAlbum', label: 'ARTIST / ALBUM' },
@@ -219,6 +221,7 @@ const CAUTION_REASONS = [
   { v: 'traffic_jam', l: 'Traffic Jam' },
   { v: 'special',     l: 'Special Handling' },
   { v: 'other',       l: 'Other' },
+  { v: 'achtung',     l: 'Achtung' },
 ];
 
 function isJobCautioned(job) {
@@ -385,7 +388,6 @@ function logConsoleRailHTML(job, mode) {
   if (mode === 'packed')        { num = p.packed;   denom = ordered;             modeClass = 'mode-packed'; }
   else if (mode === 'ready')    { num = p.ready;    denom = p.packed || ordered;  modeClass = 'mode-ready'; }
   else if (mode === 'shipped')  { num = p.shipped + p.pickedUp;  denom = p.ready || ordered;   modeClass = 'mode-shipped'; }
-  else if (mode === 'held')     { num = p.held;     denom = p.ready || ordered;   modeClass = 'mode-held'; }
   else if (mode === 'press')    { num = p.pressed;  denom = ordered;              modeClass = 'mode-press'; }
   else if (mode === 'qc_pass')  { num = p.qcPassed; denom = ordered;             modeClass = 'mode-qcpass'; }
   else                          { num = p.rejected; denom = ordered;              modeClass = 'mode-qcreject'; }

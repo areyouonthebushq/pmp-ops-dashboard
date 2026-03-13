@@ -1556,7 +1556,6 @@ try { var _lm = sessionStorage.getItem('logMode') || 'press'; logMode = _lm === 
 let logAction = logMode === 'ship' ? 'packed' : 'press';
 let logViewDate = new Date().toDateString();
 let pendingLogRejectQty = 0;
-let pendingLogHeldQty = 0;
 
 function tryAddQCRejectToProgress(jobId) {
   if (!jobId) return Promise.resolve({ applied: false });
@@ -1601,10 +1600,10 @@ function triggerLogRailGlow() {
   if (!el) return;
   const glowMap = {
     press: 'press', qc_pass: 'qcpass', qc_reject: 'qcreject',
-    packed: 'packed', ready: 'ready', shipped: 'shipped', held: 'held',
+    packed: 'packed', ready: 'ready', shipped: 'shipped',
   };
   const glow = glowMap[logAction] || 'press';
-  const all = ['rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject', 'rail-glow-packed', 'rail-glow-ready', 'rail-glow-shipped', 'rail-glow-held'];
+  const all = ['rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject', 'rail-glow-packed', 'rail-glow-ready', 'rail-glow-shipped'];
   all.forEach(c => el.classList.remove(c));
   el.classList.add('rail-glow-' + glow);
   setTimeout(function () { all.forEach(c => el.classList.remove(c)); }, 750);
@@ -1666,24 +1665,18 @@ async function unifiedLogEnter() {
   }
 
   const simpleShipActions = { packed: 'packed', ready: 'ready', shipped: 'shipped' };
+  const shipToastLabel = { packed: 'PACKED', ready: 'READY', shipped: 'QUACK' };
   if (simpleShipActions[logAction]) {
     try {
       const result = await logJobProgress(S.logSelectedJob, logAction, n, 'Log');
       if (!result.ok) { toastError(result.error || 'Log failed'); return; }
-      toast(`+${n.toLocaleString()} ${simpleShipActions[logAction]} → ${jobName}`);
+      toast(`+${n.toLocaleString()} ${shipToastLabel[logAction] || logAction} → ${jobName}`);
       logNumpadValue = '0';
       logNumpadUpdateDisplay();
       renderLog();
       triggerLogRailGlow();
     } catch (e) { toastError(e?.message || 'Log failed'); }
     return;
-  }
-  if (logAction === 'held') {
-    pendingLogHeldQty = n;
-    const titleEl = document.getElementById('logHeldPickerTitle');
-    if (titleEl) titleEl.textContent = `HELD ${n.toLocaleString()} — SELECT REASON`;
-    const picker = document.getElementById('logHeldPicker');
-    if (picker) picker.style.display = 'block';
   }
 }
 
@@ -1723,37 +1716,6 @@ async function unifiedLogRejectWithDefect(defectType) {
   }
 }
 
-function unifiedLogHideHeldPicker() {
-  const el = document.getElementById('logHeldPicker');
-  if (el) el.style.display = 'none';
-  pendingLogHeldQty = 0;
-}
-
-async function unifiedLogHeldWithReason(reason) {
-  const n = pendingLogHeldQty;
-  if (n < 1 || !S.logSelectedJob) { unifiedLogHideHeldPicker(); return; }
-  const job = S.jobs.find(j => j.id === S.logSelectedJob);
-  const jobName = job ? (job.catalog || job.artist || '—') : '—';
-
-  try {
-    const result = await logJobProgress(S.logSelectedJob, 'held', n, 'Log', reason);
-    if (!result.ok) {
-      toastError(result.error || 'Held log failed');
-      unifiedLogHideHeldPicker();
-      return;
-    }
-    toast(`${n.toLocaleString()} HELD ${reason} → ${jobName}`);
-    logNumpadValue = '0';
-    pendingLogHeldQty = 0;
-    unifiedLogHideHeldPicker();
-    logNumpadUpdateDisplay();
-    renderLog();
-    triggerLogRailGlow();
-  } catch (e) {
-    toastError(e?.message || 'Held log failed');
-    unifiedLogHideHeldPicker();
-  }
-}
 
 function getQCDates() {
   const dates = [...new Set(S.qcLog.map(e => e.date))];
@@ -1836,16 +1798,15 @@ function renderLog() {
   }
 
   const extraBtn4 = document.getElementById('logBtnMode4');
-  if (extraBtn4) extraBtn4.style.display = logMode === 'ship' ? '' : 'none';
+  if (extraBtn4) extraBtn4.style.display = 'none';
   const extraBtn5 = document.getElementById('logBtnMode5');
   if (extraBtn5) extraBtn5.style.display = 'none';
 
   const modeActions = logMode === 'ship'
     ? [
-        { id: 'logBtnPress',    key: 'packed',    label: 'PACKED',    add: 'log-action-packed',   rm: 'log-action-press' },
-        { id: 'logBtnQcPass',   key: 'ready',     label: 'READY',     add: 'log-action-ready',    rm: 'log-action-qcpass' },
-        { id: 'logBtnQcReject', key: 'shipped',   label: '\uD83E\uDD86',  add: 'log-action-shipped',  rm: 'log-action-qcreject' },
-        { id: 'logBtnMode4',    key: 'held',      label: 'HELD',      add: 'log-action-held',     rm: 'log-action-pickedup' },
+        { id: 'logBtnPress',    key: 'packed',    label: 'PACKED',     add: 'log-action-packed',   rm: 'log-action-press' },
+        { id: 'logBtnQcPass',   key: 'ready',     label: 'READY',      add: 'log-action-ready',    rm: 'log-action-qcpass' },
+        { id: 'logBtnQcReject', key: 'shipped',   label: QUACK_ICON + ' QUACK',  add: 'log-action-shipped',  rm: 'log-action-qcreject' },
       ]
     : [
         { id: 'logBtnPress',    key: 'press',     label: 'PRESS',  add: 'log-action-press',     rm: 'log-action-packed' },
@@ -1855,7 +1816,7 @@ function renderLog() {
   modeActions.forEach(a => {
     const btn = document.getElementById(a.id);
     if (!btn) return;
-    btn.textContent = a.label;
+    btn.innerHTML = a.label;
     btn.setAttribute('onclick', "setLogAction('" + a.key + "')");
     if (a.rm) btn.classList.remove(a.rm);
     btn.classList.add(a.add);
@@ -1868,20 +1829,19 @@ function renderLog() {
     qc_reject: { label: 'LOG REJECT', cls: 'log-enter-qcreject' },
     packed: { label: 'LOG PACKED', cls: 'log-enter-packed' },
     ready: { label: 'LOG READY', cls: 'log-enter-ready' },
-    shipped: { label: 'LOG \uD83E\uDD86', cls: 'log-enter-shipped' },
-    held: { label: 'LOG HELD', cls: 'log-enter-held' },
+    shipped: { label: 'LOG ' + QUACK_ICON + ' QUACK', cls: 'log-enter-shipped' },
   };
   const enterBtn = document.getElementById('logEnterBtn');
   if (enterBtn) {
     const e = enterMap[logAction] || enterMap.press;
-    enterBtn.textContent = e.label;
+    enterBtn.innerHTML = e.label;
     enterBtn.className = 'log-enter-btn ' + e.cls;
   }
 
-  const allModeClasses = ['mode-press', 'mode-qcpass', 'mode-qcreject', 'mode-packed', 'mode-ready', 'mode-shipped', 'mode-held'];
+  const allModeClasses = ['mode-press', 'mode-qcpass', 'mode-qcreject', 'mode-packed', 'mode-ready', 'mode-shipped'];
   const actionModeCls = {
     press: 'mode-press', qc_pass: 'mode-qcpass', qc_reject: 'mode-qcreject',
-    packed: 'mode-packed', ready: 'mode-ready', shipped: 'mode-shipped', held: 'mode-held',
+    packed: 'mode-packed', ready: 'mode-ready', shipped: 'mode-shipped',
   };
   const consoleEl = document.getElementById('logConsole');
   if (consoleEl) {
@@ -1890,6 +1850,18 @@ function renderLog() {
     consoleEl.classList.add(actionModeCls[logAction] || 'mode-press');
   }
   if (typeof logNumpadUpdateDisplay === 'function') logNumpadUpdateDisplay();
+
+  const achtungCtrl = document.getElementById('logAchtungCtrl');
+  if (achtungCtrl) {
+    const showAchtung = logMode === 'ship';
+    achtungCtrl.style.display = showAchtung ? '' : 'none';
+    if (showAchtung && S.logSelectedJob) {
+      const selJob = S.jobs.find(j => j.id === S.logSelectedJob);
+      achtungCtrl.classList.toggle('achtung-active', !!(selJob && isJobCautioned(selJob)));
+    } else {
+      achtungCtrl.classList.remove('achtung-active');
+    }
+  }
 
   const dateLabel = document.getElementById('logDateLabel');
   if (dateLabel) {
@@ -1908,7 +1880,7 @@ function renderLog() {
     const pressFeedStages = { pressed: 1, qc_passed: 1 };
     const shipFeedStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
     const activeFeedStages = logMode === 'ship' ? shipFeedStages : pressFeedStages;
-    const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'PACKED', ready: 'READY', shipped: '\uD83E\uDD86 OUT', picked_up: '\uD83E\uDD86 OUT', held: 'HELD' };
+    const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'PACKED', ready: 'READY', shipped: QUACK_ICON + ' QUACK', picked_up: QUACK_ICON + ' QUACK', held: 'HELD' };
     const stageCls   = { pressed: 'pressed', qc_passed: 'qc_passed', packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'picked_up', held: 'held' };
 
     feedJobs.forEach(j => {

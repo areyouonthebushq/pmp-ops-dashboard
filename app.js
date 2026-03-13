@@ -2385,6 +2385,17 @@ function clearCaution(jobId) {
   setCaution(jobId, '', '');
 }
 
+function toggleShipAchtung() {
+  if (!S.logSelectedJob) { toast('Select a job first'); return; }
+  const job = S.jobs.find(function (x) { return x.id === S.logSelectedJob; });
+  if (!job) return;
+  if (isJobCautioned(job)) {
+    clearCaution(job.id);
+  } else {
+    setCaution(job.id, 'achtung', '');
+  }
+}
+
 // ============================================================
 // SHIP — set fulfillment phase
 // ============================================================
@@ -4004,12 +4015,6 @@ document.addEventListener('keydown', e => {
     const rejectPicker = document.getElementById('logRejectPicker');
     if (rejectPicker && rejectPicker.style.display !== 'none') {
       if (typeof unifiedLogHideRejectPicker === 'function') unifiedLogHideRejectPicker();
-      e.preventDefault();
-      return;
-    }
-    const heldPicker = document.getElementById('logHeldPicker');
-    if (heldPicker && heldPicker.style.display !== 'none') {
-      if (typeof unifiedLogHideHeldPicker === 'function') unifiedLogHideHeldPicker();
       e.preventDefault();
       return;
     }

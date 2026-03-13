@@ -263,7 +263,7 @@
         <div class="log-page-shell">
             <div class="log-shell-sec">SELECT JOB</div>
             <div class="log-job-picker" id="logJobPicker"></div>
-            <div class="log-shell-sec log-shell-sec-log">LOG</div>
+            <div class="log-shell-sec log-shell-sec-log">LOG <button type="button" id="logAchtungCtrl" class="log-achtung-ctrl" onclick="toggleShipAchtung()" title="ACHTUNG — flag job for attention" style="display:none">⚠</button></div>
             <div class="log-console-wrap">
             <div class="log-mode-toggle" id="logModeToggle">
                 <button type="button" class="log-mode-btn active" id="logModePressBtn" onclick="setLogMode('press')">◉ PRESS</button>
@@ -306,20 +306,6 @@
                     <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('BISCUIT/FLASH')">✕ BISCUIT/FLASH</button>
                 </div>
                 <button type="button" class="qc-reject-cancel" onclick="unifiedLogHideRejectPicker()">CANCEL</button>
-            </div>
-            </div>
-            <div class="qc-reject-picker qc-reject-picker-overlay qc-reject-picker-console-overlay" id="logHeldPicker" style="display:none">
-            <div class="qc-reject-picker-card">
-                <div class="qc-reject-picker-title" id="logHeldPickerTitle">HELD — SELECT REASON</div>
-                <div class="qc-reject-picker-btns">
-                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('BILLING HOLD')">◉ BILLING HOLD</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('CUSTOMER HOLD')">✕ CUSTOMER HOLD</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('DAMAGE')">📦 DAMAGE</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('SHORT COUNT')">⚡ SHORT COUNT</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('WRONG CONFIG')">⬡ WRONG CONFIG</button>
-                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('OTHER')">✦ OTHER</button>
-                </div>
-                <button type="button" class="qc-reject-cancel" onclick="unifiedLogHideHeldPicker()">CANCEL</button>
             </div>
             </div>
         </div>
