@@ -754,6 +754,18 @@
     .press-card.offline  { border-left-color: var(--r); }
     .press-card.idle     { border-left-color: var(--d3); }
 
+    .press-card-wrap { display: flex; flex-direction: column; gap: var(--space-xs); }
+    .press-card-on-deck {
+    opacity: 0.6;
+    cursor: pointer;
+    border-left-color: var(--d3);
+    }
+    .press-card-on-deck:hover { opacity: 0.85; }
+    .pc-head-on-deck { margin-bottom: var(--space-xs); }
+    .pc-name-on-deck { font-size: 11px; letter-spacing: 2px; color: var(--d3); }
+    .pc-job-link-on-deck .pc-job, .pc-job-link-on-deck .pc-meta, .pc-job-link-on-deck .pc-due { font-size: 11px; color: var(--d3); }
+    .pc-job-link-on-deck .pc-job .job-id { color: var(--d2); }
+
     .pc-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: var(--space-sm); }
     .pc-name { font-family:'Special Elite',cursive; font-size:18px; color: var(--g); letter-spacing:1px; }
     .pc-name.seven { color: var(--p); }
@@ -2301,6 +2313,11 @@
     color: var(--d3);
     margin-top: var(--space-xs);
     text-align: right;
+    }
+    .notes-entry-caution-icon {
+    color: var(--w);
+    font-size: 10px;
+    margin-right: 2px;
     }
     .notes-feed .progress-empty {
     padding: var(--space-lg) 0;

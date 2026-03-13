@@ -120,6 +120,10 @@ function buildPressCardHTML(p, linkTo, showControls) {
       <option value="">— ASSIGN JOB</option>
       ${sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done')).map(j => `<option value="${j.id}" ${p.job_id === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
       </select>
+      <select class="pc-select" onchange="setPressOnDeck('${p.id}',this.value)" title="Next up">
+      <option value="">— ON DECK</option>
+      ${sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done')).map(j => `<option value="${j.id}" ${(p.on_deck_job_id || '') === j.id ? 'selected' : ''}>${j.catalog || j.id} · ${j.artist || ''}</option>`).join('')}
+      </select>
       <select class="pc-select" style="max-width:110px" onchange="setPressStatus('${p.id}',this.value)">
       <option value="online"  ${p.status === 'online'  ? 'selected' : ''}>Online</option>
       <option value="warning" ${p.status === 'warning' ? 'selected' : ''}>Warning</option>
@@ -128,6 +132,25 @@ function buildPressCardHTML(p, linkTo, showControls) {
       </select>
     </div>
     ` : ''}
+  </div>`;
+}
+
+function buildOnDeckCardHTML(p) {
+  if (!p.on_deck_job_id) return '';
+  const job = S.jobs.find(j => j.id === p.on_deck_job_id);
+  if (!job) return '';
+  const jobBlockClick = `openPanel('${job.id}')`;
+  return `
+  <div class="press-card press-card-on-deck" onclick="${jobBlockClick}" title="Open job panel">
+    <div class="pc-head pc-head-on-deck">
+      <div class="pc-name pc-name-on-deck">ON DECK</div>
+    </div>
+    <div class="pc-job-link pc-job-link-on-deck">
+      <div class="pc-job"><span class="job-id">${job.catalog || '—'}</span> — ${job.artist || ''}</div>
+      <div class="pc-meta">${job.format || ''} · ${job.color || 'Black'} · ${job.weight || ''}</div>
+      <div class="pc-meta">Qty: ${job.qty ? parseInt(job.qty).toLocaleString() : '—'}</div>
+      <div class="pc-due ${dueClass(job.due)}">${dueLabel(job.due)}</div>
+    </div>
   </div>`;
 }
 
@@ -330,7 +353,11 @@ function renderPresses() {
   const active = document.activeElement;
   if (active && active.tagName === 'SELECT' && el.contains(active)) return;
   const isAdmin = S.mode === 'admin';
-  el.innerHTML = S.presses.map(p => buildPressCardHTML(p, isAdmin ? 'pressStation' : 'panel', isAdmin)).join('');
+  el.innerHTML = S.presses.map(p => {
+    const main = buildPressCardHTML(p, isAdmin ? 'pressStation' : 'panel', isAdmin);
+    const onDeck = buildOnDeckCardHTML(p);
+    return '<div class="press-card-wrap">' + main + onDeck + '</div>';
+  }).join('');
 }
 
 // ============================================================
@@ -1651,7 +1678,10 @@ function renderNotesSection() {
     prodEl.innerHTML = (job.notesLog || []).slice().reverse().slice(0, 5).map(e => {
       const time = new Date(e.timestamp).toLocaleString();
       const asset = e.assetLabel || e.assetKey || '';
-      const assetHtml = asset ? `<div style="font-size:10px;color:var(--d3);text-align:right;margin-bottom:2px;">${escapeHtml(asset)}</div>` : '';
+      const assetObj = e.assetKey && job.assets && job.assets[e.assetKey];
+      const isCaution = !!(e.assetKey && assetObj && typeof getAssetStatus === 'function' && getAssetStatus(assetObj) === 'caution');
+      const cautionIcon = isCaution ? '<span class="notes-entry-caution-icon" aria-hidden="true">⚠</span> ' : '';
+      const assetHtml = asset ? `<div style="font-size:10px;color:var(--d3);text-align:right;margin-bottom:2px;">${cautionIcon}${escapeHtml(asset)}</div>` : '';
       return `<div class="progress-entry">${assetHtml}<strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
     }).join('') || '<div class="progress-empty">No notes yet.</div>';
   }
@@ -1708,41 +1738,51 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
     const job = S.jobs.find(j => j.id === selectedId);
     if (job) {
       ensureNotesLog(job);
-      (job.notesLog || []).forEach(e => entries.push({
-        jobId: job.id,
-        catalog: job.catalog || '',
-        artist: job.artist || '',
-        album: job.album || '',
-        text: e.text,
-        person: e.person,
-        timestamp: e.timestamp,
-        assetLabel: e.assetLabel || null,
-        assetKey: e.assetKey || null,
-        attachment_url: e.attachment_url || null,
-        attachment_name: e.attachment_name || null,
-        attachment_type: e.attachment_type || null,
-        attachment_thumb: e.attachment_thumb || null,
-      }));
+      (job.notesLog || []).forEach(e => {
+        const assetObj = e.assetKey && job.assets && job.assets[e.assetKey];
+        const isCautionAsset = !!(e.assetKey && assetObj && typeof getAssetStatus === 'function' && getAssetStatus(assetObj) === 'caution');
+        entries.push({
+          jobId: job.id,
+          catalog: job.catalog || '',
+          artist: job.artist || '',
+          album: job.album || '',
+          text: e.text,
+          person: e.person,
+          timestamp: e.timestamp,
+          assetLabel: e.assetLabel || null,
+          assetKey: e.assetKey || null,
+          attachment_url: e.attachment_url || null,
+          attachment_name: e.attachment_name || null,
+          attachment_type: e.attachment_type || null,
+          attachment_thumb: e.attachment_thumb || null,
+          isCautionAsset: isCautionAsset,
+        });
+      });
     }
     }
   } else {
     allJobs.forEach(job => {
       ensureNotesLog(job);
-      (job.notesLog || []).forEach(e => entries.push({
-        jobId: job.id,
-        catalog: job.catalog || '',
-        artist: job.artist || '',
-        album: job.album || '',
-        text: e.text,
-        person: e.person,
-        timestamp: e.timestamp,
-        assetLabel: e.assetLabel || null,
-        assetKey: e.assetKey || null,
-        attachment_url: e.attachment_url || null,
-        attachment_name: e.attachment_name || null,
-        attachment_type: e.attachment_type || null,
-        attachment_thumb: e.attachment_thumb || null,
-      }));
+      (job.notesLog || []).forEach(e => {
+        const assetObj = e.assetKey && job.assets && job.assets[e.assetKey];
+        const isCautionAsset = !!(e.assetKey && assetObj && typeof getAssetStatus === 'function' && getAssetStatus(assetObj) === 'caution');
+        entries.push({
+          jobId: job.id,
+          catalog: job.catalog || '',
+          artist: job.artist || '',
+          album: job.album || '',
+          text: e.text,
+          person: e.person,
+          timestamp: e.timestamp,
+          assetLabel: e.assetLabel || null,
+          assetKey: e.assetKey || null,
+          attachment_url: e.attachment_url || null,
+          attachment_name: e.attachment_name || null,
+          attachment_type: e.attachment_type || null,
+          attachment_thumb: e.attachment_thumb || null,
+          isCautionAsset: isCautionAsset,
+        });
+      });
     });
   }
   entries.sort((a, b) => (new Date(b.timestamp) - new Date(a.timestamp)));
@@ -1786,7 +1826,8 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const cat = e.catalog ? escapeHtml(e.catalog) : escapeHtml(e.jobId || '—');
         const artist = e.artist ? escapeHtml(e.artist) : '—';
         const asset = e.assetLabel || e.assetKey || '';
-        const assetHtml = asset ? `<div class="notes-entry-asset">${escapeHtml(asset)}</div>` : '';
+        const cautionIcon = e.isCautionAsset ? '<span class="notes-entry-caution-icon" aria-hidden="true">⚠</span> ' : '';
+        const assetHtml = asset ? `<div class="notes-entry-asset">${cautionIcon}${escapeHtml(asset)}</div>` : '';
         const rowCls = e.jobId === '!ALERT' ? ' notes-row-alert' : '';
         const thumbHtml = e.attachment_url
           ? '<div class="notes-entry-thumb" role="button" tabindex="0" data-src="' + escapeHtml(e.attachment_url) + '" onclick="openPoImageLightbox(this.getAttribute(\'data-src\'))" title="View image"><img src="' + escapeHtml(e.attachment_url) + '" alt="" loading="lazy"></div>'

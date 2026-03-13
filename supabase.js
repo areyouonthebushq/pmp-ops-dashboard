@@ -110,11 +110,11 @@
   }
 
   function pressToRow(p) {
-    return { id: p.id, name: p.name, type: p.type, status: p.status, job_id: p.job_id || p.job || null };
+    return { id: p.id, name: p.name, type: p.type, status: p.status, job_id: p.job_id || p.job || null, on_deck_job_id: p.on_deck_job_id || null };
   }
 
   function rowToPress(row) {
-    return { id: row.id, name: row.name, type: row.type, status: row.status, job_id: row.job_id };
+    return { id: row.id, name: row.name, type: row.type, status: row.status, job_id: row.job_id, on_deck_job_id: row.on_deck_job_id || null };
   }
 
   function todoToRow(t, category) {

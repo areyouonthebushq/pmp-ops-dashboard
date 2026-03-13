@@ -219,6 +219,16 @@ function selectPressStationJob(jobId) {
   renderAll();
 }
 
+function setPressOnDeck(pid, jobId) {
+  const p = S.presses.find(x => x.id === pid);
+  if (p) {
+    p.on_deck_job_id = (jobId && jobId.trim()) ? jobId.trim() : null;
+    Storage.savePresses(S.presses);
+    blurPressGridSelectIfFocused();
+    renderAll();
+  }
+}
+
 function setPressStatus(pid, st) {
   const p = S.presses.find(x => x.id === pid);
   if (p) {
@@ -558,7 +568,11 @@ function renderFloorManagerShell() {
     <div class="stat"><div class="sv ${i.c}">${i.v}</div><div class="sl">${i.l}</div><div class="ss">${i.s}</div></div>
   `).join('');
 
-  pressEl.innerHTML = S.presses.map(p => buildPressCardHTML(p, 'floorCard', false)).join('');
+  pressEl.innerHTML = S.presses.map(p => {
+    const main = buildPressCardHTML(p, 'floorCard', false);
+    const onDeck = buildOnDeckCardHTML(p);
+    return '<div class="press-card-wrap">' + main + onDeck + '</div>';
+  }).join('');
 
   if (!jobs.length) {
     bodyEl.innerHTML = `<tr><td colspan="7" class="empty">${q ? 'NO MATCHES' : 'NO ACTIVE JOBS'}</td></tr>`;
