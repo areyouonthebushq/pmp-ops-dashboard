@@ -1280,7 +1280,11 @@ function openPanel(id) {
     var cautionBtn = document.getElementById('panelCautionBtn');
     var cautionDrawer = document.getElementById('panelCautionRow');
     var hasCaution = isJobCautioned(j);
-    if (cautionBtn) cautionBtn.classList.toggle('caution-active', hasCaution);
+    var needsCautionNote = hasCaution && cautionNeedsNote(j);
+    if (cautionBtn) {
+      cautionBtn.classList.toggle('caution-active', hasCaution);
+      cautionBtn.classList.toggle('caution-pulse', needsCautionNote);
+    }
     if (cautionDrawer) cautionDrawer.style.display = hasCaution ? '' : 'none';
   } else {
     document.getElementById('panelId').textContent = 'NEW JOB';
@@ -2305,8 +2309,15 @@ async function saveJob() {
       var cautionTextEl = document.getElementById('jCautionText');
       var panelCautionReason = cautionReasonEl ? cautionReasonEl.value : '';
       if (panelCautionReason) {
-        var existingSince = (existing.caution && existing.caution.reason === panelCautionReason && existing.caution.since) ? existing.caution.since : new Date().toISOString();
-        job.caution = { reason: panelCautionReason, since: existingSince, text: cautionTextEl ? cautionTextEl.value.trim() : '' };
+        var isNewCaution = !(existing.caution && existing.caution.reason === panelCautionReason && existing.caution.since);
+        var existingSince = isNewCaution ? new Date().toISOString() : existing.caution.since;
+        var cautionText = cautionTextEl ? cautionTextEl.value.trim() : '';
+        job.caution = { reason: panelCautionReason, since: existingSince, text: cautionText };
+        if (isNewCaution && cautionText) {
+          ensureNotesLog(job);
+          var person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
+          job.notesLog.push({ text: '⚠ ' + cautionReasonLabel(panelCautionReason).toUpperCase() + ': ' + cautionText, person: person, timestamp: existingSince, cautionContext: true });
+        }
       } else {
         job.caution = null;
       }
@@ -2348,7 +2359,7 @@ async function saveJob() {
 }
 
 // ============================================================
-// RSP Icon Zone — caution drawer toggle
+// RSP Icon Zone — ACHTUNG drawer toggle
 // ============================================================
 function togglePanelCaution() {
   var drawer = document.getElementById('panelCautionRow');
@@ -2363,7 +2374,7 @@ function togglePanelCaution() {
 }
 
 // ============================================================
-// JOB-LEVEL CAUTION — set / clear exception overlay
+// JOB-LEVEL ACHTUNG — set / clear exception overlay
 // ============================================================
 function setCaution(jobId, reason, text) {
   const j = S.jobs.find(function (x) { return x.id === jobId; });
@@ -2372,10 +2383,17 @@ function setCaution(jobId, reason, text) {
     j.caution = null;
     Storage.saveJob(j);
     renderAll();
-    toast('Caution cleared');
+    toast('ACHTUNG cleared');
     return;
   }
-  j.caution = { reason: reason, since: new Date().toISOString(), text: (text || '').trim() || '' };
+  var ts = new Date().toISOString();
+  var trimmed = (text || '').trim();
+  j.caution = { reason: reason, since: ts, text: trimmed };
+  if (trimmed) {
+    ensureNotesLog(j);
+    var person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
+    j.notesLog.push({ text: '⚠ ' + cautionReasonLabel(reason).toUpperCase() + ': ' + trimmed, person: person, timestamp: ts, cautionContext: true });
+  }
   Storage.saveJob(j);
   renderAll();
   toast('⚠ ' + cautionReasonLabel(reason));
@@ -2390,10 +2408,32 @@ function toggleShipAchtung() {
   const job = S.jobs.find(function (x) { return x.id === S.logSelectedJob; });
   if (!job) return;
   if (isJobCautioned(job)) {
-    clearCaution(job.id);
+    goToNotesWithFilter(job.id);
   } else {
-    setCaution(job.id, 'achtung', '');
+    showShipAchtungComposer();
   }
+}
+
+function showShipAchtungComposer() {
+  var c = document.getElementById('shipAchtungComposer');
+  if (c) { c.style.display = ''; var inp = document.getElementById('shipAchtungText'); if (inp) { inp.value = ''; inp.focus(); } }
+}
+
+function hideShipAchtungComposer() {
+  var c = document.getElementById('shipAchtungComposer');
+  if (c) c.style.display = 'none';
+}
+
+function confirmShipAchtung() {
+  if (!S.logSelectedJob) return;
+  var inp = document.getElementById('shipAchtungText');
+  var text = inp ? inp.value.trim() : '';
+  setCaution(S.logSelectedJob, 'achtung', text);
+  hideShipAchtungComposer();
+}
+
+function cancelShipAchtung() {
+  hideShipAchtungComposer();
 }
 
 // ============================================================

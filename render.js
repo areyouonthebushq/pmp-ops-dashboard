@@ -13,7 +13,7 @@ function getFloorStats() {
     { key: 'active', v: active.length, l: 'ACTIVE', s: 'pressing/assembly', c: '' },
     { key: 'queued', v: open.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
     { key: 'overdue', v: overdue.length, l: 'OVERDUE', s: 'past due date', c: overdue.length ? 'red' : '' },
-    { key: 'cautioned', v: cautioned.length, l: '⚠ CAUTIONED', s: 'needs attention', c: cautioned.length ? 'warn' : '' },
+    { key: 'cautioned', v: cautioned.length, l: '⚠ ACHTUNG', s: 'needs attention', c: cautioned.length ? 'warn' : '' },
     { key: 'total', v: open.length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
   ];
 }
@@ -62,8 +62,9 @@ function floorTableHeaderHTML() {
 function floorTableRowHTML(j, opts) {
   const statusId = (opts && opts.statusCellId) ? ` id="st-${j.id}"` : '';
   const cautioned = isJobCautioned(j);
+  const needsNote = cautioned && cautionNeedsNote(j);
   const trClass = cautioned ? ' class="job-row-cautioned"' : '';
-  const cautionIcon = cautioned ? ' <span class="floor-caution-icon" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="Cautioned — view notes">⚠</span>' : '';
+  const cautionIcon = cautioned ? ' <span class="floor-caution-icon' + (needsNote ? '' : ' floor-caution-satisfied') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="ACHTUNG — view notes">⚠</span>' : '';
   return `
   <tr${trClass}>
   <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
@@ -745,7 +746,8 @@ function saveFloorCardQuickEdit() {
   if (canEditField('caution')) {
     var fcCR = get('fcCautionReason');
     if (fcCR) {
-      var existingSince = (j.caution && j.caution.reason === fcCR && j.caution.since) ? j.caution.since : new Date().toISOString();
+      var isNewFloorCaution = !(j.caution && j.caution.reason === fcCR && j.caution.since);
+      var existingSince = isNewFloorCaution ? new Date().toISOString() : j.caution.since;
       j.caution = { reason: fcCR, since: existingSince, text: (j.caution && j.caution.text) || '' };
     } else {
       j.caution = null;
@@ -783,7 +785,7 @@ function renderFloorCard() {
       getRow('notes', '<label>Production notes</label>', `<textarea id="fcNotes" rows="3">${(j.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
       getRow('assembly', '<label>Assembly / location notes</label>', `<textarea id="fcAssembly" rows="2">${(j.assembly || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
       getRow('fulfillment_phase', '<label>Fulfillment</label>', `<select id="fcFulfillment">${FULFILLMENT_PHASES.map(o => `<option value="${o.v}" ${(j.fulfillment_phase || '') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
-      getRow('caution', '<label>⚠ Caution</label>', `<select id="fcCautionReason">${CAUTION_REASONS.map(o => `<option value="${o.v}" ${((j.caution && j.caution.reason) || '') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
+      getRow('caution', '<label>⚠ ACHTUNG</label>', `<select id="fcCautionReason">${CAUTION_REASONS.map(o => `<option value="${o.v}" ${((j.caution && j.caution.reason) || '') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
     ].join('');
     content.innerHTML = `
     <div class="fc-header">
@@ -821,7 +823,7 @@ function renderFloorCard() {
     <span class="fc-due ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
     <span class="fc-loc">${j.location ? '📍 ' + j.location : '—'}</span>
     ${j.fulfillment_phase ? '<span class="fc-fulfill">' + fulfillmentPhasePill(j.fulfillment_phase) + '</span>' : ''}
-    ${isJobCautioned(j) ? '<span class="fc-caution floor-caution-icon" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="Cautioned — view notes">⚠</span>' : ''}
+    ${isJobCautioned(j) ? '<span class="fc-caution floor-caution-icon' + (cautionNeedsNote(j) ? '' : ' floor-caution-satisfied') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="ACHTUNG — view notes">⚠</span>' : ''}
   </div>
   <div class="fc-qty-strip">
     <span>Ordered: <strong>${(prog.p.ordered || 0).toLocaleString()}</strong></span>
@@ -1018,7 +1020,7 @@ function renderAssetsOverlay() {
   let summaryHTML = `<div class="asset-summary">
     <span class="as-received"><span class="as-num">${received}</span> received</span>
     <span class="as-na"><span class="as-num">${na}</span> N/A</span>
-    <span class="as-caution"><span class="as-num">${caution}</span> caution</span>
+    <span class="as-caution"><span class="as-num">${caution}</span> achtung</span>
     <span class="as-remaining"><span class="as-num">${remaining}</span> remaining</span>
     ${allDone ? '<span class="as-complete">✓ ALL ASSETS READY</span>' : ''}
   </div>`;
@@ -1105,7 +1107,7 @@ function renderAssetsOverlay() {
   }).join('');
 }
 
-/** Cycle asset status: '' → received → na → caution → '' */
+/** Cycle asset status: '' → received → na → achtung → '' */
 function cycleAssetsOverlayStatus(key) {
   if (!assetsOverlayState) return;
   flushAssetsOverlayInputs();
@@ -1213,7 +1215,7 @@ function renderPackCard() {
     summaryEl.innerHTML =
       '<span class="pk-ready"><span class="pk-num">' + ready + '</span> ready</span>' +
       '<span class="pk-na"><span class="pk-num">' + na + '</span> N/A</span>' +
-      '<span class="pk-caution"><span class="pk-num">' + caution + '</span> caution</span>' +
+      '<span class="pk-caution"><span class="pk-num">' + caution + '</span> achtung</span>' +
       '<span class="pk-remaining"><span class="pk-num">' + remaining + '</span> remaining</span>' +
       (allDone ? '<span class="pk-complete">✓ PACK READY</span>' : '');
   }
@@ -1250,12 +1252,19 @@ function renderPackCard() {
     }
   }
 
+  var notesLog = (job && Array.isArray(job.notesLog)) ? job.notesLog : [];
+
   listEl.innerHTML = notesCtx + PACK_DEFS.map(function (d) {
     var item = data[d.key] || { status: '', person: '', date: '', note: '' };
     var status = getPackItemStatus(item);
+    var cautionSince = (status === 'caution' && item.cautionSince) ? item.cautionSince : '';
+    var hasNoteSinceCaution = cautionSince && notesLog.some(function (n) { return n.timestamp && n.timestamp >= cautionSince; });
+    var cautionLocked = status === 'caution' && cautionSince && !hasNoteSinceCaution;
     var rowClass = status === 'ready' ? 'pk-row-ready' : status === 'na' ? 'pk-row-na' : status === 'caution' ? 'pk-row-caution' : '';
+    var lockedClass = cautionLocked ? ' pk-row-caution-locked' : '';
     var icon = status === 'ready' ? '✓' : status === 'na' ? '−' : status === 'caution' ? '⚠' : '';
     var statClass = status === 'ready' ? 'pk-stat pk-stat-ready' : status === 'na' ? 'pk-stat pk-stat-na' : status === 'caution' ? 'pk-stat pk-stat-caution' : 'pk-stat';
+    if (cautionLocked) statClass += ' pk-btn-pulse';
     var noteSnippet = item.note ? '<span class="pk-note-hint">' + escapeHtml(item.note.length > 30 ? item.note.slice(0, 30) + '…' : item.note) + '</span>' : '';
     var cautionBtn = status === 'caution'
       ? '<button type="button" class="pk-notes-btn" onclick="event.stopPropagation();goToNotesWithFilter(\'' + jobId + '\')" title="View notes">⌕</button>'
@@ -1272,7 +1281,7 @@ function renderPackCard() {
       : '';
 
     return '<div class="pk-item">' +
-      '<div class="pk-row ' + rowClass + '">' +
+      '<div class="pk-row ' + rowClass + lockedClass + '">' +
         '<div class="' + statClass + '" onclick="event.stopPropagation();cyclePackStatus(\'' + d.key + '\')" title="Tap to cycle status">' + icon + '</div>' +
         '<div class="pk-name" onclick="togglePackDetail(\'' + d.key + '\')">' + d.label + noteSnippet + '</div>' +
         '<div class="pk-row-actions">' + cautionBtn + '<span class="pk-expand-arrow" onclick="event.stopPropagation();togglePackDetail(\'' + d.key + '\')" title="Details">' + (isExpanded ? '▾' : '▸') + '</span></div>' +
@@ -1307,6 +1316,7 @@ function cyclePackStatus(key) {
   var next = cur === '' ? 'ready' : cur === 'ready' ? 'na' : cur === 'na' ? 'caution' : '';
   item.status = next;
   if (next === 'ready' && !item.date) item.date = new Date().toISOString().split('T')[0];
+  item.cautionSince = next === 'caution' ? new Date().toISOString() : '';
   renderPackCard();
 }
 
@@ -1445,7 +1455,7 @@ function renderJobs() {
         <td class="j-spec">${j.color || 'Black'}${j.weight ? ` <span class="j-wt">${j.weight}</span>` : ''}</td>
         <td class="j-spec">${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
         <td class="j-spec j-plus10">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
-        <td class="j-state">${statusPill(j.status)}${jCautioned ? ' ' + cautionPill(j) + cautionNoteBtn(j) + (j.caution.text ? '<div class="j-caution-text">' + escapeHtml(j.caution.text) + '</div>' : '') : ''}</td>
+        <td class="j-state">${statusPill(j.status)}${jCautioned ? ' ' + cautionPill(j) : ''}</td>
         <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
         <td class="j-support">${j.press || '—'}</td>
         <td class="j-support assets-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','asset')" title="Asset card">${ahHTML(j)}</td>
@@ -1470,7 +1480,7 @@ function renderJobs() {
           </div>
           <div>${statusPill(j.status)}${jcCautioned ? '<div style="margin-top:4px">' + cautionPill(j) + '</div>' : ''}</div>
         </div>
-        ${jcCautioned && j.caution.text ? '<div class="jc-caution-text">⚠ ' + escapeHtml(j.caution.text) + cautionNoteBtn(j) + '</div>' : (jcCautioned && cautionNeedsNote(j) ? '<div class="jc-caution-text">' + cautionNoteBtn(j) + '</div>' : '')}
+        
         <div class="jc-row">
           ${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : ''}
           <span class="jc-detail">${j.color || 'Black'} <span>${j.weight || ''}</span></span>
@@ -1623,6 +1633,7 @@ function selectLogJob(jobId) {
   S.logSelectedJob = (jobId && String(jobId).trim()) ? jobId : null;
   logNumpadValue = '0';
   logNumpadUpdateDisplay();
+  if (typeof hideShipAchtungComposer === 'function') hideShipAchtungComposer();
   renderLog();
 }
 
@@ -1867,9 +1878,13 @@ function renderLog() {
     achtungCtrl.style.display = showAchtung ? '' : 'none';
     if (showAchtung && S.logSelectedJob) {
       const selJob = S.jobs.find(j => j.id === S.logSelectedJob);
-      achtungCtrl.classList.toggle('achtung-active', !!(selJob && isJobCautioned(selJob)));
+      const isCautioned = !!(selJob && isJobCautioned(selJob));
+      const needsNote = isCautioned && cautionNeedsNote(selJob);
+      achtungCtrl.classList.toggle('achtung-active', isCautioned);
+      achtungCtrl.classList.toggle('achtung-pulse', needsNote);
     } else {
       achtungCtrl.classList.remove('achtung-active');
+      achtungCtrl.classList.remove('achtung-pulse');
     }
   }
 

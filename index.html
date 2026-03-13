@@ -225,7 +225,7 @@
             <option value="assembly">ASSEMBLY</option>
             <option value="hold">ON HOLD</option>
             <option value="done">DONE</option>
-            <option value="cautioned">⚠ CAUTIONED</option>
+            <option value="cautioned">⚠ ACHTUNG</option>
             <option value="archived">ARCHIVED</option>
         </select>
         <div class="search-wrap" style="min-width:180px">
@@ -265,6 +265,11 @@
             <div class="log-shell-sec">SELECT JOB</div>
             <div class="log-job-picker" id="logJobPicker"></div>
             <div class="log-shell-sec log-shell-sec-log">LOG <button type="button" id="logAchtungCtrl" class="log-achtung-ctrl" onclick="toggleShipAchtung()" title="ACHTUNG — flag job for attention" style="display:none">⚠</button></div>
+            <div id="shipAchtungComposer" class="ship-achtung-composer" style="display:none">
+                <input type="text" id="shipAchtungText" class="ship-achtung-input" placeholder="Context (writes to NOTES)" onkeydown="if(event.key==='Enter'){confirmShipAchtung();event.preventDefault()}else if(event.key==='Escape'){cancelShipAchtung();event.preventDefault()}">
+                <button type="button" class="ship-achtung-send" onclick="confirmShipAchtung()">⚠ FLAG</button>
+                <button type="button" class="ship-achtung-cancel" onclick="cancelShipAchtung()">✕</button>
+            </div>
             <div class="log-console-wrap">
             <div class="log-mode-toggle" id="logModeToggle">
                 <button type="button" class="log-mode-btn active" id="logModePressBtn" onclick="setLogMode('press')">◉ PRESS</button>
@@ -658,16 +663,16 @@
         </div>
         <div class="rsp-icon-zone">
             <button class="panel-close" id="panelPoStarBtn" onclick="panelPoStarClick()" title="PO / contract image">☆</button>
-            <button class="panel-close" id="panelCautionBtn" onclick="togglePanelCaution()" title="Caution / blocker">⚠</button>
+            <button class="panel-close" id="panelCautionBtn" onclick="togglePanelCaution()" title="ACHTUNG — flag for attention">⚠</button>
             <button class="panel-close" id="panelEditBtn" onclick="setPanelEditMode(!panelEditMode)" title="Toggle edit mode">+</button>
             <button class="panel-close" onclick="closePanel()">✕</button>
         </div>
         </div>
-        <!-- RSP caution dropdown — lives between Icon Zone and form body -->
+        <!-- RSP ACHTUNG drawer — lives between Icon Zone and form body -->
         <div id="panelCautionRow" class="rsp-caution-drawer" style="display:none;">
             <div class="rsp-caution-inner">
             <div class="fg">
-            <label class="fl">⚠ Caution / Blocker</label>
+            <label class="fl">⚠ ACHTUNG</label>
             <select class="fs" id="jCautionReason">
                 <option value="">— None</option>
                 <option value="stuck">Stuck</option>
@@ -679,7 +684,7 @@
             </select>
             </div>
             <div class="fg">
-            <label class="fl">Caution Note</label>
+            <label class="fl">Context (writes to NOTES)</label>
             <input class="fi" id="jCautionText" placeholder="Short context (optional)">
             </div>
             </div>

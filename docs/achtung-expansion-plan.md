@@ -1,6 +1,9 @@
-# Caution Protocol Expansion Plan
+# ACHTUNG Expansion Plan (Historical)
 
-**Purpose:** Plan the next expansion of the caution protocol beyond asset rows to job-level conditions.
+> **Status:** Historical — superseded by `achtung-protocol-unification-plan.md` and `achtung-canonical-model.md`.
+> Retained for context on how the protocol evolved.
+
+**Purpose:** Plan the next expansion of the ACHTUNG protocol (originally "caution") beyond asset rows to job-level conditions.
 
 **Scope:** Read-only planning. No code changes. Optimizes for operational usefulness without building a giant status system.
 

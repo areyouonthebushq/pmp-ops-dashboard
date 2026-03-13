@@ -222,7 +222,7 @@ function fulfillmentPhaseLabel(phase) {
 }
 
 // ============================================================
-// JOB-LEVEL CAUTION — lightweight exception overlay
+// JOB-LEVEL ACHTUNG — lightweight exception overlay
 // ============================================================
 const CAUTION_REASONS = [
   { v: '',            l: '— None' },
@@ -258,7 +258,7 @@ function cautionPill(job) {
     else if (ms < 864e5) tip += ' (' + Math.round(ms / 36e5) + 'h ago)';
     else tip += ' (' + Math.round(ms / 864e5) + 'd ago)';
   }
-  return '<span class="' + cls + '" title="' + tip + '">⚠ ' + label + '</span>';
+  return '<span class="' + cls + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + job.id + '\')" style="cursor:pointer" title="' + tip + '">⚠ ' + label + '</span>';
 }
 
 function cautionNeedsNote(job) {
@@ -269,9 +269,10 @@ function cautionNeedsNote(job) {
   return !notes.some(function (n) { return n.timestamp && n.timestamp >= since; });
 }
 
+/** @deprecated Dead code — ACHTUNG symbol now routes to NOTES directly. Kept temporarily for safety. */
 function cautionNoteBtn(job) {
   if (!cautionNeedsNote(job)) return '';
-  return '<button type="button" class="caution-note-btn" onclick="event.stopPropagation();goToNotesAndOpenAdd(\'' + job.id + '\')" title="Add note for caution context">+ NOTE</button>';
+  return '';
 }
 
 /** Debounce fn (no args) for use with search inputs — reduces re-renders on mobile. */
@@ -468,7 +469,7 @@ function findDuplicateJob(jobs, catalog, artist, album, excludeId) {
   });
 }
 
-/** Canonical asset status: received | na | caution | '' (unset). Derives from legacy received/na when status not set. */
+/** Canonical asset status: received | na | caution (ACHTUNG) | '' (unset). Derives from legacy received/na when status not set. */
 function getAssetStatus(asset) {
   if (!asset || typeof asset !== 'object') return '';
   const s = (asset.status || '').toLowerCase().trim();

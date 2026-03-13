@@ -1,0 +1,25 @@
+---
+description: SQL migration file convention for PMP OPS
+globs: supabase/**/*.sql
+alwaysApply: true
+---
+
+# SQL Migration Convention
+
+Any time a code change requires a new or altered database column, table, constraint, index, or RLS policy, create a dedicated `.sql` file in the `supabase/` folder.
+
+## Rules
+
+- One migration per file. Name the file after what it does (e.g., `caution-column.sql`, `progress-log-stage-check.sql`).
+- Include a short comment at the top explaining the purpose and expected shape.
+- Use `IF NOT EXISTS` / `IF EXISTS` where safe to make migrations re-runnable.
+- Never bundle unrelated schema changes into one file.
+- If dropping and recreating a constraint, put both statements in one file.
+
+## Example
+
+```sql
+-- Add fulfillment_phase to jobs for SHIP page state tracking.
+-- Values: awaiting_instructions | ready_pickup | ready_ship | local_pickup | in_house | held | shipped
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS fulfillment_phase text;
+```

@@ -1015,6 +1015,7 @@
     #panelCautionBtn { font-size: 14px; }
     #panelCautionBtn:hover { border-color: #ffb300; color: #ffb300; }
     #panelCautionBtn.caution-active { border-color: #ffb300; color: #ffb300; background: rgba(255,179,0,0.12); box-shadow: 0 0 6px rgba(255,179,0,0.3); }
+    #panelCautionBtn.caution-pulse { animation: cautionPulse 1.6s ease-in-out infinite; }
 
     /* RSP caution drawer — slides between Icon Zone and form body */
     .rsp-caution-drawer {
@@ -1025,15 +1026,7 @@
     .rsp-caution-inner { display: flex; gap: var(--space-sm); align-items: flex-end; }
     .rsp-caution-inner .fg { flex: 1; }
     @keyframes rspCautionOpen { from { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; } to { max-height: 80px; opacity: 1; } }
-    .caution-note-btn {
-      display: inline-block; background: none; border: 1px solid rgba(255,179,0,0.5);
-      color: #ffb300; font-family: 'Inconsolata', monospace; font-size: 9px; letter-spacing: 1px;
-      padding: 1px 6px; cursor: pointer; margin-left: 4px; vertical-align: middle;
-      animation: cautionPulse 1.6s ease-in-out infinite; transition: all 0.15s;
-    }
-    .caution-note-btn:hover { background: rgba(255,179,0,0.15); color: #fff; border-color: #ffb300; }
-    .j-caution-text { font-size: 10px; color: #ffb300; margin-top: 2px; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .jc-caution-text { font-size: 11px; color: #ffb300; padding: 2px 0; display: flex; align-items: center; gap: 6px; }
+    .caution-pill { cursor: pointer; }
 
     /* ============================================================ SLIDE PANEL — Single scroll form */
     .overlay {
@@ -1857,8 +1850,33 @@
     .log-achtung-ctrl:hover { color: #ffb300; background: rgba(255,179,0,0.08); border-color: rgba(255,179,0,0.3); }
     .log-achtung-ctrl.achtung-active {
       color: #ffb300; background: rgba(255,179,0,0.15); border-color: rgba(255,179,0,0.5);
+    }
+    .log-achtung-ctrl.achtung-pulse {
       animation: cautionPulse 1.6s ease-in-out infinite;
     }
+    .ship-achtung-composer {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; background: rgba(255,179,0,0.06); border: 1px solid rgba(255,179,0,0.25);
+      border-radius: 4px; margin-bottom: 6px;
+    }
+    .ship-achtung-input {
+      flex: 1; background: var(--s1); color: var(--w); border: 1px solid var(--b1);
+      border-radius: 3px; padding: 4px 8px; font-family: 'Inconsolata', monospace;
+      font-size: 12px; outline: none;
+    }
+    .ship-achtung-input:focus { border-color: rgba(255,179,0,0.5); }
+    .ship-achtung-send {
+      background: rgba(255,179,0,0.15); color: #ffb300; border: 1px solid rgba(255,179,0,0.4);
+      border-radius: 3px; padding: 4px 10px; font-family: 'Inconsolata', monospace;
+      font-size: 11px; letter-spacing: 1px; cursor: pointer; white-space: nowrap;
+    }
+    .ship-achtung-send:hover { background: rgba(255,179,0,0.25); }
+    .ship-achtung-cancel {
+      background: none; color: var(--d3); border: 1px solid var(--b1);
+      border-radius: 3px; padding: 4px 6px; cursor: pointer; font-size: 12px;
+      font-family: 'Inconsolata', monospace;
+    }
+    .ship-achtung-cancel:hover { color: var(--w); border-color: var(--d3); }
     .log-page-shell .log-job-picker { margin: 0; max-width: 100%; }
     .log-page-shell .log-console-wrap { margin: 0; }
     #pg-log .log-job-picker {
@@ -3400,6 +3418,9 @@
       animation: cautionPulse 1.6s ease-in-out infinite;
       display: inline-block; vertical-align: middle; margin-left: 4px;
     }
+    .floor-caution-icon.floor-caution-satisfied {
+      animation: none;
+    }
     .floor-caution-icon:hover { color: #ffc107; text-shadow: 0 0 6px rgba(255,179,0,0.7); }
     .floor-card-trigger { cursor: pointer; padding: 2px 0; }
     .floor-card-trigger:hover { color: var(--w); }
@@ -3540,6 +3561,9 @@
     .pk-row-na .pk-name { color: var(--d3); text-decoration: line-through; opacity: 0.6; }
     .pk-row-caution { background: rgba(255,179,0,0.06); }
     .pk-row-caution .pk-name { color: #ffb300; }
+    .pk-row-caution-locked { background: rgba(255,179,0,0.10); }
+    .pk-row-caution-locked .pk-name::after { content: ' — needs note'; font-size: 10px; color: var(--d3); font-weight: normal; }
+    .pk-btn-pulse { animation: cautionPulse 1.4s ease-in-out infinite; }
 
     /* Pack card item container + detail expansion */
     .pk-item { border-bottom: 1px solid var(--b1); }
