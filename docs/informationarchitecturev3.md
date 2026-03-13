@@ -109,7 +109,7 @@ flowchart TB
 
 | Entity | Where stored | Key fields (representative) |
 |--------|--------------|-----------------------------|
-| **Job** | `S.jobs[]`, Supabase `jobs` | id, catalog, artist, album, status, due, press, format, qty, color, notes, notesLog, assemblyLog, progressLog, assets, poContract, archived_* |
+| **Job** | `S.jobs[]`, Supabase `jobs` | id, catalog, artist, album, status, due, press, format, qty, color, notes, notesLog, assemblyLog, progressLog, assets, packCard, poContract, archived_* |
 | **Press** | `S.presses[]`, Supabase `presses` | id, name, type, status, job_id, on_deck_job_id |
 | **Progress log** | job.progressLog (hydrated from Supabase `progress_log`) | job_id, qty, stage (pressed \| qc_passed \| rejected), person, timestamp |
 | **QC log** | `S.qcLog[]`, Supabase `qc_log` | time, type, job, date |
@@ -172,6 +172,7 @@ flowchart TB
 | Slide panel | overlay + panel | openPanel(jobId) — job detail/edit, PO image, notes, assets link, progress |
 | Floor card | floorCardOverlay | openFloorCard(jobId) — quick edit (status, press, location, due, notes, assembly) |
 | Assets overlay | assetsOverlay | openAssetsOverlay(jobId) — per-asset rows, caution mode, + note, view notes |
+| Pack card | packCardOverlay | openPackCard(jobId) — late-stage packing readiness checklist (PACK_DEFS), status cycle, save to job.packCard |
 | New job chooser | (chooser UI) | openNewJobChooser() — blank vs duplicate |
 | Compound wizard | compoundWizardWrap | openCompoundWizard() — new/edit compound |
 | Confirm dialog | (confirm UI) | openConfirm() — destructive or critical actions |
@@ -373,6 +374,7 @@ flowchart TB
          ├── #overlay (RSP — Right-Side Panel)
          ├── #floorCardOverlay
          ├── #assetsOverlay
+         ├── #packCardOverlay (PACK CARD)
          ├── #compoundWizardWrap
          ├── #poImageLightbox
          └── TV (#tv) — fullscreen
@@ -394,7 +396,8 @@ flowchart TB
 | **On deck** | One optional “next” job per press; shown under press card, send-to-press via arrow. |
 | **Caution mode** | Asset state “needs attention”; requires new note before row unlocks. |
 | **Job-level caution** | Exception overlay on a job (stuck, billing, traffic jam, etc.). Visible via amber glow/border. RSP Icon Zone ⚠ opens the caution drawer; Floor ⚠ routes to NOTES. |
-| **Icon Zone** | Top-right cluster of action buttons in the RSP (☆ ⚠ + ✕). Exception-style controls live here, not in the form body. |
+| **Icon Zone** | Top-right cluster of action buttons in the RSP (☆ ⚠ 📦 + ✕). Exception-style and readiness controls live here, not in the form body. |
+| **Pack card** | Job-scoped overlay for late-stage packing readiness. PACK_DEFS items (components, assembly spec, QC clearance, etc.) with status cycle ('' → ready → na → caution). Stored in job.packCard JSONB. |
 | **Station** | Focused shell: Press, QC, or Floor Manager (launcher choice). |
 
 ---

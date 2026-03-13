@@ -62,6 +62,37 @@ const ASSET_DEFS = [
   {key:'outer_pkg',     label:'Outer Packaging'},
 ];
 
+const PACK_DEFS = [
+  {key:'sleeve',    label:'Sleeve'},
+  {key:'jacket',    label:'Jacket'},
+  {key:'insert',    label:'Insert / Extras'},
+  {key:'wrap',      label:'Shrink Wrap / Poly'},
+  {key:'sticker',   label:'Sticker'},
+  {key:'box_label', label:'Box Label'},
+  {key:'special',   label:'Special Handling'},
+];
+
+function getPackItemStatus(item) {
+  if (!item || typeof item !== 'object') return '';
+  var s = (item.status || '').toLowerCase().trim();
+  if (s === 'ready' || s === 'na' || s === 'caution') return s;
+  return '';
+}
+
+function packHealth(job) {
+  var pc = (job && job.packCard) || {};
+  var applicable = PACK_DEFS.filter(function (d) { return getPackItemStatus(pc[d.key]) !== 'na'; });
+  var done = applicable.filter(function (d) { return getPackItemStatus(pc[d.key]) === 'ready'; });
+  return { done: done.length, total: applicable.length, pct: applicable.length ? done.length / applicable.length : 0 };
+}
+
+function packHealthHTML(job) {
+  var h = packHealth(job);
+  if (!h.total) return '<span class="ph-empty">—</span>';
+  var color = h.pct >= 1 ? 'var(--g)' : h.pct >= 0.5 ? 'var(--w)' : 'var(--d3)';
+  return '<span class="ph" style="color:' + color + '">' + h.done + '/' + h.total + '</span>';
+}
+
 const DEFAULT_PRESSES = [
   {id:'p1', name:'PRESS 1', type:'LP',  status:'online', job_id:null},
   {id:'p2', name:'PRESS 2', type:'LP',  status:'online', job_id:null},
@@ -96,9 +127,11 @@ const DEFAULT_TODOS = {
 const STATUS_ORDER = ['queue','pressing','assembly','hold','done'];
 
 // ============================================================
-const PROGRESS_STAGES = ['pressed', 'qc_passed', 'rejected'];
+const PROGRESS_STAGES = ['pressed', 'qc_passed', 'rejected', 'packed', 'ready', 'shipped', 'picked_up', 'held'];
 
 const QC_TYPES = ['FLASH','BLEMISH','OFF-CENTER','AUDIO','UNTRIMMED','BISCUIT/FLASH'];
+
+const HELD_REASONS = ['BILLING HOLD','CUSTOMER HOLD','DAMAGE','SHORT COUNT','WRONG CONFIG','OTHER'];
 
 const FLOOR_COLUMNS = [
   { key: 'catalog', label: 'CATALOG' },
@@ -275,15 +308,20 @@ function getJobProgress(job) {
   ensureJobProgressLog(job);
   const log = job.progressLog || [];
   const ordered = Math.max(0, parseInt(job.qty, 10) || 0);
-  let pressed = 0, qcPassed = 0, rejected = 0;
+  let pressed = 0, qcPassed = 0, rejected = 0, packed = 0, ready = 0, shipped = 0, pickedUp = 0, held = 0;
   log.forEach(e => {
     const q = Math.max(0, parseInt(e.qty, 10) || 0);
     if (e.stage === 'pressed') pressed += q;
     else if (e.stage === 'qc_passed') qcPassed += q;
     else if (e.stage === 'rejected') rejected += q;
+    else if (e.stage === 'packed') packed += q;
+    else if (e.stage === 'ready') ready += q;
+    else if (e.stage === 'shipped') shipped += q;
+    else if (e.stage === 'picked_up') pickedUp += q;
+    else if (e.stage === 'held') held += q;
   });
   const pendingQC = Math.max(0, pressed - qcPassed - rejected);
-  return { ordered, pressed, qcPassed, rejected, pendingQC };
+  return { ordered, pressed, qcPassed, rejected, pendingQC, packed, ready, shipped, pickedUp, held };
 }
 
 function progressDisplay(job) {
@@ -329,14 +367,21 @@ function statusRailPlaceholderHTML() {
   </div>`;
 }
 
-/** LOG console only: single compact % bar by mode (PRESS = pressed/ordered, PASS = qcPassed/ordered, REJECT = rejected/ordered). */
+/** LOG console only: single compact % bar by mode. Supports press + outbound actions. */
 function logConsoleRailHTML(job, mode) {
   if (!job) return logConsoleRailPlaceholderHTML();
   const p = getJobProgress(job);
   const ordered = p.ordered;
-  const num = mode === 'press' ? p.pressed : mode === 'qc_pass' ? p.qcPassed : p.rejected;
-  const pct = ordered ? Math.min(100, (num / ordered) * 100) : 0;
-  const modeClass = mode === 'press' ? 'mode-press' : mode === 'qc_pass' ? 'mode-qcpass' : 'mode-qcreject';
+  let num, denom, modeClass;
+  if (mode === 'packed')        { num = p.packed;   denom = ordered;             modeClass = 'mode-packed'; }
+  else if (mode === 'ready')    { num = p.ready;    denom = p.packed || ordered;  modeClass = 'mode-ready'; }
+  else if (mode === 'shipped')  { num = p.shipped;  denom = p.ready || ordered;   modeClass = 'mode-shipped'; }
+  else if (mode === 'picked_up') { num = p.pickedUp; denom = p.ready || ordered;  modeClass = 'mode-pickedup'; }
+  else if (mode === 'held')     { num = p.held;     denom = p.ready || ordered;   modeClass = 'mode-held'; }
+  else if (mode === 'press')    { num = p.pressed;  denom = ordered;              modeClass = 'mode-press'; }
+  else if (mode === 'qc_pass')  { num = p.qcPassed; denom = ordered;             modeClass = 'mode-qcpass'; }
+  else                          { num = p.rejected; denom = ordered;              modeClass = 'mode-qcreject'; }
+  const pct = denom ? Math.min(100, (num / denom) * 100) : 0;
   const pctText = Math.round(pct) + '%';
   return `<div class="log-rail-simple ${modeClass}">
     <div class="log-rail-bar"><div class="log-rail-fill" style="width:${pct}%"></div></div>

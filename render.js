@@ -448,12 +448,15 @@ function renderCrewPage() {
     var notes = (e.notes || '').trim();
     var notesShort = notes.length > 40 ? notes.slice(0, 37) + '…' : notes;
     var photoUrl = (e.photo_url || '').trim();
+    var hasPhoto = !!photoUrl;
+    var thumbClick = 'event.stopPropagation();crewThumbClick(\'' + (e.id || '').replace(/'/g, "\\'") + '\',' + hasPhoto + ')';
+    var thumbTitle = hasPhoto ? 'View / Replace photo' : 'Upload photo';
     var thumb = '';
-    if (photoUrl) {
-      thumb = '<div class="crew-thumb crew-thumb-img" style="background-image:url(\'' + photoUrl.replace(/'/g, "\\'") + '\')" role="img" aria-label="Photo"></div>';
+    if (hasPhoto) {
+      thumb = '<div class="crew-thumb crew-thumb-img crew-thumb-btn" style="background-image:url(\'' + photoUrl.replace(/'/g, "\\'") + '\')" role="button" aria-label="' + thumbTitle + '" title="' + thumbTitle + '" onclick="' + thumbClick + '"></div>';
     } else {
       var initial = name.charAt(0).toUpperCase();
-      thumb = '<div class="crew-thumb crew-thumb-initial">' + (typeof escapeHtml === 'function' ? escapeHtml(initial) : initial) + '</div>';
+      thumb = '<div class="crew-thumb crew-thumb-initial crew-thumb-btn" role="button" aria-label="' + thumbTitle + '" title="' + thumbTitle + '" onclick="' + thumbClick + '">' + (typeof escapeHtml === 'function' ? escapeHtml(initial) : initial) + '</div>';
     }
     var esc = function (s) { return typeof escapeHtml === 'function' ? escapeHtml(s) : s; };
     function attrEsc(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -1134,6 +1137,181 @@ async function saveAssetsOverlay() {
 }
 
 // ============================================================
+// PACK CARD — late-stage packing readiness overlay
+// ============================================================
+var packCardState = null;
+
+function openPackCard(jobId) {
+  var job = S.jobs.find(function (j) { return j.id === jobId; });
+  if (!job) return;
+  var raw = JSON.parse(JSON.stringify(job.packCard || {}));
+  PACK_DEFS.forEach(function (d) {
+    if (!raw[d.key]) raw[d.key] = { status: '', person: '', date: '', note: '' };
+    raw[d.key].status = getPackItemStatus(raw[d.key]);
+  });
+  if (raw._packNote === undefined) raw._packNote = '';
+  packCardState = { jobId: jobId, data: raw, expandedKey: null };
+  var titleEl = document.getElementById('packCardTitle');
+  if (titleEl) titleEl.innerHTML = escapeHtml((job.catalog || '—') + ' · ' + (job.artist || '—')) +
+    ' <button type="button" class="pk-go-notes" onclick="event.stopPropagation();goToNotesFromPackCard()" title="Open NOTES for this job">◇ NOTES</button>';
+  renderPackCard();
+  document.getElementById('packCardOverlay').classList.add('on');
+}
+
+function closePackCard() {
+  packCardState = null;
+  var el = document.getElementById('packCardOverlay');
+  if (el) el.classList.remove('on');
+}
+
+function flushPackCardInputs() {
+  if (!packCardState) return;
+  PACK_DEFS.forEach(function (d) {
+    var noteEl = document.getElementById('pkn-' + d.key);
+    var whoEl = document.getElementById('pkw-' + d.key);
+    if (noteEl) packCardState.data[d.key].note = noteEl.value;
+    if (whoEl) packCardState.data[d.key].person = whoEl.value;
+  });
+  var packNoteEl = document.getElementById('pkPackNote');
+  if (packNoteEl) packCardState.data._packNote = packNoteEl.value;
+}
+
+function renderPackCard() {
+  if (!packCardState) return;
+  flushPackCardInputs();
+  var data = packCardState.data;
+  var ready = 0, na = 0, caution = 0, remaining = 0;
+  PACK_DEFS.forEach(function (d) {
+    var s = getPackItemStatus(data[d.key]);
+    if (s === 'ready') ready++;
+    else if (s === 'na') na++;
+    else if (s === 'caution') caution++;
+    else remaining++;
+  });
+  var allDone = remaining === 0 && caution === 0;
+
+  var summaryEl = document.getElementById('packCardSummary');
+  if (summaryEl) {
+    summaryEl.innerHTML =
+      '<span class="pk-ready"><span class="pk-num">' + ready + '</span> ready</span>' +
+      '<span class="pk-na"><span class="pk-num">' + na + '</span> N/A</span>' +
+      '<span class="pk-caution"><span class="pk-num">' + caution + '</span> caution</span>' +
+      '<span class="pk-remaining"><span class="pk-num">' + remaining + '</span> remaining</span>' +
+      (allDone ? '<span class="pk-complete">✓ PACK READY</span>' : '');
+  }
+
+  var jobId = packCardState.jobId;
+  var job = S.jobs.find(function (j) { return j.id === jobId; });
+  var expanded = packCardState.expandedKey;
+  var listEl = document.getElementById('packCardList');
+  if (!listEl) return;
+
+  var notesCtx = '';
+  if (job) {
+    var notes = Array.isArray(job.notesLog) ? job.notesLog : [];
+    var recent = notes.slice(-3).reverse();
+    if (recent.length) {
+      notesCtx = '<div class="pk-notes-ctx">' +
+        '<div class="pk-notes-ctx-head">RECENT NOTES</div>' +
+        recent.map(function (n) {
+          var age = '';
+          if (n.timestamp) {
+            var ms = Date.now() - new Date(n.timestamp).getTime();
+            if (ms < 36e5) age = Math.max(1, Math.round(ms / 6e4)) + 'm';
+            else if (ms < 864e5) age = Math.round(ms / 36e5) + 'h';
+            else age = Math.round(ms / 864e5) + 'd';
+          }
+          var tag = n.assetLabel ? '<span class="pk-notes-tag">' + escapeHtml(n.assetLabel) + '</span> ' : '';
+          var snippet = escapeHtml((n.text || '').length > 60 ? (n.text || '').slice(0, 60) + '…' : (n.text || ''));
+          return '<div class="pk-notes-ctx-entry">' +
+            '<span class="pk-notes-ctx-text">' + tag + snippet + '</span>' +
+            '<span class="pk-notes-ctx-age">' + (n.person ? escapeHtml(n.person) + ' · ' : '') + age + '</span>' +
+            '</div>';
+        }).join('') +
+        '</div>';
+    }
+  }
+
+  listEl.innerHTML = notesCtx + PACK_DEFS.map(function (d) {
+    var item = data[d.key] || { status: '', person: '', date: '', note: '' };
+    var status = getPackItemStatus(item);
+    var rowClass = status === 'ready' ? 'pk-row-ready' : status === 'na' ? 'pk-row-na' : status === 'caution' ? 'pk-row-caution' : '';
+    var icon = status === 'ready' ? '✓' : status === 'na' ? '−' : status === 'caution' ? '⚠' : '';
+    var statClass = status === 'ready' ? 'pk-stat pk-stat-ready' : status === 'na' ? 'pk-stat pk-stat-na' : status === 'caution' ? 'pk-stat pk-stat-caution' : 'pk-stat';
+    var noteSnippet = item.note ? '<span class="pk-note-hint">' + escapeHtml(item.note.length > 30 ? item.note.slice(0, 30) + '…' : item.note) + '</span>' : '';
+    var cautionBtn = status === 'caution'
+      ? '<button type="button" class="pk-notes-btn" onclick="event.stopPropagation();goToNotesWithFilter(\'' + jobId + '\')" title="View notes">⌕</button>'
+      : '';
+
+    var isExpanded = expanded === d.key;
+    var detail = isExpanded
+      ? '<div class="pk-detail">' +
+        '<div class="pk-detail-row">' +
+          '<div class="pk-detail-field"><div class="pk-dl">NOTE</div><input type="text" class="pk-di" id="pkn-' + d.key + '" value="' + escapeHtml(item.note || '') + '" placeholder="Packing note…" onclick="event.stopPropagation()"></div>' +
+          '<div class="pk-detail-field"><div class="pk-dl">WHO</div><input type="text" class="pk-di" id="pkw-' + d.key + '" value="' + escapeHtml(item.person || '') + '" placeholder="Name" onclick="event.stopPropagation()"></div>' +
+        '</div>' +
+        '</div>'
+      : '';
+
+    return '<div class="pk-item">' +
+      '<div class="pk-row ' + rowClass + '">' +
+        '<div class="' + statClass + '" onclick="event.stopPropagation();cyclePackStatus(\'' + d.key + '\')" title="Tap to cycle status">' + icon + '</div>' +
+        '<div class="pk-name" onclick="togglePackDetail(\'' + d.key + '\')">' + d.label + noteSnippet + '</div>' +
+        '<div class="pk-row-actions">' + cautionBtn + '<span class="pk-expand-arrow" onclick="event.stopPropagation();togglePackDetail(\'' + d.key + '\')" title="Details">' + (isExpanded ? '▾' : '▸') + '</span></div>' +
+      '</div>' +
+      detail +
+      '</div>';
+  }).join('') +
+    '<div class="pk-pack-note-section">' +
+      '<div class="pk-dl">PACKING NOTE</div>' +
+      '<textarea class="pk-pack-note" id="pkPackNote" rows="2" placeholder="Free-form packing context…">' + escapeHtml(data._packNote || '') + '</textarea>' +
+    '</div>';
+}
+
+function togglePackDetail(key) {
+  if (!packCardState) return;
+  flushPackCardInputs();
+  packCardState.expandedKey = packCardState.expandedKey === key ? null : key;
+  renderPackCard();
+  if (packCardState.expandedKey === key) {
+    setTimeout(function () {
+      var el = document.getElementById('pkn-' + key);
+      if (el) el.focus();
+    }, 60);
+  }
+}
+
+function cyclePackStatus(key) {
+  if (!packCardState || !packCardState.data[key]) return;
+  flushPackCardInputs();
+  var item = packCardState.data[key];
+  var cur = getPackItemStatus(item);
+  var next = cur === '' ? 'ready' : cur === 'ready' ? 'na' : cur === 'na' ? 'caution' : '';
+  item.status = next;
+  if (next === 'ready' && !item.date) item.date = new Date().toISOString().split('T')[0];
+  renderPackCard();
+}
+
+function savePackCard() {
+  if (!packCardState) return;
+  flushPackCardInputs();
+  var job = S.jobs.find(function (j) { return j.id === packCardState.jobId; });
+  if (!job) { closePackCard(); return; }
+  job.packCard = JSON.parse(JSON.stringify(packCardState.data));
+  Storage.saveJob(job)
+    .then(function () {
+      packCardState = null;
+      var el = document.getElementById('packCardOverlay');
+      if (el) el.classList.remove('on');
+      renderAll();
+      if (typeof toast === 'function') toast('PACK CARD SAVED');
+    })
+    .catch(function () {
+      if (typeof toastError === 'function') toastError('Pack card save failed');
+    });
+}
+
+// ============================================================
 // JOBS PAGE
 // ============================================================
 function ensureFloorSortColumn() {
@@ -1236,6 +1414,7 @@ function renderJobs() {
         <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
         <td class="j-support">${j.press || '—'}</td>
         <td class="j-support assets-tap" onclick="event.stopPropagation(); openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
+        <td class="j-support pack-tap" onclick="event.stopPropagation(); openPackCard('${j.id}')" title="Pack card">${packHealthHTML(j)}</td>
         <td class="j-support td-progress progress-tap" onclick="event.stopPropagation(); openProgressDetail('${j.id}')" title="View progress breakdown">
         <div class="progress-main">${prog.main}</div>
         <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
@@ -1352,9 +1531,12 @@ function addTodo(key) {
 // Replaces separate Press Log and QC Log entry surfaces.
 // ============================================================
 let logNumpadValue = '0';
-let logAction = 'press';
+let logMode = 'press';
+try { logMode = sessionStorage.getItem('logMode') || 'press'; } catch (e) {}
+let logAction = logMode === 'outbound' ? 'packed' : 'press';
 let logViewDate = new Date().toDateString();
 let pendingLogRejectQty = 0;
+let pendingLogHeldQty = 0;
 
 function tryAddQCRejectToProgress(jobId) {
   if (!jobId) return Promise.resolve({ applied: false });
@@ -1386,15 +1568,26 @@ function setLogAction(action) {
   renderLog();
 }
 
+function setLogMode(mode) {
+  logMode = mode;
+  logAction = mode === 'outbound' ? 'packed' : 'press';
+  logNumpadValue = '0';
+  try { sessionStorage.setItem('logMode', mode); } catch (e) {}
+  renderLog();
+}
+
 function triggerLogRailGlow() {
   const el = document.getElementById('logConsoleRail');
   if (!el) return;
-  const mode = logAction === 'press' ? 'press' : logAction === 'qc_pass' ? 'qcpass' : 'qcreject';
-  el.classList.remove('rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject');
-  el.classList.add('rail-glow-' + mode);
-  setTimeout(function () {
-    el.classList.remove('rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject');
-  }, 750);
+  const glowMap = {
+    press: 'press', qc_pass: 'qcpass', qc_reject: 'qcreject',
+    packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'pickedup', held: 'held',
+  };
+  const glow = glowMap[logAction] || 'press';
+  const all = ['rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject', 'rail-glow-packed', 'rail-glow-ready', 'rail-glow-shipped', 'rail-glow-pickedup', 'rail-glow-held'];
+  all.forEach(c => el.classList.remove(c));
+  el.classList.add('rail-glow-' + glow);
+  setTimeout(function () { all.forEach(c => el.classList.remove(c)); }, 750);
 }
 
 function selectLogJob(jobId) {
@@ -1449,6 +1642,28 @@ async function unifiedLogEnter() {
     const titleEl = document.getElementById('logRejectPickerTitle');
     if (titleEl) titleEl.textContent = `REJECT ${n.toLocaleString()} — SELECT DEFECT TYPE`;
     document.getElementById('logRejectPicker').style.display = 'block';
+    return;
+  }
+
+  const simpleOutbound = { packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'picked up' };
+  if (simpleOutbound[logAction]) {
+    try {
+      const result = await logJobProgress(S.logSelectedJob, logAction, n, 'Log');
+      if (!result.ok) { toastError(result.error || 'Log failed'); return; }
+      toast(`+${n.toLocaleString()} ${simpleOutbound[logAction]} → ${jobName}`);
+      logNumpadValue = '0';
+      logNumpadUpdateDisplay();
+      renderLog();
+      triggerLogRailGlow();
+    } catch (e) { toastError(e?.message || 'Log failed'); }
+    return;
+  }
+  if (logAction === 'held') {
+    pendingLogHeldQty = n;
+    const titleEl = document.getElementById('logHeldPickerTitle');
+    if (titleEl) titleEl.textContent = `HELD ${n.toLocaleString()} — SELECT REASON`;
+    const picker = document.getElementById('logHeldPicker');
+    if (picker) picker.style.display = 'block';
   }
 }
 
@@ -1485,6 +1700,38 @@ async function unifiedLogRejectWithDefect(defectType) {
   } catch (e) {
     toastError(e?.message || 'Reject log failed');
     unifiedLogHideRejectPicker();
+  }
+}
+
+function unifiedLogHideHeldPicker() {
+  const el = document.getElementById('logHeldPicker');
+  if (el) el.style.display = 'none';
+  pendingLogHeldQty = 0;
+}
+
+async function unifiedLogHeldWithReason(reason) {
+  const n = pendingLogHeldQty;
+  if (n < 1 || !S.logSelectedJob) { unifiedLogHideHeldPicker(); return; }
+  const job = S.jobs.find(j => j.id === S.logSelectedJob);
+  const jobName = job ? (job.catalog || job.artist || '—') : '—';
+
+  try {
+    const result = await logJobProgress(S.logSelectedJob, 'held', n, 'Log', reason);
+    if (!result.ok) {
+      toastError(result.error || 'Held log failed');
+      unifiedLogHideHeldPicker();
+      return;
+    }
+    toast(`${n.toLocaleString()} HELD ${reason} → ${jobName}`);
+    logNumpadValue = '0';
+    pendingLogHeldQty = 0;
+    unifiedLogHideHeldPicker();
+    logNumpadUpdateDisplay();
+    renderLog();
+    triggerLogRailGlow();
+  } catch (e) {
+    toastError(e?.message || 'Held log failed');
+    unifiedLogHideHeldPicker();
   }
 }
 
@@ -1531,11 +1778,20 @@ function renderLog() {
     badge.classList.toggle('show', todayLog.length > 0);
   }
 
+  const pressToggle = document.getElementById('logModePressBtn');
+  const outToggle = document.getElementById('logModeOutboundBtn');
+  if (pressToggle) pressToggle.classList.toggle('active', logMode === 'press');
+  if (outToggle) outToggle.classList.toggle('active', logMode === 'outbound');
+
   const picker = document.getElementById('logJobPicker');
   if (picker) {
     const active = document.activeElement;
     if (!(active && active.tagName === 'SELECT' && picker.contains(active))) {
-      const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done'));
+      const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => {
+        if (isJobArchived(j)) return false;
+        if (logMode === 'outbound') return ['assembly', 'hold', 'done'].includes(j.status);
+        return j.status !== 'done';
+      }));
       const selectedId = S.logSelectedJob || '';
       picker.innerHTML = `
     <select class="qc-job-select" onchange="selectLogJob(this.value || null)">
@@ -1560,19 +1816,61 @@ function renderLog() {
     logConsoleRail.innerHTML = job ? logConsoleRailHTML(job, logAction) : logConsoleRailPlaceholderHTML();
   }
 
-  ['press', 'qc_pass', 'qc_reject'].forEach(a => {
-    const btn = document.getElementById('logBtn' + (a === 'press' ? 'Press' : a === 'qc_pass' ? 'QcPass' : 'QcReject'));
-    if (btn) btn.classList.toggle('active', logAction === a);
+  const extraBtn4 = document.getElementById('logBtnMode4');
+  const extraBtn5 = document.getElementById('logBtnMode5');
+  if (extraBtn4) extraBtn4.style.display = logMode === 'outbound' ? '' : 'none';
+  if (extraBtn5) extraBtn5.style.display = logMode === 'outbound' ? '' : 'none';
+
+  const modeActions = logMode === 'outbound'
+    ? [
+        { id: 'logBtnPress',    key: 'packed',    label: 'PACKED',    add: 'log-action-packed',   rm: 'log-action-press' },
+        { id: 'logBtnQcPass',   key: 'ready',     label: 'READY',     add: 'log-action-ready',    rm: 'log-action-qcpass' },
+        { id: 'logBtnQcReject', key: 'shipped',   label: 'SHIPPED',   add: 'log-action-shipped',  rm: 'log-action-qcreject' },
+        { id: 'logBtnMode4',    key: 'picked_up', label: 'PICKED UP', add: 'log-action-pickedup', rm: '' },
+        { id: 'logBtnMode5',    key: 'held',      label: 'HELD',      add: 'log-action-held',     rm: '' },
+      ]
+    : [
+        { id: 'logBtnPress',    key: 'press',     label: 'PRESS',  add: 'log-action-press',     rm: 'log-action-packed' },
+        { id: 'logBtnQcPass',   key: 'qc_pass',   label: 'PASS',   add: 'log-action-qcpass',    rm: 'log-action-ready' },
+        { id: 'logBtnQcReject', key: 'qc_reject',  label: 'REJECT', add: 'log-action-qcreject',  rm: 'log-action-shipped' },
+      ];
+  modeActions.forEach(a => {
+    const btn = document.getElementById(a.id);
+    if (!btn) return;
+    btn.textContent = a.label;
+    btn.setAttribute('onclick', "setLogAction('" + a.key + "')");
+    if (a.rm) btn.classList.remove(a.rm);
+    btn.classList.add(a.add);
+    btn.classList.toggle('active', logAction === a.key);
   });
+
+  const enterMap = {
+    press: { label: 'LOG PRESS', cls: 'log-enter-press' },
+    qc_pass: { label: 'LOG PASS', cls: 'log-enter-qcpass' },
+    qc_reject: { label: 'LOG REJECT', cls: 'log-enter-qcreject' },
+    packed: { label: 'LOG PACKED', cls: 'log-enter-packed' },
+    ready: { label: 'LOG READY', cls: 'log-enter-ready' },
+    shipped: { label: 'LOG SHIPPED', cls: 'log-enter-shipped' },
+    picked_up: { label: 'LOG PICKED UP', cls: 'log-enter-pickedup' },
+    held: { label: 'LOG HELD', cls: 'log-enter-held' },
+  };
   const enterBtn = document.getElementById('logEnterBtn');
   if (enterBtn) {
-    enterBtn.textContent = logAction === 'press' ? 'LOG PRESS' : logAction === 'qc_pass' ? 'LOG PASS' : 'LOG REJECT';
-    enterBtn.className = 'log-enter-btn log-enter-' + (logAction === 'press' ? 'press' : logAction === 'qc_pass' ? 'qcpass' : 'qcreject');
+    const e = enterMap[logAction] || enterMap.press;
+    enterBtn.textContent = e.label;
+    enterBtn.className = 'log-enter-btn ' + e.cls;
   }
+
+  const allModeClasses = ['mode-press', 'mode-qcpass', 'mode-qcreject', 'mode-packed', 'mode-ready', 'mode-shipped', 'mode-pickedup', 'mode-held'];
+  const actionModeCls = {
+    press: 'mode-press', qc_pass: 'mode-qcpass', qc_reject: 'mode-qcreject',
+    packed: 'mode-packed', ready: 'mode-ready', shipped: 'mode-shipped', picked_up: 'mode-pickedup', held: 'mode-held',
+  };
   const consoleEl = document.getElementById('logConsole');
   if (consoleEl) {
-    consoleEl.classList.remove('mode-press', 'mode-qcpass', 'mode-qcreject');
-    consoleEl.classList.add('mode-' + (logAction === 'press' ? 'press' : logAction === 'qc_pass' ? 'qcpass' : 'qcreject'));
+    consoleEl.classList.toggle('log-outbound-grid', logMode === 'outbound');
+    allModeClasses.forEach(c => consoleEl.classList.remove(c));
+    consoleEl.classList.add(actionModeCls[logAction] || 'mode-press');
   }
   if (typeof logNumpadUpdateDisplay === 'function') logNumpadUpdateDisplay();
 
@@ -1588,26 +1886,30 @@ function renderLog() {
   const feedEl = document.getElementById('logDailyFeed');
   if (feedEl) {
     const items = [];
-    const allJobs = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
+    const feedJobs = S.jobs.filter(j => !isJobArchived(j));
     const viewDate = logViewDate;
+    const pressFeedStages = { pressed: 1, qc_passed: 1 };
+    const outboundFeedStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
+    const activeFeedStages = logMode === 'outbound' ? outboundFeedStages : pressFeedStages;
+    const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'PACKED', ready: 'READY', shipped: 'SHIPPED', picked_up: 'PICKED UP', held: 'HELD' };
+    const stageCls   = { pressed: 'pressed', qc_passed: 'qc_passed', packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'picked_up', held: 'held' };
 
-    allJobs.forEach(j => {
+    feedJobs.forEach(j => {
       if (!Array.isArray(j.progressLog)) return;
       j.progressLog.forEach(e => {
         if (!e || !e.timestamp) return;
         const d = new Date(e.timestamp).toDateString();
         if (d !== viewDate) return;
         if (e.stage === 'asset_note') return;
-        if (e.stage === 'rejected') return; // reject rows rendered from qcLog with defect type
-        const action = e.stage === 'pressed' ? 'PRESS' : e.stage === 'qc_passed' ? 'PASS' : 'LOG';
-        const cls = e.stage === 'pressed' ? 'pressed' : e.stage === 'qc_passed' ? 'qc_passed' : '';
+        if (e.stage === 'rejected') return;
+        if (!activeFeedStages[e.stage]) return;
         const sw = parseSurfaceWho(e.person || '');
         items.push({
           ts: e.timestamp,
           qty: parseInt(e.qty, 10) || 0,
-          action,
-          defect: '',
-          cls,
+          action: stageLabel[e.stage] || 'LOG',
+          defect: e.reason || '',
+          cls: stageCls[e.stage] || '',
           source: sw.surface || '—',
           who: sw.who || '',
           press: (j.press || '').split(',')[0].trim(),
@@ -1618,47 +1920,54 @@ function renderLog() {
       });
     });
 
-    viewLog.forEach(e => {
-      const m = (e.job || '').match(/\(x(\d+)\)\s*$/i);
-      const qty = m ? parseInt(m[1], 10) : 1;
-      const jobLabel = m ? (e.job || '').replace(/\s*\(x\d+\)\s*$/i, '').trim() : (e.job || '—');
-      const base = new Date(viewDate);
-      const parts = String(e.time || '').split(':').map(n => parseInt(n, 10));
-      if (parts.length >= 2 && parts.every(n => Number.isFinite(n))) base.setHours(parts[0], parts[1], parts[2] || 0, 0);
-      items.push({
-        ts: base.toISOString(),
-        qty: Number.isFinite(qty) ? qty : 1,
-        action: 'REJECT',
-        defect: e.type || '',
-        cls: 'rejected',
-        source: 'QC',
-        press: '',
-        jobLabel,
+    if (logMode !== 'outbound') {
+      viewLog.forEach(e => {
+        const m = (e.job || '').match(/\(x(\d+)\)\s*$/i);
+        const qty = m ? parseInt(m[1], 10) : 1;
+        const jobLabel = m ? (e.job || '').replace(/\s*\(x\d+\)\s*$/i, '').trim() : (e.job || '—');
+        const base = new Date(viewDate);
+        const parts = String(e.time || '').split(':').map(n => parseInt(n, 10));
+        if (parts.length >= 2 && parts.every(n => Number.isFinite(n))) base.setHours(parts[0], parts[1], parts[2] || 0, 0);
+        items.push({
+          ts: base.toISOString(),
+          qty: Number.isFinite(qty) ? qty : 1,
+          action: 'REJECT',
+          defect: e.type || '',
+          cls: 'rejected',
+          source: 'QC',
+          press: '',
+          jobLabel,
+        });
       });
-    });
+    }
 
     items.sort((a, b) => new Date(b.ts) - new Date(a.ts));
 
+    const outboundStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
     if (!items.length) {
       feedEl.innerHTML = `<div class="empty">No entries ${isToday ? 'today' : 'on this date'}</div>`;
     } else {
       feedEl.innerHTML = items.map(it => {
         const time = new Date(it.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        const isOut = !!outboundStages[it.cls];
+        const prefix = isOut ? '◇ ' : '+';
         const primary = it.action === 'NOTE'
           ? ('NOTE' + (it.defect ? ' · ' + escapeHtml(it.defect) : ''))
-          : (`+${(it.qty || 0).toLocaleString()} ${it.action}${it.defect ? ' · ' + escapeHtml(it.defect) : ''}`);
+          : (`${prefix}${(it.qty || 0).toLocaleString()} ${it.action}${it.defect ? ' · ' + escapeHtml(it.defect) : ''}`);
         const metaParts = [
+          isOut ? 'OUTBOUND' : null,
           escapeHtml(it.source || '—'),
           it.press ? escapeHtml(it.press) : null,
           it.who ? escapeHtml(it.who) : null,
           escapeHtml(time),
           escapeHtml(it.jobLabel || '—'),
         ].filter(Boolean);
+        const laneCls = isOut ? ' log-feed-outbound' : '';
         const clickable = it.cls === 'asset_note' && it.jobId && it.assetKey;
         const jobIdAttr = clickable ? String(it.jobId).replace(/'/g, '\\\'') : '';
         const assetKeyAttr = clickable ? String(it.assetKey).replace(/'/g, '\\\'') : '';
         const clickAttr = clickable ? ` onclick=\"goToNotesWithFilter('${jobIdAttr}','${assetKeyAttr}')\"` : '';
-        return `<div class="progress-entry ${it.cls}"${clickAttr}><div class="log-feed-primary">${primary}</div><div class="log-feed-meta">${metaParts.join(' · ')}</div></div>`;
+        return `<div class="progress-entry ${it.cls}${laneCls}"${clickAttr}><div class="log-feed-primary">${primary}</div><div class="log-feed-meta">${metaParts.join(' · ')}</div></div>`;
       }).join('');
     }
   }

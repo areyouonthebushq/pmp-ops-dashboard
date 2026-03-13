@@ -242,7 +242,7 @@
             <thead><tr>
             <th>CATALOG</th><th>ARTIST</th><th>ALBUM</th><th>FORMAT</th>
             <th>COLOR / WT</th><th>QTY</th><th>+10%</th>
-            <th>STATUS</th><th>DUE</th><th>PRESS</th><th>ASSETS</th><th>PROGRESS</th><th>LOCATION</th><th></th>
+            <th>STATUS</th><th>DUE</th><th>PRESS</th><th>ASSETS</th><th>PACK</th><th>PROGRESS</th><th>LOCATION</th><th></th>
             </tr></thead>
             <tbody id="jobsBody"></tbody>
         </table>
@@ -265,12 +265,18 @@
             <div class="log-job-picker" id="logJobPicker"></div>
             <div class="log-shell-sec log-shell-sec-log">LOG</div>
             <div class="log-console-wrap">
+            <div class="log-mode-toggle" id="logModeToggle">
+                <button type="button" class="log-mode-btn active" id="logModePressBtn" onclick="setLogMode('press')">◉ PRESS</button>
+                <button type="button" class="log-mode-btn" id="logModeOutboundBtn" onclick="setLogMode('outbound')">◇ OUTBOUND</button>
+            </div>
             <div class="log-main log-faceplate mode-press" id="logConsole">
                 <div id="logConsoleRail" class="log-console-rail"></div>
                 <div class="log-fp-job" id="logNumpadJobLabel">Select a job above</div>
                 <button type="button" class="log-action-btn log-action-press log-fp-press" id="logBtnPress" onclick="setLogAction('press')">PRESS</button>
                 <button type="button" class="log-action-btn log-action-qcpass log-fp-qcpass" id="logBtnQcPass" onclick="setLogAction('qc_pass')">PASS</button>
                 <button type="button" class="log-action-btn log-action-qcreject log-fp-qcrej" id="logBtnQcReject" onclick="setLogAction('qc_reject')">REJECT</button>
+                <button type="button" class="log-action-btn log-action-pickedup log-fp-mode4" id="logBtnMode4" onclick="setLogAction('picked_up')" style="display:none">PICKED UP</button>
+                <button type="button" class="log-action-btn log-action-held log-fp-mode5" id="logBtnMode5" onclick="setLogAction('held')" style="display:none">HELD</button>
                 <div class="log-fp-display" id="logNumpadDisplay">0</div>
                 <button type="button" class="ps-numpad-btn log-fp-k7" onclick="logNumpadTap('7')">7</button>
                 <button type="button" class="ps-numpad-btn log-fp-k8" onclick="logNumpadTap('8')">8</button>
@@ -300,6 +306,20 @@
                     <button type="button" class="qc-reject-type-btn" onclick="unifiedLogRejectWithDefect('BISCUIT/FLASH')">✕ BISCUIT/FLASH</button>
                 </div>
                 <button type="button" class="qc-reject-cancel" onclick="unifiedLogHideRejectPicker()">CANCEL</button>
+            </div>
+            </div>
+            <div class="qc-reject-picker qc-reject-picker-overlay qc-reject-picker-console-overlay" id="logHeldPicker" style="display:none">
+            <div class="qc-reject-picker-card">
+                <div class="qc-reject-picker-title" id="logHeldPickerTitle">HELD — SELECT REASON</div>
+                <div class="qc-reject-picker-btns">
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('BILLING HOLD')">◉ BILLING HOLD</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('CUSTOMER HOLD')">✕ CUSTOMER HOLD</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('DAMAGE')">📦 DAMAGE</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('SHORT COUNT')">⚡ SHORT COUNT</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('WRONG CONFIG')">⬡ WRONG CONFIG</button>
+                    <button type="button" class="qc-reject-type-btn" onclick="unifiedLogHeldWithReason('OTHER')">✦ OTHER</button>
+                </div>
+                <button type="button" class="qc-reject-cancel" onclick="unifiedLogHideHeldPicker()">CANCEL</button>
             </div>
             </div>
         </div>
@@ -457,6 +477,7 @@
           </label>
           <button type="button" class="bar-btn" onclick="openEmployeeWizard()">+ ADD PERSON</button>
         </div>
+        <input type="file" id="crewPhotoInput" accept="image/*" style="display:none" onchange="onCrewPhotoSelected(this)">
         <div class="tbl-wrap">
           <table class="crew-tbl">
             <thead><tr>
@@ -631,6 +652,7 @@
         <div class="rsp-icon-zone">
             <button class="panel-close" id="panelPoStarBtn" onclick="panelPoStarClick()" title="PO / contract image">☆</button>
             <button class="panel-close" id="panelCautionBtn" onclick="togglePanelCaution()" title="Caution / blocker">⚠</button>
+            <button class="panel-close" id="panelPackBtn" onclick="openPackCard(S.editId)" title="Pack card">📦</button>
             <button class="panel-close" id="panelEditBtn" onclick="setPanelEditMode(!panelEditMode)" title="Toggle edit mode">+</button>
             <button class="panel-close" onclick="closePanel()">✕</button>
         </div>
@@ -979,6 +1001,22 @@
         <div class="assets-overlay-actions">
             <button type="button" class="btn go" onclick="saveAssetsOverlay()">SAVE & CLOSE</button>
             <button type="button" class="btn ghost" onclick="closeAssetsOverlay(true)">CANCEL</button>
+        </div>
+    </div>
+    </div>
+
+    <!-- PACK CARD — late-stage packing/assembly readiness overlay (job-scoped) -->
+    <div class="pack-card-overlay" id="packCardOverlay" onclick="if(event.target===this)closePackCard()">
+    <div class="pack-card-box" onclick="event.stopPropagation()">
+        <button type="button" class="pack-card-close" onclick="closePackCard()" aria-label="Close">✕</button>
+        <div class="pack-card-title" id="packCardTitle"></div>
+        <div class="pack-card-hint">Tap icon to cycle status · Tap name to expand · N/A if not required</div>
+        <div class="pack-card-summary" id="packCardSummary"></div>
+        <div class="pack-card-list" id="packCardList"></div>
+        <div class="pack-card-actions">
+            <button type="button" class="btn go" onclick="savePackCard()">SAVE & CLOSE</button>
+            <button type="button" class="btn ghost" onclick="addNoteFromPackCard()" title="Save pack card, then open NOTES to add a note">+ ADD NOTE</button>
+            <button type="button" class="btn ghost" onclick="closePackCard()">CANCEL</button>
         </div>
     </div>
     </div>

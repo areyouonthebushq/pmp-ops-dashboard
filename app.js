@@ -345,7 +345,7 @@ function checkTodoReset() {
   S._lastReset = today;
 }
 
-function logJobProgress(jobId, stage, qty, person) {
+function logJobProgress(jobId, stage, qty, person, reason) {
   const job = S.jobs.find(j => j.id === jobId);
   if (!job) return Promise.resolve({ ok: false, error: 'Job not found' });
   ensureJobProgressLog(job);
@@ -362,11 +362,28 @@ function logJobProgress(jobId, stage, qty, person) {
     const newRej = cur.rejected + q;
     if (newRej > ordered) return Promise.resolve({ ok: false, error: 'rejected cannot exceed ordered' });
   }
+  if (stage === 'packed') {
+    if (cur.packed + q > cur.qcPassed) return Promise.resolve({ ok: false, error: 'Packed cannot exceed QC passed' });
+  }
+  if (stage === 'ready') {
+    if (cur.ready + q > cur.packed) return Promise.resolve({ ok: false, error: 'Ready cannot exceed packed' });
+  }
+  if (stage === 'shipped') {
+    if (cur.shipped + q > cur.ready) return Promise.resolve({ ok: false, error: 'Shipped cannot exceed ready' });
+  }
+  if (stage === 'picked_up') {
+    if (cur.pickedUp + q > cur.ready) return Promise.resolve({ ok: false, error: 'Picked up cannot exceed ready' });
+  }
+  if (stage === 'held') {
+    if (cur.shipped + cur.pickedUp + cur.held + q > cur.ready) return Promise.resolve({ ok: false, error: 'Shipped + picked up + held cannot exceed ready' });
+  }
   const surface = (person != null && String(person).trim()) ? String(person).trim() : 'UNKNOWN';
   const who = (window.PMP?.userProfile?.display_name || window.PMP?.userProfile?.email || (S.mode === 'admin' ? 'Admin' : 'Operator') || '—');
   const personVal = surface.includes('·') ? surface : `${surface} · ${who}`;
   const timestamp = new Date().toISOString();
-  job.progressLog.push({ qty: q, stage, person: personVal, timestamp });
+  const entry = { qty: q, stage, person: personVal, timestamp };
+  if (reason) entry.reason = reason;
+  job.progressLog.push(entry);
 
   const isAssigned = S.presses.some(p => p.job_id === jobId);
   const suggestion = suggestedStatus(job, isAssigned);
@@ -374,7 +391,9 @@ function logJobProgress(jobId, stage, qty, person) {
   if (suggestion && (suggestion.suggested === 'pressing' || suggestion.suggested === 'done')) {
     job.status = suggestion.suggested;
   }
-  let p = Storage.logProgress({ job_id: jobId, qty: q, stage, person: personVal, timestamp });
+  const logEntry = { job_id: jobId, qty: q, stage, person: personVal, timestamp };
+  if (reason) logEntry.reason = reason;
+  let p = Storage.logProgress(logEntry);
   if (suggestion && (suggestion.suggested === 'pressing' || suggestion.suggested === 'done')) {
     p = p.then(() => Storage.saveJob(job)).then(() => {
       if (prev !== suggestion.suggested) toast(`Status set to ${suggestion.suggested.toUpperCase()}`);
@@ -1635,6 +1654,51 @@ function editEmployee(id) {
 }
 
 // ============================================================
+// CREW — photo upload (pfp circle)
+// ============================================================
+function crewThumbClick(employeeId, hasImage) {
+  if (hasImage) {
+    var e = (S.employees || []).find(function (x) { return x.id === employeeId; });
+    if (e && e.photo_url) openPoImageLightbox(e.photo_url, { employeeId: employeeId });
+  } else {
+    S.crewUploadEmployeeId = employeeId;
+    var input = document.getElementById('crewPhotoInput');
+    if (input) input.click();
+  }
+}
+
+function onCrewPhotoSelected(input) {
+  var file = input && input.files && input.files[0];
+  input.value = '';
+  var employeeId = S.crewUploadEmployeeId;
+  S.crewUploadEmployeeId = null;
+  if (!file || !employeeId) return;
+  if (!window.PMP || !window.PMP.Supabase || typeof window.PMP.Supabase.uploadCrewPhoto !== 'function') {
+    if (typeof toast === 'function') toast('Storage not available.');
+    return;
+  }
+  window.PMP.Supabase.uploadCrewPhoto(employeeId, file).then(function (res) {
+    var list = Array.isArray(S.employees) ? S.employees.slice() : [];
+    var idx = list.findIndex(function (x) { return x.id === employeeId; });
+    if (idx !== -1) {
+      list[idx] = Object.assign({}, list[idx], { photo_url: res.url });
+      S.employees = list;
+      Storage.saveEmployees(S.employees).then(function () {
+        closePoImageLightbox();
+        renderCrewPage();
+        if (typeof toast === 'function') toast('Photo uploaded.');
+      }).catch(function () {
+        renderCrewPage();
+        if (typeof toast === 'function') toast('Photo saved locally.');
+      });
+    }
+  }).catch(function (err) {
+    if (typeof toastError === 'function') toastError('Upload failed: ' + (err.message || err));
+    else if (typeof toast === 'function') toast('Upload failed.');
+  });
+}
+
+// ============================================================
 // CREW — CSV import (directory)
 // ============================================================
 function mapCrewCsvHeaderToKey(h) {
@@ -2051,6 +2115,7 @@ function openPoImageLightbox(src, opts) {
   if (replaceBtn) {
     if (opts && opts.compoundId) {
       el.dataset.compoundId = opts.compoundId;
+      el.dataset.employeeId = '';
       replaceBtn.style.display = 'block';
       replaceBtn.onclick = function (e) {
         e.stopPropagation();
@@ -2061,8 +2126,22 @@ function openPoImageLightbox(src, opts) {
           if (input) input.click();
         }
       };
+    } else if (opts && opts.employeeId) {
+      el.dataset.employeeId = opts.employeeId;
+      el.dataset.compoundId = '';
+      replaceBtn.style.display = 'block';
+      replaceBtn.onclick = function (e) {
+        e.stopPropagation();
+        var eid = el.dataset.employeeId;
+        if (eid) {
+          S.crewUploadEmployeeId = eid;
+          var input = document.getElementById('crewPhotoInput');
+          if (input) input.click();
+        }
+      };
     } else {
       el.dataset.compoundId = '';
+      el.dataset.employeeId = '';
       replaceBtn.style.display = 'none';
     }
   }
@@ -2232,6 +2311,7 @@ async function saveJob() {
       } else {
         job.caution = null;
       }
+      job.packCard = existing.packCard || null;
     }
     const notesEl = document.getElementById('jNotesInput');
     const assemblyEl = document.getElementById('jAssemblyInput');
@@ -3576,6 +3656,31 @@ function goToNotesWithFilter(jobId, assetKey) {
   goPg('notes');
 }
 
+/** Navigate from PACK CARD to NOTES with job pre-selected (read-only jump). */
+function goToNotesFromPackCard() {
+  var jobId = (typeof packCardState !== 'undefined' && packCardState) ? packCardState.jobId : '';
+  if (typeof closePackCard === 'function') closePackCard();
+  S.notesPreloadFilter = { jobId: jobId || '', search: '', assetLabel: '' };
+  goPg('notes');
+}
+
+/** Save pack card, close it, then open NOTES with add-note composer ready. */
+function addNoteFromPackCard() {
+  if (!packCardState) return;
+  if (typeof flushPackCardInputs === 'function') flushPackCardInputs();
+  var jobId = packCardState.jobId;
+  var job = S.jobs.find(function (j) { return j.id === jobId; });
+  if (job) {
+    job.packCard = JSON.parse(JSON.stringify(packCardState.data));
+    Storage.saveJob(job).catch(function () {});
+  }
+  packCardState = null;
+  var el = document.getElementById('packCardOverlay');
+  if (el) el.classList.remove('on');
+  renderAll();
+  goToNotesAndOpenAdd(jobId);
+}
+
 /** Open inline asset-note composer for this asset row (called from Assets overlay). */
 function openAssetNoteComposer(jobId, assetKey) {
   S.assetsOverlayAddingNoteKey = assetKey;
@@ -3896,7 +4001,27 @@ document.addEventListener('keydown', e => {
       e.preventDefault();
       return;
     }
-    // 3. Assets overlay
+    // 3a. LOG pickers (reject / exception reason)
+    const rejectPicker = document.getElementById('logRejectPicker');
+    if (rejectPicker && rejectPicker.style.display !== 'none') {
+      if (typeof unifiedLogHideRejectPicker === 'function') unifiedLogHideRejectPicker();
+      e.preventDefault();
+      return;
+    }
+    const heldPicker = document.getElementById('logHeldPicker');
+    if (heldPicker && heldPicker.style.display !== 'none') {
+      if (typeof unifiedLogHideHeldPicker === 'function') unifiedLogHideHeldPicker();
+      e.preventDefault();
+      return;
+    }
+    // 3b. Pack card overlay
+    const packCardEl = document.getElementById('packCardOverlay');
+    if (packCardEl && packCardEl.classList.contains('on')) {
+      if (typeof closePackCard === 'function') closePackCard();
+      e.preventDefault();
+      return;
+    }
+    // 3c. Assets overlay
     const assetsEl = document.getElementById('assetsOverlay');
     if (assetsEl && assetsEl.classList.contains('on')) {
       // Skip save on ESC; behave like click-outside cancel

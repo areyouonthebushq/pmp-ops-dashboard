@@ -54,6 +54,7 @@
       assembly_log: Array.isArray(job.assemblyLog) ? job.assemblyLog : [],
       fulfillment_phase: job.fulfillment_phase || null,
       caution: (job.caution && typeof job.caution === 'object' && job.caution.reason) ? job.caution : null,
+      pack_card: (job.packCard && typeof job.packCard === 'object') ? job.packCard : null,
     };
   }
 
@@ -99,6 +100,7 @@
       poContract: (row.po_contract && typeof row.po_contract === 'object') ? row.po_contract : {},
       fulfillment_phase: row.fulfillment_phase || null,
       caution: (row.caution && typeof row.caution === 'object' && row.caution.reason) ? row.caution : null,
+      packCard: (row.pack_card && typeof row.pack_card === 'object') ? row.pack_card : null,
     };
     return job;
   }
@@ -471,6 +473,22 @@
       if (!compoundId || !file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid compound or image file');
       const client = getClient();
       const path = this.getCompoundImagePath(compoundId, file.name);
+      const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
+      if (error) throw error;
+      const { data } = client.storage.from('po-images').getPublicUrl(path);
+      return { path, url: data.publicUrl };
+    },
+
+    /** Crew photo: path = crew/{employeeId}/photo.{ext}. Same bucket as PO. */
+    getCrewPhotoPath(employeeId, filename) {
+      if (!employeeId || !filename) return null;
+      const ext = (filename.match(/\.(jpe?g|png|gif|webp)$/i) || [])[1] || 'jpg';
+      return 'crew/' + employeeId + '/photo.' + ext.toLowerCase();
+    },
+    async uploadCrewPhoto(employeeId, file) {
+      if (!employeeId || !file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid employee or image file');
+      const client = getClient();
+      const path = this.getCrewPhotoPath(employeeId, file.name);
       const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
       if (error) throw error;
       const { data } = client.storage.from('po-images').getPublicUrl(path);
