@@ -2038,8 +2038,8 @@ function renderEngine() {
     return '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(pct) + '%"></div></div>';
   }
 
-  function sq(key, label, value, sub, railHTML) {
-    return '<div class="eng-block" onclick="openEngineDetail(\'' + key + '\')" style="cursor:pointer">'
+  function sq(key, role, label, value, sub, railHTML) {
+    return '<div class="eng-block ' + role + '" onclick="openEngineDetail(\'' + key + '\')" style="cursor:pointer">'
       + '<div class="eng-label">' + label + '</div>'
       + '<div class="eng-value">' + value + '</div>'
       + (railHTML || '')
@@ -2049,34 +2049,45 @@ function renderEngine() {
 
   var b = '';
 
-  b += sq('qpm', QUACK_ICON + ' QPM', quacked.toLocaleString(),
+  // hero — north-star output metric
+  b += sq('qpm', 'eng-hero', QUACK_ICON + ' QPM', quacked.toLocaleString(),
     quacked > 0 ? 'out the door' : 'no quacks yet',
     rail(quacked, totalOrdered || 1));
 
-  b += sq('pressed', 'PRESSED', d.pressed.toLocaleString(),
+  // process — production movement
+  b += sq('pressed', 'eng-process', 'PRESSED', d.pressed.toLocaleString(),
     totalOrdered > 0 ? d.pressed.toLocaleString() + ' / ' + totalOrdered.toLocaleString() : '',
     rail(d.pressed, totalOrdered || 1));
 
-  b += sq('qc_passed', 'QC PASSED', d.qcPassed.toLocaleString(),
+  b += sq('qc_passed', 'eng-process', 'QC PASSED', d.qcPassed.toLocaleString(),
     d.pressed > 0 ? d.qcPassed.toLocaleString() + ' / ' + d.pressed.toLocaleString() + ' pressed' : '',
     rail(d.qcPassed, d.pressed || 1));
 
-  b += sq('yield', 'YIELD', yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—',
+  // yield — conditional color escalation
+  var yieldRole = 'eng-yield';
+  if (yieldPct !== null && yieldPct < 90) yieldRole = 'eng-yield-bad';
+  else if (yieldPct !== null && yieldPct < 95) yieldRole = 'eng-yield-warn';
+  b += sq('yield', yieldRole, 'YIELD', yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—',
     yieldDenom > 0 ? d.qcPassed.toLocaleString() + ' / ' + yieldDenom.toLocaleString() : 'no QC data',
     yieldPct !== null ? rail(Math.round(yieldPct), 100) : '');
 
-  b += sq('rejected', 'REJECTED', d.rejected.toLocaleString(),
+  // friction — rejects (hot when > 0)
+  var rejRole = d.rejected > 0 ? 'eng-friction eng-hot' : 'eng-friction';
+  b += sq('rejected', rejRole, 'REJECTED', d.rejected.toLocaleString(),
     d.rejected > 0 && yieldDenom > 0 ? (100 - yieldPct).toFixed(1) + '% rate' : '',
     rail(d.rejected, yieldDenom || 1));
 
-  b += sq('packed', 'PACKED', d.packed.toLocaleString(),
+  // process — packed
+  b += sq('packed', 'eng-process', 'PACKED', d.packed.toLocaleString(),
     d.qcPassed > 0 ? d.packed.toLocaleString() + ' / ' + d.qcPassed.toLocaleString() + ' QC' : '',
     rail(d.packed, d.qcPassed || 1));
 
-  b += sq('ready', 'READY', liveReady.toLocaleString(),
+  // staging — ready (outbound family)
+  b += sq('ready', 'eng-stage', 'READY', liveReady.toLocaleString(),
     liveReady > 0 ? 'on skids' : 'none staged', '');
 
-  b += sq('order_book', 'ORDER BOOK', totalOrdered.toLocaleString(),
+  // context — denominator / background stat
+  b += sq('order_book', 'eng-context', 'ORDER BOOK', totalOrdered.toLocaleString(),
     active.length + ' active job' + (active.length !== 1 ? 's' : ''), '');
 
   grid.innerHTML = b;

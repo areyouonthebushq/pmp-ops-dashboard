@@ -2288,9 +2288,19 @@
 
     /* ============================================================
        ENGINE — plant instrumentation / telemetry console
-       Pedalboard / phone-shaped console with equal square blocks.
-       One color (--g) for all values. Uniform time frame.
+       Role hierarchy: hero → process → friction → context
+       Color: green (output) · cyan (staging) · amber (friction) · red (loss) · muted (context)
        ============================================================ */
+
+    @keyframes engPulse {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.6; }
+    }
+    @keyframes engScan {
+      0%   { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
     .engine-shell {
       max-width: 660px; margin: 0 auto; padding: var(--space-lg) var(--space-md);
     }
@@ -2310,21 +2320,33 @@
     .engine-console {
       background: var(--b1); border: 1px solid var(--b2);
       border-radius: 3px; padding: 1px;
+      box-shadow: 0 0 0 1px var(--bg), 0 2px 12px rgba(0,0,0,0.3);
     }
     .engine-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 1px;
     }
+
+    /* --- base block --- */
     .eng-block {
       background: var(--s1);
       aspect-ratio: 1;
       padding: var(--space-md) var(--space-sm);
       display: flex; flex-direction: column; justify-content: center;
       overflow: hidden;
-      transition: background 0.15s;
+      transition: background 0.15s, box-shadow 0.2s;
+      position: relative;
     }
     .eng-block:hover { background: var(--s2); }
+
+    /* thin top accent line — role-colored */
+    .eng-block::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; background: var(--b2);
+      transition: background 0.2s;
+    }
+
     .eng-label {
       font-family: 'Inconsolata', monospace; font-size: 9px;
       letter-spacing: 1.5px; text-transform: uppercase;
@@ -2352,6 +2374,66 @@
       letter-spacing: 0.3px; line-height: 1.2;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+
+    /* ---- ROLE: hero (QPM) ---- */
+    .eng-hero::before { background: var(--g); box-shadow: 0 0 6px rgba(0,230,118,0.3); }
+    .eng-hero { background: var(--bg); }
+    .eng-hero:hover { background: var(--s1); }
+    .eng-hero .eng-value { font-size: 36px; color: var(--g); text-shadow: 0 0 12px rgba(0,230,118,0.25); }
+    .eng-hero .eng-label { color: var(--g2); }
+    .eng-hero .eng-sub { color: var(--d2); }
+    .eng-hero .eng-rail { height: 4px; }
+    .eng-hero .eng-rail-fill {
+      background: linear-gradient(90deg, var(--g), var(--g) 60%, transparent);
+      background-size: 200% 100%;
+      animation: engScan 4s linear infinite;
+    }
+
+    /* ---- ROLE: process (pressed, qc_passed, packed) ---- */
+    .eng-process::before { background: var(--g2); }
+    .eng-process .eng-value { color: var(--g); }
+    .eng-process .eng-rail-fill { background: var(--g); }
+
+    /* ---- ROLE: staging (ready) ---- */
+    .eng-stage::before { background: var(--cy2); }
+    .eng-stage .eng-value { color: var(--cy); }
+    .eng-stage .eng-label { color: var(--cy2); }
+    .eng-stage .eng-rail-fill { background: var(--cy); }
+    .eng-stage .eng-sub { color: var(--cy2); }
+
+    /* ---- ROLE: friction (rejected) ---- */
+    .eng-friction::before { background: var(--r2); }
+    .eng-friction .eng-value { color: var(--d3); }
+    .eng-friction .eng-rail-fill { background: var(--r2); }
+    .eng-friction .eng-sub { color: var(--d3); }
+    /* when rejected > 0, escalate */
+    .eng-friction.eng-hot::before { background: var(--r); box-shadow: 0 0 4px rgba(255,61,61,0.25); }
+    .eng-friction.eng-hot .eng-value { color: var(--r); }
+    .eng-friction.eng-hot .eng-rail-fill { background: var(--r); }
+
+    /* ---- ROLE: yield ---- */
+    .eng-yield::before { background: var(--g2); }
+    .eng-yield .eng-value { color: var(--g); }
+    .eng-yield .eng-rail-fill { background: var(--g); }
+    .eng-yield-warn::before { background: var(--w2); }
+    .eng-yield-warn .eng-value { color: var(--w); }
+    .eng-yield-warn .eng-rail-fill { background: var(--w); }
+    .eng-yield-bad::before { background: var(--r2); }
+    .eng-yield-bad .eng-value { color: var(--r); }
+    .eng-yield-bad .eng-rail-fill { background: var(--r); }
+
+    /* ---- ROLE: context (order book) ---- */
+    .eng-context { background: var(--bg); }
+    .eng-context:hover { background: var(--s1); }
+    .eng-context::before { background: var(--b2); }
+    .eng-context .eng-value { color: var(--d2); font-weight: 400; }
+    .eng-context .eng-label { color: var(--b5); }
+    .eng-context .eng-sub { color: var(--b5); }
+
+    /* ---- telemetry: live-data pulse on hero rail ---- */
+    .eng-hero .eng-rail-fill { will-change: background-position; }
+
+    /* ---- telemetry: period selector ---- */
     .eng-period-strip {
       display: flex; justify-content: flex-end; gap: 0;
       padding: var(--space-xs) 0 0;
@@ -2510,6 +2592,7 @@
       .engine-shell { max-width: 100%; }
       .engine-grid { grid-template-columns: repeat(2, 1fr); }
       .eng-value { font-size: 26px; }
+      .eng-hero .eng-value { font-size: 30px; }
       .eng-detail-number { font-size: 36px; }
     }
 
