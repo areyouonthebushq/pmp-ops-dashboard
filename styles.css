@@ -3417,6 +3417,7 @@
     @media(max-width:600px) {
     .bar { padding: 0 var(--space-md); gap: var(--space-sm); }
     .bar-clock { display:none; }
+    .bar-actions { margin-left: auto; }
     .nav-item { padding: var(--space-md) var(--space-lg); font-size:16px; }
     .press-grid { grid-template-columns:1fr; }
     .stats { grid-template-columns:repeat(3,1fr); }

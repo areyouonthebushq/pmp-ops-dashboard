@@ -1938,20 +1938,7 @@ function renderLog() {
   if (typeof logNumpadUpdateDisplay === 'function') logNumpadUpdateDisplay();
 
   const achtungCtrl = document.getElementById('logAchtungCtrl');
-  if (achtungCtrl) {
-    const showAchtung = logMode === 'ship';
-    achtungCtrl.style.display = showAchtung ? '' : 'none';
-    if (showAchtung && S.logSelectedJob) {
-      const selJob = S.jobs.find(j => j.id === S.logSelectedJob);
-      const isCautioned = !!(selJob && isJobCautioned(selJob));
-      const needsNote = isCautioned && cautionNeedsNote(selJob);
-      achtungCtrl.classList.toggle('achtung-active', isCautioned);
-      achtungCtrl.classList.toggle('achtung-pulse', needsNote);
-    } else {
-      achtungCtrl.classList.remove('achtung-active');
-      achtungCtrl.classList.remove('achtung-pulse');
-    }
-  }
+  if (achtungCtrl) achtungCtrl.style.display = 'none';
 
   const dateLabel = document.getElementById('logDateLabel');
   if (dateLabel) {
