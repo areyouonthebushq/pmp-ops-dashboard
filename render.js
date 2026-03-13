@@ -1969,25 +1969,56 @@ function renderQC() {
 
 // ============================================================
 // ENGINE — plant instrumentation / telemetry console
+// Pedalboard console: equal square blocks, one color, uniform period.
 // ============================================================
+var enginePeriod = '1M';
+
+function setEnginePeriod(p) {
+  enginePeriod = p;
+  renderEngine();
+}
+
 function renderEngine() {
-  const grid = document.getElementById('engineGrid');
+  var grid = document.getElementById('engineGrid');
   if (!grid) return;
 
-  const now = new Date();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const tomorrowStart = new Date(todayStart.getTime() + 864e5);
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  var now = new Date();
+  var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var tomorrowStart = new Date(todayStart.getTime() + 864e5);
 
-  const active = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
+  // --- resolve period window ---
+  var pStart, pEnd = tomorrowStart;
+  switch (enginePeriod) {
+    case '1H':
+      pStart = new Date(now.getTime() - 36e5);
+      pEnd = now;
+      break;
+    case '1D':
+      pStart = todayStart;
+      break;
+    case '1W':
+      pStart = new Date(todayStart.getTime() - 6 * 864e5);
+      break;
+    case '1M':
+      pStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+    case '1Y':
+      pStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      break;
+    case 'YTD':
+      pStart = new Date(now.getFullYear(), 0, 1);
+      break;
+    case 'ALL':
+      pStart = new Date(0);
+      break;
+    default:
+      pStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
 
-  const today = getEngineData(S.jobs, todayStart, tomorrowStart);
-  const mtd = getEngineData(S.jobs, monthStart, tomorrowStart);
+  var d = getEngineData(S.jobs, pStart, pEnd);
+  var quacked = d.shipped + d.pickedUp;
 
-  const qpm = mtd.shipped + mtd.pickedUp;
-  const yieldDenom = today.qcPassed + today.rejected;
-  const yieldPct = yieldDenom > 0 ? ((today.qcPassed / yieldDenom) * 100) : null;
-
+  var active = S.jobs.filter(function (j) { return !isJobArchived(j) && j.status !== 'done'; });
   var totalOrdered = 0;
   var liveReady = 0;
   active.forEach(function (j) {
@@ -1996,84 +2027,71 @@ function renderEngine() {
     liveReady += p.ready;
   });
 
-  const quackedToday = today.shipped + today.pickedUp;
+  var yieldDenom = d.qcPassed + d.rejected;
+  var yieldPct = yieldDenom > 0 ? ((d.qcPassed / yieldDenom) * 100) : null;
 
-  function yieldColor(pct) {
-    if (pct === null) return 'var(--d3)';
-    if (pct >= 97) return 'var(--g)';
-    if (pct >= 90) return 'var(--w)';
-    return 'var(--r)';
-  }
-
-  function rail(num, denom, color) {
+  // --- helpers ---
+  function rail(num, denom) {
     var pct = denom > 0 ? Math.min(100, (num / denom) * 100) : 0;
-    return '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(pct) + '%;background:' + color + '"></div></div>';
+    return '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(pct) + '%"></div></div>';
   }
 
-  function block(cls, label, tag, value, color, sub, railHTML) {
-    return '<div class="eng-block ' + cls + '">'
-      + '<div class="eng-label">' + label + (tag ? '<span class="eng-tag">' + tag + '</span>' : '') + '</div>'
-      + '<div class="eng-value"' + (color ? ' style="color:' + color + '"' : '') + '>' + value + '</div>'
+  function sq(label, value, sub, railHTML) {
+    return '<div class="eng-block">'
+      + '<div class="eng-label">' + label + '</div>'
+      + '<div class="eng-value">' + value + '</div>'
       + (railHTML || '')
       + (sub ? '<div class="eng-sub">' + sub + '</div>' : '')
       + '</div>';
   }
 
-  var blocks = '';
+  // --- 8 equal blocks, uniform period ---
+  var b = '';
 
-  // 1. QPM — hero, full-width, always first
-  blocks += '<div class="eng-block eng-hero">'
-    + '<div class="eng-label">QPM<span class="eng-tag">MTD</span></div>'
-    + '<div class="eng-value eng-value-hero">' + qpm.toLocaleString() + '</div>'
-    + rail(qpm, totalOrdered || 1, 'var(--cy)')
-    + '<div class="eng-sub">' + QUACK_ICON + ' quacks per month'
-    + (qpm === 0 ? ' · no outbound logged yet' : '') + '</div>'
-    + '</div>';
+  b += sq(QUACK_ICON + ' QPM', quacked.toLocaleString(),
+    quacked > 0 ? 'out the door' : 'no quacks yet',
+    rail(quacked, totalOrdered || 1));
 
-  // 2. QUACKED TODAY
-  blocks += block('', QUACK_ICON + ' QUACKED', 'TODAY',
-    quackedToday.toLocaleString(), 'var(--cy)',
-    quackedToday > 0 ? today.shipped.toLocaleString() + ' shipped · ' + today.pickedUp.toLocaleString() + ' picked up' : 'no outbound today',
-    rail(quackedToday, today.packed || liveReady || 1, 'var(--cy)'));
+  b += sq('PRESSED', d.pressed.toLocaleString(),
+    totalOrdered > 0 ? d.pressed.toLocaleString() + ' / ' + totalOrdered.toLocaleString() : '',
+    rail(d.pressed, totalOrdered || 1));
 
-  // 3. YIELD
-  blocks += block('', 'YIELD', 'TODAY',
-    yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—', yieldColor(yieldPct),
-    yieldDenom > 0 ? today.qcPassed.toLocaleString() + ' passed / ' + yieldDenom.toLocaleString() + ' inspected' : 'no QC data today',
-    yieldPct !== null ? '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(yieldPct) + '%;background:' + yieldColor(yieldPct) + '"></div></div>' : '');
+  b += sq('QC PASSED', d.qcPassed.toLocaleString(),
+    d.pressed > 0 ? d.qcPassed.toLocaleString() + ' / ' + d.pressed.toLocaleString() + ' pressed' : '',
+    rail(d.qcPassed, d.pressed || 1));
 
-  // 4. PRESSED
-  blocks += block('', 'PRESSED', 'TODAY',
-    today.pressed.toLocaleString(), 'var(--w)',
-    totalOrdered > 0 ? today.pressed.toLocaleString() + ' / ' + totalOrdered.toLocaleString() + ' ordered' : '',
-    rail(today.pressed, totalOrdered || 1, 'var(--w)'));
+  b += sq('YIELD', yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—',
+    yieldDenom > 0 ? d.qcPassed.toLocaleString() + ' / ' + yieldDenom.toLocaleString() : 'no QC data',
+    yieldPct !== null ? rail(Math.round(yieldPct), 100) : '');
 
-  // 5. QC PASSED
-  blocks += block('', 'QC PASSED', 'TODAY',
-    today.qcPassed.toLocaleString(), 'var(--g)',
-    today.pressed > 0 ? today.qcPassed.toLocaleString() + ' / ' + today.pressed.toLocaleString() + ' pressed' : '',
-    rail(today.qcPassed, today.pressed || 1, 'var(--g)'));
+  b += sq('REJECTED', d.rejected.toLocaleString(),
+    d.rejected > 0 && yieldDenom > 0 ? (100 - yieldPct).toFixed(1) + '% rate' : '',
+    rail(d.rejected, yieldDenom || 1));
 
-  // 6. REJECTED
-  blocks += block(today.rejected > 0 ? 'eng-alert' : '', 'REJECTED', 'TODAY',
-    today.rejected.toLocaleString(), today.rejected > 0 ? 'var(--r)' : 'var(--d3)',
-    today.rejected > 0 && yieldDenom > 0 ? (100 - yieldPct).toFixed(1) + '% reject rate' : '',
-    rail(today.rejected, yieldDenom || 1, 'var(--r)'));
+  b += sq('PACKED', d.packed.toLocaleString(),
+    d.qcPassed > 0 ? d.packed.toLocaleString() + ' / ' + d.qcPassed.toLocaleString() + ' QC' : '',
+    rail(d.packed, d.qcPassed || 1));
 
-  // 7. PACKED
-  blocks += block('', 'PACKED', 'MTD',
-    mtd.packed.toLocaleString(), 'var(--cy)',
-    mtd.qcPassed > 0 ? mtd.packed.toLocaleString() + ' / ' + mtd.qcPassed.toLocaleString() + ' QC passed' : '',
-    rail(mtd.packed, mtd.qcPassed || 1, 'var(--cy)'));
-
-  // 8. READY
-  blocks += block('', 'READY', 'LIVE',
-    liveReady.toLocaleString(), 'var(--cy)',
-    liveReady > 0 ? 'on skids · waiting for truck' : 'no units staged',
+  b += sq('READY', liveReady.toLocaleString(),
+    liveReady > 0 ? 'on skids' : 'none staged',
     '');
 
-  grid.innerHTML = blocks;
+  b += sq('ORDER BOOK', totalOrdered.toLocaleString(),
+    active.length + ' active job' + (active.length !== 1 ? 's' : ''),
+    '');
 
+  grid.innerHTML = b;
+
+  // --- period selector strip ---
+  var strip = document.getElementById('enginePeriodStrip');
+  if (strip) {
+    var periods = ['1H', '1D', '1W', '1M', '1Y', 'YTD', 'ALL'];
+    strip.innerHTML = periods.map(function (p) {
+      return '<span class="eng-period' + (enginePeriod === p ? ' eng-period-on' : '') + '" onclick="setEnginePeriod(\'' + p + '\')">' + p + '</span>';
+    }).join('');
+  }
+
+  // --- clock ---
   var clockEl = document.getElementById('engineClock');
   if (clockEl) {
     var n = new Date();
