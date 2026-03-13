@@ -1694,12 +1694,17 @@ function onCrewCsvSelected(input) {
       list.push(p);
     });
     S.employees = list.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+    if (typeof renderCrewPage === 'function') renderCrewPage();
+    var importCount = people.length - dupes;
     Storage.saveEmployees(S.employees).then(function () {
-      if (typeof renderCrewPage === 'function') renderCrewPage();
-      var msg = (people.length - dupes) + ' person' + ((people.length - dupes) !== 1 ? 's' : '') + ' imported';
+      var msg = importCount + ' person' + (importCount !== 1 ? 's' : '') + ' imported';
       if (dupes) msg += ' (' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '') + ' skipped)';
       toast(msg);
-    }).catch(function () { toast('Import save failed.'); });
+    }).catch(function (err) {
+      console.error('Crew CSV save error:', err);
+      var detail = (err && (err.message || err.error)) ? String(err.message || err.error) : '';
+      toast('Save failed' + (detail ? ': ' + detail : '') + ' — data loaded locally');
+    });
   };
   reader.readAsText(file);
 }
@@ -1894,15 +1899,19 @@ function onScheduleCsvSelected(input) {
     });
     S.employees = employees.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
     S.scheduleEntries = list;
+    if (typeof renderCrewPage === 'function') renderCrewPage();
     Promise.all([
       Storage.saveEmployees(S.employees),
       Storage.saveScheduleEntries(S.scheduleEntries),
     ]).then(function () {
-      if (typeof renderCrewPage === 'function') renderCrewPage();
       var msg = added + ' entr' + (added !== 1 ? 'ies' : 'y') + ' imported';
       if (autoCreated) msg += ' (' + autoCreated + ' new person' + (autoCreated !== 1 ? 's' : '') + ' created)';
       toast(msg);
-    }).catch(function () { toast('Import save failed.'); });
+    }).catch(function (err) {
+      console.error('Schedule CSV save error:', err);
+      var detail = (err && (err.message || err.error)) ? String(err.message || err.error) : '';
+      toast('Save failed' + (detail ? ': ' + detail : '') + ' — data loaded locally');
+    });
   };
   reader.readAsText(file);
 }
