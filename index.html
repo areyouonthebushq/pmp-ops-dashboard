@@ -291,18 +291,18 @@
             </div>
             <div class="log-console-wrap">
             <div class="log-mode-toggle" id="logModeToggle">
-                <button type="button" class="log-mode-btn active" id="logModePressBtn" onclick="setLogMode('press')">◉ PRESS</button>
+                <button type="button" class="log-mode-btn" id="logModePressBtn" onclick="setLogMode('press')">◉ PRESS</button>
                 <button type="button" class="log-mode-btn" id="logModeShipBtn" onclick="setLogMode('ship')">◇ OUTBOUND</button>
             </div>
-            <div class="log-main log-faceplate mode-press" id="logConsole">
+            <div class="log-main log-faceplate" id="logConsole">
                 <div id="logConsoleRail" class="log-console-rail"></div>
                 <div class="log-fp-job" id="logNumpadJobLabel">Select a job above</div>
                 <button type="button" class="log-action-btn log-action-press log-fp-press" id="logBtnPress" onclick="setLogAction('press')">PRESS</button>
                 <button type="button" class="log-action-btn log-action-qcpass log-fp-qcpass" id="logBtnQcPass" onclick="setLogAction('qc_pass')">PASS</button>
                 <button type="button" class="log-action-btn log-action-qcreject log-fp-qcrej" id="logBtnQcReject" onclick="setLogAction('qc_reject')">REJECT</button>
-                <button type="button" class="log-action-btn log-fp-mode4" id="logBtnMode4" style="display:none">BOXED</button>
-                <button type="button" class="log-action-btn log-fp-mode5" id="logBtnMode5" style="display:none">READY</button>
-                <button type="button" class="log-action-btn log-fp-mode6" id="logBtnMode6" style="display:none">QUACK</button>
+                <button type="button" class="log-action-btn log-fp-mode4" id="logBtnMode4">BOXED</button>
+                <button type="button" class="log-action-btn log-fp-mode5" id="logBtnMode5">READY</button>
+                <button type="button" class="log-action-btn log-fp-mode6" id="logBtnMode6">QUACK</button>
                 <div class="log-fp-display" id="logNumpadDisplay">0</div>
                 <button type="button" class="ps-numpad-btn log-fp-k7" onclick="logNumpadTap('7')">7</button>
                 <button type="button" class="ps-numpad-btn log-fp-k8" onclick="logNumpadTap('8')">8</button>
@@ -317,7 +317,7 @@
                 <button type="button" class="ps-numpad-btn log-fp-zero" onclick="logNumpadTap('0')">0</button>
                 <button type="button" class="ps-numpad-btn ps-numpad-back log-fp-back" onclick="logNumpadBack()">←</button>
                 <div class="log-fp-log-wrap">
-                    <button type="button" class="log-enter-btn log-enter-press log-fp-log" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>LOG PRESS</button>
+                    <button type="button" class="log-enter-btn log-fp-log" id="logEnterBtn" onclick="unifiedLogEnter()" disabled>ENTER</button>
                 </div>
             </div>
             <div class="qc-reject-picker qc-reject-picker-overlay qc-reject-picker-console-overlay" id="logRejectPicker" style="display:none">
