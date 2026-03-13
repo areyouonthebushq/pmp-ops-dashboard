@@ -2146,6 +2146,8 @@
     }
     #notesAddRow {
     grid-template-columns: 1fr auto auto auto;
+    align-items: center;
+    gap: var(--space-sm);
     }
     #notesAddRow .notes-textarea {
     grid-column: 1 / 2;
@@ -2156,21 +2158,56 @@
     overflow: auto;
     resize: none;
     }
-    .notes-attach-btn {
-    min-height: 38px;
-    cursor: pointer;
-    font-size: 11px;
-    color: var(--d2);
+    .notes-composer-btn {
+    min-width: 40px;
+    min-height: 36px;
+    padding: var(--space-xs) var(--space-sm);
     }
-    .notes-attach-btn:hover { color: var(--d); border-color: var(--b3); }
+    .notes-attach-cell {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+    .notes-attach-btn {
+    cursor: pointer;
+    color: var(--d2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+    .notes-attach-btn:hover:not(:disabled) { color: var(--d); border-color: var(--b3); }
+    .notes-attach-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .notes-camera-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+    .notes-camera-icon svg { flex: 0 0 auto; }
+    .notes-upload-progress {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--b3);
+    border-top-color: var(--d2);
+    border-radius: 50%;
+    animation: notes-upload-spin 0.7s linear infinite;
+    pointer-events: none;
+    }
+    @keyframes notes-upload-spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
     .notes-attach-hint {
     font-size: 10px;
     color: var(--d3);
     align-self: center;
     }
+    .notes-utility-action { min-height: 36px; }
     #notesSearchRow .notes-search-wrap { grid-column: 1 / 3; width: 100%; max-width: none; }
     #notesSearchRow .notes-search-wrap .search-count { position: absolute; right: var(--space-md); top: 50%; transform: translateY(-50%); }
-    .notes-utility-action { min-height: 38px; }
     .notes-feed-sec {
     font-family: 'Special Elite', cursive;
     font-size: 13px;
@@ -2207,14 +2244,17 @@
     }
     .notes-feed .notes-entry-thumb {
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
+    width: 20px;
+    height: 20px;
+    margin-right: var(--space-sm);
     border-radius: 50%;
     overflow: hidden;
     border: 1px solid var(--b2);
     background: var(--s2);
     cursor: pointer;
     padding: 0;
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
     }
     .notes-feed .notes-entry-thumb img {
     width: 100%;
@@ -2222,7 +2262,8 @@
     object-fit: cover;
     display: block;
     }
-    .notes-feed .notes-entry-thumb:hover { border-color: var(--b4); }
+    .notes-feed .notes-entry-thumb:hover,
+    .notes-feed .notes-entry-thumb:focus { opacity: 0.85; border-color: var(--b4); }
     .notes-feed .notes-entry-thumb:focus { outline: 1px solid var(--d2); outline-offset: 2px; }
     /* Zone 1: Identity — catalog (yellow) + artist (white), compact, top-left */
     .notes-feed .notes-entry-job {

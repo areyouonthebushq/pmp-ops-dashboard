@@ -2927,6 +2927,10 @@ function onNotesAttachmentSelected(input) {
     input.value = '';
     return;
   }
+  const progressEl = document.getElementById('notesAttachmentProgress');
+  const btnEl = document.getElementById('notesAttachmentBtn');
+  if (progressEl) progressEl.style.display = 'block';
+  if (btnEl) btnEl.disabled = true;
   window.PMP.Supabase.uploadNoteAttachment(file).then(function (res) {
     S.notesPendingAttachment = { attachment_url: res.url, attachment_name: file.name, attachment_type: 'image' };
     const hint = document.getElementById('notesAttachmentHint');
@@ -2935,6 +2939,9 @@ function onNotesAttachmentSelected(input) {
   }).catch(function (e) {
     if (typeof toastError === 'function') toastError(e && e.message ? e.message : 'Upload failed');
     input.value = '';
+  }).finally(function () {
+    if (progressEl) progressEl.style.display = 'none';
+    if (btnEl) btnEl.disabled = false;
   });
 }
 
