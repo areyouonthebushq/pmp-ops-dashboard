@@ -3175,28 +3175,22 @@
     padding: 0;
     }
     .notes-feed .progress-entry {
-    position: relative;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: var(--space-sm);
+    display: grid;
+    grid-template-columns: 1fr 28px;
+    align-items: start;
     padding: var(--space-md) 0;
     border-bottom: 1px solid var(--b1);
     }
     .notes-feed .progress-entry:last-child { border-bottom: none; }
     .notes-feed .progress-entry-inner {
-    flex: 1;
     min-width: 0;
-    width: 100%;
     display: grid;
     grid-template-columns: 1fr;
     gap: 0;
     }
     .notes-feed .notes-entry-thumb {
-    position: absolute;
-    top: var(--space-md);
-    right: 0;
-    flex-shrink: 0;
+    justify-self: end;
+    align-self: start;
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -3237,7 +3231,6 @@
     text-align: left;
     word-break: break-word;
     max-width: 100%;
-    padding-right: var(--space-md);
     }
     /* Zone 3: Provenance — person + timestamp, muted, bottom-right */
     .notes-feed .notes-entry-meta {
@@ -3246,7 +3239,6 @@
     color: var(--d3);
     margin-top: var(--space-xs);
     text-align: right;
-    padding-right: var(--space-md);
     }
     .notes-feed .notes-entry-asset {
     font-size: 10px;
@@ -3254,7 +3246,6 @@
     color: var(--d3);
     margin-top: var(--space-xs);
     text-align: right;
-    padding-right: var(--space-md);
     }
     .notes-entry-caution-icon {
     color: var(--w);
