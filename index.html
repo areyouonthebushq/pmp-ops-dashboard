@@ -335,14 +335,16 @@
             </div>
         </div>
         </div>
-        <div class="sec">LOG</div>
-        <div class="qc-date-nav">
-        <button class="qc-date-btn" onclick="logDateStep(-1)">◂ PREV</button>
-        <span class="qc-date-label" id="logDateLabel"></span>
-        <button class="qc-date-btn" onclick="logDateStep(1)">NEXT ▸</button>
-        <button class="qc-date-btn" id="logTodayBtn" onclick="logDateToday()">TODAY</button>
+        <div class="log-page-shell log-feed-shell">
+            <div class="log-shell-sec">LOG</div>
+            <div class="qc-date-nav">
+            <button class="qc-date-btn" onclick="logDateStep(-1)">◂ PREV</button>
+            <span class="qc-date-label" id="logDateLabel"></span>
+            <button class="qc-date-btn" onclick="logDateStep(1)">NEXT ▸</button>
+            <button class="qc-date-btn" id="logTodayBtn" onclick="logDateToday()">TODAY</button>
+            </div>
+            <div class="log-recent" id="logDailyFeed"><div class="empty">NO ENTRIES</div></div>
         </div>
-        <div class="log-recent" id="logDailyFeed"><div class="empty">NO ENTRIES</div></div>
     </div>
 
     <!-- ======= ENGINE PAGE (plant instrumentation / telemetry) ======= -->

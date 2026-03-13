@@ -113,7 +113,6 @@ function buildPressCardHTML(p, linkTo, showControls) {
       <div class="pc-progress-label">PROGRESS <span class="pc-progress-num">${prog.main}</span></div>
       <div class="pc-progress-bar-outer dl-bar pc">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
       <div class="pc-progress-sub">${prog.sub}</div>
-      ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
     </div>
     <div class="pc-assets pc-assets-demoted" onclick="event.stopPropagation(); openCardZone('${job.id}','asset')" style="cursor:pointer" title="Asset card">
       <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
@@ -1607,9 +1606,8 @@ function addTodo(key) {
 // Replaces separate Press Log and QC Log entry surfaces.
 // ============================================================
 let logNumpadValue = '0';
-let logMode = 'press';
-try { var _lm = sessionStorage.getItem('logMode') || 'press'; logMode = _lm === 'outbound' ? 'ship' : _lm; } catch (e) {}
-let logAction = logMode === 'ship' ? 'packed' : 'press';
+let logMode = 'ship';
+let logAction = 'packed';
 let logViewDate = new Date().toDateString();
 let pendingLogRejectQty = 0;
 
@@ -1964,9 +1962,7 @@ function renderLog() {
     const items = [];
     const feedJobs = S.jobs.filter(j => !isJobArchived(j));
     const viewDate = logViewDate;
-    const pressFeedStages = { pressed: 1, qc_passed: 1 };
-    const shipFeedStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
-    const activeFeedStages = logMode === 'ship' ? shipFeedStages : pressFeedStages;
+    const activeFeedStages = { pressed: 1, qc_passed: 1, packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
     const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'BOXED', ready: 'READY', shipped: QUACK_ICON + ' QUACK', picked_up: QUACK_ICON + ' QUACK', held: 'HELD' };
     const stageCls   = { pressed: 'pressed', qc_passed: 'qc_passed', packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'picked_up', held: 'held' };
 
@@ -2887,7 +2883,6 @@ function renderTV() {
         <div class="tv-progress-label">PROGRESS <span class="tv-progress-num">${prog.main}</span></div>
         <div class="tv-dl-bar dl-bar tv">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
         <div class="tv-progress-sub">${prog.sub}</div>
-        ${prog.overQty ? '<div class="tv-progress-over">OVER QTY</div>' : ''}
       </div>
       <div class="tv-assets-demoted">Assets ${ah.done}/${ah.total}</div>
       ` : `<div class="tv-pmeta" style="color:var(--d3);margin-top: var(--space-xs)">Idle</div>`}
@@ -3146,7 +3141,6 @@ function renderProgressSection() {
   barEl.innerHTML = `
     <div class="dl-bar td">${progressDualBarHTML(p.pressedPct, p.qcPassedPct)}</div>
     <div class="progress-bar-text">QC ${qcPassed.toLocaleString()}/${ordered.toLocaleString()} · Pressed ${pressed.toLocaleString()}</div>
-    ${overQty ? '<div class="progress-over-qty">OVER QTY</div>' : ''}
   `;
 
   ensureJobProgressLog(job);

@@ -1939,7 +1939,7 @@
     #pg-log.on {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: var(--space-lg);
     }
     .log-page-shell {
@@ -2011,7 +2011,7 @@
     #pg-log .log-console-wrap { position: relative; max-width: 360px; margin-bottom: var(--space-lg); }
 
     .log-mode-toggle {
-    display: flex; gap: 1px; margin-bottom: var(--space-sm);
+    display: none; gap: 1px; margin-bottom: var(--space-sm);
     }
     .log-mode-btn {
     flex: 1; padding: var(--space-xs) var(--space-sm);
