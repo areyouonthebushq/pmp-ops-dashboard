@@ -3178,24 +3178,23 @@
     padding: 0;
     }
     .notes-feed .progress-entry {
-    display: grid;
-    grid-template-columns: 1fr 28px;
-    align-items: start;
-    padding: var(--space-md) 0;
+    position: relative;
+    display: block;
+    padding: var(--space-md) 56px var(--space-md) 0;
     border-bottom: 1px solid var(--b1);
     }
     .notes-feed .progress-entry:last-child { border-bottom: none; }
     .notes-feed .progress-entry-inner {
     min-width: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0;
+    display: flex;
+    flex-direction: column;
     }
     .notes-feed .notes-entry-thumb {
-    justify-self: end;
-    align-self: start;
-    width: 20px;
-    height: 20px;
+    position: absolute;
+    top: var(--space-md);
+    right: 12px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     overflow: hidden;
     border: 1px solid var(--b2);
