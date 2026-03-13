@@ -91,9 +91,16 @@ function applyMinimalThemeFromStorage() {
 }
 function toggleMinimalTheme() {
   document.body.classList.toggle('theme-minimal');
-  try { localStorage.setItem('themeMinimal', document.body.classList.contains('theme-minimal') ? '1' : '0'); } catch (e) {}
+  const on = document.body.classList.contains('theme-minimal');
+  try { localStorage.setItem('themeMinimal', on ? '1' : '0'); } catch (e) {}
+  const btn = document.getElementById('minimalThemeBtn');
+  if (btn) btn.classList.toggle('bar-min-on', on);
 }
 applyMinimalThemeFromStorage();
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('minimalThemeBtn');
+  if (btn && document.body.classList.contains('theme-minimal')) btn.classList.add('bar-min-on');
+});
 
 // ============================================================
 // STATE
@@ -599,9 +606,7 @@ function enterByLauncher(choice, pressId) {
   S.mode = choice === 'admin' ? 'admin' : 'floor';
   const badge = document.getElementById('modeBadge');
   if (badge) { badge.textContent = (choice === 'admin' ? 'ADMIN' : 'OPERATOR'); badge.className = 'bar-mode ' + (choice === 'admin' ? 'admin' : 'floor'); }
-  const exportBtn = document.getElementById('exportBtn');
   const backupBtn = document.getElementById('backupBtn');
-  if (exportBtn) exportBtn.style.display = choice === 'admin' ? '' : 'none';
   if (backupBtn) backupBtn.style.display = 'none';
   updateFAB();
   loadAll();
@@ -614,19 +619,13 @@ function enterByLauncher(choice, pressId) {
     setStationContext({});
     hideAllShells();
     setLastLauncherChoice({ stationType: null });
-    const navAudit = document.getElementById('navAudit');
-    const navDev = document.getElementById('navDev');
     const isAdminRole = getAuthRole() === 'admin';
-    if (navAudit) navAudit.style.display = isAdminRole ? '' : 'none';
-    if (navDev) navDev.style.display = isAdminRole ? '' : 'none';
+    _showAdminUtils(isAdminRole);
     renderAll();
     return;
   }
   if (appEl) appEl.style.display = 'block';
-  const navAudit = document.getElementById('navAudit');
-  const navDev = document.getElementById('navDev');
-  if (navAudit) navAudit.style.display = 'none';
-  if (navDev) navDev.style.display = 'none';
+  _showAdminUtils(false);
   if (choice === 'floor_manager') {
     setLastLauncherChoice({ stationType: 'floor_manager' });
     openFloorManager();
@@ -644,11 +643,7 @@ function enterByLauncher(choice, pressId) {
       S.mode = 'admin';
       const badgeEl = document.getElementById('modeBadge');
       if (badgeEl) { badgeEl.textContent = 'ADMIN'; badgeEl.className = 'bar-mode admin'; }
-      if (exportBtn) exportBtn.style.display = '';
-      const navAuditEl = document.getElementById('navAudit');
-      const navDevEl = document.getElementById('navDev');
-      if (navAuditEl) navAuditEl.style.display = '';
-      if (navDevEl) navDevEl.style.display = '';
+      _showAdminUtils(true);
     }
     hideAllShells();
     goPg('log');
@@ -984,7 +979,6 @@ function enterApp(mode) {
   badge.textContent = mode === 'admin' ? 'ADMIN' : 'OPERATOR';
   badge.className = 'bar-mode ' + mode;
   if (mode === 'floor') {
-    const eb = document.getElementById('exportBtn'); if (eb) eb.style.display = 'none';
     const bb = document.getElementById('backupBtn'); if (bb) bb.style.display = 'none';
   }
   updateFAB();
@@ -1070,6 +1064,38 @@ function goPg(id) {
   updateFAB();
   if (id === 'audit') loadAuditPage();
   else renderAll();
+}
+
+function _showAdminUtils(show) {
+  const d = show ? '' : 'none';
+  const utilDev = document.getElementById('utilDev');
+  const utilAudit = document.getElementById('utilAudit');
+  if (utilDev) utilDev.style.display = d;
+  if (utilAudit) utilAudit.style.display = d;
+}
+
+function goPgUtil(id) {
+  closeUtilMenu();
+  goPg(id);
+}
+function toggleUtilMenu() {
+  const m = document.getElementById('utilMenu');
+  if (!m) return;
+  const open = m.classList.toggle('open');
+  if (open) {
+    setTimeout(() => document.addEventListener('click', _closeUtilOnOutside, { once: true }), 0);
+  }
+}
+function closeUtilMenu() {
+  const m = document.getElementById('utilMenu');
+  if (m) m.classList.remove('open');
+}
+function _closeUtilOnOutside(e) {
+  const wrap = document.querySelector('.bar-util-wrap');
+  if (wrap && !wrap.contains(e.target)) closeUtilMenu();
+  else if (document.getElementById('utilMenu')?.classList.contains('open')) {
+    setTimeout(() => document.addEventListener('click', _closeUtilOnOutside, { once: true }), 0);
+  }
 }
 
 function updateFAB() {
@@ -4001,6 +4027,9 @@ document.addEventListener('keydown', e => {
   const stationVisible = isStationShellVisible();
 
   if (e.key === 'Escape') {
+    // 0. Close utility menu if open
+    const utilOpen = document.getElementById('utilMenu')?.classList.contains('open');
+    if (utilOpen) { closeUtilMenu(); e.preventDefault(); return; }
     // 1. Topmost full-screen / station shell
     if (stationVisible) {
       doLogout();

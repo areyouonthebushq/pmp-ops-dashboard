@@ -78,10 +78,9 @@ function returnToAdmin() {
     badge.textContent = 'ADMIN';
     badge.className = 'bar-mode admin';
   }
-  const exportBtn = document.getElementById('exportBtn');
-  if (exportBtn) exportBtn.style.display = '';
   const backupBtn = document.getElementById('backupBtn');
   if (backupBtn) backupBtn.style.display = 'none';
+  if (typeof _showAdminUtils === 'function') _showAdminUtils(true);
   hideAllShells();
   renderAll();
 }
