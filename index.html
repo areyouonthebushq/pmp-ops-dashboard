@@ -173,7 +173,7 @@
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="3" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11" r="1.2"/></svg>
             </button>
             <div class="bar-util-menu" id="utilMenu">
-                <div class="bar-util-item" onclick="goPgUtil('ship')">◇ SHIP</div>
+                <div class="bar-util-item" id="utilShip" onclick="goPgUtil('ship')" style="display:none">◇ SHIP</div>
                 <div class="bar-util-item" onclick="goPgUtil('crew')">◉ CREW</div>
                 <div class="bar-util-item" onclick="goPgUtil('compounds')">◌ PVC</div>
                 <div class="bar-util-item bar-util-dev" id="utilDev" onclick="goPgUtil('dev')" style="display:none">♛ DEV</div>
@@ -251,7 +251,7 @@
             <thead><tr>
             <th>CATALOG</th><th>ARTIST</th><th>ALBUM</th><th>FORMAT</th>
             <th>COLOR / WT</th><th>QTY</th><th>+10%</th>
-            <th>STATUS</th><th>DUE</th><th>PRESS</th><th>ASSETS</th><th>PACKING</th><th>LOCATION</th><th></th>
+            <th>LIVE</th><th>DUE</th><th>PRESS</th><th>ASSETS</th><th>PACKING</th><th>LOCATION</th><th></th>
             </tr></thead>
             <tbody id="jobsBody"></tbody>
         </table>
@@ -281,7 +281,7 @@
             <div class="log-console-wrap">
             <div class="log-mode-toggle" id="logModeToggle">
                 <button type="button" class="log-mode-btn active" id="logModePressBtn" onclick="setLogMode('press')">◉ PRESS</button>
-                <button type="button" class="log-mode-btn" id="logModeShipBtn" onclick="setLogMode('ship')">◇ SHIP</button>
+                <button type="button" class="log-mode-btn" id="logModeShipBtn" onclick="setLogMode('ship')">◇ OUTBOUND</button>
             </div>
             <div class="log-main log-faceplate mode-press" id="logConsole">
                 <div id="logConsoleRail" class="log-console-rail"></div>

@@ -164,7 +164,7 @@ const JOBS_COLUMNS = [
   { key: 'colorWt', label: 'COLOR / WT' },
   { key: 'qty', label: 'QTY' },
   { key: 'plus10', label: '+10%' },
-  { key: 'status', label: 'STATUS' },
+  { key: 'status', label: 'LIVE' },
   { key: 'due', label: 'DUE' },
   { key: 'press', label: 'PRESS' },
   { key: 'assets', label: 'ASSETS' },
@@ -645,6 +645,23 @@ function sortCrewList(employees) {
     const cmp = String(va).localeCompare(String(vb), undefined, { numeric: true });
     return dir * (cmp || 0);
   });
+}
+
+function isJobOnPress(job) {
+  if (!job || !Array.isArray(S.presses)) return false;
+  return S.presses.some(p => p.job_id === job.id);
+}
+
+function hasRecentShipActivity(job, withinMs) {
+  if (!job || !Array.isArray(job.progressLog)) return false;
+  const cutoff = Date.now() - (withinMs || 3600000);
+  const shipStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1 };
+  for (let i = job.progressLog.length - 1; i >= 0; i--) {
+    var e = job.progressLog[i];
+    if (!e || !e.timestamp) continue;
+    if (shipStages[e.stage] && new Date(e.timestamp).getTime() >= cutoff) return true;
+  }
+  return false;
 }
 
 // Proper CSV parsing that handles quoted fields with commas

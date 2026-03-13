@@ -1447,6 +1447,11 @@ function renderJobs() {
       const ah = assetHealth(j);
       const prog = progressDisplay(j);
       const jCautioned = isJobCautioned(j);
+      const onPress = isJobOnPress(j);
+      const recentShip = hasRecentShipActivity(j);
+      const dots = (onPress ? '<span class="live-dot live-dot-press" title="On press now"></span>' : '')
+                 + (recentShip ? '<span class="live-dot live-dot-ship" title="Recent outbound activity"></span>' : '');
+      const statusMicro = '<span class="status-micro st-' + (j.status || 'queue') + '">' + (j.status || 'queue').toUpperCase() + '</span>';
       return `<tr data-status="${j.status || ''}"${jCautioned ? ' class="job-row-cautioned"' : ''}>
         <td class="j-cat panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
         <td class="j-artist panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.artist || '—'}</td>
@@ -1455,7 +1460,7 @@ function renderJobs() {
         <td class="j-spec">${j.color || 'Black'}${j.weight ? ` <span class="j-wt">${j.weight}</span>` : ''}</td>
         <td class="j-spec">${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
         <td class="j-spec j-plus10">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
-        <td class="j-state">${statusPill(j.status)}${jCautioned ? ' ' + cautionPill(j) : ''}</td>
+        <td class="j-state j-live-cell">${dots}${statusMicro}${jCautioned ? ' ' + cautionPill(j) : ''}</td>
         <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
         <td class="j-support">${j.press || '—'}</td>
         <td class="j-support assets-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','asset')" title="Asset card">${ahHTML(j)}</td>
@@ -1470,6 +1475,11 @@ function renderJobs() {
       const ah = assetHealth(j);
       const prog = progressDisplay(j);
       const jcCautioned = isJobCautioned(j);
+      const onPress = isJobOnPress(j);
+      const recentShip = hasRecentShipActivity(j);
+      const dots = (onPress ? '<span class="live-dot live-dot-press" title="On press now"></span>' : '')
+                 + (recentShip ? '<span class="live-dot live-dot-ship" title="Recent outbound activity"></span>' : '');
+      const statusMicro = '<span class="status-micro st-' + (j.status || 'queue') + '">' + (j.status || 'queue').toUpperCase() + '</span>';
       return `
         <div class="job-card st-${j.status}${jcCautioned ? ' job-card-cautioned' : ''}" onclick="openPanel('${j.id}')">
         <div class="jc-top">
@@ -1478,7 +1488,7 @@ function renderJobs() {
           <div class="jc-artist">${j.artist || '—'}</div>
           <div class="jc-album">${j.album || ''}</div>
           </div>
-          <div>${statusPill(j.status)}${jcCautioned ? '<div style="margin-top:4px">' + cautionPill(j) + '</div>' : ''}</div>
+          <div class="jc-live-wrap">${dots}${statusMicro}${jcCautioned ? '<div style="margin-top:4px">' + cautionPill(j) + '</div>' : ''}</div>
         </div>
         
         <div class="jc-row">
@@ -1686,7 +1696,7 @@ async function unifiedLogEnter() {
   }
 
   const simpleShipActions = { packed: 'packed', ready: 'ready', shipped: 'shipped' };
-  const shipToastLabel = { packed: 'PACKED', ready: 'READY', shipped: 'QUACK' };
+  const shipToastLabel = { packed: 'BOXED', ready: 'READY', shipped: 'QUACK' };
   if (simpleShipActions[logAction]) {
     try {
       const result = await logJobProgress(S.logSelectedJob, logAction, n, 'Log');
@@ -1825,7 +1835,7 @@ function renderLog() {
 
   const modeActions = logMode === 'ship'
     ? [
-        { id: 'logBtnPress',    key: 'packed',    label: 'PACKED',     add: 'log-action-packed',   rm: 'log-action-press' },
+        { id: 'logBtnPress',    key: 'packed',    label: 'BOXED',      add: 'log-action-packed',   rm: 'log-action-press' },
         { id: 'logBtnQcPass',   key: 'ready',     label: 'READY',      add: 'log-action-ready',    rm: 'log-action-qcpass' },
         { id: 'logBtnQcReject', key: 'shipped',   label: QUACK_ICON + ' QUACK',  add: 'log-action-shipped',  rm: 'log-action-qcreject' },
       ]
@@ -1848,7 +1858,7 @@ function renderLog() {
     press: { label: 'LOG PRESS', cls: 'log-enter-press' },
     qc_pass: { label: 'LOG PASS', cls: 'log-enter-qcpass' },
     qc_reject: { label: 'LOG REJECT', cls: 'log-enter-qcreject' },
-    packed: { label: 'LOG PACKED', cls: 'log-enter-packed' },
+    packed: { label: 'LOG BOXED', cls: 'log-enter-packed' },
     ready: { label: 'LOG READY', cls: 'log-enter-ready' },
     shipped: { label: 'LOG ' + QUACK_ICON + ' QUACK', cls: 'log-enter-shipped' },
   };
@@ -1905,7 +1915,7 @@ function renderLog() {
     const pressFeedStages = { pressed: 1, qc_passed: 1 };
     const shipFeedStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
     const activeFeedStages = logMode === 'ship' ? shipFeedStages : pressFeedStages;
-    const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'PACKED', ready: 'READY', shipped: QUACK_ICON + ' QUACK', picked_up: QUACK_ICON + ' QUACK', held: 'HELD' };
+    const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'BOXED', ready: 'READY', shipped: QUACK_ICON + ' QUACK', picked_up: QUACK_ICON + ' QUACK', held: 'HELD' };
     const stageCls   = { pressed: 'pressed', qc_passed: 'qc_passed', packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'picked_up', held: 'held' };
 
     feedJobs.forEach(j => {
@@ -2004,7 +2014,7 @@ var ENGINE_METRICS = {
   qc_passed:  { label: 'QC PASSED',           stages: ['qc_passed'],            desc: 'QC pass count' },
   yield:      { label: 'YIELD',               stages: ['qc_passed', 'rejected'], desc: 'QC yield rate', isYield: true },
   rejected:   { label: 'REJECTED',             stages: ['rejected'],             desc: 'Reject count' },
-  packed:     { label: 'PACKED',               stages: ['packed'],               desc: 'In sealed boxes' },
+  packed:     { label: 'BOXED',                stages: ['packed'],               desc: 'In sealed boxes' },
   ready:      { label: 'READY',                stages: null, desc: 'Units on skids', isLive: true },
   order_book: { label: 'ORDER BOOK',           stages: null, desc: 'Total ordered across active jobs', isLive: true }
 };
@@ -2102,7 +2112,7 @@ function renderEngine() {
     rail(d.rejected, yieldDenom || 1));
 
   // process — packed
-  b += sq('packed', 'eng-process', 'PACKED', d.packed.toLocaleString(),
+  b += sq('packed', 'eng-process', 'BOXED', d.packed.toLocaleString(),
     d.qcPassed > 0 ? d.packed.toLocaleString() + ' / ' + d.qcPassed.toLocaleString() + ' QC' : '',
     rail(d.packed, d.qcPassed || 1));
 
@@ -2149,7 +2159,7 @@ var ENG_COMPARE_MAP = {
 
 var ENG_COMPARE_LABELS = {
   qpm: 'QPM', pressed: 'PRESSED', qc_passed: 'QC PASS',
-  rejected: 'REJECTED', packed: 'PACKED'
+  rejected: 'REJECTED', packed: 'BOXED'
 };
 
 var ENG_OVERLAY_COLORS = [

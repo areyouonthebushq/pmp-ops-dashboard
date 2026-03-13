@@ -1049,6 +1049,36 @@
     #pg-jobs #jobsTbl tbody tr[data-status="hold"] { border-left-color: var(--r); }
     #pg-jobs #jobsTbl tbody tr[data-status="queue"] { border-left-color: var(--d3); }
 
+    /* Live telemetry dots — jobs board */
+    .j-live-cell { display: flex; align-items: center; gap: 5px; }
+    .jc-live-wrap { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .live-dot-press {
+      background: var(--g);
+      box-shadow: 0 0 4px var(--g);
+      animation: livePulse 2s ease-in-out infinite;
+    }
+    .live-dot-ship {
+      background: #5ba8ff;
+      box-shadow: 0 0 4px #5ba8ff;
+      animation: livePulse 2.4s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.8); }
+    }
+    .status-micro {
+      font-size: 9px; letter-spacing: 0.6px; font-weight: 600;
+      opacity: 0.5; white-space: nowrap;
+    }
+    .status-micro.st-pressing { color: var(--g); opacity: 0.7; }
+    .status-micro.st-hold     { color: var(--r); opacity: 0.7; }
+    .status-micro.st-assembly { color: var(--w); opacity: 0.7; }
+    .status-micro.st-done     { color: var(--d3); }
+    .status-micro.st-queue    { color: var(--d3); }
+
     /* Job-level caution treatment — amber border + subtle warm bg */
     tr.job-row-cautioned { border-left: 3px solid #ffb300 !important; background: rgba(255,179,0,0.06); }
     .job-card-cautioned { border-color: rgba(255,179,0,0.5) !important; background: rgba(255,179,0,0.06) !important; }
