@@ -1656,10 +1656,10 @@ function triggerLogRailGlow() {
     press: 'press', qc_pass: 'qcpass', qc_reject: 'qcreject',
     packed: 'packed', ready: 'ready', shipped: 'shipped',
   };
-  const glow = glowMap[logAction] || 'press';
+  const glow = glowMap[logAction];
   const all = ['rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject', 'rail-glow-packed', 'rail-glow-ready', 'rail-glow-shipped'];
   all.forEach(c => el.classList.remove(c));
-  el.classList.add('rail-glow-' + glow);
+  if (glow) el.classList.add('rail-glow-' + glow);
   setTimeout(function () { all.forEach(c => el.classList.remove(c)); }, 750);
 }
 
@@ -1914,9 +1914,14 @@ function renderLog() {
   };
   const enterBtn = document.getElementById('logEnterBtn');
   if (enterBtn) {
-    const e = enterMap[logAction] || enterMap.press;
-    enterBtn.innerHTML = e.label;
-    enterBtn.className = 'log-enter-btn ' + e.cls;
+    const e = enterMap[logAction];
+    if (e) {
+      enterBtn.innerHTML = e.label;
+      enterBtn.className = 'log-enter-btn ' + e.cls;
+    } else {
+      enterBtn.innerHTML = 'ENTER';
+      enterBtn.className = 'log-enter-btn';
+    }
   }
 
   const allModeClasses = ['mode-press', 'mode-qcpass', 'mode-qcreject', 'mode-packed', 'mode-ready', 'mode-shipped'];
@@ -1928,7 +1933,7 @@ function renderLog() {
   if (consoleEl) {
     consoleEl.classList.toggle('log-ship-grid', logMode === 'ship');
     allModeClasses.forEach(c => consoleEl.classList.remove(c));
-    consoleEl.classList.add(actionModeCls[logAction] || 'mode-press');
+    if (actionModeCls[logAction]) consoleEl.classList.add(actionModeCls[logAction]);
   }
   if (typeof logNumpadUpdateDisplay === 'function') logNumpadUpdateDisplay();
 
