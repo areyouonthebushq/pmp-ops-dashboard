@@ -1128,6 +1128,17 @@ function toggleTVParty() {
     document.body.classList.add('tv-pizzaz-enter');
     setTimeout(function () { document.body.classList.remove('tv-pizzaz-enter'); }, 650);
   }
+  // Rain burst — replicate the escape-from-PIZZAZ matrix rain flash on every toggle
+  var rain = document.getElementById('rain');
+  if (rain) {
+    rain.style.transition = 'none';
+    rain.style.opacity = '0.85';
+    requestAnimationFrame(function () {
+      rain.style.transition = 'opacity 0.6s ease-out';
+      rain.style.opacity = '';
+      setTimeout(function () { rain.style.transition = ''; }, 650);
+    });
+  }
   updatePizzazButtonState();
 }
 
