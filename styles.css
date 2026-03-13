@@ -2144,6 +2144,9 @@
     gap: var(--space-sm);
     padding: 0;
     }
+    #notesAddRow {
+    grid-template-columns: 1fr auto auto auto;
+    }
     #notesAddRow .notes-textarea {
     grid-column: 1 / 2;
     width: 100%;
@@ -2152,6 +2155,18 @@
     max-height: 120px;
     overflow: auto;
     resize: none;
+    }
+    .notes-attach-btn {
+    min-height: 38px;
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--d2);
+    }
+    .notes-attach-btn:hover { color: var(--d); border-color: var(--b3); }
+    .notes-attach-hint {
+    font-size: 10px;
+    color: var(--d3);
+    align-self: center;
     }
     #notesSearchRow .notes-search-wrap { grid-column: 1 / 3; width: 100%; max-width: none; }
     #notesSearchRow .notes-search-wrap .search-count { position: absolute; right: var(--space-md); top: 50%; transform: translateY(-50%); }
@@ -2175,15 +2190,40 @@
     padding: 0;
     }
     .notes-feed .progress-entry {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-    gap: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--space-sm);
     padding: var(--space-md) 0;
     border-bottom: 1px solid var(--b1);
-    align-items: start;
     }
     .notes-feed .progress-entry:last-child { border-bottom: none; }
+    .notes-feed .progress-entry-inner {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    }
+    .notes-feed .notes-entry-thumb {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid var(--b2);
+    background: var(--s2);
+    cursor: pointer;
+    padding: 0;
+    }
+    .notes-feed .notes-entry-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    }
+    .notes-feed .notes-entry-thumb:hover { border-color: var(--b4); }
+    .notes-feed .notes-entry-thumb:focus { outline: 1px solid var(--d2); outline-offset: 2px; }
     /* Zone 1: Identity — catalog (yellow) + artist (white), compact, top-left */
     .notes-feed .notes-entry-job {
     font-size: 10px;

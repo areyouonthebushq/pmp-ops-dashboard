@@ -328,8 +328,10 @@
             </div>
             <div class="notes-utility-row" id="notesAddRow" style="display:none;">
                 <textarea class="fta notes-textarea" id="notesNewText" placeholder="Add note" onkeydown="notesComposerKeydown(event)"></textarea>
+                <label class="bar-btn notes-attach-btn" for="notesAttachmentInput" id="notesAttachmentLabel" title="Attach image">IMG</label>
+                <input type="file" id="notesAttachmentInput" accept="image/*" style="display:none" onchange="onNotesAttachmentSelected(this)">
+                <span class="notes-attach-hint" id="notesAttachmentHint"></span>
                 <button type="button" class="bar-btn notes-utility-action" onclick="addNoteFromNotesPage()">ADD</button>
-                <div></div>
             </div>
             <div class="notes-utility-row" id="notesSearchRow" style="display:none;">
                 <div class="search-wrap notes-search-wrap">

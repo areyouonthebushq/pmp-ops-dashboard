@@ -171,13 +171,26 @@ function renderAdminShell() {
 // PVC — operational compound library (visual reference)
 // ============================================================
 
+/** Sort compounds by numeric number (1, 2, 3, …). Non-numeric or empty go last. */
+function sortCompoundsByNumber(list) {
+  if (!Array.isArray(list) || !list.length) return list;
+  return list.slice().sort(function (a, b) {
+    var na = parseInt((a.number || '').trim(), 10);
+    var nb = parseInt((b.number || '').trim(), 10);
+    if (Number.isNaN(na)) na = Infinity;
+    if (Number.isNaN(nb)) nb = Infinity;
+    return na - nb;
+  });
+}
+
 function renderCompoundsPage() {
   const shell = document.getElementById('pg-compounds');
   if (!shell) return;
   const listEl = document.getElementById('compoundList');
   if (!listEl) return;
 
-  const compounds = Array.isArray(S.compounds) ? S.compounds : [];
+  const raw = Array.isArray(S.compounds) ? S.compounds : [];
+  const compounds = sortCompoundsByNumber(raw);
 
   if (!compounds.length) {
     listEl.innerHTML = '<div class="empty">NO COMPOUNDS YET · TAP + ADD COMPOUND</div>';
@@ -1705,6 +1718,10 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         timestamp: e.timestamp,
         assetLabel: e.assetLabel || null,
         assetKey: e.assetKey || null,
+        attachment_url: e.attachment_url || null,
+        attachment_name: e.attachment_name || null,
+        attachment_type: e.attachment_type || null,
+        attachment_thumb: e.attachment_thumb || null,
       }));
     }
     }
@@ -1721,6 +1738,10 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         timestamp: e.timestamp,
         assetLabel: e.assetLabel || null,
         assetKey: e.assetKey || null,
+        attachment_url: e.attachment_url || null,
+        attachment_name: e.attachment_name || null,
+        attachment_type: e.attachment_type || null,
+        attachment_thumb: e.attachment_thumb || null,
       }));
     });
   }
@@ -1767,7 +1788,11 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const asset = e.assetLabel || e.assetKey || '';
         const assetHtml = asset ? `<div class="notes-entry-asset">${escapeHtml(asset)}</div>` : '';
         const rowCls = e.jobId === '!ALERT' ? ' notes-row-alert' : '';
-        return `<div class="progress-entry${rowCls}"><div class="notes-entry-job"><span class="notes-entry-cat">${cat}</span> <span class="notes-entry-artist">${artist}</span></div><div class="notes-entry-text">${escapeHtml(e.text)}</div>${assetHtml}<div class="notes-entry-meta">${meta}</div></div>`;
+        const thumbHtml = e.attachment_url
+          ? '<div class="notes-entry-thumb" role="button" tabindex="0" data-src="' + escapeHtml(e.attachment_url) + '" onclick="openPoImageLightbox(this.getAttribute(\'data-src\'))" title="View image"><img src="' + escapeHtml(e.attachment_url) + '" alt="" loading="lazy"></div>'
+          : '';
+        const inner = '<div class="notes-entry-job"><span class="notes-entry-cat">' + cat + '</span> <span class="notes-entry-artist">' + artist + '</span></div><div class="notes-entry-text">' + escapeHtml(e.text) + '</div>' + assetHtml + '<div class="notes-entry-meta">' + meta + '</div>';
+        return '<div class="progress-entry' + rowCls + '"><div class="progress-entry-inner">' + inner + '</div>' + thumbHtml + '</div>';
       }).join('');
 
   const addAllowed = !!selectedId && (selectedId !== '!ALERT' || ((window.PMP?.userProfile?.email || '').toLowerCase().includes('piper') || (window.PMP?.userProfile?.display_name || '').toLowerCase().includes('piper')));

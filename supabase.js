@@ -413,6 +413,18 @@
       return { path, url: data.publicUrl };
     },
 
+    /** Note attachment: path = notes/{timestamp}_{id}.{ext}. Uses po-images bucket. */
+    async uploadNoteAttachment(file) {
+      if (!file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid image file');
+      const client = getClient();
+      const ext = (file.name.match(/\.(jpe?g|png|gif|webp)$/i) || [])[1] || 'jpg';
+      const path = 'notes/' + Date.now() + '_' + Math.random().toString(36).slice(2, 9) + '.' + ext.toLowerCase();
+      const { error } = await client.storage.from('po-images').upload(path, file, { upsert: false });
+      if (error) throw error;
+      const { data } = client.storage.from('po-images').getPublicUrl(path);
+      return { path, url: data.publicUrl };
+    },
+
     async getAuditLog(opts = {}) {
       const client = getClient();
       let q = client

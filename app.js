@@ -190,7 +190,7 @@ async function loadAll() {
       S.devNotes = [];
     }
     if (Array.isArray(data.compounds)) {
-      S.compounds = data.compounds;
+      S.compounds = typeof sortCompoundsByNumber === 'function' ? sortCompoundsByNumber(data.compounds) : data.compounds;
     } else if (!Array.isArray(S.compounds)) {
       S.compounds = [];
     }
@@ -1400,9 +1400,9 @@ function compoundWizardSave() {
     const id = 'cmp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     list.push({ id, number, code_name, amount_on_hand, color, notes });
   }
-  S.compounds = list;
+  S.compounds = typeof sortCompoundsByNumber === 'function' ? sortCompoundsByNumber(list) : list;
   S.compoundEditId = null;
-  Storage.saveCompounds(list).then(function () {
+  Storage.saveCompounds(S.compounds).then(function () {
     closeCompoundWizard();
     renderCompoundsPage();
     if (typeof toast === 'function') toast('Compound saved.');
@@ -1553,7 +1553,7 @@ function onPvcCsvSelected(input) {
     }
     var list = Array.isArray(S.compounds) ? S.compounds.slice() : [];
     compounds.forEach(function (c) { list.push(c); });
-    S.compounds = list;
+    S.compounds = typeof sortCompoundsByNumber === 'function' ? sortCompoundsByNumber(list) : list;
     Storage.saveCompounds(S.compounds).then(function () {
       renderCompoundsPage();
       if (typeof toast === 'function') toast(compounds.length + ' compound' + (compounds.length !== 1 ? 's' : '') + ' imported.');
@@ -2897,6 +2897,47 @@ async function submitProgressLog() {
 
 function addProductionNote() {}
 
+// NOTE ATTACHMENT (phase 1 lightweight): optional image reference on a note.
+// Shape: { attachment_url?, attachment_src?, attachment_name?, attachment_type?, attachment_thumb? }.
+// Use attachment_url (or attachment_src) for the image URL; other fields optional. Existing notes without these fields remain valid.
+function mergeNoteAttachment(entry, attachment) {
+  if (!attachment || (!attachment.attachment_url && !attachment.attachment_src)) return entry;
+  const url = attachment.attachment_url || attachment.attachment_src;
+  const out = Object.assign({}, entry);
+  out.attachment_url = url;
+  if (attachment.attachment_name) out.attachment_name = attachment.attachment_name;
+  if (attachment.attachment_type) out.attachment_type = attachment.attachment_type;
+  if (attachment.attachment_thumb) out.attachment_thumb = attachment.attachment_thumb;
+  return out;
+}
+
+function clearNotesComposerAttachment() {
+  S.notesPendingAttachment = null;
+  const hint = document.getElementById('notesAttachmentHint');
+  if (hint) hint.textContent = '';
+  const input = document.getElementById('notesAttachmentInput');
+  if (input) input.value = '';
+}
+
+function onNotesAttachmentSelected(input) {
+  const file = input && input.files && input.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  if (!window.PMP || !window.PMP.Supabase || typeof window.PMP.Supabase.uploadNoteAttachment !== 'function') {
+    if (typeof toast === 'function') toast('Upload not available');
+    input.value = '';
+    return;
+  }
+  window.PMP.Supabase.uploadNoteAttachment(file).then(function (res) {
+    S.notesPendingAttachment = { attachment_url: res.url, attachment_name: file.name, attachment_type: 'image' };
+    const hint = document.getElementById('notesAttachmentHint');
+    if (hint) hint.textContent = '1 image';
+    input.value = '';
+  }).catch(function (e) {
+    if (typeof toastError === 'function') toastError(e && e.message ? e.message : 'Upload failed');
+    input.value = '';
+  });
+}
+
 async function addNoteFromNotesPage() {
   const selEl = document.getElementById('notesJobSelect');
   const jobId = selEl && (selEl.value || '').trim();
@@ -2913,11 +2954,15 @@ async function addNoteFromNotesPage() {
     if (!S.notesChannels || typeof S.notesChannels !== 'object') S.notesChannels = { '!TEAM': [], '!ALERT': [] };
     if (!Array.isArray(S.notesChannels[jobId])) S.notesChannels[jobId] = [];
     const person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
-    S.notesChannels[jobId].push({ text, person, timestamp: new Date().toISOString() });
+    let channelEntry = { text, person, timestamp: new Date().toISOString() };
+    channelEntry = mergeNoteAttachment(channelEntry, S.notesPendingAttachment || null);
+    if (S.notesPendingAttachment) S.notesPendingAttachment = null;
+    S.notesChannels[jobId].push(channelEntry);
     if (textEl) textEl.value = '';
     await Storage.saveNotesChannels(S.notesChannels).catch(() => {});
     S.notesUtilityOpen = null;
     S.notesComposerOpen = false;
+    clearNotesComposerAttachment();
     renderNotesPage();
     toast('NOTE LOGGED');
     return;
@@ -2929,7 +2974,10 @@ async function addNoteFromNotesPage() {
   if (!text) return;
   ensureNotesLog(job);
   const person = S.mode === 'admin' ? 'Admin' : 'Operator';
-  job.notesLog.push({ text, person, timestamp: new Date().toISOString() });
+  let entry = { text, person, timestamp: new Date().toISOString() };
+  entry = mergeNoteAttachment(entry, S.notesPendingAttachment || null);
+  if (S.notesPendingAttachment) S.notesPendingAttachment = null;
+  job.notesLog.push(entry);
   job.notes = text;
   if (textEl) textEl.value = '';
   try {
@@ -2940,12 +2988,13 @@ async function addNoteFromNotesPage() {
   }
   S.notesComposerOpen = false;
   S.notesUtilityOpen = null;
+  clearNotesComposerAttachment();
   renderNotesPage();
   toast('NOTE LOGGED');
 }
 
-/** Asset-originated note: lands in NOTES (job.notesLog with asset tag) and LOG (progress_log asset_note). */
-async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text) {
+/** Asset-originated note: lands in NOTES (job.notesLog with asset tag) and LOG (progress_log asset_note). Optional attachmentOpts: { attachment_url?, attachment_src?, attachment_name?, attachment_type?, attachment_thumb? }. */
+async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text, attachmentOpts) {
   const job = S.jobs.find(j => j.id === jobId);
   if (!job || !(assetLabel && text)) return;
   const trimmed = String(text).trim();
@@ -2953,7 +3002,10 @@ async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text) {
   const ts = new Date().toISOString();
   ensureNotesLog(job);
   const person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
-  job.notesLog.push({ text: trimmed, person, timestamp: ts, assetLabel, assetKey });
+  let entry = { text: trimmed, person, timestamp: ts, assetLabel, assetKey };
+  entry = mergeNoteAttachment(entry, attachmentOpts || S.notesPendingAttachment || null);
+  if (S.notesPendingAttachment) S.notesPendingAttachment = null;
+  job.notesLog.push(entry);
   job.notes = trimmed;
   try {
     await Storage.saveJob(job);
@@ -3088,6 +3140,7 @@ function toggleNotesUtility(which) {
   if (next !== 'add') {
     const t = document.getElementById('notesNewText');
     if (t) t.value = '';
+    clearNotesComposerAttachment();
   }
   renderNotesPage();
   if (next === 'add') {
