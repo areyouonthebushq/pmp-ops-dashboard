@@ -28,6 +28,7 @@ const FIELD_MAP = [
   { id:'jDep',         key:'deposit',     type:'date' },
   { id:'jInv2',        key:'inv2',        type:'date' },
   { id:'jPay2',        key:'pay2',        type:'date' },
+  { id:'jFulfillment', key:'fulfillment_phase', type:'select' },
 ];
 
 /** PO / CONTRACT — floor-critical packaging/assembly reference (Phase 1). Keys live on job.poContract. */
@@ -134,6 +135,89 @@ const STATUS_OPTS = [
   { v: 'done', l: 'Done' },
 ];
 
+const FULFILLMENT_PHASES = [
+  { v: '',                    l: '—' },
+  { v: 'awaiting_instructions', l: 'Awaiting Instructions' },
+  { v: 'ready_for_pickup',    l: 'Ready for Pickup' },
+  { v: 'ready_to_ship',       l: 'Ready to Ship' },
+  { v: 'local_pickup',        l: 'Local Pickup' },
+  { v: 'in_house_fulfillment', l: 'In-House Fulfillment' },
+  { v: 'held_exception',      l: 'Held / Exception' },
+  { v: 'shipped',             l: 'Shipped / Picked Up' },
+];
+
+function fulfillmentPhasePill(phase) {
+  if (!phase) return '';
+  const map = {
+    awaiting_instructions: '<span class="pill warn">AWAITING INSTRUCTIONS</span>',
+    ready_for_pickup:      '<span class="pill go">READY FOR PICKUP</span>',
+    ready_to_ship:         '<span class="pill go">READY TO SHIP</span>',
+    local_pickup:          '<span class="pill queue">LOCAL PICKUP</span>',
+    in_house_fulfillment:  '<span class="pill queue">IN-HOUSE FULFILLMENT</span>',
+    held_exception:        '<span class="pill red">HELD / EXCEPTION</span>',
+    shipped:               '<span class="pill done">SHIPPED / PICKED UP</span>',
+  };
+  return map[phase] || `<span class="pill queue">${(phase || '').toUpperCase()}</span>`;
+}
+
+function fulfillmentPhaseLabel(phase) {
+  if (!phase) return '';
+  const f = FULFILLMENT_PHASES.find(function (x) { return x.v === phase; });
+  return f ? f.l : phase;
+}
+
+// ============================================================
+// JOB-LEVEL CAUTION — lightweight exception overlay
+// ============================================================
+const CAUTION_REASONS = [
+  { v: '',            l: '— None' },
+  { v: 'stuck',       l: 'Stuck' },
+  { v: 'customer',    l: 'Waiting on Customer' },
+  { v: 'billing',     l: 'Billing Issue' },
+  { v: 'traffic_jam', l: 'Traffic Jam' },
+  { v: 'special',     l: 'Special Handling' },
+  { v: 'other',       l: 'Other' },
+];
+
+function isJobCautioned(job) {
+  return !!(job && job.caution && job.caution.reason);
+}
+
+function cautionReasonLabel(reason) {
+  if (!reason) return '';
+  var r = CAUTION_REASONS.find(function (x) { return x.v === reason; });
+  return r ? r.l : reason;
+}
+
+function cautionPill(job) {
+  if (!isJobCautioned(job)) return '';
+  var label = cautionReasonLabel(job.caution.reason).toUpperCase();
+  var needs = cautionNeedsNote(job);
+  var cls = 'pill caution-pill' + (needs ? ' caution-pill-pulse' : '');
+  var tip = label;
+  if (job.caution.text) tip += ' — ' + job.caution.text.replace(/"/g, '&quot;');
+  if (job.caution.since) {
+    var ms = Date.now() - new Date(job.caution.since).getTime();
+    if (ms < 36e5) tip += ' (' + Math.max(1, Math.round(ms / 6e4)) + 'm ago)';
+    else if (ms < 864e5) tip += ' (' + Math.round(ms / 36e5) + 'h ago)';
+    else tip += ' (' + Math.round(ms / 864e5) + 'd ago)';
+  }
+  return '<span class="' + cls + '" title="' + tip + '">⚠ ' + label + '</span>';
+}
+
+function cautionNeedsNote(job) {
+  if (!isJobCautioned(job)) return false;
+  var since = job.caution.since;
+  if (!since) return false;
+  var notes = Array.isArray(job.notesLog) ? job.notesLog : [];
+  return !notes.some(function (n) { return n.timestamp && n.timestamp >= since; });
+}
+
+function cautionNoteBtn(job) {
+  if (!cautionNeedsNote(job)) return '';
+  return '<button type="button" class="caution-note-btn" onclick="event.stopPropagation();goToNotesAndOpenAdd(\'' + job.id + '\')" title="Add note for caution context">+ NOTE</button>';
+}
+
 /** Debounce fn (no args) for use with search inputs — reduces re-renders on mobile. */
 function debounce(fn, ms) {
   let t = null;
@@ -176,6 +260,8 @@ function jobFieldsHash(job) {
     (job.location || ''),
     (job.due || ''),
     ((job.progressLog || []).length).toString(),
+    (job.fulfillment_phase || ''),
+    (job.caution && job.caution.reason ? job.caution.reason : ''),
   ];
   return parts.join('|');
 }

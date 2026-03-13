@@ -7,11 +7,13 @@ function getFloorStats() {
   const overdue = open.filter(j => j.due && new Date(j.due) < Date.now());
   const online = S.presses.filter(p => p.status === 'online').length;
   const onPress = S.presses.filter(p => p.job_id).map(p => p.job_id);
+  const cautioned = open.filter(j => isJobCautioned(j));
   return [
     { key: 'presses', v: `${online}/${S.presses.length}`, l: 'PRESSES', s: 'online', c: online < S.presses.length ? 'warn' : '' },
     { key: 'active', v: active.length, l: 'ACTIVE', s: 'pressing/assembly', c: '' },
     { key: 'queued', v: open.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
     { key: 'overdue', v: overdue.length, l: 'OVERDUE', s: 'past due date', c: overdue.length ? 'red' : '' },
+    { key: 'cautioned', v: cautioned.length, l: '⚠ CAUTIONED', s: 'needs attention', c: cautioned.length ? 'warn' : '' },
     { key: 'total', v: open.length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
   ];
 }
@@ -59,8 +61,11 @@ function floorTableHeaderHTML() {
 
 function floorTableRowHTML(j, opts) {
   const statusId = (opts && opts.statusCellId) ? ` id="st-${j.id}"` : '';
+  const cautioned = isJobCautioned(j);
+  const trClass = cautioned ? ' class="job-row-cautioned"' : '';
+  const cautionTag = cautioned ? ' ' + cautionPill(j) + cautionNoteBtn(j) : '';
   return `
-  <tr>
+  <tr${trClass}>
   <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
   <td class="panel-trigger" onclick="openPanel('${j.id}')" title="Open job" style="cursor:pointer">
     <div style="color:var(--d)">${j.artist || '—'}</div>
@@ -72,7 +77,7 @@ function floorTableRowHTML(j, opts) {
   <td class="panel-trigger" onclick="openPanel('${j.id}')" title="Open job to change status" style="cursor:pointer">
     <div class="status-pill-readonly ${statusTapClass(j.status)}"${statusId}>
     ${(j.status || 'queue').toUpperCase()}
-    </div>
+    </div>${cautionTag}
   </td>
   <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
   </tr>`;
@@ -189,6 +194,7 @@ function renderAdminShell() {
   renderTodos();
   renderLog();
   renderNotesPage();
+  renderShip();
   renderCrewPage();
   renderCompoundsPage();
   renderDevPage();
@@ -251,6 +257,147 @@ function renderCompoundsPage() {
       (notes ? '<div class="compound-notes">' + notes + '</div>' : '') +
       '</div></div>'
     );
+  }).join('');
+}
+
+// ============================================================
+// SHIP — fulfillment / pickup / shipping
+// ============================================================
+
+function getShipJobs() {
+  return S.jobs.filter(function (j) {
+    if (isJobArchived(j)) return false;
+    return j.status === 'done' || j.status === 'assembly' || !!j.fulfillment_phase;
+  });
+}
+
+function renderShip() {
+  var bodyEl = document.getElementById('shipBody');
+  var countEl = document.getElementById('shipCount');
+  var emptyEl = document.getElementById('shipEmpty');
+  var summaryEl = document.getElementById('shipSummary');
+  if (!bodyEl) return;
+
+  var filterEl = document.getElementById('shipFilter');
+  var filter = filterEl ? filterEl.value : '';
+  var q = (document.getElementById('shipSearch')?.value || '').toLowerCase().trim();
+
+  var all = getShipJobs();
+
+  var jobs;
+  if (filter === 'unset') {
+    jobs = all.filter(function (j) { return !j.fulfillment_phase; });
+  } else if (filter) {
+    jobs = all.filter(function (j) { return j.fulfillment_phase === filter; });
+  } else {
+    jobs = all.slice();
+  }
+
+  if (q) {
+    jobs = jobs.filter(function (j) {
+      return (j.catalog || '').toLowerCase().includes(q) ||
+        (j.artist || '').toLowerCase().includes(q) ||
+        (j.album || '').toLowerCase().includes(q) ||
+        (j.location || '').toLowerCase().includes(q);
+    });
+  }
+
+  jobs.sort(function (a, b) {
+    var pa = a.fulfillment_phase || '';
+    var pb = b.fulfillment_phase || '';
+    if (pa === 'shipped' && pb !== 'shipped') return 1;
+    if (pb === 'shipped' && pa !== 'shipped') return -1;
+    if (pa === 'held_exception' && pb !== 'held_exception') return -1;
+    if (pb === 'held_exception' && pa !== 'held_exception') return 1;
+    var da = a.due || '\uffff';
+    var db = b.due || '\uffff';
+    if (da !== db) return da < db ? -1 : 1;
+    return (a.catalog || '').localeCompare(b.catalog || '');
+  });
+
+  if (countEl) countEl.textContent = jobs.length + ' of ' + all.length;
+
+  if (summaryEl) {
+    var counts = {};
+    all.forEach(function (j) {
+      var p = j.fulfillment_phase || '_unset';
+      counts[p] = (counts[p] || 0) + 1;
+    });
+    var pills = [];
+    if (counts.held_exception) pills.push('<span class="ship-sum-item ship-sum-held">' + counts.held_exception + ' held</span>');
+    if (counts.awaiting_instructions) pills.push('<span class="ship-sum-item ship-sum-await">' + counts.awaiting_instructions + ' awaiting</span>');
+    if (counts.ready_to_ship) pills.push('<span class="ship-sum-item ship-sum-ready">' + counts.ready_to_ship + ' ready to ship</span>');
+    if (counts.ready_for_pickup) pills.push('<span class="ship-sum-item ship-sum-pickup">' + counts.ready_for_pickup + ' ready for pickup</span>');
+    if (counts.local_pickup) pills.push('<span class="ship-sum-item">' + counts.local_pickup + ' local</span>');
+    if (counts.in_house_fulfillment) pills.push('<span class="ship-sum-item">' + counts.in_house_fulfillment + ' in-house</span>');
+    if (counts.shipped) pills.push('<span class="ship-sum-item ship-sum-shipped">' + counts.shipped + ' shipped</span>');
+    if (counts._unset) pills.push('<span class="ship-sum-item ship-sum-unset">' + counts._unset + ' no phase</span>');
+    summaryEl.innerHTML = pills.length ? pills.join('') : '';
+  }
+
+  if (jobs.length === 0) {
+    bodyEl.innerHTML = '';
+    if (emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = filter ? 'NO JOBS IN THIS PHASE' : 'NO LATE-STAGE JOBS'; }
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  bodyEl.innerHTML = jobs.map(function (j) {
+    var esc = typeof escapeHtml === 'function' ? escapeHtml : function (s) { return s || ''; };
+    var phaseOpts = typeof FULFILLMENT_PHASES !== 'undefined'
+      ? FULFILLMENT_PHASES.map(function (o) { return '<option value="' + o.v + '"' + ((j.fulfillment_phase || '') === o.v ? ' selected' : '') + '>' + esc(o.l) + '</option>'; }).join('')
+      : '';
+
+    var notes = Array.isArray(j.notesLog) ? j.notesLog : [];
+    var attachCount = notes.filter(function (n) { return !!n.attachment_url; }).length;
+    var lastNote = null;
+    for (var ni = notes.length - 1; ni >= 0; ni--) { if (notes[ni] && notes[ni].text) { lastNote = notes[ni]; break; } }
+    var noteSnippet = '';
+    if (lastNote) {
+      var txt = (lastNote.text || '').trim();
+      if (txt.length > 50) txt = txt.slice(0, 47) + '…';
+      var ago = '';
+      if (lastNote.timestamp) {
+        var ms = Date.now() - new Date(lastNote.timestamp).getTime();
+        if (ms < 36e5) ago = Math.max(1, Math.round(ms / 6e4)) + 'm';
+        else if (ms < 864e5) ago = Math.round(ms / 36e5) + 'h';
+        else ago = Math.round(ms / 864e5) + 'd';
+      }
+      noteSnippet = '<span class="ship-note-text" title="' + esc(lastNote.text || '').replace(/"/g, '&quot;') + '">' + esc(txt) + '</span>' +
+        (ago ? ' <span class="ship-note-ago">' + ago + '</span>' : '');
+    }
+    var proofBadge = attachCount > 0
+      ? '<span class="ship-proof-badge" title="' + attachCount + ' image' + (attachCount > 1 ? 's' : '') + ' attached">📎' + attachCount + '</span>'
+      : '';
+    var noteCountBadge = notes.length > 0
+      ? '<span class="ship-notes-count">' + notes.length + '</span>'
+      : '';
+
+    var noteCell = '<div class="ship-note-cell">';
+    if (noteSnippet || proofBadge) {
+      noteCell += '<div class="ship-note-preview">' + proofBadge + noteSnippet + '</div>';
+    } else {
+      noteCell += '<span class="ship-no-phase">—</span>';
+    }
+    noteCell += '<div class="ship-note-actions">' +
+      '<button type="button" class="ship-note-btn" onclick="goToNotesAndOpenAdd(\'' + j.id + '\')" title="Add shipping note">+ NOTE' + noteCountBadge + '</button>' +
+    '</div>';
+    noteCell += '</div>';
+
+    var shipCautioned = isJobCautioned(j);
+    return '<tr class="ship-row' + (j.fulfillment_phase === 'held_exception' ? ' ship-row-held' : '') + (j.fulfillment_phase === 'shipped' ? ' ship-row-shipped' : '') + (shipCautioned ? ' job-row-cautioned' : '') + '" data-jid="' + j.id + '">' +
+      '<td class="ship-cat panel-trigger" onclick="openPanel(\'' + j.id + '\')" title="Open job">' + esc(j.catalog || '—') + '</td>' +
+      '<td class="ship-artist panel-trigger" onclick="openPanel(\'' + j.id + '\')" title="Open job">' + esc(j.artist || '—') + (j.album ? ' <span class="ship-album">' + esc(j.album) + '</span>' : '') + '</td>' +
+      '<td>' + (j.format ? '<span class="pill ' + (j.format.includes('7"') ? 'seven' : 'go') + '">' + esc(j.format) + '</span>' : '—') + '</td>' +
+      '<td>' + (j.qty ? parseInt(j.qty).toLocaleString() : '—') + '</td>' +
+      '<td>' + statusPill(j.status) + (shipCautioned ? ' ' + cautionPill(j) : '') + '</td>' +
+      '<td class="ship-phase-cell">' +
+        '<select class="ship-phase-select" onchange="setFulfillmentPhase(\'' + j.id + '\', this.value)">' + phaseOpts + '</select>' +
+      '</td>' +
+      '<td class="' + (typeof dueClass === 'function' ? dueClass(j.due) : '') + '">' + (typeof dueLabel === 'function' ? dueLabel(j.due) : (j.due || '—')) + '</td>' +
+      '<td class="ship-td-note">' + noteCell + '</td>' +
+      '<td><button type="button" class="bar-btn ship-open-btn" onclick="openPanel(\'' + j.id + '\')">OPEN</button></td>' +
+    '</tr>';
   }).join('');
 }
 
@@ -584,6 +731,16 @@ function saveFloorCardQuickEdit() {
   if (canEditField('due')) j.due = get('fcDue') || j.due;
   if (canEditField('notes')) j.notes = get('fcNotes') || j.notes;
   if (canEditField('assembly')) j.assembly = get('fcAssembly') || j.assembly;
+  if (canEditField('fulfillment_phase')) j.fulfillment_phase = get('fcFulfillment') || null;
+  if (canEditField('caution')) {
+    var fcCR = get('fcCautionReason');
+    if (fcCR) {
+      var existingSince = (j.caution && j.caution.reason === fcCR && j.caution.since) ? j.caution.since : new Date().toISOString();
+      j.caution = { reason: fcCR, since: existingSince, text: (j.caution && j.caution.text) || '' };
+    } else {
+      j.caution = null;
+    }
+  }
   Storage.saveJob(j);
   S.floorCardEditMode = false;
   const btn = document.getElementById('floorCardQuickEditBtn');
@@ -615,6 +772,8 @@ function renderFloorCard() {
       getRow('due', '<label>Due date</label>', `<input type="date" id="fcDue" value="${j.due || ''}">`),
       getRow('notes', '<label>Production notes</label>', `<textarea id="fcNotes" rows="3">${(j.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
       getRow('assembly', '<label>Assembly / location notes</label>', `<textarea id="fcAssembly" rows="2">${(j.assembly || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
+      getRow('fulfillment_phase', '<label>Fulfillment</label>', `<select id="fcFulfillment">${FULFILLMENT_PHASES.map(o => `<option value="${o.v}" ${(j.fulfillment_phase || '') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
+      getRow('caution', '<label>⚠ Caution</label>', `<select id="fcCautionReason">${CAUTION_REASONS.map(o => `<option value="${o.v}" ${((j.caution && j.caution.reason) || '') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
     ].join('');
     content.innerHTML = `
     <div class="fc-header">
@@ -651,7 +810,10 @@ function renderFloorCard() {
     <span class="fc-press">${j.press ? j.press : '—'}</span>
     <span class="fc-due ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
     <span class="fc-loc">${j.location ? '📍 ' + j.location : '—'}</span>
+    ${j.fulfillment_phase ? '<span class="fc-fulfill">' + fulfillmentPhasePill(j.fulfillment_phase) + '</span>' : ''}
+    ${isJobCautioned(j) ? '<span class="fc-caution">' + cautionPill(j) + '</span>' : ''}
   </div>
+  ${isJobCautioned(j) && j.caution.text ? '<div class="fc-caution-note">⚠ ' + escapeHtml(j.caution.text) + '</div>' : ''}
   <div class="fc-qty-strip">
     <span>Ordered: <strong>${(prog.p.ordered || 0).toLocaleString()}</strong></span>
     <span>Pressed: <strong>${(prog.p.pressed || 0).toLocaleString()}</strong></span>
@@ -1012,6 +1174,9 @@ function renderJobs() {
   if (filter === 'archived') {
     jobs = archivedJobs.slice();
     totalForCount = archivedJobs.length;
+  } else if (filter === 'cautioned') {
+    jobs = activeJobs.filter(j => isJobCautioned(j));
+    totalForCount = activeJobs.length;
   } else {
     jobs = filter ? activeJobs.filter(j => j.status === filter) : activeJobs.slice();
     totalForCount = activeJobs.length;
@@ -1059,7 +1224,8 @@ function renderJobs() {
     tbody.innerHTML = jobs.map(j => {
       const ah = assetHealth(j);
       const prog = progressDisplay(j);
-      return `<tr data-status="${j.status || ''}">
+      const jCautioned = isJobCautioned(j);
+      return `<tr data-status="${j.status || ''}"${jCautioned ? ' class="job-row-cautioned"' : ''}>
         <td class="j-cat panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
         <td class="j-artist panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.artist || '—'}</td>
         <td class="j-album panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.album || '—'}</td>
@@ -1067,7 +1233,7 @@ function renderJobs() {
         <td class="j-spec">${j.color || 'Black'}${j.weight ? ` <span class="j-wt">${j.weight}</span>` : ''}</td>
         <td class="j-spec">${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
         <td class="j-spec j-plus10">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
-        <td class="j-state">${statusPill(j.status)}</td>
+        <td class="j-state">${statusPill(j.status)}${jCautioned ? ' ' + cautionPill(j) + cautionNoteBtn(j) + (j.caution.text ? '<div class="j-caution-text">' + escapeHtml(j.caution.text) + '</div>' : '') : ''}</td>
         <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
         <td class="j-support">${j.press || '—'}</td>
         <td class="j-support assets-tap" onclick="event.stopPropagation(); openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
@@ -1085,16 +1251,18 @@ function renderJobs() {
     cards.innerHTML = jobs.map(j => {
       const ah = assetHealth(j);
       const prog = progressDisplay(j);
+      const jcCautioned = isJobCautioned(j);
       return `
-        <div class="job-card st-${j.status}" onclick="openPanel('${j.id}')">
+        <div class="job-card st-${j.status}${jcCautioned ? ' job-card-cautioned' : ''}" onclick="openPanel('${j.id}')">
         <div class="jc-top">
           <div>
           <div class="jc-cat">${j.catalog || '—'}</div>
           <div class="jc-artist">${j.artist || '—'}</div>
           <div class="jc-album">${j.album || ''}</div>
           </div>
-          ${statusPill(j.status)}
+          <div>${statusPill(j.status)}${jcCautioned ? '<div style="margin-top:4px">' + cautionPill(j) + '</div>' : ''}</div>
         </div>
+        ${jcCautioned && j.caution.text ? '<div class="jc-caution-text">⚠ ' + escapeHtml(j.caution.text) + cautionNoteBtn(j) + '</div>' : (jcCautioned && cautionNeedsNote(j) ? '<div class="jc-caution-text">' + cautionNoteBtn(j) + '</div>' : '')}
         <div class="jc-row">
           ${j.format ? `<span class="pill ${j.format.includes('7"') ? 'seven' : 'go'}">${j.format}</span>` : ''}
           <span class="jc-detail">${j.color || 'Black'} <span>${j.weight || ''}</span></span>
@@ -1564,7 +1732,7 @@ function renderTV() {
       return sum + (Number.isFinite(n) ? n : 1);
     }, 0);
     const pressingNow = S.presses.filter(p => !!p.job_id).length;
-    const blockers = activeJobs.filter(j => (j.status || '').toLowerCase() === 'hold').length + S.presses.filter(p => p.status === 'offline').length;
+    const blockers = activeJobs.filter(j => (j.status || '').toLowerCase() === 'hold' || isJobCautioned(j)).length + S.presses.filter(p => p.status === 'offline').length;
 
     statsEl.innerHTML = `
       <div class="tv-stat"><div class="tv-stat-num w">${pressedToday.toLocaleString()}</div><div class="tv-stat-lab">PRESSED TODAY</div></div>

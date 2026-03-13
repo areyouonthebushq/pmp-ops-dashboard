@@ -22,10 +22,10 @@ window.addEventListener('unhandledrejection', function (event) {
     const party = document.body.classList.contains('tv-party');
     return {
       party,
-      col: party ? 14 : 18,
-      step: party ? 42 : 55,
-      fade: party ? 0.05 : 0.06,
-      font: party ? 14 : 13,
+      col: party ? 10 : 18,
+      step: party ? 22 : 55,
+      fade: party ? 0.035 : 0.06,
+      font: party ? 17 : 13,
     };
   }
   const reset = () => {
@@ -50,9 +50,23 @@ window.addEventListener('unhandledrejection', function (event) {
       drops.forEach((y, i) => {
         const x = i * cfg.col;
         const yy = y * cfg.col;
-        ctx.fillText(ch[Math.random() * ch.length | 0], x, yy);
-        if (cfg.party && Math.random() > 0.8) ctx.fillText(ch[Math.random() * ch.length | 0], x, yy + cfg.col);
-        if (yy > c.height && Math.random() > (cfg.party ? 0.965 : 0.97)) drops[i] = 0;
+        const head = ch[Math.random() * ch.length | 0];
+        ctx.fillStyle = '#00e676';
+        ctx.fillText(head, x, yy);
+        if (cfg.party) {
+          ctx.globalAlpha = 0.85;
+          ctx.fillText(ch[Math.random() * ch.length | 0], x, yy - cfg.col);
+          ctx.globalAlpha = 0.5;
+          ctx.fillText(ch[Math.random() * ch.length | 0], x, yy - cfg.col * 2);
+          ctx.globalAlpha = 0.22;
+          ctx.fillText(ch[Math.random() * ch.length | 0], x, yy - cfg.col * 3);
+          ctx.globalAlpha = 0.1;
+          ctx.fillText(ch[Math.random() * ch.length | 0], x, yy - cfg.col * 4);
+          ctx.globalAlpha = 1;
+        } else if (Math.random() > 0.8) {
+          ctx.fillText(ch[Math.random() * ch.length | 0], x, yy + cfg.col);
+        }
+        if (yy > c.height && Math.random() > (cfg.party ? 0.94 : 0.97)) drops[i] = 0;
         else drops[i]++;
       });
     }
@@ -1049,7 +1063,7 @@ function updateFAB() {
     fab.style.display = 'flex';
     fab.textContent = '+';
     if (label) { label.textContent = 'NEW JOB [N]'; }
-  } else if (currentPage === 'audit' || currentPage === 'crew') {
+  } else if (currentPage === 'audit' || currentPage === 'crew' || currentPage === 'ship') {
     fab.style.display = 'none';
   } else {
     fab.style.display = 'none';
@@ -1110,6 +1124,10 @@ function updatePizzazButtonState() {
 function toggleTVParty() {
   document.body.classList.toggle('tv-party');
   try { sessionStorage.setItem('tvParty', document.body.classList.contains('tv-party') ? '1' : '0'); } catch (e) {}
+  if (document.body.classList.contains('tv-party')) {
+    document.body.classList.add('tv-pizzaz-enter');
+    setTimeout(function () { document.body.classList.remove('tv-pizzaz-enter'); }, 650);
+  }
   updatePizzazButtonState();
 }
 
@@ -1226,6 +1244,12 @@ function openPanel(id) {
       });
     }
     updatePoImageUI(j);
+    var cautionRow = document.getElementById('panelCautionRow');
+    var cautionReasonEl = document.getElementById('jCautionReason');
+    var cautionTextEl = document.getElementById('jCautionText');
+    if (cautionRow) cautionRow.style.display = '';
+    if (cautionReasonEl) cautionReasonEl.value = (j.caution && j.caution.reason) ? j.caution.reason : '';
+    if (cautionTextEl) cautionTextEl.value = (j.caution && j.caution.text) ? j.caution.text : '';
   } else {
     document.getElementById('panelId').textContent = 'NEW JOB';
     document.getElementById('panelSub').textContent = '';
@@ -1235,6 +1259,8 @@ function openPanel(id) {
     if (archiveBtn) archiveBtn.style.display = 'none';
     if (restoreBtn) restoreBtn.style.display = 'none';
     clearFields();
+    var cautionRow = document.getElementById('panelCautionRow');
+    if (cautionRow) cautionRow.style.display = 'none';
   }
   buildAssetList();
   renderProgressSection();
@@ -1592,6 +1618,92 @@ function editEmployee(id) {
   if (wrap) wrap.classList.add('on');
 }
 
+// ============================================================
+// CREW — CSV import (directory)
+// ============================================================
+function mapCrewCsvHeaderToKey(h) {
+  var t = (h || '').trim().replace(/^\uFEFF/, '').toLowerCase().replace(/\s+/g, ' ');
+  var map = {
+    name: 'name', 'full name': 'name', employee: 'name', 'employee name': 'name',
+    email: 'email', 'e-mail': 'email', 'email address': 'email',
+    role: 'role', title: 'role', position: 'role', 'job title': 'role',
+    phone: 'phone', 'phone number': 'phone', tel: 'phone', telephone: 'phone', mobile: 'phone', cell: 'phone',
+    specialty: 'specialty', station: 'specialty', 'specialty / station': 'specialty',
+    notes: 'notes', note: 'notes', comments: 'notes', comment: 'notes',
+    photo: 'photo_url', 'photo url': 'photo_url', photo_url: 'photo_url', image: 'photo_url',
+  };
+  return map[t] || null;
+}
+
+function parseCrewCsv(text) {
+  var lines = typeof parseCSVLines === 'function' ? parseCSVLines(text) : [];
+  if (lines.length < 2) return [];
+  var headerRowIndex = -1;
+  for (var h = 0; h < Math.min(5, lines.length); h++) {
+    if (!lines[h] || !lines[h].length) continue;
+    for (var c = 0; c < lines[h].length; c++) {
+      if (mapCrewCsvHeaderToKey((lines[h][c] || '').trim())) { headerRowIndex = h; break; }
+    }
+    if (headerRowIndex >= 0) break;
+  }
+  if (headerRowIndex < 0) return [];
+  var headers = lines[headerRowIndex].map(function (h) { return (h || '').trim(); });
+  var keyToCol = {};
+  headers.forEach(function (h, i) { var k = mapCrewCsvHeaderToKey(h); if (k && keyToCol[k] === undefined) keyToCol[k] = i; });
+  if (keyToCol.name === undefined && keyToCol.email === undefined) return [];
+  var out = [];
+  var baseId = 'emp_csv_' + Date.now();
+  for (var i = headerRowIndex + 1; i < lines.length; i++) {
+    var v = lines[i];
+    var name = (keyToCol.name !== undefined && v[keyToCol.name] != null) ? String(v[keyToCol.name]).trim() : '';
+    var email = (keyToCol.email !== undefined && v[keyToCol.email] != null) ? String(v[keyToCol.email]).trim() : '';
+    if (!name && !email) continue;
+    if (!name) name = email.split('@')[0] || email;
+    out.push({
+      id: baseId + '_' + i + '_' + Math.random().toString(36).slice(2, 6),
+      name: name,
+      email: email,
+      role: (keyToCol.role !== undefined && v[keyToCol.role] != null) ? String(v[keyToCol.role]).trim() : '',
+      phone: (keyToCol.phone !== undefined && v[keyToCol.phone] != null) ? String(v[keyToCol.phone]).trim() : '',
+      specialty: (keyToCol.specialty !== undefined && v[keyToCol.specialty] != null) ? String(v[keyToCol.specialty]).trim() : '',
+      photo_url: (keyToCol.photo_url !== undefined && v[keyToCol.photo_url] != null) ? String(v[keyToCol.photo_url]).trim() : '',
+      notes: (keyToCol.notes !== undefined && v[keyToCol.notes] != null) ? String(v[keyToCol.notes]).trim() : '',
+      active: true,
+    });
+  }
+  return out;
+}
+
+function onCrewCsvSelected(input) {
+  var file = input && input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    var text = e.target && e.target.result;
+    var people = typeof text === 'string' ? parseCrewCsv(text) : [];
+    if (!people.length) { toast('No rows found. Ensure CSV has a name or email column.'); return; }
+    var list = Array.isArray(S.employees) ? S.employees.slice() : [];
+    var dupes = 0;
+    people.forEach(function (p) {
+      var exists = list.some(function (x) {
+        return (p.email && x.email && x.email.toLowerCase() === p.email.toLowerCase()) ||
+               (p.name && x.name && x.name.toLowerCase() === p.name.toLowerCase());
+      });
+      if (exists) { dupes++; return; }
+      list.push(p);
+    });
+    S.employees = list.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+    Storage.saveEmployees(S.employees).then(function () {
+      if (typeof renderCrewPage === 'function') renderCrewPage();
+      var msg = (people.length - dupes) + ' person' + ((people.length - dupes) !== 1 ? 's' : '') + ' imported';
+      if (dupes) msg += ' (' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '') + ' skipped)';
+      toast(msg);
+    }).catch(function () { toast('Import save failed.'); });
+  };
+  reader.readAsText(file);
+}
+
 function getTodayDateISO() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -1694,6 +1806,105 @@ function editScheduleEntry(id) {
   renderScheduleEntryWizard();
   const wrap = document.getElementById('scheduleEntryWizardWrap');
   if (wrap) wrap.classList.add('on');
+}
+
+// ============================================================
+// SCHEDULE — CSV import (today entries)
+// ============================================================
+function mapScheduleCsvHeaderToKey(h) {
+  var t = (h || '').trim().replace(/^\uFEFF/, '').toLowerCase().replace(/\s+/g, ' ');
+  var map = {
+    name: 'name', 'full name': 'name', employee: 'name', 'employee name': 'name',
+    email: 'email', 'e-mail': 'email', 'email address': 'email',
+    shift: 'shift_label', 'shift label': 'shift_label', time: 'shift_label', hours: 'shift_label', 'shift / time': 'shift_label',
+    area: 'area', station: 'area', 'area / station': 'area', location: 'area',
+    note: 'notes', notes: 'notes', comment: 'notes', comments: 'notes',
+    date: 'date', day: 'date',
+  };
+  return map[t] || null;
+}
+
+function parseScheduleCsv(text) {
+  var lines = typeof parseCSVLines === 'function' ? parseCSVLines(text) : [];
+  if (lines.length < 2) return [];
+  var headerRowIndex = -1;
+  for (var h = 0; h < Math.min(5, lines.length); h++) {
+    if (!lines[h] || !lines[h].length) continue;
+    for (var c = 0; c < lines[h].length; c++) {
+      if (mapScheduleCsvHeaderToKey((lines[h][c] || '').trim())) { headerRowIndex = h; break; }
+    }
+    if (headerRowIndex >= 0) break;
+  }
+  if (headerRowIndex < 0) return [];
+  var headers = lines[headerRowIndex].map(function (h) { return (h || '').trim(); });
+  var keyToCol = {};
+  headers.forEach(function (h, i) { var k = mapScheduleCsvHeaderToKey(h); if (k && keyToCol[k] === undefined) keyToCol[k] = i; });
+  if (keyToCol.name === undefined && keyToCol.email === undefined) return [];
+  var out = [];
+  for (var i = headerRowIndex + 1; i < lines.length; i++) {
+    var v = lines[i];
+    var name = (keyToCol.name !== undefined && v[keyToCol.name] != null) ? String(v[keyToCol.name]).trim() : '';
+    var email = (keyToCol.email !== undefined && v[keyToCol.email] != null) ? String(v[keyToCol.email]).trim() : '';
+    if (!name && !email) continue;
+    var shift_label = (keyToCol.shift_label !== undefined && v[keyToCol.shift_label] != null) ? String(v[keyToCol.shift_label]).trim() : '';
+    var area = (keyToCol.area !== undefined && v[keyToCol.area] != null) ? String(v[keyToCol.area]).trim() : '';
+    var notes = (keyToCol.notes !== undefined && v[keyToCol.notes] != null) ? String(v[keyToCol.notes]).trim() : '';
+    var date = (keyToCol.date !== undefined && v[keyToCol.date] != null) ? String(v[keyToCol.date]).trim() : '';
+    out.push({ name: name, email: email, shift_label: shift_label, area: area, notes: notes, date: date });
+  }
+  return out;
+}
+
+function onScheduleCsvSelected(input) {
+  var file = input && input.files && input.files[0];
+  input.value = '';
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    var text = e.target && e.target.result;
+    var rows = typeof text === 'string' ? parseScheduleCsv(text) : [];
+    if (!rows.length) { toast('No rows found. Ensure CSV has a name or email column.'); return; }
+    var employees = Array.isArray(S.employees) ? S.employees : [];
+    var todayISO = getTodayDateISO();
+    var list = Array.isArray(S.scheduleEntries) ? S.scheduleEntries.slice() : [];
+    var added = 0;
+    var autoCreated = 0;
+    var baseId = 'sched_csv_' + Date.now();
+    rows.forEach(function (r, ri) {
+      var emp = null;
+      if (r.email) emp = employees.find(function (x) { return x.email && x.email.toLowerCase() === r.email.toLowerCase(); });
+      if (!emp && r.name) emp = employees.find(function (x) { return x.name && x.name.toLowerCase() === r.name.toLowerCase(); });
+      if (!emp) {
+        var newId = 'emp_csv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        emp = { id: newId, name: r.name || (r.email ? r.email.split('@')[0] : 'Unknown'), email: r.email || '', role: '', phone: '', specialty: '', photo_url: '', notes: '', active: true };
+        employees.push(emp);
+        autoCreated++;
+      }
+      var dateStr = r.date && /^\d{4}-\d{2}-\d{2}$/.test(r.date) ? r.date : todayISO;
+      list.push({
+        id: baseId + '_' + ri + '_' + Math.random().toString(36).slice(2, 6),
+        employee_id: emp.id,
+        date: dateStr,
+        shift_label: r.shift_label || '',
+        area: r.area || '',
+        notes: r.notes || '',
+        sort_order: list.length,
+      });
+      added++;
+    });
+    S.employees = employees.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+    S.scheduleEntries = list;
+    Promise.all([
+      Storage.saveEmployees(S.employees),
+      Storage.saveScheduleEntries(S.scheduleEntries),
+    ]).then(function () {
+      if (typeof renderCrewPage === 'function') renderCrewPage();
+      var msg = added + ' entr' + (added !== 1 ? 'ies' : 'y') + ' imported';
+      if (autoCreated) msg += ' (' + autoCreated + ' new person' + (autoCreated !== 1 ? 's' : '') + ' created)';
+      toast(msg);
+    }).catch(function () { toast('Import save failed.'); });
+  };
+  reader.readAsText(file);
 }
 
 // PVC CSV import — template: number, code name, amount on hand, color, notes
@@ -1986,6 +2197,16 @@ async function saveJob() {
       job.archived_at = existing.archived_at || null;
       job.archived_by = existing.archived_by || null;
       job.archive_reason = existing.archive_reason || null;
+      if (!job.fulfillment_phase) job.fulfillment_phase = existing.fulfillment_phase || null;
+      var cautionReasonEl = document.getElementById('jCautionReason');
+      var cautionTextEl = document.getElementById('jCautionText');
+      var panelCautionReason = cautionReasonEl ? cautionReasonEl.value : '';
+      if (panelCautionReason) {
+        var existingSince = (existing.caution && existing.caution.reason === panelCautionReason && existing.caution.since) ? existing.caution.since : new Date().toISOString();
+        job.caution = { reason: panelCautionReason, since: existingSince, text: cautionTextEl ? cautionTextEl.value.trim() : '' };
+      } else {
+        job.caution = null;
+      }
     }
     const notesEl = document.getElementById('jNotesInput');
     const assemblyEl = document.getElementById('jAssemblyInput');
@@ -2020,6 +2241,45 @@ async function saveJob() {
     if (typeof toastError === 'function') toastError(e && (e.message || e.error) ? String(e.message || e.error) : 'Save failed');
     else toast('Save failed');
   }
+}
+
+// ============================================================
+// JOB-LEVEL CAUTION — set / clear exception overlay
+// ============================================================
+function setCaution(jobId, reason, text) {
+  const j = S.jobs.find(function (x) { return x.id === jobId; });
+  if (!j) return;
+  if (!reason) {
+    j.caution = null;
+    Storage.saveJob(j);
+    renderAll();
+    toast('Caution cleared');
+    return;
+  }
+  j.caution = { reason: reason, since: new Date().toISOString(), text: (text || '').trim() || '' };
+  Storage.saveJob(j);
+  renderAll();
+  toast('⚠ ' + cautionReasonLabel(reason));
+}
+
+function clearCaution(jobId) {
+  setCaution(jobId, '', '');
+}
+
+// ============================================================
+// SHIP — set fulfillment phase
+// ============================================================
+function setFulfillmentPhase(jobId, phase) {
+  const j = S.jobs.find(function (x) { return x.id === jobId; });
+  if (!j) return;
+  j.fulfillment_phase = phase || null;
+  Storage.saveJob(j);
+  renderAll();
+  toast(phase ? fulfillmentPhaseLabel(phase) : 'Phase cleared');
+  requestAnimationFrame(function () {
+    var row = document.querySelector('.ship-row[data-jid="' + jobId + '"]');
+    if (row) { row.classList.add('ship-row-flash'); setTimeout(function () { row.classList.remove('ship-row-flash'); }, 600); }
+  });
 }
 
 // ============================================================
@@ -3457,6 +3717,7 @@ function hasLocalSearchAction() {
   if (currentPage === 'floor' && document.getElementById('floorSearch')) return true;
   if (currentPage === 'jobs' && document.getElementById('jobSearch')) return true;
   if (currentPage === 'crew' && document.getElementById('crewSearch')) return true;
+  if (currentPage === 'ship' && document.getElementById('shipSearch')) return true;
   const fmShell = document.getElementById('floorManagerShell');
   if (fmShell && fmShell.classList.contains('on') && document.getElementById('fmFloorSearch')) return true;
   return false;
@@ -3482,6 +3743,9 @@ function triggerLocalSearchAction() {
     jobSearch.focus();
   } else if (currentPage === 'crew' && crewSearch) {
     crewSearch.focus();
+  } else if (currentPage === 'ship') {
+    var shipSearch = document.getElementById('shipSearch');
+    if (shipSearch) shipSearch.focus();
   } else if (floorSearch) {
     floorSearch.focus();
   } else if (jobSearch) {
@@ -3738,4 +4002,6 @@ document.addEventListener('keydown', e => {
   if (jobEl) jobEl.addEventListener('input', debounce(renderJobs, 280));
   var fmEl = document.getElementById('fmFloorSearch');
   if (fmEl) fmEl.addEventListener('input', debounce(renderFloorManagerShell, 280));
+  var shipEl = document.getElementById('shipSearch');
+  if (shipEl) shipEl.addEventListener('input', debounce(renderShip, 280));
 })();

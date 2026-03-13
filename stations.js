@@ -133,20 +133,20 @@ function getStationEditPermissions() {
   const ctx = getStationContext();
 
   if (!role) {
-    if (!ctx) return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+    if (!ctx) return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly','fulfillment_phase','caution'], canLogPressProgress: true, canLogQC: true };
     switch (ctx.stationType) {
-      case 'floor_manager': return { canUseFullPanel: false, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: false, canLogQC: false };
+      case 'floor_manager': return { canUseFullPanel: false, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly','fulfillment_phase','caution'], canLogPressProgress: false, canLogQC: false };
       case 'press': return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: true, canLogQC: false };
       case 'qc': return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: false, canLogQC: true };
-      default: return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+      default: return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly','fulfillment_phase','caution'], canLogPressProgress: true, canLogQC: true };
     }
   }
 
   switch (role) {
     case 'admin':
-      return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: true, canLogQC: true };
+      return { canUseFullPanel: true, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly','fulfillment_phase','caution'], canLogPressProgress: true, canLogQC: true };
     case 'floor_manager':
-      return { canUseFullPanel: false, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly'], canLogPressProgress: false, canLogQC: false };
+      return { canUseFullPanel: false, canUseFloorCard: true, floorCardFields: ['status','press','location','due','notes','assembly','fulfillment_phase','caution'], canLogPressProgress: false, canLogQC: false };
     case 'press': {
       const inPressStation = ctx && ctx.stationType === 'press';
       return { canUseFullPanel: false, canUseFloorCard: false, floorCardFields: [], canLogPressProgress: !!inPressStation, canLogQC: false };

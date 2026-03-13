@@ -52,6 +52,8 @@
       po_contract: (job.poContract && typeof job.poContract === 'object') ? job.poContract : {},
       notes_log: Array.isArray(job.notesLog) ? job.notesLog : [],
       assembly_log: Array.isArray(job.assemblyLog) ? job.assemblyLog : [],
+      fulfillment_phase: job.fulfillment_phase || null,
+      caution: (job.caution && typeof job.caution === 'object' && job.caution.reason) ? job.caution : null,
     };
   }
 
@@ -95,6 +97,8 @@
       archived_by: row.archived_by || null,
       archive_reason: row.archive_reason || null,
       poContract: (row.po_contract && typeof row.po_contract === 'object') ? row.po_contract : {},
+      fulfillment_phase: row.fulfillment_phase || null,
+      caution: (row.caution && typeof row.caution === 'object' && row.caution.reason) ? row.caution : null,
     };
     return job;
   }

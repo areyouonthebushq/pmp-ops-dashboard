@@ -179,6 +179,7 @@
         <div class="nav-item" id="navTodos" data-pg="todos" onclick="goPg('todos')" style="display:none">✓ TODOS</div>
         <div class="nav-item" data-pg="log" onclick="goPg('log')">⬡ LOG <span class="badge" id="logBadge"></span></div>
         <div class="nav-item" data-pg="notes" onclick="goPg('notes')">◇ NOTES</div>
+        <div class="nav-item" data-pg="ship" onclick="goPg('ship')">◈ SHIP</div>
         <div class="nav-item" data-pg="crew" onclick="goPg('crew')">◉ CREW</div>
         <div class="nav-item" data-pg="compounds" onclick="goPg('compounds')">◌ PVC</div>
         <div class="nav-item" id="navAudit" data-pg="audit" onclick="goPg('audit')" style="display:none">▣ AUDIT</div>
@@ -223,6 +224,7 @@
             <option value="assembly">ASSEMBLY</option>
             <option value="hold">ON HOLD</option>
             <option value="done">DONE</option>
+            <option value="cautioned">⚠ CAUTIONED</option>
             <option value="archived">ARCHIVED</option>
         </select>
         <div class="search-wrap" style="min-width:180px">
@@ -404,6 +406,44 @@
     </div>
 
     <!-- ======= CREW PAGE (operational directory) ======= -->
+    <!-- ======= SHIP PAGE (fulfillment / pickup / shipping) ======= -->
+    <div class="pg" id="pg-ship">
+      <div class="ship-shell">
+        <div class="ship-toolbar">
+          <div class="ship-toolbar-left">
+            <div class="ship-title">SHIP</div>
+            <div class="ship-sub">Fulfillment · Pickup · Shipping</div>
+          </div>
+          <select id="shipFilter" class="fs" style="width:auto;padding:var(--space-sm) var(--space-md);font-size:13px;" onchange="renderShip()">
+            <option value="">ALL LATE-STAGE</option>
+            <option value="awaiting_instructions">AWAITING INSTRUCTIONS</option>
+            <option value="ready_for_pickup">READY FOR PICKUP</option>
+            <option value="ready_to_ship">READY TO SHIP</option>
+            <option value="local_pickup">LOCAL PICKUP</option>
+            <option value="in_house_fulfillment">IN-HOUSE FULFILLMENT</option>
+            <option value="held_exception">HELD / EXCEPTION</option>
+            <option value="shipped">SHIPPED / PICKED UP</option>
+            <option value="unset">NO PHASE SET</option>
+          </select>
+          <div class="search-wrap" style="min-width:160px">
+            <input class="search-input" id="shipSearch" placeholder="SEARCH CATALOG, ARTIST…">
+          </div>
+          <span class="search-count" id="shipCount"></span>
+        </div>
+        <div class="ship-summary" id="shipSummary"></div>
+        <div class="tbl-wrap">
+          <table class="ship-tbl">
+            <thead><tr>
+              <th>CATALOG</th><th>ARTIST / ALBUM</th><th>FORMAT</th><th>QTY</th>
+              <th>STATUS</th><th>FULFILLMENT</th><th>DUE</th><th>LAST NOTE</th><th></th>
+            </tr></thead>
+            <tbody id="shipBody"></tbody>
+          </table>
+        </div>
+        <div id="shipEmpty" class="empty" style="display:none;">NO LATE-STAGE JOBS</div>
+      </div>
+    </div>
+
     <div class="pg" id="pg-crew">
       <div class="crew-shell">
         <div class="sec">DIRECTORY</div>
@@ -412,6 +452,9 @@
             <input class="search-input" id="crewSearch" placeholder="Search name, role, specialty…" oninput="if(typeof renderCrewPage==='function')renderCrewPage()">
           </div>
           <span class="search-count" id="crewCount"></span>
+          <label class="bar-btn" style="cursor:pointer;">↑ IMPORT CSV
+            <input type="file" id="crewCsvInput" accept=".csv" style="display:none" onchange="onCrewCsvSelected(this)">
+          </label>
           <button type="button" class="bar-btn" onclick="openEmployeeWizard()">+ ADD PERSON</button>
         </div>
         <div class="tbl-wrap">
@@ -428,6 +471,9 @@
         <div class="sec crew-today-sec" id="crewTodaySec">TODAY</div>
         <div class="crew-today-toolbar">
           <span class="crew-today-date" id="crewTodayDate"></span>
+          <label class="bar-btn" style="cursor:pointer;">↑ IMPORT CSV
+            <input type="file" id="scheduleCsvInput" accept=".csv" style="display:none" onchange="onScheduleCsvSelected(this)">
+          </label>
           <button type="button" class="bar-btn" onclick="openScheduleEntryWizard()">+ ADD ENTRY</button>
         </div>
         <div class="tbl-wrap crew-today-tbl-wrap">
@@ -610,6 +656,24 @@
             </div>
         </div>
         <div id="panelStatusSuggestion" class="panel-status-suggestion" style="display:none;"></div>
+        <div id="panelCautionRow" class="frow c2 panel-caution-row" style="display:none;">
+            <div class="fg">
+            <label class="fl">⚠ Caution / Blocker</label>
+            <select class="fs" id="jCautionReason">
+                <option value="">— None</option>
+                <option value="stuck">Stuck</option>
+                <option value="customer">Waiting on Customer</option>
+                <option value="billing">Billing Issue</option>
+                <option value="traffic_jam">Traffic Jam</option>
+                <option value="special">Special Handling</option>
+                <option value="other">Other</option>
+            </select>
+            </div>
+            <div class="fg">
+            <label class="fl">Caution Note</label>
+            <input class="fi" id="jCautionText" placeholder="Short context (optional)">
+            </div>
+        </div>
         <div class="frow c2">
             <div class="fg">
             <label class="fl">Artist</label>
@@ -619,6 +683,22 @@
             <label class="fl">Album</label>
             <input class="fi" id="jAlbum" placeholder="Album title">
             </div>
+        </div>
+        <div class="frow c2">
+            <div class="fg">
+            <label class="fl">Fulfillment</label>
+            <select class="fs" id="jFulfillment">
+                <option value="">—</option>
+                <option value="awaiting_instructions">Awaiting Instructions</option>
+                <option value="ready_for_pickup">Ready for Pickup</option>
+                <option value="ready_to_ship">Ready to Ship</option>
+                <option value="local_pickup">Local Pickup</option>
+                <option value="in_house_fulfillment">In-House Fulfillment</option>
+                <option value="held_exception">Held / Exception</option>
+                <option value="shipped">Shipped / Picked Up</option>
+            </select>
+            </div>
+            <div class="fg"></div>
         </div>
         <div class="frow c2">
             <div class="fg">
