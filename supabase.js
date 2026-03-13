@@ -453,7 +453,7 @@
       const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
       if (error) throw error;
       const { data } = client.storage.from('po-images').getPublicUrl(path);
-      return { path, url: data.publicUrl };
+      return { path, url: data.publicUrl + '?t=' + Date.now() };
     },
 
     async deletePoImage(path) {
@@ -476,7 +476,7 @@
       const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
       if (error) throw error;
       const { data } = client.storage.from('po-images').getPublicUrl(path);
-      return { path, url: data.publicUrl };
+      return { path, url: data.publicUrl + '?t=' + Date.now() };
     },
 
     /** Crew photo: path = crew/{employeeId}/photo.{ext}. Same bucket as PO. */
@@ -492,7 +492,7 @@
       const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
       if (error) throw error;
       const { data } = client.storage.from('po-images').getPublicUrl(path);
-      return { path, url: data.publicUrl };
+      return { path, url: data.publicUrl + '?t=' + Date.now() };
     },
 
     /** Note attachment: path = notes/{timestamp}_{id}.{ext}. Uses po-images bucket. */

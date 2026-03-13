@@ -2004,8 +2004,8 @@
     grid-template-areas:
         "rail    rail    rail"
         "job     job     job"
-        "mode1   mode2   mode3"
-        "mode4   mode4   mode5"
+        "mode1   mode1   mode2"
+        "mode3   mode3   mode4"
         "display display display"
         "k7      k8      k9"
         "k4      k5      k6"
@@ -2053,10 +2053,8 @@
     .log-action-packed.active { background: var(--cy2); color: var(--cy); border-color: var(--cy2); }
     .log-action-ready { color: var(--d2); }
     .log-action-ready.active { background: var(--b3); color: var(--d); border-color: var(--b3); }
-    .log-action-shipped { color: var(--d2); }
+    .log-action-shipped { color: var(--d2); font-size: 1.3em; }
     .log-action-shipped.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
-    .log-action-pickedup { color: var(--d2); }
-    .log-action-pickedup.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
     .log-action-held { color: var(--d2); }
     .log-action-held.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
     .log-fp-display {

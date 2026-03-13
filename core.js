@@ -159,6 +159,15 @@ const JOBS_COLUMNS = [
   { key: 'location', label: 'LOCATION' },
 ];
 
+const CREW_COLUMNS = [
+  { key: 'name', label: 'NAME' },
+  { key: 'role', label: 'ROLE' },
+  { key: 'specialty', label: 'SPECIALTY' },
+  { key: 'phone', label: 'PHONE' },
+  { key: 'email', label: 'EMAIL' },
+  { key: 'notes', label: 'NOTES' },
+];
+
 const PRESS_OPTS = ['', 'PRESS 1', 'PRESS 2', 'PRESS 3', '7" PRESS'];
 const STATUS_OPTS = [
   { v: 'queue', l: 'Queued' },
@@ -375,8 +384,7 @@ function logConsoleRailHTML(job, mode) {
   let num, denom, modeClass;
   if (mode === 'packed')        { num = p.packed;   denom = ordered;             modeClass = 'mode-packed'; }
   else if (mode === 'ready')    { num = p.ready;    denom = p.packed || ordered;  modeClass = 'mode-ready'; }
-  else if (mode === 'shipped')  { num = p.shipped;  denom = p.ready || ordered;   modeClass = 'mode-shipped'; }
-  else if (mode === 'picked_up') { num = p.pickedUp; denom = p.ready || ordered;  modeClass = 'mode-pickedup'; }
+  else if (mode === 'shipped')  { num = p.shipped + p.pickedUp;  denom = p.ready || ordered;   modeClass = 'mode-shipped'; }
   else if (mode === 'held')     { num = p.held;     denom = p.ready || ordered;   modeClass = 'mode-held'; }
   else if (mode === 'press')    { num = p.pressed;  denom = ordered;              modeClass = 'mode-press'; }
   else if (mode === 'qc_pass')  { num = p.qcPassed; denom = ordered;             modeClass = 'mode-qcpass'; }
@@ -574,6 +582,27 @@ function sortJobsList(jobs) {
     const va = getJobsSortValue(a, by);
     const vb = getJobsSortValue(b, by);
     const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb), undefined, { numeric: true });
+    return dir * (cmp || 0);
+  });
+}
+
+function getCrewSortValue(e, key) {
+  if (key === 'name') return (e.name || '').toLowerCase();
+  if (key === 'role') return (e.role || '').toLowerCase();
+  if (key === 'specialty') return (e.specialty || '').toLowerCase();
+  if (key === 'phone') return (e.phone || '').toLowerCase();
+  if (key === 'email') return (e.email || '').toLowerCase();
+  if (key === 'notes') return (e.notes || '').toLowerCase();
+  return '';
+}
+
+function sortCrewList(employees) {
+  const by = S.crewSortBy;
+  const dir = S.crewSortDir === 'desc' ? -1 : 1;
+  return employees.slice().sort((a, b) => {
+    const va = getCrewSortValue(a, by);
+    const vb = getCrewSortValue(b, by);
+    const cmp = String(va).localeCompare(String(vb), undefined, { numeric: true });
     return dir * (cmp || 0);
   });
 }

@@ -124,6 +124,8 @@ let S = {
   floorSortDir: 'asc',
   jobsSortBy: 'catalog',
   jobsSortDir: 'asc',
+  crewSortBy: 'name',
+  crewSortDir: 'asc',
   floorStatFilter: null,
   notesComposerOpen: false,
   notesUtilityOpen: null, // 'add' | 'search' | null
@@ -369,13 +371,10 @@ function logJobProgress(jobId, stage, qty, person, reason) {
     if (cur.ready + q > cur.packed) return Promise.resolve({ ok: false, error: 'Ready cannot exceed packed' });
   }
   if (stage === 'shipped') {
-    if (cur.shipped + q > cur.ready) return Promise.resolve({ ok: false, error: 'Shipped cannot exceed ready' });
-  }
-  if (stage === 'picked_up') {
-    if (cur.pickedUp + q > cur.ready) return Promise.resolve({ ok: false, error: 'Picked up cannot exceed ready' });
+    if (cur.shipped + cur.pickedUp + q > cur.ready) return Promise.resolve({ ok: false, error: 'Out cannot exceed ready' });
   }
   if (stage === 'held') {
-    if (cur.shipped + cur.pickedUp + cur.held + q > cur.ready) return Promise.resolve({ ok: false, error: 'Shipped + picked up + held cannot exceed ready' });
+    if (cur.shipped + cur.pickedUp + cur.held + q > cur.ready) return Promise.resolve({ ok: false, error: 'Out + held cannot exceed ready' });
   }
   const surface = (person != null && String(person).trim()) ? String(person).trim() : 'UNKNOWN';
   const who = (window.PMP?.userProfile?.display_name || window.PMP?.userProfile?.email || (S.mode === 'admin' ? 'Admin' : 'Operator') || '—');

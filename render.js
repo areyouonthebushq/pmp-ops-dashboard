@@ -433,11 +433,17 @@ function renderCrewPage() {
   if (emptyEl) {
     emptyEl.style.display = list.length === 0 && raw.length === 0 ? 'block' : 'none';
   }
-  if (list.length === 0) {
+  var table = bodyEl.closest('table');
+  if (table) {
+    var thead = table.querySelector('thead tr');
+    if (thead) thead.innerHTML = crewTableHeaderHTML();
+  }
+  var sorted = sortCrewList(list);
+  if (sorted.length === 0) {
     bodyEl.innerHTML = '';
     return;
   }
-  bodyEl.innerHTML = list.map(function (e) {
+  bodyEl.innerHTML = sorted.map(function (e) {
     var name = (e.name || '').trim() || '—';
     var role = (e.role || '').trim() || '—';
     var specialty = (e.specialty || '').trim() || '—';
@@ -1330,6 +1336,20 @@ function setJobsSort(key) {
   renderJobs();
 }
 
+function setCrewSort(key) {
+  if (S.crewSortBy === key) S.crewSortDir = S.crewSortDir === 'asc' ? 'desc' : 'asc';
+  else { S.crewSortBy = key; S.crewSortDir = 'asc'; }
+  renderCrewPage();
+}
+
+function crewTableHeaderHTML() {
+  return '<th></th>' + CREW_COLUMNS.map(c => {
+    const active = S.crewSortBy === c.key;
+    const arrow = active ? (S.crewSortDir === 'asc' ? ' ▲' : ' ▼') : '';
+    return `<th class="sortable-th ${active ? 'sort-' + S.crewSortDir : ''}" onclick="setCrewSort('${c.key}')" title="Sort by ${c.label}">${c.label}${arrow}</th>`;
+  }).join('') + '<th></th>';
+}
+
 const JOBS_TH_CLASS = { catalog: 'j-cat', artist: 'j-artist', album: 'j-album', format: 'j-spec', colorWt: 'j-spec', qty: 'j-spec', plus10: 'j-spec', status: 'j-state', due: 'j-state', press: 'j-support', assets: 'j-support', progress: 'j-support', location: 'j-support' };
 function jobsTableHeaderHTML() {
   const ths = JOBS_COLUMNS.map(c => {
@@ -1581,10 +1601,10 @@ function triggerLogRailGlow() {
   if (!el) return;
   const glowMap = {
     press: 'press', qc_pass: 'qcpass', qc_reject: 'qcreject',
-    packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'pickedup', held: 'held',
+    packed: 'packed', ready: 'ready', shipped: 'shipped', held: 'held',
   };
   const glow = glowMap[logAction] || 'press';
-  const all = ['rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject', 'rail-glow-packed', 'rail-glow-ready', 'rail-glow-shipped', 'rail-glow-pickedup', 'rail-glow-held'];
+  const all = ['rail-glow-press', 'rail-glow-qcpass', 'rail-glow-qcreject', 'rail-glow-packed', 'rail-glow-ready', 'rail-glow-shipped', 'rail-glow-held'];
   all.forEach(c => el.classList.remove(c));
   el.classList.add('rail-glow-' + glow);
   setTimeout(function () { all.forEach(c => el.classList.remove(c)); }, 750);
@@ -1645,7 +1665,7 @@ async function unifiedLogEnter() {
     return;
   }
 
-  const simpleOutbound = { packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'picked up' };
+  const simpleOutbound = { packed: 'packed', ready: 'ready', shipped: 'shipped' };
   if (simpleOutbound[logAction]) {
     try {
       const result = await logJobProgress(S.logSelectedJob, logAction, n, 'Log');
@@ -1789,7 +1809,6 @@ function renderLog() {
     if (!(active && active.tagName === 'SELECT' && picker.contains(active))) {
       const allJobs = sortJobsByCatalogAsc(S.jobs.filter(j => {
         if (isJobArchived(j)) return false;
-        if (logMode === 'outbound') return ['assembly', 'hold', 'done'].includes(j.status);
         return j.status !== 'done';
       }));
       const selectedId = S.logSelectedJob || '';
@@ -1817,17 +1836,16 @@ function renderLog() {
   }
 
   const extraBtn4 = document.getElementById('logBtnMode4');
-  const extraBtn5 = document.getElementById('logBtnMode5');
   if (extraBtn4) extraBtn4.style.display = logMode === 'outbound' ? '' : 'none';
-  if (extraBtn5) extraBtn5.style.display = logMode === 'outbound' ? '' : 'none';
+  const extraBtn5 = document.getElementById('logBtnMode5');
+  if (extraBtn5) extraBtn5.style.display = 'none';
 
   const modeActions = logMode === 'outbound'
     ? [
         { id: 'logBtnPress',    key: 'packed',    label: 'PACKED',    add: 'log-action-packed',   rm: 'log-action-press' },
         { id: 'logBtnQcPass',   key: 'ready',     label: 'READY',     add: 'log-action-ready',    rm: 'log-action-qcpass' },
-        { id: 'logBtnQcReject', key: 'shipped',   label: 'SHIPPED',   add: 'log-action-shipped',  rm: 'log-action-qcreject' },
-        { id: 'logBtnMode4',    key: 'picked_up', label: 'PICKED UP', add: 'log-action-pickedup', rm: '' },
-        { id: 'logBtnMode5',    key: 'held',      label: 'HELD',      add: 'log-action-held',     rm: '' },
+        { id: 'logBtnQcReject', key: 'shipped',   label: '\uD83E\uDD86',  add: 'log-action-shipped',  rm: 'log-action-qcreject' },
+        { id: 'logBtnMode4',    key: 'held',      label: 'HELD',      add: 'log-action-held',     rm: 'log-action-pickedup' },
       ]
     : [
         { id: 'logBtnPress',    key: 'press',     label: 'PRESS',  add: 'log-action-press',     rm: 'log-action-packed' },
@@ -1850,8 +1868,7 @@ function renderLog() {
     qc_reject: { label: 'LOG REJECT', cls: 'log-enter-qcreject' },
     packed: { label: 'LOG PACKED', cls: 'log-enter-packed' },
     ready: { label: 'LOG READY', cls: 'log-enter-ready' },
-    shipped: { label: 'LOG SHIPPED', cls: 'log-enter-shipped' },
-    picked_up: { label: 'LOG PICKED UP', cls: 'log-enter-pickedup' },
+    shipped: { label: 'LOG \uD83E\uDD86', cls: 'log-enter-shipped' },
     held: { label: 'LOG HELD', cls: 'log-enter-held' },
   };
   const enterBtn = document.getElementById('logEnterBtn');
@@ -1861,10 +1878,10 @@ function renderLog() {
     enterBtn.className = 'log-enter-btn ' + e.cls;
   }
 
-  const allModeClasses = ['mode-press', 'mode-qcpass', 'mode-qcreject', 'mode-packed', 'mode-ready', 'mode-shipped', 'mode-pickedup', 'mode-held'];
+  const allModeClasses = ['mode-press', 'mode-qcpass', 'mode-qcreject', 'mode-packed', 'mode-ready', 'mode-shipped', 'mode-held'];
   const actionModeCls = {
     press: 'mode-press', qc_pass: 'mode-qcpass', qc_reject: 'mode-qcreject',
-    packed: 'mode-packed', ready: 'mode-ready', shipped: 'mode-shipped', picked_up: 'mode-pickedup', held: 'mode-held',
+    packed: 'mode-packed', ready: 'mode-ready', shipped: 'mode-shipped', held: 'mode-held',
   };
   const consoleEl = document.getElementById('logConsole');
   if (consoleEl) {
@@ -1891,7 +1908,7 @@ function renderLog() {
     const pressFeedStages = { pressed: 1, qc_passed: 1 };
     const outboundFeedStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
     const activeFeedStages = logMode === 'outbound' ? outboundFeedStages : pressFeedStages;
-    const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'PACKED', ready: 'READY', shipped: 'SHIPPED', picked_up: 'PICKED UP', held: 'HELD' };
+    const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'PACKED', ready: 'READY', shipped: '\uD83E\uDD86 OUT', picked_up: '\uD83E\uDD86 OUT', held: 'HELD' };
     const stageCls   = { pressed: 'pressed', qc_passed: 'qc_passed', packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'picked_up', held: 'held' };
 
     feedJobs.forEach(j => {

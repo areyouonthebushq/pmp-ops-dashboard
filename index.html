@@ -482,7 +482,13 @@
           <table class="crew-tbl">
             <thead><tr>
               <th></th>
-              <th>NAME</th><th>ROLE</th><th>SPECIALTY</th><th>PHONE</th><th>EMAIL</th><th>NOTES</th><th></th>
+              <th class="sortable-th" onclick="setCrewSort('name')" title="Sort by NAME">NAME</th>
+              <th class="sortable-th" onclick="setCrewSort('role')" title="Sort by ROLE">ROLE</th>
+              <th class="sortable-th" onclick="setCrewSort('specialty')" title="Sort by SPECIALTY">SPECIALTY</th>
+              <th class="sortable-th" onclick="setCrewSort('phone')" title="Sort by PHONE">PHONE</th>
+              <th class="sortable-th" onclick="setCrewSort('email')" title="Sort by EMAIL">EMAIL</th>
+              <th class="sortable-th" onclick="setCrewSort('notes')" title="Sort by NOTES">NOTES</th>
+              <th></th>
             </tr></thead>
             <tbody id="crewBody"></tbody>
           </table>
