@@ -13,7 +13,7 @@ function getFloorStats() {
     { key: 'active', v: active.length, l: 'ACTIVE', s: 'pressing/assembly', c: '' },
     { key: 'queued', v: open.filter(j => j.status === 'queue').length, l: 'QUEUED', s: 'waiting', c: '' },
     { key: 'overdue', v: overdue.length, l: 'OVERDUE', s: 'past due date', c: overdue.length ? 'red' : '' },
-    { key: 'cautioned', v: cautioned.length, l: '⚠ ACHTUNG', s: 'needs attention', c: cautioned.length ? 'warn' : '' },
+    { key: 'cautioned', v: cautioned.length, l: '\u26A0\uFE0E ACHTUNG', s: 'needs attention', c: cautioned.length ? 'warn' : '' },
     { key: 'total', v: open.length, l: 'TOTAL OPEN', s: 'jobs in system', c: '' },
   ];
 }
@@ -64,7 +64,7 @@ function floorTableRowHTML(j, opts) {
   const cautioned = isJobCautioned(j);
   const needsNote = cautioned && cautionNeedsNote(j);
   const trClass = cautioned ? ' class="job-row-cautioned"' : '';
-  const cautionIcon = cautioned ? ' <span class="floor-caution-icon' + (needsNote ? '' : ' floor-caution-satisfied') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="ACHTUNG — view notes">⚠</span>' : '';
+  const cautionIcon = cautioned ? ' <span class="floor-caution-icon' + (needsNote ? '' : ' floor-caution-satisfied') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="ACHTUNG — view notes">\u26A0\uFE0E</span>' : '';
   return `
   <tr${trClass}>
   <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
@@ -822,7 +822,7 @@ function renderFloorCard() {
     <span class="fc-due ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
     <span class="fc-loc">${j.location ? '📍 ' + j.location : '—'}</span>
     ${j.fulfillment_phase ? '<span class="fc-fulfill">' + fulfillmentPhasePill(j.fulfillment_phase) + '</span>' : ''}
-    ${isJobCautioned(j) ? '<span class="fc-caution floor-caution-icon' + (cautionNeedsNote(j) ? '' : ' floor-caution-satisfied') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="ACHTUNG — view notes">⚠</span>' : ''}
+    ${isJobCautioned(j) ? '<span class="fc-caution floor-caution-icon' + (cautionNeedsNote(j) ? '' : ' floor-caution-satisfied') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="ACHTUNG — view notes">\u26A0\uFE0E</span>' : ''}
   </div>
   <div class="fc-qty-strip">
     <span>Ordered: <strong>${(prog.p.ordered || 0).toLocaleString()}</strong></span>
@@ -1067,7 +1067,7 @@ function renderAssetsOverlay() {
     const showPulse = cautionLocked && (pulseActive[a.key] || S.assetsOverlayPulseKeys[a.key]);
     const rowClass = status === 'received' ? 'asset-row-received' : status === 'na' ? 'asset-row-na' : status === 'caution' ? 'asset-row-caution' : '';
     const lockedClass = cautionLocked ? ' asset-row-caution-locked' : '';
-    const icon = status === 'received' ? '✓' : status === 'na' ? '−' : status === 'caution' ? '⚠' : '';
+    const icon = status === 'received' ? '✓' : status === 'na' ? '−' : status === 'caution' ? '\u26A0\uFE0E' : '';
     const statClass = status === 'received' ? 'astat astat-received' : status === 'na' ? 'astat astat-na' : status === 'caution' ? 'astat astat-caution' : 'astat';
     const addingNote = S.assetsOverlayAddingNoteKey === a.key;
     const jobId = assetsOverlayState.jobId || '';
@@ -1261,7 +1261,7 @@ function renderPackCard() {
     var cautionLocked = status === 'caution' && cautionSince && !hasNoteSinceCaution;
     var rowClass = status === 'ready' ? 'pk-row-ready' : status === 'na' ? 'pk-row-na' : status === 'caution' ? 'pk-row-caution' : '';
     var lockedClass = cautionLocked ? ' pk-row-caution-locked' : '';
-    var icon = status === 'ready' ? '✓' : status === 'na' ? '−' : status === 'caution' ? '⚠' : '';
+    var icon = status === 'ready' ? '✓' : status === 'na' ? '−' : status === 'caution' ? '\u26A0\uFE0E' : '';
     var statClass = status === 'ready' ? 'pk-stat pk-stat-ready' : status === 'na' ? 'pk-stat pk-stat-na' : status === 'caution' ? 'pk-stat pk-stat-caution' : 'pk-stat';
     if (cautionLocked) statClass += ' pk-btn-pulse';
     var noteSnippet = item.note ? '<span class="pk-note-hint">' + escapeHtml(item.note.length > 30 ? item.note.slice(0, 30) + '…' : item.note) + '</span>' : '';
@@ -1458,7 +1458,7 @@ function renderJobs() {
         + (ra.shipped  ? '<span class="live-quack" title="Quacked (1h)">' + QUACK_ICON + '</span>' : '');
       const st = j.status || 'queue';
       const statusMicro = st === 'pressing' ? '' : '<span class="status-micro st-' + st + '">' + st.toUpperCase() + '</span>';
-      const cautionDot = jCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">⚠</span>' : '';
+      const cautionDot = jCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">\u26A0\uFE0E</span>' : '';
       const pressCell = pi.onPress
         ? '<span class="press-live' + (ra.pressed ? ' press-live-glow' : '') + '">' + escapeHtml(pi.onPress) + '</span>'
         : pi.onDeck
@@ -1499,7 +1499,7 @@ function renderJobs() {
         + (ra.shipped  ? '<span class="live-quack" title="Quacked (1h)">' + QUACK_ICON + '</span>' : '');
       const st = j.status || 'queue';
       const statusMicro = st === 'pressing' ? '' : '<span class="status-micro st-' + st + '">' + st.toUpperCase() + '</span>';
-      const cautionDot = jcCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">⚠</span>' : '';
+      const cautionDot = jcCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">\u26A0\uFE0E</span>' : '';
       const pressTag = pi.onPress
         ? '<span class="jc-detail press-live' + (ra.pressed ? ' press-live-glow' : '') + '">⬡ ' + escapeHtml(pi.onPress) + '</span>'
         : pi.onDeck
@@ -3170,7 +3170,7 @@ function renderNotesSection() {
       const asset = e.assetLabel || e.assetKey || '';
       const assetObj = e.assetKey && job.assets && job.assets[e.assetKey];
       const isCaution = !!(e.assetKey && assetObj && typeof getAssetStatus === 'function' && getAssetStatus(assetObj) === 'caution');
-      const cautionIcon = isCaution ? '<span class="notes-entry-caution-icon" aria-hidden="true">⚠</span> ' : '';
+      const cautionIcon = isCaution ? '<span class="notes-entry-caution-icon" aria-hidden="true">\u26A0\uFE0E</span> ' : '';
       const assetHtml = asset ? `<div style="font-size:10px;color:var(--d3);text-align:right;margin-bottom:2px;">${cautionIcon}${escapeHtml(asset)}</div>` : '';
       return `<div class="progress-entry">${assetHtml}<strong>${escapeHtml(e.person || 'Unknown')}</strong> · ${escapeHtml(time)}<br>${escapeHtml(e.text)}</div>`;
     }).join('') || '<div class="progress-empty">No notes yet.</div>';
@@ -3316,7 +3316,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const cat = e.catalog ? escapeHtml(e.catalog) : escapeHtml(e.jobId || '—');
         const artist = e.artist ? escapeHtml(e.artist) : '—';
         const asset = e.assetLabel || e.assetKey || '';
-        const cautionIcon = e.isCautionAsset ? '<span class="notes-entry-caution-icon" aria-hidden="true">⚠</span> ' : '';
+        const cautionIcon = e.isCautionAsset ? '<span class="notes-entry-caution-icon" aria-hidden="true">\u26A0\uFE0E</span> ' : '';
         const assetHtml = asset ? `<div class="notes-entry-asset">${cautionIcon}${escapeHtml(asset)}</div>` : '';
         const rowCls = e.jobId === '!ALERT' ? ' notes-row-alert' : '';
         const thumbHtml = e.attachment_url

@@ -1033,6 +1033,7 @@
     border-left: 1px solid var(--b1);
     padding-left: var(--space-md);
     font-weight: 600;
+    white-space: nowrap;
     }
     #pg-jobs #jobsTbl tbody td.j-press {
     font-size: 12px; white-space: nowrap; min-width: 80px;
@@ -1102,8 +1103,11 @@
     .press-live { color: var(--g); font-weight: 600; white-space: nowrap; }
     .press-live-glow { animation: pressGlow 3s ease-in-out infinite; }
     @keyframes pressGlow {
-      0%, 100% { text-shadow: 0 0 3px rgba(0,230,118,0.2); }
-      50% { text-shadow: 0 0 6px rgba(0,230,118,0.4); }
+      0%, 100% { text-shadow: 0 0 2px rgba(0,230,118,0.15); }
+      50% { text-shadow: 0 0 4px rgba(0,230,118,0.3); }
+    }
+    @media (max-width: 768px) {
+      .press-live-glow { animation: none; text-shadow: 0 0 2px rgba(0,230,118,0.15); }
     }
     .press-deck { color: var(--d3); font-weight: 500; white-space: nowrap; }
 
