@@ -2917,6 +2917,8 @@ function clearNotesComposerAttachment() {
   if (hint) hint.textContent = '';
   const input = document.getElementById('notesAttachmentInput');
   if (input) input.value = '';
+  const cell = document.getElementById('notesAttachCell');
+  if (cell) cell.style.display = '';
 }
 
 function onNotesAttachmentSelected(input) {
@@ -2935,6 +2937,8 @@ function onNotesAttachmentSelected(input) {
     S.notesPendingAttachment = { attachment_url: res.url, attachment_name: file.name, attachment_type: 'image' };
     const hint = document.getElementById('notesAttachmentHint');
     if (hint) hint.textContent = '1 image';
+    const cell = document.getElementById('notesAttachCell');
+    if (cell) cell.style.display = 'none';
     input.value = '';
   }).catch(function (e) {
     if (typeof toastError === 'function') toastError(e && e.message ? e.message : 'Upload failed');
