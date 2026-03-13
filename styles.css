@@ -1128,15 +1128,7 @@
     #panelCautionBtn.caution-active { border-color: #ffb300; color: #ffb300; background: rgba(255,179,0,0.12); box-shadow: 0 0 6px rgba(255,179,0,0.3); }
     #panelCautionBtn.caution-pulse { animation: cautionPulse 1.6s ease-in-out infinite; }
 
-    /* RSP caution drawer — slides between Icon Zone and form body */
-    .rsp-caution-drawer {
-      background: rgba(255,179,0,0.06); border-bottom: 1px solid rgba(255,179,0,0.25);
-      padding: var(--space-sm) var(--space-lg); overflow: hidden;
-      animation: rspCautionOpen 0.15s ease-out;
-    }
-    .rsp-caution-inner { display: flex; gap: var(--space-sm); align-items: flex-end; }
-    .rsp-caution-inner .fg { flex: 1; }
-    @keyframes rspCautionOpen { from { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; } to { max-height: 80px; opacity: 1; } }
+    /* (caution drawer removed — replaced by caution-popup overlay) */
     .caution-pill { cursor: pointer; }
 
     /* ============================================================ SLIDE PANEL — Single scroll form */
@@ -1310,6 +1302,51 @@
     cursor: pointer; transition: all 0.15s;
     }
     .po-upload-prompt-cancel:hover { border-color: var(--d2); color: var(--d2); }
+
+    /* Caution popup overlay */
+    .caution-popup {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.7); display: none;
+    align-items: center; justify-content: center;
+    }
+    .caution-popup.open { display: flex; }
+    .caution-popup-card {
+    border: 1px solid rgba(255,179,0,0.4); background: var(--s1);
+    padding: var(--space-lg); max-width: 340px; width: 90%;
+    display: flex; flex-direction: column; gap: var(--space-md);
+    text-align: center;
+    }
+    .caution-popup-title {
+    font-family: 'Special Elite', cursive; font-size: 16px;
+    letter-spacing: 2px; color: #ffb300;
+    }
+    .caution-popup-sub {
+    font-size: 12px; color: var(--d3); letter-spacing: 0.5px;
+    }
+    .caution-popup-select {
+    padding: var(--space-sm); background: var(--s2); color: var(--d);
+    border: 1px solid var(--b2); font-family: 'Inconsolata', monospace; font-size: 13px;
+    cursor: pointer;
+    }
+    .caution-popup-input {
+    padding: var(--space-sm); background: var(--s2); color: var(--d);
+    border: 1px solid var(--b2); font-family: 'Inconsolata', monospace; font-size: 13px;
+    }
+    .caution-popup-input::placeholder { color: var(--d3); }
+    .caution-popup-btn {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid rgba(255,179,0,0.5); background: rgba(255,179,0,0.12); color: #ffb300;
+    font-family: 'Inconsolata', monospace; font-size: 13px; font-weight: 700;
+    letter-spacing: 1px; cursor: pointer; transition: all 0.15s;
+    }
+    .caution-popup-btn:hover { background: #ffb300; color: #000; border-color: #ffb300; box-shadow: 0 0 12px rgba(255,179,0,0.4); }
+    .caution-popup-cancel {
+    padding: var(--space-xs) var(--space-md);
+    border: 1px solid var(--b2); background: transparent; color: var(--d3);
+    font-family: 'Inconsolata', monospace; font-size: 11px;
+    cursor: pointer; transition: all 0.15s;
+    }
+    .caution-popup-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
     .panel-notes .fg { margin-bottom: var(--space-sm); }
     .panel-notes .fl { font-size:9px; color: var(--d3); letter-spacing:1.5px; }
@@ -3133,6 +3170,7 @@
     padding: 0;
     }
     .notes-feed .progress-entry {
+    position: relative;
     display: flex;
     flex-direction: row;
     align-items: flex-start;
@@ -3144,15 +3182,18 @@
     .notes-feed .progress-entry-inner {
     flex: 1;
     min-width: 0;
+    width: 100%;
     display: grid;
     grid-template-columns: 1fr;
     gap: 0;
     }
     .notes-feed .notes-entry-thumb {
+    position: absolute;
+    top: var(--space-md);
+    right: 0;
     flex-shrink: 0;
     width: 20px;
     height: 20px;
-    margin-right: var(--space-sm);
     border-radius: 50%;
     overflow: hidden;
     border: 1px solid var(--b2);
@@ -3200,6 +3241,7 @@
     color: var(--d3);
     margin-top: var(--space-xs);
     text-align: right;
+    padding-right: var(--space-md);
     }
     .notes-feed .notes-entry-asset {
     font-size: 10px;
@@ -3207,6 +3249,7 @@
     color: var(--d3);
     margin-top: var(--space-xs);
     text-align: right;
+    padding-right: var(--space-md);
     }
     .notes-entry-caution-icon {
     color: var(--w);

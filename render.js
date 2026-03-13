@@ -1607,7 +1607,7 @@ function addTodo(key) {
 // ============================================================
 let logNumpadValue = '0';
 let logMode = 'ship';
-let logAction = 'packed';
+let logAction = '';
 let logViewDate = new Date().toDateString();
 let pendingLogRejectQty = 0;
 
@@ -1643,7 +1643,7 @@ function setLogAction(action) {
 
 function setLogMode(mode) {
   logMode = mode;
-  logAction = mode === 'ship' ? 'packed' : 'press';
+  logAction = '';
   logNumpadValue = '0';
   try { sessionStorage.setItem('logMode', mode); } catch (e) {}
   renderLog();

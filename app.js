@@ -1297,19 +1297,13 @@ function openPanel(id) {
       });
     }
     updatePoImageUI(j);
-    var cautionReasonEl = document.getElementById('jCautionReason');
-    var cautionTextEl = document.getElementById('jCautionText');
-    if (cautionReasonEl) cautionReasonEl.value = (j.caution && j.caution.reason) ? j.caution.reason : '';
-    if (cautionTextEl) cautionTextEl.value = (j.caution && j.caution.text) ? j.caution.text : '';
     var cautionBtn = document.getElementById('panelCautionBtn');
-    var cautionDrawer = document.getElementById('panelCautionRow');
-    var hasCaution = isJobCautioned(j);
-    var needsCautionNote = hasCaution && cautionNeedsNote(j);
     if (cautionBtn) {
+      var hasCaution = isJobCautioned(j);
+      var needsCautionNote = hasCaution && cautionNeedsNote(j);
       cautionBtn.classList.toggle('caution-active', hasCaution);
       cautionBtn.classList.toggle('caution-pulse', needsCautionNote);
     }
-    if (cautionDrawer) cautionDrawer.style.display = hasCaution ? '' : 'none';
   } else {
     document.getElementById('panelId').textContent = 'NEW JOB';
     document.getElementById('panelSub').textContent = '';
@@ -1320,9 +1314,7 @@ function openPanel(id) {
     if (restoreBtn) restoreBtn.style.display = 'none';
     clearFields();
     var cautionBtn = document.getElementById('panelCautionBtn');
-    var cautionDrawer = document.getElementById('panelCautionRow');
-    if (cautionBtn) cautionBtn.classList.remove('caution-active');
-    if (cautionDrawer) cautionDrawer.style.display = 'none';
+    if (cautionBtn) { cautionBtn.classList.remove('caution-active'); cautionBtn.classList.remove('caution-pulse'); }
   }
   buildAssetList();
   renderProgressSection();
@@ -2352,22 +2344,7 @@ async function saveJob() {
       job.archived_by = existing.archived_by || null;
       job.archive_reason = existing.archive_reason || null;
       if (!job.fulfillment_phase) job.fulfillment_phase = existing.fulfillment_phase || null;
-      var cautionReasonEl = document.getElementById('jCautionReason');
-      var cautionTextEl = document.getElementById('jCautionText');
-      var panelCautionReason = cautionReasonEl ? cautionReasonEl.value : '';
-      if (panelCautionReason) {
-        var isNewCaution = !(existing.caution && existing.caution.reason === panelCautionReason && existing.caution.since);
-        var existingSince = isNewCaution ? new Date().toISOString() : existing.caution.since;
-        var cautionText = cautionTextEl ? cautionTextEl.value.trim() : '';
-        job.caution = { reason: panelCautionReason, since: existingSince, text: cautionText };
-        if (isNewCaution && cautionText) {
-          ensureNotesLog(job);
-          var person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
-          job.notesLog.push({ text: '⚠ ' + cautionReasonLabel(panelCautionReason).toUpperCase() + ': ' + cautionText, person: person, timestamp: existingSince, cautionContext: true });
-        }
-      } else {
-        job.caution = null;
-      }
+      job.caution = existing.caution || null;
       job.packCard = existing.packCard || null;
     }
     const notesEl = document.getElementById('jNotesInput');
@@ -2406,18 +2383,71 @@ async function saveJob() {
 }
 
 // ============================================================
-// RSP Icon Zone — ACHTUNG drawer toggle
+// RSP Icon Zone — ACHTUNG popup (self-contained, no edit mode)
 // ============================================================
 function togglePanelCaution() {
-  var drawer = document.getElementById('panelCautionRow');
-  var btn = document.getElementById('panelCautionBtn');
-  if (!drawer) return;
-  var visible = drawer.style.display !== 'none';
-  drawer.style.display = visible ? 'none' : '';
-  if (!visible) {
-    var reasonEl = document.getElementById('jCautionReason');
-    if (reasonEl) reasonEl.focus();
+  var jobId = S.editId;
+  if (!jobId) return;
+  var j = S.jobs.find(function (x) { return x.id === jobId; });
+  if (!j) return;
+  if (isJobCautioned(j)) {
+    goToNotesWithFilter(j.id);
+  } else {
+    openCautionPopup(j.id);
   }
+}
+
+function openCautionPopup(jobId) {
+  var el = document.getElementById('cautionPopup');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'cautionPopup';
+    el.className = 'caution-popup';
+    var opts = CAUTION_REASONS.filter(function (r) { return r.v !== ''; }).map(function (r) {
+      return '<option value="' + r.v + '">' + r.l + '</option>';
+    }).join('');
+    el.innerHTML =
+      '<div class="caution-popup-card">' +
+        '<div class="caution-popup-title">ACHTUNG</div>' +
+        '<div class="caution-popup-sub">Flag this job for attention</div>' +
+        '<select class="caution-popup-select" id="cautionPopupReason">' + opts + '</select>' +
+        '<input class="caution-popup-input" id="cautionPopupText" placeholder="Context note (optional)">' +
+        '<button type="button" class="caution-popup-btn" id="cautionPopupAdd">ADD</button>' +
+        '<button type="button" class="caution-popup-cancel" onclick="closeCautionPopup()">Cancel</button>' +
+      '</div>';
+    el.onclick = function (e) { if (e.target === el) closeCautionPopup(); };
+    document.body.appendChild(el);
+  }
+  el.dataset.jobId = jobId;
+  var reasonEl = document.getElementById('cautionPopupReason');
+  var textEl = document.getElementById('cautionPopupText');
+  if (reasonEl) reasonEl.selectedIndex = 0;
+  if (textEl) textEl.value = '';
+  var addBtn = document.getElementById('cautionPopupAdd');
+  if (addBtn) addBtn.onclick = function () { submitCautionPopup(); };
+  if (textEl) textEl.onkeydown = function (e) { if (e.key === 'Enter') submitCautionPopup(); };
+  el.classList.add('open');
+  if (reasonEl) reasonEl.focus();
+}
+
+function closeCautionPopup() {
+  var el = document.getElementById('cautionPopup');
+  if (el) el.classList.remove('open');
+}
+
+function submitCautionPopup() {
+  var el = document.getElementById('cautionPopup');
+  if (!el) return;
+  var jobId = el.dataset.jobId;
+  var reasonEl = document.getElementById('cautionPopupReason');
+  var textEl = document.getElementById('cautionPopupText');
+  var reason = reasonEl ? reasonEl.value : '';
+  var text = textEl ? textEl.value.trim() : '';
+  if (!reason) { toast('Select a reason'); return; }
+  setCaution(jobId, reason, text);
+  closeCautionPopup();
+  var btn = document.getElementById('panelCautionBtn');
+  if (btn) btn.classList.add('caution-active');
 }
 
 // ============================================================
