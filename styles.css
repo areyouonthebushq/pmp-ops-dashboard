@@ -1079,11 +1079,7 @@
 
     /* Press column — live state indicators */
     .press-live { color: var(--g); font-weight: 600; }
-    .press-live-glow { animation: pressGlow 1.8s ease-in-out infinite; }
-    @keyframes pressGlow {
-      0%, 100% { text-shadow: 0 0 4px var(--g); }
-      50% { text-shadow: 0 0 10px var(--g), 0 0 2px var(--g); }
-    }
+    .press-live-glow { text-shadow: 0 0 6px rgba(0,230,118,0.35); }
     .press-deck { color: var(--d3); font-weight: 500; }
 
     /* Caution dot — symbol-only in LIVE cell */
