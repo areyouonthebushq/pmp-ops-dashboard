@@ -814,11 +814,12 @@
     .press-card.offline  { border-left-color: var(--r); }
     .press-card.idle     { border-left-color: var(--d3); }
 
-    .press-card-wrap { display: flex; flex-direction: column; gap: var(--space-xs); }
+    .press-card-wrap { display: flex; flex-direction: column; gap: 0; background: var(--s1); }
     .press-card-on-deck {
     opacity: 0.6;
     cursor: pointer;
     border-left-color: var(--d3);
+    border-top: 1px solid var(--b1);
     }
     .press-card-on-deck:hover { opacity: 0.85; }
     .pc-head-on-deck { margin-bottom: var(--space-xs); display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; }
@@ -3418,6 +3419,8 @@
     .nav-item { padding: var(--space-md) var(--space-lg); font-size:16px; }
     .press-grid { grid-template-columns:1fr; }
     .stats { grid-template-columns:repeat(3,1fr); }
+    .floor-shell { padding: var(--space-sm); }
+    .press-card { padding: var(--space-md); }
 
     /* Hide the table on Jobs page — show card layout instead */
     #pg-jobs .tbl-wrap { display:none; }
