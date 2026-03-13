@@ -1456,7 +1456,7 @@ function renderJobs() {
         + (ra.rejected ? '<span class="live-dot live-dot-reject" title="Rejected (1h)"></span>' : '')
         + (ra.packed   ? '<span class="live-dot live-dot-packed" title="Boxed (1h)"></span>' : '')
         + (ra.ready    ? '<span class="live-dot live-dot-ready" title="Ready (1h)"></span>' : '')
-        + (ra.shipped  ? '<span class="live-dot live-dot-shipped" title="Quacked (1h)"></span>' : '');
+        + (ra.shipped  ? '<span class="live-quack" title="Quacked (1h)">' + QUACK_ICON + '</span>' : '');
       const st = j.status || 'queue';
       const statusMicro = st === 'pressing' ? '' : '<span class="status-micro st-' + st + '">' + st.toUpperCase() + '</span>';
       const cautionDot = jCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">⚠</span>' : '';
@@ -1497,7 +1497,7 @@ function renderJobs() {
         + (ra.rejected ? '<span class="live-dot live-dot-reject" title="Rejected (1h)"></span>' : '')
         + (ra.packed   ? '<span class="live-dot live-dot-packed" title="Boxed (1h)"></span>' : '')
         + (ra.ready    ? '<span class="live-dot live-dot-ready" title="Ready (1h)"></span>' : '')
-        + (ra.shipped  ? '<span class="live-dot live-dot-shipped" title="Quacked (1h)"></span>' : '');
+        + (ra.shipped  ? '<span class="live-quack" title="Quacked (1h)">' + QUACK_ICON + '</span>' : '');
       const st = j.status || 'queue';
       const statusMicro = st === 'pressing' ? '' : '<span class="status-micro st-' + st + '">' + st.toUpperCase() + '</span>';
       const cautionDot = jcCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">⚠</span>' : '';

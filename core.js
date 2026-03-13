@@ -100,8 +100,7 @@ function packBarSegmentedHTML(job) {
 function packHealthHTML(job) {
   var h = packHealth(job);
   if (!h.total) return '<span class="ph-empty">—</span>';
-  var color = h.pct >= 1 ? 'var(--cy)' : h.pct >= 0.5 ? 'var(--w)' : 'var(--d3)';
-  return '<div class="ph">' + packBarSegmentedHTML(job) + '<span class="ph-count" style="color:' + color + '">' + h.done + '/' + h.total + '</span></div>';
+  return '<div class="ph">' + packBarSegmentedHTML(job) + '</div>';
 }
 
 const DEFAULT_PRESSES = [
@@ -502,11 +501,7 @@ function assetBarSegmentedHTML(job) {
 }
 
 function ahHTML(job) {
-  const { done, total, pct } = assetHealth(job);
-  return `<div class="ah">
-    ${assetBarSegmentedHTML(job)}
-    <span class="ah-count" style="color:${pct >= 1 ? 'var(--g)' : pct >= 0.5 ? 'var(--w)' : 'var(--r)'}">${done}/${total}</span>
-  </div>`;
+  return `<div class="ah">${assetBarSegmentedHTML(job)}</div>`;
 }
 
 function dueClass(due) {
