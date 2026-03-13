@@ -247,12 +247,13 @@
               <input class="search-input" id="jobSearch" placeholder="SEARCH JOBS…">
             </div>
             <span class="search-count" id="jobCount"></span>
-            <button type="button" class="bar-btn" onclick="openNewJobChooser()">+ ADD JOB</button>
-            <label class="bar-btn" style="cursor:pointer;border:1px solid var(--b2);padding: var(--space-sm) var(--space-md);">
-              ↑ IMPORT CSV
-              <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(this)">
-            </label>
-            <button type="button" class="bar-btn" onclick="exportCSV()" title="Download jobs as CSV">↓ CSV</button>
+            <div class="jobs-icon-zone">
+              <button type="button" class="jobs-icon-btn" onclick="openNewJobChooser()" title="Add job">+</button>
+              <label class="jobs-icon-btn" title="Import CSV">↑
+                <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(this)">
+              </label>
+              <button type="button" class="jobs-icon-btn" onclick="exportCSV()" title="Download CSV">↓</button>
+            </div>
           </div>
         </div>
         <div class="tbl-wrap">

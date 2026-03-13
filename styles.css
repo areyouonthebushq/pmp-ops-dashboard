@@ -2944,6 +2944,15 @@
     .jobs-header-actions {
     display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap;
     }
+    .jobs-icon-zone { display: flex; gap: var(--space-sm); }
+    .jobs-icon-btn {
+    background: none; border: 1px solid var(--b2); color: var(--d2);
+    width: 30px; height: 30px; cursor: pointer; font-size: 16px;
+    transition: all 0.15s; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inconsolata', monospace; padding: 0;
+    }
+    .jobs-icon-btn:hover { border-color: var(--g); color: var(--g); }
     .audit-toolbar { display:flex; align-items:center; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap:wrap; }
     .audit-toolbar label { font-size:11px; letter-spacing:1px; color: var(--d3); }
     /* ----- NOTES PAGE: terminal containment (sibling to LOG) ----- */
