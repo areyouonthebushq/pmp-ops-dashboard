@@ -1049,25 +1049,23 @@
     #pg-jobs #jobsTbl tbody tr[data-status="hold"] { border-left-color: var(--r); }
     #pg-jobs #jobsTbl tbody tr[data-status="queue"] { border-left-color: var(--d3); }
 
-    /* Live telemetry dots — jobs board */
-    .j-live-cell { display: flex; align-items: center; gap: 5px; }
-    .jc-live-wrap { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+    /* Live telemetry dots — jobs board (colors reference LOG button active states) */
+    .j-live-cell { display: flex; align-items: center; gap: 4px; }
+    .jc-live-wrap { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
     .live-dot {
       width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-    }
-    .live-dot-press {
-      background: var(--g);
-      box-shadow: 0 0 4px var(--g);
       animation: livePulse 2s ease-in-out infinite;
     }
-    .live-dot-ship {
-      background: #5ba8ff;
-      box-shadow: 0 0 4px #5ba8ff;
-      animation: livePulse 2.4s ease-in-out infinite;
-    }
+    .live-dot-press   { background: var(--g); box-shadow: 0 0 4px var(--g); }
+    .live-dot-pressed { background: var(--w); box-shadow: 0 0 4px var(--w); animation-delay: 0.1s; }
+    .live-dot-qcpass  { background: var(--g); box-shadow: 0 0 4px var(--g); animation-delay: 0.2s; }
+    .live-dot-reject  { background: var(--r); box-shadow: 0 0 4px var(--r); animation-delay: 0.3s; }
+    .live-dot-packed  { background: var(--cy); box-shadow: 0 0 4px var(--cy); animation-delay: 0.4s; }
+    .live-dot-ready   { background: var(--d); box-shadow: 0 0 3px var(--d); animation-delay: 0.5s; }
+    .live-dot-shipped { background: var(--g2); box-shadow: 0 0 4px var(--g2); animation-delay: 0.6s; }
     @keyframes livePulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.45; transform: scale(0.8); }
+      50% { opacity: 0.4; transform: scale(0.75); }
     }
     .status-micro {
       font-size: 9px; letter-spacing: 0.6px; font-weight: 600;
@@ -2023,7 +2021,7 @@
     .log-main.mode-qcreject { border-color: var(--r2); }
     .log-main.mode-packed { border-color: var(--cy2); }
     .log-main.mode-ready { border-color: var(--b3); }
-    .log-main.mode-shipped { border-color: var(--g2); }
+    .log-main.mode-shipped { border-color: var(--g); }
     .log-main.mode-pickedup { border-color: var(--g2); }
     .log-main.mode-held { border-color: var(--w2); }
     .log-console-rail { grid-area: rail; min-height: 36px; border-bottom: 1px solid var(--b1); padding: var(--space-xs) 0; }
@@ -2115,12 +2113,14 @@
     .log-fp-qcrej { grid-area: mode3; }
     .log-fp-mode4 { grid-area: mode4; }
     .log-fp-mode5 { grid-area: mode5; }
+    .log-fp-mode6 { grid-area: mode6; }
     .log-main.log-faceplate.log-ship-grid {
-    grid-template-rows: auto auto 48px 72px 56px 56px 56px 56px 56px;
+    grid-template-rows: auto auto 44px 44px 72px 56px 56px 56px 56px 56px;
     grid-template-areas:
         "rail    rail    rail"
         "job     job     job"
         "mode1   mode2   mode3"
+        "mode4   mode5   mode6"
         "display display display"
         "k7      k8      k9"
         "k4      k5      k6"
@@ -2169,7 +2169,7 @@
     .log-action-ready { color: var(--d2); }
     .log-action-ready.active { background: var(--b3); color: var(--d); border-color: var(--b3); }
     .log-action-shipped { color: var(--d2); }
-    .log-action-shipped.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
+    .log-action-shipped.active { background: var(--g); color: #003d12; border-color: var(--g); }
     .quack-ico { display: inline-block; vertical-align: -0.125em; }
     .log-action-held { color: var(--d2); }
     .log-action-held.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
@@ -2227,8 +2227,8 @@
     .log-enter-btn.log-enter-packed:hover:not(:disabled) { background: var(--cy); color: #000; border-color: var(--cy); box-shadow: var(--gcy); }
     .log-enter-btn.log-enter-ready { color: var(--d); background: var(--b3); border-color: var(--b3); }
     .log-enter-btn.log-enter-ready:hover:not(:disabled) { background: var(--d); color: var(--s1); border-color: var(--d); }
-    .log-enter-btn.log-enter-shipped { color: var(--g); background: var(--g3); border-color: var(--g2); }
-    .log-enter-btn.log-enter-shipped:hover:not(:disabled) { background: var(--g); color: #000; border-color: var(--g); box-shadow: var(--gg); }
+    .log-enter-btn.log-enter-shipped { color: #003d12; background: var(--g); border-color: var(--g); }
+    .log-enter-btn.log-enter-shipped:hover:not(:disabled) { background: #33ff99; color: #002a0d; border-color: #33ff99; box-shadow: var(--gg); }
     .log-enter-btn.log-enter-pickedup { color: var(--g); background: var(--g3); border-color: var(--g2); }
     .log-enter-btn.log-enter-pickedup:hover:not(:disabled) { background: var(--g); color: #000; border-color: var(--g); box-shadow: var(--gg); }
     .log-enter-btn.log-enter-held { color: var(--w); background: var(--w2); border-color: var(--w2); }

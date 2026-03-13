@@ -652,16 +652,17 @@ function isJobOnPress(job) {
   return S.presses.some(p => p.job_id === job.id);
 }
 
-function hasRecentShipActivity(job, withinMs) {
-  if (!job || !Array.isArray(job.progressLog)) return false;
-  const cutoff = Date.now() - (withinMs || 3600000);
-  const shipStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1 };
-  for (let i = job.progressLog.length - 1; i >= 0; i--) {
+function recentLogActivity(job, withinMs) {
+  var out = { pressed: false, qc_passed: false, rejected: false, packed: false, ready: false, shipped: false };
+  if (!job || !Array.isArray(job.progressLog)) return out;
+  var cutoff = Date.now() - (withinMs || 3600000);
+  for (var i = job.progressLog.length - 1; i >= 0; i--) {
     var e = job.progressLog[i];
     if (!e || !e.timestamp) continue;
-    if (shipStages[e.stage] && new Date(e.timestamp).getTime() >= cutoff) return true;
+    if (new Date(e.timestamp).getTime() < cutoff) break;
+    if (out.hasOwnProperty(e.stage)) out[e.stage] = true;
   }
-  return false;
+  return out;
 }
 
 // Proper CSV parsing that handles quoted fields with commas

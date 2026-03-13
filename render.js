@@ -1448,9 +1448,14 @@ function renderJobs() {
       const prog = progressDisplay(j);
       const jCautioned = isJobCautioned(j);
       const onPress = isJobOnPress(j);
-      const recentShip = hasRecentShipActivity(j);
-      const dots = (onPress ? '<span class="live-dot live-dot-press" title="On press now"></span>' : '')
-                 + (recentShip ? '<span class="live-dot live-dot-ship" title="Recent outbound activity"></span>' : '');
+      const ra = recentLogActivity(j);
+      const dots = (onPress   ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
+        + (ra.pressed  ? '<span class="live-dot live-dot-pressed" title="Pressed (1h)"></span>' : '')
+        + (ra.qc_passed? '<span class="live-dot live-dot-qcpass" title="QC pass (1h)"></span>' : '')
+        + (ra.rejected ? '<span class="live-dot live-dot-reject" title="Rejected (1h)"></span>' : '')
+        + (ra.packed   ? '<span class="live-dot live-dot-packed" title="Boxed (1h)"></span>' : '')
+        + (ra.ready    ? '<span class="live-dot live-dot-ready" title="Ready (1h)"></span>' : '')
+        + (ra.shipped  ? '<span class="live-dot live-dot-shipped" title="Quacked (1h)"></span>' : '');
       const statusMicro = '<span class="status-micro st-' + (j.status || 'queue') + '">' + (j.status || 'queue').toUpperCase() + '</span>';
       return `<tr data-status="${j.status || ''}"${jCautioned ? ' class="job-row-cautioned"' : ''}>
         <td class="j-cat panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
@@ -1476,9 +1481,14 @@ function renderJobs() {
       const prog = progressDisplay(j);
       const jcCautioned = isJobCautioned(j);
       const onPress = isJobOnPress(j);
-      const recentShip = hasRecentShipActivity(j);
-      const dots = (onPress ? '<span class="live-dot live-dot-press" title="On press now"></span>' : '')
-                 + (recentShip ? '<span class="live-dot live-dot-ship" title="Recent outbound activity"></span>' : '');
+      const ra = recentLogActivity(j);
+      const dots = (onPress   ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
+        + (ra.pressed  ? '<span class="live-dot live-dot-pressed" title="Pressed (1h)"></span>' : '')
+        + (ra.qc_passed? '<span class="live-dot live-dot-qcpass" title="QC pass (1h)"></span>' : '')
+        + (ra.rejected ? '<span class="live-dot live-dot-reject" title="Rejected (1h)"></span>' : '')
+        + (ra.packed   ? '<span class="live-dot live-dot-packed" title="Boxed (1h)"></span>' : '')
+        + (ra.ready    ? '<span class="live-dot live-dot-ready" title="Ready (1h)"></span>' : '')
+        + (ra.shipped  ? '<span class="live-dot live-dot-shipped" title="Quacked (1h)"></span>' : '');
       const statusMicro = '<span class="status-micro st-' + (j.status || 'queue') + '">' + (j.status || 'queue').toUpperCase() + '</span>';
       return `
         <div class="job-card st-${j.status}${jcCautioned ? ' job-card-cautioned' : ''}" onclick="openPanel('${j.id}')">
@@ -1829,30 +1839,56 @@ function renderLog() {
   }
 
   const extraBtn4 = document.getElementById('logBtnMode4');
-  if (extraBtn4) extraBtn4.style.display = 'none';
   const extraBtn5 = document.getElementById('logBtnMode5');
-  if (extraBtn5) extraBtn5.style.display = 'none';
+  const extraBtn6 = document.getElementById('logBtnMode6');
+  const isShip = logMode === 'ship';
 
-  const modeActions = logMode === 'ship'
-    ? [
-        { id: 'logBtnPress',    key: 'packed',    label: 'BOXED',      add: 'log-action-packed',   rm: 'log-action-press' },
-        { id: 'logBtnQcPass',   key: 'ready',     label: 'READY',      add: 'log-action-ready',    rm: 'log-action-qcpass' },
-        { id: 'logBtnQcReject', key: 'shipped',   label: QUACK_ICON + ' QUACK',  add: 'log-action-shipped',  rm: 'log-action-qcreject' },
-      ]
-    : [
-        { id: 'logBtnPress',    key: 'press',     label: 'PRESS',  add: 'log-action-press',     rm: 'log-action-packed' },
-        { id: 'logBtnQcPass',   key: 'qc_pass',   label: 'PASS',   add: 'log-action-qcpass',    rm: 'log-action-ready' },
-        { id: 'logBtnQcReject', key: 'qc_reject',  label: 'REJECT', add: 'log-action-qcreject',  rm: 'log-action-shipped' },
-      ];
-  modeActions.forEach(a => {
-    const btn = document.getElementById(a.id);
-    if (!btn) return;
-    btn.innerHTML = a.label;
-    btn.setAttribute('onclick', "setLogAction('" + a.key + "')");
-    if (a.rm) btn.classList.remove(a.rm);
-    btn.classList.add(a.add);
-    btn.classList.toggle('active', logAction === a.key);
-  });
+  if (isShip) {
+    const pressActions = [
+      { id: 'logBtnPress',    key: 'press',     label: 'PRESS',  cls: 'log-action-press' },
+      { id: 'logBtnQcPass',   key: 'qc_pass',   label: 'PASS',   cls: 'log-action-qcpass' },
+      { id: 'logBtnQcReject', key: 'qc_reject',  label: 'REJECT', cls: 'log-action-qcreject' },
+    ];
+    pressActions.forEach(a => {
+      const btn = document.getElementById(a.id);
+      if (!btn) return;
+      btn.innerHTML = a.label;
+      btn.setAttribute('onclick', "setLogAction('" + a.key + "')");
+      btn.className = 'log-action-btn ' + a.cls + ' log-fp-' + ({logBtnPress:'press',logBtnQcPass:'qcpass',logBtnQcReject:'qcrej'}[a.id]);
+      btn.classList.toggle('active', logAction === a.key);
+    });
+    const shipActions = [
+      { id: 'logBtnMode4', key: 'packed',  label: 'BOXED',                  cls: 'log-action-packed' },
+      { id: 'logBtnMode5', key: 'ready',   label: 'READY',                  cls: 'log-action-ready' },
+      { id: 'logBtnMode6', key: 'shipped', label: QUACK_ICON + ' QUACK',    cls: 'log-action-shipped' },
+    ];
+    shipActions.forEach(a => {
+      const btn = document.getElementById(a.id);
+      if (!btn) return;
+      btn.style.display = '';
+      btn.innerHTML = a.label;
+      btn.setAttribute('onclick', "setLogAction('" + a.key + "')");
+      btn.className = 'log-action-btn ' + a.cls + ' log-fp-' + ({logBtnMode4:'mode4',logBtnMode5:'mode5',logBtnMode6:'mode6'}[a.id]);
+      btn.classList.toggle('active', logAction === a.key);
+    });
+  } else {
+    if (extraBtn4) extraBtn4.style.display = 'none';
+    if (extraBtn5) extraBtn5.style.display = 'none';
+    if (extraBtn6) extraBtn6.style.display = 'none';
+    const pressActions = [
+      { id: 'logBtnPress',    key: 'press',     label: 'PRESS',  cls: 'log-action-press' },
+      { id: 'logBtnQcPass',   key: 'qc_pass',   label: 'PASS',   cls: 'log-action-qcpass' },
+      { id: 'logBtnQcReject', key: 'qc_reject',  label: 'REJECT', cls: 'log-action-qcreject' },
+    ];
+    pressActions.forEach(a => {
+      const btn = document.getElementById(a.id);
+      if (!btn) return;
+      btn.innerHTML = a.label;
+      btn.setAttribute('onclick', "setLogAction('" + a.key + "')");
+      btn.className = 'log-action-btn ' + a.cls + ' log-fp-' + ({logBtnPress:'press',logBtnQcPass:'qcpass',logBtnQcReject:'qcrej'}[a.id]);
+      btn.classList.toggle('active', logAction === a.key);
+    });
+  }
 
   const enterMap = {
     press: { label: 'LOG PRESS', cls: 'log-enter-press' },
