@@ -193,6 +193,7 @@ function renderAdminShell() {
   renderJobs();
   renderTodos();
   renderLog();
+  renderEngine();
   renderNotesPage();
   renderShip();
   renderCrewPage();
@@ -1964,6 +1965,120 @@ function renderLog() {
 
 function renderQC() {
   renderLog();
+}
+
+// ============================================================
+// ENGINE — plant instrumentation / telemetry console
+// ============================================================
+function renderEngine() {
+  const grid = document.getElementById('engineGrid');
+  if (!grid) return;
+
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(todayStart.getTime() + 864e5);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const active = S.jobs.filter(j => !isJobArchived(j) && j.status !== 'done');
+
+  const today = getEngineData(S.jobs, todayStart, tomorrowStart);
+  const mtd = getEngineData(S.jobs, monthStart, tomorrowStart);
+
+  const qpm = mtd.shipped + mtd.pickedUp;
+  const yieldDenom = today.qcPassed + today.rejected;
+  const yieldPct = yieldDenom > 0 ? ((today.qcPassed / yieldDenom) * 100) : null;
+
+  var totalOrdered = 0;
+  var liveReady = 0;
+  active.forEach(function (j) {
+    totalOrdered += Math.max(0, parseInt(j.qty, 10) || 0);
+    var p = getJobProgress(j);
+    liveReady += p.ready;
+  });
+
+  const pressesOnline = S.presses.filter(p => p.status === 'online').length;
+  const pressesTotal = S.presses.length;
+  const cautioned = active.filter(j => isJobCautioned(j));
+  const overdue = active.filter(j => j.due && new Date(j.due) < now);
+
+  const pressDots = S.presses.map(function (p) {
+    return p.status === 'online' ? '<span class="eng-dot eng-dot-on">◉</span>' : '<span class="eng-dot eng-dot-off">○</span>';
+  }).join(' ');
+
+  function yieldColor(pct) {
+    if (pct === null) return 'var(--d3)';
+    if (pct >= 97) return 'var(--g)';
+    if (pct >= 90) return 'var(--w)';
+    return 'var(--r)';
+  }
+
+  function rail(num, denom, color) {
+    var pct = denom > 0 ? Math.min(100, (num / denom) * 100) : 0;
+    return '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(pct) + '%;background:' + color + '"></div></div>';
+  }
+
+  function block(cls, label, tag, value, sub, railHTML) {
+    return '<div class="eng-block ' + cls + '">'
+      + '<div class="eng-label">' + label + (tag ? '<span class="eng-tag">' + tag + '</span>' : '') + '</div>'
+      + '<div class="eng-value">' + value + '</div>'
+      + (railHTML || '')
+      + (sub ? '<div class="eng-sub">' + sub + '</div>' : '')
+      + '</div>';
+  }
+
+  var blocks = '';
+
+  blocks += '<div class="eng-block eng-hero">'
+    + '<div class="eng-label">QPM<span class="eng-tag">MTD</span></div>'
+    + '<div class="eng-value eng-value-hero">' + qpm.toLocaleString() + '</div>'
+    + rail(qpm, totalOrdered || 1, 'var(--cy)')
+    + '<div class="eng-sub">' + QUACK_ICON + ' quacks this month</div>'
+    + '</div>';
+
+  blocks += block('', 'PRESSED', 'TODAY', today.pressed.toLocaleString(),
+    today.pressed.toLocaleString() + ' / ' + totalOrdered.toLocaleString(),
+    rail(today.pressed, totalOrdered || 1, 'var(--w)'));
+
+  blocks += block('', 'QC PASSED', 'TODAY', today.qcPassed.toLocaleString(),
+    today.rejected > 0 ? today.rejected.toLocaleString() + ' rejected' : '',
+    rail(today.qcPassed, today.pressed || 1, 'var(--g)'));
+
+  blocks += block('', 'YIELD', 'TODAY',
+    yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—',
+    yieldDenom > 0 ? today.qcPassed.toLocaleString() + ' / ' + yieldDenom.toLocaleString() : 'no QC data',
+    yieldPct !== null ? '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(yieldPct) + '%;background:' + yieldColor(yieldPct) + '"></div></div>' : '');
+
+  blocks += block('', 'PACKED', 'MTD', mtd.packed.toLocaleString(),
+    '',
+    rail(mtd.packed, mtd.qcPassed || 1, 'var(--cy)'));
+
+  blocks += block('', 'QUACKED', 'MTD', qpm.toLocaleString(),
+    (mtd.shipped > 0 || mtd.pickedUp > 0) ? QUACK_ICON + ' ' + mtd.shipped.toLocaleString() + ' shipped · ' + mtd.pickedUp.toLocaleString() + ' picked up' : '',
+    rail(qpm, mtd.packed || 1, 'var(--cy)'));
+
+  blocks += block('', 'PRESSES', 'LIVE',
+    pressesOnline + ' / ' + pressesTotal,
+    pressDots,
+    '');
+
+  blocks += block(cautioned.length > 0 ? 'eng-warn' : '', '⚠ CAUTIONED', 'LIVE',
+    cautioned.length.toString(),
+    cautioned.length > 0 ? cautioned.slice(0, 3).map(function (j) { return escapeHtml(j.catalog || j.artist || '—'); }).join(' · ') + (cautioned.length > 3 ? ' +' + (cautioned.length - 3) : '') : '',
+    '');
+
+  blocks += block(overdue.length > 0 ? 'eng-alert' : '', 'OVERDUE', 'LIVE',
+    overdue.length.toString(),
+    overdue.length > 0 ? overdue.slice(0, 3).map(function (j) { return escapeHtml(j.catalog || j.artist || '—'); }).join(' · ') + (overdue.length > 3 ? ' +' + (overdue.length - 3) : '') : '',
+    '');
+
+  grid.innerHTML = blocks;
+
+  var clockEl = document.getElementById('engineClock');
+  if (clockEl) {
+    var n = new Date();
+    clockEl.textContent = n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+      + ' · ' + n.toLocaleTimeString('en-US', { hour12: false });
+  }
 }
 
 // ============================================================

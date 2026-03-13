@@ -406,6 +406,32 @@ function logConsoleRailPlaceholderHTML() {
   </div>`;
 }
 
+/** ENGINE — aggregate progressLog across all active jobs for a date range. */
+function getEngineData(jobs, periodStart, periodEnd) {
+  var out = { pressed: 0, qcPassed: 0, rejected: 0, packed: 0, ready: 0, shipped: 0, pickedUp: 0, held: 0 };
+  if (!Array.isArray(jobs)) return out;
+  var ps = periodStart ? periodStart.getTime() : 0;
+  var pe = periodEnd ? periodEnd.getTime() : Infinity;
+  jobs.forEach(function (j) {
+    if (!j || isJobArchived(j)) return;
+    (j.progressLog || []).forEach(function (e) {
+      if (!e || !e.timestamp) return;
+      var t = new Date(e.timestamp).getTime();
+      if (t < ps || t >= pe) return;
+      var q = Math.max(0, parseInt(e.qty, 10) || 0);
+      if (e.stage === 'pressed') out.pressed += q;
+      else if (e.stage === 'qc_passed') out.qcPassed += q;
+      else if (e.stage === 'rejected') out.rejected += q;
+      else if (e.stage === 'packed') out.packed += q;
+      else if (e.stage === 'ready') out.ready += q;
+      else if (e.stage === 'shipped') out.shipped += q;
+      else if (e.stage === 'picked_up') out.pickedUp += q;
+      else if (e.stage === 'held') out.held += q;
+    });
+  });
+  return out;
+}
+
 function ensureNotesLog(job) {
   if (!job) return;
   if (!Array.isArray(job.notesLog)) job.notesLog = [];
