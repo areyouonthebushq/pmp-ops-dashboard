@@ -229,6 +229,24 @@ function setPressOnDeck(pid, jobId) {
   }
 }
 
+function showOnDeckArrow(pressId) {
+  S.pressOnDeckArrowPressId = pressId;
+  renderAll();
+}
+
+function sendOnDeckToPress(pressId) {
+  const p = S.presses.find(x => x.id === pressId);
+  if (!p || !p.on_deck_job_id) return;
+  const jobId = p.on_deck_job_id;
+  setAssignment(pressId, jobId);
+  p.on_deck_job_id = null;
+  S.pressOnDeckArrowPressId = null;
+  Storage.savePresses(S.presses);
+  blurPressGridSelectIfFocused();
+  renderAll();
+  if (typeof toast === 'function') toast('Sent to press');
+}
+
 function setPressStatus(pid, st) {
   const p = S.presses.find(x => x.id === pid);
   if (p) {

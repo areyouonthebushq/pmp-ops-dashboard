@@ -761,8 +761,22 @@
     border-left-color: var(--d3);
     }
     .press-card-on-deck:hover { opacity: 0.85; }
-    .pc-head-on-deck { margin-bottom: var(--space-xs); }
+    .pc-head-on-deck { margin-bottom: var(--space-xs); display: flex; align-items: center; gap: var(--space-sm); cursor: pointer; }
     .pc-name-on-deck { font-size: 11px; letter-spacing: 2px; color: var(--d3); }
+    .pc-on-deck-arrow {
+    font-size: 14px;
+    line-height: 1;
+    color: var(--g);
+    cursor: pointer;
+    padding: 0 var(--space-xs);
+    flex-shrink: 0;
+    animation: pc-on-deck-arrow-pulse 1.2s ease-in-out infinite;
+    }
+    .pc-on-deck-arrow:hover { filter: brightness(1.2); }
+    @keyframes pc-on-deck-arrow-pulse {
+    0%, 100% { opacity: 0.85; text-shadow: 0 0 4px rgba(0,230,118,0.4); }
+    50% { opacity: 1; text-shadow: 0 0 10px rgba(0,230,118,0.8); }
+    }
     .pc-job-link-on-deck .pc-job, .pc-job-link-on-deck .pc-meta, .pc-job-link-on-deck .pc-due { font-size: 11px; color: var(--d3); }
     .pc-job-link-on-deck .pc-job .job-id { color: var(--d2); }
 

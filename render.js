@@ -139,13 +139,17 @@ function buildOnDeckCardHTML(p) {
   if (!p.on_deck_job_id) return '';
   const job = S.jobs.find(j => j.id === p.on_deck_job_id);
   if (!job) return '';
-  const jobBlockClick = `openPanel('${job.id}')`;
+  const showArrow = S.pressOnDeckArrowPressId === p.id;
+  const headClick = "event.stopPropagation(); showOnDeckArrow('" + p.id.replace(/'/g, "\\'") + "');";
+  const arrowClick = "event.stopPropagation(); sendOnDeckToPress('" + p.id.replace(/'/g, "\\'") + "');";
+  const arrowHtml = showArrow ? '<span class="pc-on-deck-arrow" onclick="' + arrowClick + '" title="Send to press" role="button" tabindex="0">↑</span>' : '';
   return `
-  <div class="press-card press-card-on-deck" onclick="${jobBlockClick}" title="Open job panel">
-    <div class="pc-head pc-head-on-deck">
+  <div class="press-card press-card-on-deck">
+    <div class="pc-head pc-head-on-deck" onclick="${headClick}" role="button" tabindex="0" title="Show send arrow">
       <div class="pc-name pc-name-on-deck">ON DECK</div>
+      ${arrowHtml}
     </div>
-    <div class="pc-job-link pc-job-link-on-deck">
+    <div class="pc-job-link pc-job-link-on-deck" onclick="openPanel('${job.id.replace(/'/g, "\\'")}')" title="Open job panel" style="cursor:pointer">
       <div class="pc-job"><span class="job-id">${job.catalog || '—'}</span> — ${job.artist || ''}</div>
       <div class="pc-meta">${job.format || ''} · ${job.color || 'Black'} · ${job.weight || ''}</div>
       <div class="pc-meta">Qty: ${job.qty ? parseInt(job.qty).toLocaleString() : '—'}</div>
