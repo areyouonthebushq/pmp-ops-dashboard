@@ -2478,6 +2478,33 @@
     .eng-compare-btn:hover { color: var(--d); border-color: var(--b4); }
     .eng-compare-btn.eng-cmp-on-0 { color: var(--cy); border-color: var(--cy); }
     .eng-compare-btn.eng-cmp-on-1 { color: var(--w); border-color: var(--w); }
+    /* --- context bar module --- */
+    .eng-ctx-row {
+      display: flex; align-items: center; gap: var(--space-sm);
+      padding: 3px 0;
+    }
+    .eng-ctx-label {
+      flex: 0 0 72px; font-family: 'Inconsolata', monospace; font-size: 9px;
+      letter-spacing: 0.5px; text-align: right; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .eng-ctx-bar {
+      flex: 1; height: 8px; background: var(--b2); border-radius: 1px;
+      overflow: hidden;
+    }
+    .eng-ctx-fill {
+      height: 100%; border-radius: 1px; transition: width 0.2s ease;
+    }
+    .eng-ctx-val {
+      flex: 0 0 52px; text-align: right; font-family: 'Inconsolata', monospace;
+      font-weight: 700; font-size: 11px;
+    }
+    .eng-ctx-primary .eng-ctx-label { color: var(--d); }
+    .eng-ctx-primary .eng-ctx-fill { background: var(--g); }
+    .eng-ctx-primary .eng-ctx-val { color: var(--g); }
+    .eng-ctx-ref .eng-ctx-label { color: var(--d3); }
+    .eng-ctx-ref .eng-ctx-fill { background: var(--b4); }
+    .eng-ctx-ref .eng-ctx-val { color: var(--d2); }
 
     @media (max-width: 600px) {
       .engine-shell { max-width: 100%; }

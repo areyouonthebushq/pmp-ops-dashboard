@@ -2511,6 +2511,158 @@ function engineDetailJobBreakdown(stages, pStart, pEnd) {
   return html;
 }
 
+// ---- context bar module ----
+
+function engContextRow(label, value, maxVal, primary, fmt) {
+  var pct = maxVal > 0 ? Math.min(100, (value / maxVal) * 100) : 0;
+  var cls = primary ? 'eng-ctx-primary' : 'eng-ctx-ref';
+  return '<div class="eng-ctx-row ' + cls + '">'
+    + '<div class="eng-ctx-label">' + label + '</div>'
+    + '<div class="eng-ctx-bar"><div class="eng-ctx-fill" style="width:' + Math.round(pct) + '%"></div></div>'
+    + '<div class="eng-ctx-val">' + (fmt || value.toLocaleString()) + '</div>'
+    + '</div>';
+}
+
+function engContextStageData(stages) {
+  var now = new Date();
+  var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var tomorrow = new Date(todayStart.getTime() + 864e5);
+  var d30Start = new Date(todayStart.getTime() - 30 * 864e5);
+  var ps = d30Start.getTime(), pe = tomorrow.getTime();
+
+  var dayMap = {};
+  S.jobs.forEach(function (j) {
+    if (!j || isJobArchived(j)) return;
+    (j.progressLog || []).forEach(function (e) {
+      if (!e || !e.timestamp || stages.indexOf(e.stage) === -1) return;
+      var t = new Date(e.timestamp).getTime();
+      if (t < ps || t >= pe) return;
+      var dk = new Date(e.timestamp).toISOString().slice(0, 10);
+      dayMap[dk] = (dayMap[dk] || 0) + Math.max(0, parseInt(e.qty, 10) || 0);
+    });
+  });
+
+  var todayKey = todayStart.toISOString().slice(0, 10);
+  var todayVal = dayMap[todayKey] || 0;
+
+  var sum7 = 0;
+  for (var i = 1; i <= 7; i++) {
+    var dk = new Date(todayStart.getTime() - i * 864e5).toISOString().slice(0, 10);
+    sum7 += dayMap[dk] || 0;
+  }
+
+  var sum30 = 0;
+  for (var i = 1; i <= 30; i++) {
+    var dk = new Date(todayStart.getTime() - i * 864e5).toISOString().slice(0, 10);
+    sum30 += dayMap[dk] || 0;
+  }
+
+  var peakVal = 0, peakDate = '';
+  Object.keys(dayMap).forEach(function (dk) {
+    if (dayMap[dk] > peakVal) {
+      peakVal = dayMap[dk];
+      var dt = new Date(dk + 'T12:00:00');
+      peakDate = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  });
+
+  return { today: todayVal, avg7: sum7 / 7, avg30: sum30 / 30, peak: peakVal, peakDate: peakDate };
+}
+
+function engContextStageHTML(stages) {
+  var c = engContextStageData(stages);
+  var maxBar = Math.max(c.today, c.avg7, c.avg30, c.peak, 1);
+  var html = '<div class="eng-detail-section">'
+    + '<div class="eng-detail-section-title">CONTEXT</div>';
+  html += engContextRow('TODAY', c.today, maxBar, true);
+  html += engContextRow('7D AVG', Math.round(c.avg7), maxBar, false);
+  html += engContextRow('30D AVG', Math.round(c.avg30), maxBar, false);
+  if (c.peak > 0) {
+    html += engContextRow('PEAK · ' + c.peakDate, c.peak, maxBar, false);
+  }
+  html += '</div>';
+  return html;
+}
+
+function engContextYieldData() {
+  var now = new Date();
+  var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var tomorrow = new Date(todayStart.getTime() + 864e5);
+  var d30Start = new Date(todayStart.getTime() - 30 * 864e5);
+  var ps = d30Start.getTime(), pe = tomorrow.getTime();
+
+  var passMap = {}, rejMap = {};
+  S.jobs.forEach(function (j) {
+    if (!j || isJobArchived(j)) return;
+    (j.progressLog || []).forEach(function (e) {
+      if (!e || !e.timestamp) return;
+      var t = new Date(e.timestamp).getTime();
+      if (t < ps || t >= pe) return;
+      var dk = new Date(e.timestamp).toISOString().slice(0, 10);
+      var q = Math.max(0, parseInt(e.qty, 10) || 0);
+      if (e.stage === 'qc_passed') passMap[dk] = (passMap[dk] || 0) + q;
+      else if (e.stage === 'rejected') rejMap[dk] = (rejMap[dk] || 0) + q;
+    });
+  });
+
+  function yld(dk) {
+    var p = passMap[dk] || 0, r = rejMap[dk] || 0;
+    return (p + r) > 0 ? (p / (p + r)) * 100 : null;
+  }
+
+  var todayKey = todayStart.toISOString().slice(0, 10);
+  var todayYield = yld(todayKey);
+
+  var s7 = 0, n7 = 0;
+  for (var i = 1; i <= 7; i++) {
+    var y = yld(new Date(todayStart.getTime() - i * 864e5).toISOString().slice(0, 10));
+    if (y !== null) { s7 += y; n7++; }
+  }
+
+  var s30 = 0, n30 = 0;
+  for (var i = 1; i <= 30; i++) {
+    var y = yld(new Date(todayStart.getTime() - i * 864e5).toISOString().slice(0, 10));
+    if (y !== null) { s30 += y; n30++; }
+  }
+
+  var peakYield = null, peakDate = '';
+  var allDays = {};
+  Object.keys(passMap).forEach(function (d) { allDays[d] = true; });
+  Object.keys(rejMap).forEach(function (d) { allDays[d] = true; });
+  Object.keys(allDays).forEach(function (dk) {
+    var y = yld(dk);
+    if (y !== null && (peakYield === null || y > peakYield)) {
+      peakYield = y;
+      var dt = new Date(dk + 'T12:00:00');
+      peakDate = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  });
+
+  return {
+    today: todayYield,
+    avg7: n7 > 0 ? s7 / n7 : null,
+    avg30: n30 > 0 ? s30 / n30 : null,
+    peak: peakYield,
+    peakDate: peakDate
+  };
+}
+
+function engContextYieldHTML() {
+  var c = engContextYieldData();
+  var vals = [c.today, c.avg7, c.avg30, c.peak].filter(function (v) { return v !== null; });
+  if (vals.length === 0) return '';
+  var maxBar = 100;
+  function fmt(v) { return v !== null ? v.toFixed(1) + '%' : '—'; }
+  var html = '<div class="eng-detail-section">'
+    + '<div class="eng-detail-section-title">CONTEXT</div>';
+  html += engContextRow('TODAY', c.today !== null ? c.today : 0, maxBar, true, fmt(c.today));
+  if (c.avg7 !== null) html += engContextRow('7D AVG', c.avg7, maxBar, false, fmt(c.avg7));
+  if (c.avg30 !== null) html += engContextRow('30D AVG', c.avg30, maxBar, false, fmt(c.avg30));
+  if (c.peak !== null) html += engContextRow('PEAK · ' + c.peakDate, c.peak, maxBar, false, fmt(c.peak));
+  html += '</div>';
+  return html;
+}
+
 // ---- stage detail (QPM, PRESSED, QC PASSED, REJECTED, PACKED) ----
 function renderEngineDetailStage(key, m, numEl, w) {
   var d = getEngineData(S.jobs, w.start, w.end);
@@ -2528,6 +2680,8 @@ function renderEngineDetailStage(key, m, numEl, w) {
   numEl.textContent = total.toLocaleString();
 
   var html = engChartSectionHTML('TREND');
+
+  html += engContextStageHTML(m.stages);
 
   var jobHTML = engineDetailJobBreakdown(m.stages, w.start, w.end);
   if (jobHTML) {
@@ -2557,6 +2711,8 @@ function renderEngineDetailYield(numEl, w) {
   html += '</div>';
 
   html += engChartSectionHTML('DAILY YIELD');
+
+  html += engContextYieldHTML();
 
   return html;
 }
