@@ -37,7 +37,7 @@ It is **code-informed** (anchored to `index.html`, `app.js`, `render.js`, `stati
 |-------|--------|
 | **Login** | Supabase email/password when `SUPABASE_URL` + key set. Guest Demo bypasses. |
 | **Launcher** | Role-based: Admin, Floor Manager, Press (p1–p4), QC. Last choice restored on refresh; default-to-floor when no last. |
-| **Admin app** | Nav: FLOOR · JOBS · TODOS · LOG · NOTES · PVC · AUDIT · DEV. FAB on Floor/Jobs = New Job. |
+| **Admin app** | Nav: FLOOR · JOBS · TODOS · LOG · NOTES · SHIP · PVC · CREW · AUDIT · DEV. FAB on Floor/Jobs = New Job. |
 | **Stations** | Press / QC / Floor Manager: focused shells with BACK → launcher (or admin if role admin). |
 
 ---
@@ -54,9 +54,11 @@ flowchart TB
     F[⬡ FLOOR]
     J[▶ JOBS]
     T[✓ TODOS]
-    Lo[⬡ LOG]
+    Lo["⬡ LOG (PRESS · OUTBOUND)"]
     N[◇ NOTES]
+    Sh[◈ SHIP]
     P[◌ PVC]
+    Cr[◎ CREW]
     A[▣ AUDIT]
     D[♛ DEV]
   end
@@ -65,10 +67,11 @@ flowchart TB
     QS[QC Station]
     FM[Floor Manager]
   end
-  subgraph Overlays["Overlays (global)"]
-    Panel[Slide panel]
+  subgraph Overlays["Overlays (global, job-scoped)"]
+    Panel["RSP (Right-Side Panel)"]
     FC[Floor card]
     Assets[Assets overlay]
+    Pack[PACK CARD]
     Wizard[Job / Compound wizard]
     TV[TV view]
   end
@@ -81,9 +84,12 @@ flowchart TB
   F --> Assets
   J --> Panel
   J --> Assets
+  J --> Pack
   N --> Panel
   Lo --> Panel
+  Sh --> Panel
   Panel --> Assets
+  Panel --> Pack
   FM --> FC
   FM --> Assets
 ```
@@ -93,10 +99,10 @@ flowchart TB
 ```
   BAR: PMP·OPS | [ADMIN/OPERATOR] | clock | MIN · ↓ CSV · 💾 · EXIT
 
-  NAV:  [⬡ FLOOR] [▶ JOBS] [✓ TODOS] [⬡ LOG] [◇ NOTES] [◌ PVC] [▣ AUDIT] [♛ DEV]
-         default    filter    cols      job+     channel    library   admin     admin
-                   +search   daily/     numpad   +add       cards     only      only
-                            weekly     +feed
+  NAV:  [⬡ FLOOR] [▶ JOBS] [✓ TODOS] [⬡ LOG] [◇ NOTES] [◈ SHIP] [◌ PVC] [◎ CREW] [▣ AUDIT] [♛ DEV]
+         default    filter    cols      mode     channel    fulfill   library  directory  admin   admin
+                   +search   daily/    toggle    +add       phase     cards    +schedule   only    only
+                            weekly   PRESS|OUT  +feed      groups
 
   FAB (Floor/Jobs only):  [+]  NEW JOB [N]
 ```
@@ -109,9 +115,9 @@ flowchart TB
 
 | Entity | Where stored | Key fields (representative) |
 |--------|--------------|-----------------------------|
-| **Job** | `S.jobs[]`, Supabase `jobs` | id, catalog, artist, album, status, due, press, format, qty, color, notes, notesLog, assemblyLog, progressLog, assets, packCard, poContract, archived_* |
+| **Job** | `S.jobs[]`, Supabase `jobs` | id, catalog, artist, album, status, due, press, format, qty, color, notes, notesLog, assemblyLog, progressLog, assets, packCard, poContract, caution, fulfillment_phase, archived_* |
 | **Press** | `S.presses[]`, Supabase `presses` | id, name, type, status, job_id, on_deck_job_id |
-| **Progress log** | job.progressLog (hydrated from Supabase `progress_log`) | job_id, qty, stage (pressed \| qc_passed \| rejected), person, timestamp |
+| **Progress log** | job.progressLog (hydrated from Supabase `progress_log`) | job_id, qty, stage (pressed \| qc_passed \| rejected \| packed \| ready \| shipped \| picked_up \| held), person, timestamp, reason? |
 | **QC log** | `S.qcLog[]`, Supabase `qc_log` | time, type, job, date |
 | **Todos** | `S.todos{ daily, weekly, standing }`, Supabase `todos` | id, category, text, done, who, sort_order |
 | **Notes (job)** | job.notesLog, job.assemblyLog | text, person, timestamp, assetKey?, assetLabel?, attachment_url?, attachment_* |
@@ -126,9 +132,14 @@ flowchart TB
   JOB ◄──────────────────────────────────────────────────────────────┐
    │                                                                   │
    ├── progressLog[]  (from progress_log by job_id)                   │
+   │     stages: pressed | qc_passed | rejected                       │
+   │              packed | ready | shipped | picked_up | held          │
    ├── notesLog[]     (notes_log JSONB)  ── optional attachment       │
    ├── assemblyLog[]  (assembly_log JSONB)                             │
    ├── assets{}       (assets JSONB)  ── per ASSET_DEFS key            │
+   ├── packCard{}     (pack_card JSONB) ── per PACK_DEFS key           │
+   ├── caution{}      (caution JSONB)   ── { reason, since, text }     │
+   ├── fulfillment_phase  (text)  ── SHIP page state                   │
    ├── press          (derived from S.presses where job_id = job.id)   │
    └── poContract     (po_contract JSONB, image ref)                    │
                                                                        │
@@ -150,9 +161,11 @@ flowchart TB
 | floor | pg-floor | Press grid (with ON DECK), stats, floor table, ADD JOB, filter/sort |
 | jobs | pg-jobs | Jobs table/cards, filter, search, import CSV, ADD JOB |
 | todos | pg-todos | Todo columns (daily, weekly, standing) — optional nav |
-| log | pg-log | Job picker, LOG faceplate (PRESS/PASS/REJECT), numpad, date nav, daily feed |
+| log | pg-log | Mode toggle (PRESS / OUTBOUND), job picker, LOG faceplate, numpad, date nav, daily feed. See §6.3 for mode details. |
 | notes | pg-notes | Channel/job picker, + add note (with camera attach), search, notes feed |
+| ship | pg-ship | SHIP page: jobs grouped by fulfillment_phase, open RSP, notes context, update fulfillment state |
 | compounds | pg-compounds | PVC toolbar, compound cards, IMPORT CSV, + ADD COMPOUND |
+| crew | pg-crew | Directory (table: photo, name, role, specialty, phone, email, notes), CSV import, pfp upload; TODAY schedule block |
 | audit | pg-audit | Limit, LOAD, audit table (admin only) |
 | dev | pg-dev | Dev area select, add note, dev feed (admin only) |
 
@@ -208,14 +221,58 @@ flowchart TB
 
 ---
 
-### 6.3 LOG — One-sheet
+### 6.3 LOG 2.0 — One-sheet
 
 | Attribute | Detail |
 |-----------|--------|
-| **Question answered** | What units moved today, by job and type (pressed / pass / reject)? |
-| **Primary components** | Job picker, faceplate (PRESS / PASS / REJECT), numpad, LOG button, date nav (Prev/Next/Today), daily feed |
-| **Actions** | Select job → enter qty → LOG PRESS / LOG PASS / REJECT (defect picker) → writes progress_log / qc_log |
-| **Data** | S.logSelectedJob, S.logAction, S.logDate, progress_log (by date), qc_log |
+| **Question answered** | What units moved today — through the press, QC, packing, and out the door? |
+| **Architecture** | Single console family with two operational modes: **PRESS** and **OUTBOUND**. Mode toggle at top of console. Same numpad, same job picker, same daily feed — different action set and color family. One source of truth (`job.progressLog`). |
+
+#### Mode toggle
+
+```
+[ ◉ PRESS ]  [ ◇ OUTBOUND ]
+```
+
+Mode is persisted in `sessionStorage`. Toggling resets `logAction` and numpad but preserves selected job and date.
+
+#### PRESS mode (production)
+
+| Component | Detail |
+|-----------|--------|
+| **Actions (3 buttons)** | PRESS (amber) · PASS (green) · REJECT (red + defect picker) |
+| **Stages** | `pressed`, `qc_passed`, `rejected` |
+| **Rail** | pressed / ordered (amber), passed / ordered (green), rejected / ordered (red) |
+| **Job filter** | Jobs where `status !== 'done'` |
+| **Feed** | pressed, qc_passed entries + QC reject log |
+
+#### OUTBOUND mode (late-stage)
+
+| Component | Detail |
+|-----------|--------|
+| **Actions (5 buttons, 3+2 grid)** | PACKED (cyan) · READY (neutral) · SHIPPED (green) / PICKED UP (green) · HELD (amber + reason picker) |
+| **Stages** | `packed`, `ready`, `shipped`, `picked_up`, `held` |
+| **Quantity gates** | packed ≤ qcPassed · ready ≤ packed · shipped ≤ ready · picked_up ≤ ready · shipped + picked_up + held ≤ ready |
+| **HELD reasons** | BILLING HOLD, CUSTOMER HOLD, DAMAGE, SHORT COUNT, WRONG CONFIG, OTHER |
+| **Rail** | Numerator/denominator shifts per action (e.g. shipped / ready, packed / ordered) |
+| **Job filter** | Jobs where `status ∈ {assembly, hold, done}` |
+| **Feed** | packed, ready, shipped, picked_up, held entries; outbound entries prefixed with ◇ and left-border accent |
+
+#### Shared grammar
+
+| Element | Behavior |
+|---------|----------|
+| **Numpad** | Same 0–9 / C / ← in both modes |
+| **LOG button** | Label changes per action (LOG PRESS, LOG PACKED, LOG SHIPPED, etc.) |
+| **Daily feed** | Filtered by mode. Outbound entries carry `◇` prefix, `OUTBOUND` meta tag, and colored left border to distinguish from press entries. |
+| **Rail glow** | Pulsing glow on log (color matches action) |
+| **Person/signing** | All entries signed `{surface} · {who}` |
+
+| Data | Location |
+|------|----------|
+| S.logSelectedJob, logMode, logAction, logViewDate | render.js state |
+| progress_log (all stages) | job.progressLog / Supabase `progress_log` |
+| qc_log (defect types) | S.qcLog / Supabase `qc_log` |
 
 ---
 
@@ -242,12 +299,24 @@ flowchart TB
 
 ---
 
-### 6.6 Right-Side Panel (RSP) — One-sheet
+### 6.6 SHIP — One-sheet
+
+| Attribute | Detail |
+|-----------|--------|
+| **Question answered** | What jobs are in late-stage fulfillment and what's their shipping state? |
+| **Primary components** | Jobs grouped by `fulfillment_phase` columns, clickable rows → RSP, notes/proof context links |
+| **Fulfillment phases** | AWAITING INSTRUCTIONS · READY FOR PICKUP · READY TO SHIP · LOCAL PICKUP · IN HOUSE FULFILLMENT · HELD / EXCEPTION · SHIPPED / PICKED UP |
+| **Interactions** | Click row → open RSP; notes icon → go to NOTES with job selected; phase select dropdown on each row |
+| **Data** | S.jobs filtered by `fulfillment_phase`, `setFulfillmentPhase()` |
+
+---
+
+### 6.7 Right-Side Panel (RSP) — One-sheet
 
 | Attribute | Detail |
 |-----------|--------|
 | **Question answered** | Full job detail and edit. |
-| **Icon Zone** | Top-right control cluster: ☆ (PO/contract image), ⚠ (caution/blocker toggle), + (edit mode), ✕ (close). Exception-style controls live here, not in the form body. |
+| **Icon Zone** | Top-right control cluster: ☆ (PO/contract image), ⚠ (caution/blocker toggle), 📦 (open PACK CARD), + (edit mode), ✕ (close). Exception-style and readiness controls live here, not in the form body. |
 | **Sections** | Job details (FIELD_MAP), PO/Contract (image + fields), Progress, Notes, Assembly, Assets (link to assets overlay), actions (Save, Delete, etc.) |
 | **Caution drawer** | ⚠ in Icon Zone toggles a drawer between header and form body. Contains reason dropdown + short context field. Not part of the normal form flow. |
 | **Modes** | View vs edit (panelEditMode); suggested status when progress suggests change |
@@ -255,7 +324,7 @@ flowchart TB
 
 ---
 
-### 6.7 Assets overlay — One-sheet
+### 6.8 Assets overlay — One-sheet
 
 | Attribute | Detail |
 |-----------|--------|
@@ -266,7 +335,37 @@ flowchart TB
 
 ---
 
-### 6.8 Floor card — One-sheet
+### 6.9 PACK CARD — One-sheet
+
+| Attribute | Detail |
+|-----------|--------|
+| **Question answered** | Is this job ready to pack correctly? What packing-specific context applies? |
+| **Surface type** | Job-scoped overlay (`#packCardOverlay`). Not a page — no nav item. |
+| **Entry points** | Jobs page (PACK button per row) · RSP Icon Zone (📦 icon) |
+| **Exit** | ✕ button · Escape key · existing overlay close logic |
+| **Checklist items (PACK_DEFS)** | Sleeve · Jacket · Insert / Extras · Shrink Wrap / Poly · Sticker · Box Label · Special Handling |
+| **Status cycle per item** | (blank) → ready → na → caution → (blank) — click to cycle |
+| **Expandable detail** | Each item has a collapsible detail row with note and person fields |
+| **Health display** | `packHealth()`: done/total count (items at `ready` status, excluding `na`) |
+| **Caution behavior** | Item at `caution` → routes to NOTES for context. Same flag → require context → resolve protocol as Assets. |
+| **Special handling** | Dedicated textarea for packing-specific instructions. Saved with card. |
+| **NOTES connection** | "Open Notes" button at bottom → navigates to NOTES with job pre-selected. Caution items show note-link icon. |
+| **Data** | `job.packCard{}` (JSONB, keyed by PACK_DEFS key). Each item: `{ status, note, person }`. Persisted via `savePackCard()` → `Storage.saveJob()`. |
+
+#### What belongs where: PACK CARD vs LOG vs NOTES
+
+| Concern | Surface | Why |
+|---------|---------|-----|
+| Is the sleeve confirmed / in-house? | **PACK CARD** | Readiness checklist per component |
+| How many units were packed today? | **LOG** (OUTBOUND → PACKED) | Counted movement |
+| "Client wants extra insert in west-coast shipment" | **NOTES** | Communication / special handling / proof |
+| Job has a packing caution (wrong labels received) | **PACK CARD** caution → **NOTES** for context | Flag lives on card, explanation lives in notes |
+| How many units shipped? | **LOG** (OUTBOUND → SHIPPED) | Counted movement |
+| What fulfillment phase is the job in? | **SHIP** page | Phase/visibility surface |
+
+---
+
+### 6.10 Floor card — One-sheet
 
 | Attribute | Detail |
 |-----------|--------|
@@ -284,11 +383,17 @@ flowchart TB
 2. After auth → launcher; optionally **restore last** (open last station) or **default to Floor Manager** if no last.
 3. Admin → enter app, nav default FLOOR. Floor Manager / Press / QC → enter station shell.
 
-### 7.2 Log production (LOG page)
+### 7.2 Log production — PRESS mode (LOG page)
 
-1. Go to LOG → select job in picker.
-2. Set action (PRESS / PASS / REJECT). If REJECT → defect picker.
+1. Go to LOG → ensure **PRESS** mode is active (default).
+2. Select job in picker → set action (PRESS / PASS / REJECT). If REJECT → defect picker.
 3. Enter qty on numpad → LOG PRESS / LOG PASS / etc. → progress_log or qc_log updated, feed re-rendered.
+
+### 7.2b Log outbound — OUTBOUND mode (LOG page)
+
+1. Go to LOG → switch to **OUTBOUND** mode via toggle.
+2. Select job in picker → set action (PACKED / READY / SHIPPED / PICKED UP / HELD). If HELD → reason picker.
+3. Enter qty on numpad → LOG PACKED / LOG SHIPPED / etc. → progress_log updated, feed re-rendered with ◇ prefix and outbound lane accent.
 
 ### 7.3 Add note with attachment (NOTES)
 
@@ -307,6 +412,14 @@ flowchart TB
 1. Open assets overlay for job → cycle asset to caution → row locks (⌕ disabled, detail hidden).
 2. After 1.5s, + pulses. Click + → add note → submit → note timestamp ≥ cautionSince → row unlocks.
 
+### 7.6 Check packing readiness (PACK CARD)
+
+1. Open PACK CARD from Jobs page (PACK button) or RSP Icon Zone (📦).
+2. Review checklist items — cycle each: (blank) → ready → na → caution.
+3. If caution on an item → go to NOTES to add context.
+4. Add special handling notes in the dedicated field if needed.
+5. Close → card state persisted to `job.packCard`.
+
 ---
 
 ## 8. Role-to-surface matrix
@@ -316,13 +429,17 @@ flowchart TB
 | Launcher | All options | FM, Admin (if allowed) | Press picker | QC |
 | FLOOR | Full, assign + on-deck | View, floor card edit | Read (or hidden) | Read (or hidden) |
 | JOBS | Full CRUD, panel | Limited edit (permissions) | Read | Read |
-| LOG | Use | Use | Use (own press) | Use |
+| LOG (PRESS) | Use | Use | Use (own press) | Use |
+| LOG (OUTBOUND) | Use | Use | — | — |
 | NOTES | Use, !ALERT | Use | Use | Use |
+| SHIP | Use | Use | — | — |
 | PVC | Full | View/add? (per product) | View | View |
+| CREW | Full | View | — | — |
 | AUDIT | Yes | No | No | No |
 | DEV | Yes | No | No | No |
-| Panel | Full edit | Limited (canUseFullPanel) | Read / limited | Read / limited |
+| RSP (Panel) | Full edit | Limited (canUseFullPanel) | Read / limited | Read / limited |
 | Floor card | — | Quick edit | — | — |
+| PACK CARD | Use (from Jobs/RSP) | Use | — | — |
 | Press Station | Can open any | — | Assigned press | — |
 | QC Station | Can open | — | — | Yes |
 | Floor Manager shell | Can open | Yes | — | — |
@@ -335,14 +452,14 @@ flowchart TB
 
 | File | Responsibility |
 |------|----------------|
-| index.html | Shells: login, launcher, TV, app, nav, all pg-* pages, overlay, RSP (Right-Side Panel), floor card, assets overlay, FAB, sync bar, confirm, wizards, station shells. |
-| app.js | S state, storage wiring, auth, launcher, goPg, updateFAB, RSP/floor card open-close, new job, import/export, notes add (incl. attachment), asset note, saveJob, savePresses, saveTodos, notes channels, realtime/polling, TV enter/exit, theme, RSP Icon Zone toggle. |
-| render.js | renderAll entry; stats; buildPressCardHTML, buildOnDeckCardHTML; renderPresses, renderFloor, renderJobs, renderLog, renderNotesPage, renderNotesSection, renderCompoundsPage; panel body (renderPanel*); floor card; assets overlay (renderAssetsOverlay); TV; audit table; dev feed; sort/floor helpers. |
+| index.html | Shells: login, launcher, TV, app, nav, all pg-* pages, overlay, RSP, floor card, assets overlay, PACK CARD overlay, FAB, sync bar, confirm, wizards, station shells, LOG mode toggle + held picker. |
+| app.js | S state, storage wiring, auth, launcher, goPg, updateFAB, RSP/floor card open-close, new job, import/export, notes add (incl. attachment), asset note, saveJob, savePresses, saveTodos, notes channels, realtime/polling, TV enter/exit, theme, RSP Icon Zone toggle, PACK CARD open/close/save, crew photo upload, logJobProgress (with outbound validation). |
+| render.js | renderAll entry; stats; buildPressCardHTML, buildOnDeckCardHTML; renderPresses, renderFloor, renderJobs, renderLog (PRESS + OUTBOUND modes, mode toggle, 5-button outbound grid), renderNotesPage, renderNotesSection, renderCompoundsPage, renderCrewPage, renderShip; panel body (renderPanel*); floor card; assets overlay; PACK CARD (renderPackCard); TV; audit table; dev feed; sort/floor helpers. |
 | stations.js | Station context, setAssignment, setPressOnDeck, showOnDeckArrow, sendOnDeckToPress, assignJob, setPressStatus; Press/QC/Floor Manager shells (open, exit, render); press station job select; syncJobPressFromPresses. |
-| core.js | FIELD_MAP, ASSET_DEFS, DEFAULT_PRESSES, STATUS_ORDER, PROGRESS_STAGES, QC_TYPES; getAssetStatus, assetHealth, assetBarSegmentedHTML; progressDisplay, progressDualBarHTML; dueClass, dueLabel; ensureNotesLog; job field hash, duplicate check. |
-| supabase.js | loadAllData (jobs, progress_log, presses, todos, qc_log, dev_notes, compounds, notes_channels); saveJob, savePresses, saveTodos, logProgress, logQC, saveNotesChannels, saveCompounds; uploadNoteAttachment, uploadPoImage, uploadCompoundImage; getAuditLog; row/column mapping. |
+| core.js | FIELD_MAP, ASSET_DEFS, PACK_DEFS, DEFAULT_PRESSES, STATUS_ORDER, PROGRESS_STAGES, QC_TYPES, HELD_REASONS; getAssetStatus, assetHealth, assetBarSegmentedHTML; packHealth, getPackItemStatus; getJobProgress (all 8 stages); progressDisplay, progressDualBarHTML; logConsoleRailHTML (mode-aware); dueClass, dueLabel; ensureNotesLog; job field hash, duplicate check. |
+| supabase.js | loadAllData (jobs, progress_log, presses, todos, qc_log, dev_notes, compounds, notes_channels, employees, schedule_entries); saveJob, savePresses, saveTodos, logProgress, logQC, saveNotesChannels, saveCompounds, saveEmployees, saveScheduleEntries; uploadNoteAttachment, uploadPoImage, uploadCompoundImage, uploadCrewPhoto; getAuditLog; row/column mapping. |
 | storage.js | Local fallback, scheduleSave, saveJob, savePresses, saveTodos, saveNotesChannels, saveCompounds, loadAll; pending writes, offline queue. |
-| styles.css | Design tokens (--g, --w, --r, etc.); layout (bar, nav, pg, press-grid, panel, floor card, assets overlay, NOTES, LOG, PVC, TV, stations). |
+| styles.css | Design tokens (--g, --w, --r, --cy, etc.); layout (bar, nav, pg, press-grid, panel, floor card, assets overlay, PACK CARD, NOTES, LOG + outbound grid, SHIP, PVC, CREW, TV, stations). |
 
 ---
 
@@ -363,9 +480,11 @@ flowchart TB
 │  Bar + Nav +    │    │  Stats | Press grid |        │    │  #qcStationShell    │
 │  pg-floor       │    │  Active orders table        │    │  Job + numpad or    │
 │  pg-jobs        │    │  [EDIT] → floor card        │    │  reject buttons    │
-│  pg-log         │    │  [← BACK] → launcher        │    │  [← BACK] → launcher│
+│  pg-log (2.0)   │    │  [← BACK] → launcher        │    │  [← BACK] → launcher│
 │  pg-notes       │    └─────────────────────────────┘    └─────────────────────┘
+│  pg-ship        │
 │  pg-compounds   │
+│  pg-crew        │
 │  pg-audit       │
 │  pg-dev         │
 │  FAB [+]        │
@@ -385,19 +504,26 @@ flowchart TB
 ## 11. Glossary (IA terms)
 
 | Term | Meaning |
-|------|--------|
+|------|---------|
 | **Floor** | Page and view of “what’s running where”; press grid + floor table. |
-| **RSP (Right-Side Panel)** | Slide-over full job detail/edit (admin or when canUseFullPanel). Icon Zone at top-right for exception controls (PO star, caution, edit mode, close). |
+| **RSP (Right-Side Panel)** | Slide-over full job detail/edit. Icon Zone at top-right: PO star, caution, PACK CARD, edit mode, close. |
 | **Floor card** | Quick-edit overlay for one job (status, press, location, due, notes, assembly). |
 | **Assets overlay** | Modal list of per-job assets (ASSET_DEFS) with status, notes, caution mode. |
-| **NOTES** | Communication home: job-scoped notes + channels (!TEAM, !ALERT) + optional image attachment. |
-| **LOG** | Production logging: press/qc events by job, date, with numpad and reject picker. |
+| **NOTES** | Communication home: job-scoped notes + channels (!TEAM, !ALERT) + optional image attachment. The explanation/context layer for caution, exceptions, and special handling. |
+| **LOG** | Counted movement console. Two modes: **PRESS** (production: pressed / pass / reject) and **OUTBOUND** (late-stage: packed / ready / shipped / picked up / held). Same numpad, same grammar, different action palettes and colors. |
+| **LOG PRESS mode** | PRESS (amber) / PASS (green) / REJECT (red + defect picker). Stages: `pressed`, `qc_passed`, `rejected`. |
+| **LOG OUTBOUND mode** | PACKED (cyan) / READY (neutral) / SHIPPED (green) / PICKED UP (green) / HELD (amber + reason picker). 5-button grid (3+2). Stages: `packed`, `ready`, `shipped`, `picked_up`, `held`. |
+| **SHIP** | Fulfillment phase page: jobs grouped by `fulfillment_phase`. Visibility/phase surface, not a counting console. |
+| **CREW** | Employee directory page with pfp, name, role, specialty, contact. CSV import. Photo upload. TODAY schedule block. |
 | **PVC** | Compound library (operational); cards, wizard, CSV import. |
 | **On deck** | One optional “next” job per press; shown under press card, send-to-press via arrow. |
-| **Caution mode** | Asset state “needs attention”; requires new note before row unlocks. |
+| **Caution mode (asset)** | Asset state “needs attention”; requires new note before row unlocks. |
 | **Job-level caution** | Exception overlay on a job (stuck, billing, traffic jam, etc.). Visible via amber glow/border. RSP Icon Zone ⚠ opens the caution drawer; Floor ⚠ routes to NOTES. |
 | **Icon Zone** | Top-right cluster of action buttons in the RSP (☆ ⚠ 📦 + ✕). Exception-style and readiness controls live here, not in the form body. |
-| **Pack card** | Job-scoped overlay for late-stage packing readiness. PACK_DEFS items (components, assembly spec, QC clearance, etc.) with status cycle ('' → ready → na → caution). Stored in job.packCard JSONB. |
+| **PACK CARD** | Job-scoped overlay for late-stage packing readiness (PACK_DEFS: Sleeve, Jacket, Insert, Wrap, Sticker, Box Label, Special Handling). Status cycle: blank / ready / na / caution. Entry: Jobs PACK button or RSP Icon Zone. Connected to NOTES for caution context. Stored in `job.packCard` JSONB. |
+| **Outbound feed lane** | Visual distinction for outbound entries in LOG daily feed: diamond prefix, OUTBOUND meta tag, colored left border. |
+| **Fulfillment phase** | Job field for SHIP page grouping (awaiting instructions, ready to ship, local pickup, etc.). |
+| **HELD_REASONS** | Outbound hold reasons: BILLING HOLD, CUSTOMER HOLD, DAMAGE, SHORT COUNT, WRONG CONFIG, OTHER. |
 | **Station** | Focused shell: Press, QC, or Floor Manager (launcher choice). |
 
 ---
