@@ -1069,9 +1069,7 @@ function goPg(id) {
 function _showAdminUtils(show) {
   const d = show ? '' : 'none';
   const utilDev = document.getElementById('utilDev');
-  const utilAudit = document.getElementById('utilAudit');
   if (utilDev) utilDev.style.display = d;
-  if (utilAudit) utilAudit.style.display = d;
 }
 
 function goPgUtil(id) {
