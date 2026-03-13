@@ -1077,6 +1077,26 @@
     .status-micro.st-done     { color: var(--d3); }
     .status-micro.st-queue    { color: var(--d3); }
 
+    /* Press column — live state indicators */
+    .press-live { color: var(--g); font-weight: 600; }
+    .press-live-glow { animation: pressGlow 1.8s ease-in-out infinite; }
+    @keyframes pressGlow {
+      0%, 100% { text-shadow: 0 0 4px var(--g); }
+      50% { text-shadow: 0 0 10px var(--g), 0 0 2px var(--g); }
+    }
+    .press-deck { color: var(--d3); font-weight: 500; }
+
+    /* Caution dot — symbol-only in LIVE cell */
+    .caution-dot {
+      cursor: pointer; font-size: 12px; color: #ffb300;
+      text-shadow: 0 0 4px rgba(255,179,0,0.4);
+    }
+    .caution-dot-pulse { animation: cautionDotPulse 1.6s ease-in-out infinite; }
+    @keyframes cautionDotPulse {
+      0%, 100% { opacity: 1; text-shadow: 0 0 4px rgba(255,179,0,0.4); }
+      50% { opacity: 0.5; text-shadow: 0 0 8px rgba(255,179,0,0.7); }
+    }
+
     /* Job-level caution treatment — amber border + subtle warm bg */
     tr.job-row-cautioned { border-left: 3px solid #ffb300 !important; background: rgba(255,179,0,0.06); }
     .job-card-cautioned { border-color: rgba(255,179,0,0.5) !important; background: rgba(255,179,0,0.06) !important; }

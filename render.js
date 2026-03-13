@@ -1449,6 +1449,7 @@ function renderJobs() {
       const jCautioned = isJobCautioned(j);
       const onPress = isJobOnPress(j);
       const ra = recentLogActivity(j);
+      const pi = jobPressInfo(j);
       const dots = (onPress   ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
         + (ra.pressed  ? '<span class="live-dot live-dot-pressed" title="Pressed (1h)"></span>' : '')
         + (ra.qc_passed? '<span class="live-dot live-dot-qcpass" title="QC pass (1h)"></span>' : '')
@@ -1456,7 +1457,14 @@ function renderJobs() {
         + (ra.packed   ? '<span class="live-dot live-dot-packed" title="Boxed (1h)"></span>' : '')
         + (ra.ready    ? '<span class="live-dot live-dot-ready" title="Ready (1h)"></span>' : '')
         + (ra.shipped  ? '<span class="live-dot live-dot-shipped" title="Quacked (1h)"></span>' : '');
-      const statusMicro = '<span class="status-micro st-' + (j.status || 'queue') + '">' + (j.status || 'queue').toUpperCase() + '</span>';
+      const st = j.status || 'queue';
+      const statusMicro = st === 'pressing' ? '' : '<span class="status-micro st-' + st + '">' + st.toUpperCase() + '</span>';
+      const cautionDot = jCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">⚠</span>' : '';
+      const pressCell = pi.onPress
+        ? '<span class="press-live' + (ra.pressed ? ' press-live-glow' : '') + '">' + escapeHtml(pi.onPress) + '</span>'
+        : pi.onDeck
+          ? '<span class="press-deck">' + escapeHtml(pi.onDeck) + '</span>'
+          : (j.press || '—');
       return `<tr data-status="${j.status || ''}"${jCautioned ? ' class="job-row-cautioned"' : ''}>
         <td class="j-cat panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
         <td class="j-artist panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.artist || '—'}</td>
@@ -1465,9 +1473,9 @@ function renderJobs() {
         <td class="j-spec">${j.color || 'Black'}${j.weight ? ` <span class="j-wt">${j.weight}</span>` : ''}</td>
         <td class="j-spec">${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
         <td class="j-spec j-plus10">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
-        <td class="j-state j-live-cell">${dots}${statusMicro}${jCautioned ? ' ' + cautionPill(j) : ''}</td>
+        <td class="j-state j-live-cell">${dots}${statusMicro}${cautionDot}</td>
         <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
-        <td class="j-support">${j.press || '—'}</td>
+        <td class="j-support">${pressCell}</td>
         <td class="j-support assets-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','asset')" title="Asset card">${ahHTML(j)}</td>
         <td class="j-support packing-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','pack')" title="Pack card">${packHealthHTML(j)}</td>
         <td class="j-support">${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
@@ -1482,6 +1490,7 @@ function renderJobs() {
       const jcCautioned = isJobCautioned(j);
       const onPress = isJobOnPress(j);
       const ra = recentLogActivity(j);
+      const pi = jobPressInfo(j);
       const dots = (onPress   ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
         + (ra.pressed  ? '<span class="live-dot live-dot-pressed" title="Pressed (1h)"></span>' : '')
         + (ra.qc_passed? '<span class="live-dot live-dot-qcpass" title="QC pass (1h)"></span>' : '')
@@ -1489,7 +1498,14 @@ function renderJobs() {
         + (ra.packed   ? '<span class="live-dot live-dot-packed" title="Boxed (1h)"></span>' : '')
         + (ra.ready    ? '<span class="live-dot live-dot-ready" title="Ready (1h)"></span>' : '')
         + (ra.shipped  ? '<span class="live-dot live-dot-shipped" title="Quacked (1h)"></span>' : '');
-      const statusMicro = '<span class="status-micro st-' + (j.status || 'queue') + '">' + (j.status || 'queue').toUpperCase() + '</span>';
+      const st = j.status || 'queue';
+      const statusMicro = st === 'pressing' ? '' : '<span class="status-micro st-' + st + '">' + st.toUpperCase() + '</span>';
+      const cautionDot = jcCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">⚠</span>' : '';
+      const pressTag = pi.onPress
+        ? '<span class="jc-detail press-live' + (ra.pressed ? ' press-live-glow' : '') + '">⬡ ' + escapeHtml(pi.onPress) + '</span>'
+        : pi.onDeck
+          ? '<span class="jc-detail press-deck">⬡ ' + escapeHtml(pi.onDeck) + '</span>'
+          : (j.press ? `<span class="jc-detail">⬡ ${j.press}</span>` : '');
       return `
         <div class="job-card st-${j.status}${jcCautioned ? ' job-card-cautioned' : ''}" onclick="openPanel('${j.id}')">
         <div class="jc-top">
@@ -1498,7 +1514,7 @@ function renderJobs() {
           <div class="jc-artist">${j.artist || '—'}</div>
           <div class="jc-album">${j.album || ''}</div>
           </div>
-          <div class="jc-live-wrap">${dots}${statusMicro}${jcCautioned ? '<div style="margin-top:4px">' + cautionPill(j) + '</div>' : ''}</div>
+          <div class="jc-live-wrap">${dots}${statusMicro}${cautionDot}</div>
         </div>
         
         <div class="jc-row">
@@ -1509,7 +1525,7 @@ function renderJobs() {
         <div class="jc-row">
           <span class="jc-detail ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
           ${ahHTML(j)}
-          ${j.press ? `<span class="jc-detail">⬡ ${j.press}</span>` : ''}
+          ${pressTag}
           ${j.location ? `<span class="loc">${j.location}</span>` : ''}
         </div>
         <div class="jc-progress">

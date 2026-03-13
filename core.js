@@ -652,6 +652,17 @@ function isJobOnPress(job) {
   return S.presses.some(p => p.job_id === job.id);
 }
 
+function jobPressInfo(job) {
+  var out = { onPress: null, onDeck: null };
+  if (!job || !Array.isArray(S.presses)) return out;
+  for (var i = 0; i < S.presses.length; i++) {
+    var p = S.presses[i];
+    if (p.job_id === job.id) out.onPress = p.name;
+    if (p.on_deck_job_id === job.id) out.onDeck = p.name;
+  }
+  return out;
+}
+
 function recentLogActivity(job, withinMs) {
   var out = { pressed: false, qc_passed: false, rejected: false, packed: false, ready: false, shipped: false };
   if (!job || !Array.isArray(job.progressLog)) return out;
