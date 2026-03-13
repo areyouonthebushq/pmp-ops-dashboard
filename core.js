@@ -89,7 +89,7 @@ function packHealth(job) {
 function packHealthHTML(job) {
   var h = packHealth(job);
   if (!h.total) return '<span class="ph-empty">—</span>';
-  var color = h.pct >= 1 ? 'var(--g)' : h.pct >= 0.5 ? 'var(--w)' : 'var(--d3)';
+  var color = h.pct >= 1 ? 'var(--cy)' : h.pct >= 0.5 ? 'var(--w)' : 'var(--d3)';
   return '<span class="ph" style="color:' + color + '">' + h.done + '/' + h.total + '</span>';
 }
 
@@ -376,7 +376,7 @@ function statusRailPlaceholderHTML() {
   </div>`;
 }
 
-/** LOG console only: single compact % bar by mode. Supports press + outbound actions. */
+/** LOG console only: single compact % bar by mode. Supports PRESS + SHIP actions. */
 function logConsoleRailHTML(job, mode) {
   if (!job) return logConsoleRailPlaceholderHTML();
   const p = getJobProgress(job);

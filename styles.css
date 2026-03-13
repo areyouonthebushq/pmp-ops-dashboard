@@ -1868,7 +1868,7 @@
     .log-mode-btn:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
     .log-mode-btn:hover:not(.active) { background: var(--s3); color: var(--d2); }
     #logModePressBtn.active    { border-color: var(--w2); background: var(--w2); color: var(--w); }
-    #logModeOutboundBtn.active { border-color: var(--cy2); background: var(--cy2); color: var(--cy); }
+    #logModeShipBtn.active { border-color: var(--cy2); background: var(--cy2); color: var(--cy); }
     #pg-log .log-console-wrap .qc-reject-picker-overlay.qc-reject-picker-console-overlay {
     position: absolute;
     inset: 0;
@@ -1999,7 +1999,7 @@
     .log-fp-qcrej { grid-area: mode3; }
     .log-fp-mode4 { grid-area: mode4; }
     .log-fp-mode5 { grid-area: mode5; }
-    .log-main.log-faceplate.log-outbound-grid {
+    .log-main.log-faceplate.log-ship-grid {
     grid-template-rows: auto auto 48px 48px 72px 56px 56px 56px 56px 56px;
     grid-template-areas:
         "rail    rail    rail"
@@ -2151,11 +2151,11 @@
     #logDailyFeed .progress-entry.held .log-feed-primary { color: var(--w); }
     #logDailyFeed .progress-entry.asset_note .log-feed-primary { color: var(--d2); text-decoration: underline; cursor: pointer; }
     #logDailyFeed .log-feed-meta { font-size: 11px; color: var(--d2); margin-top: var(--space-xs); }
-    #logDailyFeed .progress-entry.log-feed-outbound { border-left: 2px solid var(--b3); padding-left: var(--space-sm); }
-    #logDailyFeed .progress-entry.log-feed-outbound.packed { border-left-color: var(--cy); }
-    #logDailyFeed .progress-entry.log-feed-outbound.shipped { border-left-color: var(--g); }
-    #logDailyFeed .progress-entry.log-feed-outbound.picked_up { border-left-color: var(--g); }
-    #logDailyFeed .progress-entry.log-feed-outbound.held { border-left-color: var(--w); }
+    #logDailyFeed .progress-entry.log-feed-ship { border-left: 2px solid var(--b3); padding-left: var(--space-sm); }
+    #logDailyFeed .progress-entry.log-feed-ship.packed { border-left-color: var(--cy); }
+    #logDailyFeed .progress-entry.log-feed-ship.shipped { border-left-color: var(--g); }
+    #logDailyFeed .progress-entry.log-feed-ship.picked_up { border-left-color: var(--g); }
+    #logDailyFeed .progress-entry.log-feed-ship.held { border-left-color: var(--w); }
 
     @media (max-width: 600px) {
         .qc-numpad { max-width: 100%; }
@@ -3156,8 +3156,8 @@
     .pack-card-box {
     position: relative; width: 100%; max-width: 480px; max-height: 85vh;
     display: flex; flex-direction: column;
-    background: var(--b2); border: 1px solid var(--b4); border-radius: var(--radius);
-    padding: var(--space-lg); box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    background: var(--b2); border: 1px solid var(--cy2); border-radius: var(--radius);
+    padding: var(--space-lg); box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 1px var(--cy2);
     }
     .pack-card-close {
     position: absolute; top: var(--space-sm); right: var(--space-sm);
@@ -3167,7 +3167,7 @@
     .pack-card-close:hover { background: var(--b5); color: var(--d2); }
     .pack-card-title {
     font-family: 'Inconsolata', monospace; font-size: 16px; font-weight: 700;
-    color: var(--d); margin-bottom: var(--space-xs);
+    color: var(--cy); margin-bottom: var(--space-xs);
     }
     .pack-card-hint {
     font-size: 11px; color: var(--d3); letter-spacing: 1px; margin-bottom: var(--space-md);
@@ -3176,11 +3176,11 @@
     display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-md);
     font-size: 11px; letter-spacing: 1px;
     }
-    .pk-ready .pk-num { color: var(--g); font-weight: 700; }
+    .pk-ready .pk-num { color: var(--cy); font-weight: 700; }
     .pk-na .pk-num { color: var(--d3); font-weight: 700; }
     .pk-caution .pk-num { color: #ffb300; font-weight: 700; }
     .pk-remaining .pk-num { color: var(--d2); font-weight: 700; }
-    .pk-complete { color: var(--g); font-weight: 700; letter-spacing: 2px; }
+    .pk-complete { color: var(--cy); font-weight: 700; letter-spacing: 2px; }
     .pack-card-list { flex: 1; overflow-y: auto; margin-bottom: var(--space-md); }
     .pk-row {
     display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm);
@@ -3193,12 +3193,12 @@
     border: 1px solid var(--b4); border-radius: 3px; font-size: 12px; flex-shrink: 0;
     color: var(--d3); background: var(--b1);
     }
-    .pk-stat-ready { border-color: var(--g); color: var(--g); background: rgba(0,230,118,0.1); }
+    .pk-stat-ready { border-color: var(--cy); color: var(--cy); background: rgba(0,229,255,0.08); }
     .pk-stat-na { border-color: var(--d3); color: var(--d3); background: var(--b1); }
     .pk-stat-caution { border-color: #ffb300; color: #ffb300; background: rgba(255,179,0,0.1); }
     .pk-name { flex: 1; font-size: 13px; color: var(--d); letter-spacing: 0.5px; }
     .pk-who { font-size: 11px; color: var(--d3); }
-    .pk-row-ready .pk-name { color: var(--g); }
+    .pk-row-ready .pk-name { color: var(--cy); }
     .pk-row-na .pk-name { color: var(--d3); text-decoration: line-through; opacity: 0.6; }
     .pk-row-caution { background: rgba(255,179,0,0.06); }
     .pk-row-caution .pk-name { color: #ffb300; }
@@ -3239,7 +3239,7 @@
       padding: var(--space-xs) var(--space-sm); font-size: 12px; font-family: 'Inconsolata', monospace;
       border-radius: 2px; resize: vertical;
     }
-    .pk-pack-note:focus { border-color: var(--g); outline: none; }
+    .pk-pack-note:focus { border-color: var(--cy); outline: none; }
 
     /* Pack card → NOTES link in title bar */
     .pk-go-notes {
@@ -3247,7 +3247,7 @@
       font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 1.5px;
       padding: 2px 8px; cursor: pointer; margin-left: var(--space-sm); vertical-align: middle;
     }
-    .pk-go-notes:hover { border-color: var(--g); color: var(--g); }
+    .pk-go-notes:hover { border-color: var(--cy); color: var(--cy); }
 
     /* Recent notes context — read-only snippet area */
     .pk-notes-ctx {
@@ -3270,6 +3270,8 @@
     .pk-notes-ctx-age { font-size: 10px; color: var(--d3); flex-shrink: 0; white-space: nowrap; }
 
     .pack-card-actions { display: flex; gap: var(--space-sm); flex-shrink: 0; }
+    .pack-card-actions .btn.go { background: var(--cy2); border-color: var(--cy2); color: var(--cy); }
+    .pack-card-actions .btn.go:hover { background: var(--cy); color: #000; box-shadow: var(--gcy); }
     .pack-tap { cursor: pointer; }
     .pack-tap:hover { background: var(--b3); }
     .ph { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }

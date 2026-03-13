@@ -267,7 +267,7 @@
             <div class="log-console-wrap">
             <div class="log-mode-toggle" id="logModeToggle">
                 <button type="button" class="log-mode-btn active" id="logModePressBtn" onclick="setLogMode('press')">◉ PRESS</button>
-                <button type="button" class="log-mode-btn" id="logModeOutboundBtn" onclick="setLogMode('outbound')">◇ OUTBOUND</button>
+                <button type="button" class="log-mode-btn" id="logModeShipBtn" onclick="setLogMode('ship')">◇ SHIP</button>
             </div>
             <div class="log-main log-faceplate mode-press" id="logConsole">
                 <div id="logConsoleRail" class="log-console-rail"></div>
@@ -997,7 +997,7 @@
     </div>
     </div>
 
-    <!-- ASSETS DETAIL — editable asset checklist (triggered from Assets on press cards or floor table) -->
+    <!-- ASSET CARD — incoming/material readiness checklist (job-scoped overlay) -->
     <div class="assets-overlay" id="assetsOverlay" onclick="if(event.target===this)closeAssetsOverlay(true)">
     <div class="assets-overlay-box" onclick="event.stopPropagation()">
         <button type="button" class="assets-overlay-close" onclick="closeAssetsOverlay(true)" aria-label="Close">✕</button>

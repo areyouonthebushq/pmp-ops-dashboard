@@ -887,7 +887,7 @@ function closeProgressDetail() {
 }
 
 // ============================================================
-// ASSETS OVERLAY (standalone modal)
+// ASSET CARD (standalone modal — incoming/material readiness)
 // ============================================================
 let assetsOverlayState = null;
 
@@ -903,7 +903,7 @@ function openAssetsOverlay(jobId) {
     raw[a.key] = { status, date: d.date || '', person: d.person || '', note: d.note || '', received: status === 'received', na: status === 'na', cautionSince: d.cautionSince || '' };
   });
   assetsOverlayState = { jobId, data: raw };
-  document.getElementById('assetsOverlayTitle').textContent = `${job.catalog || '—'} · ${job.artist || '—'}`;
+  document.getElementById('assetsOverlayTitle').textContent = `ASSET CARD — ${job.catalog || '—'} · ${job.artist || '—'}`;
   renderAssetsOverlay();
   document.getElementById('assetsOverlay').classList.add('on');
 }
@@ -1134,7 +1134,7 @@ async function saveAssetsOverlay() {
       const el = document.getElementById('assetsOverlay');
       if (el) el.classList.remove('on');
       renderAll();
-      if (typeof toast === 'function') toast('ASSETS SAVED');
+      if (typeof toast === 'function') toast('ASSET CARD SAVED');
     })
     .catch((e) => {
       if (typeof setSyncState === 'function') setSyncState('error', { toast: 'SAVE FAILED' });
@@ -1158,7 +1158,7 @@ function openPackCard(jobId) {
   if (raw._packNote === undefined) raw._packNote = '';
   packCardState = { jobId: jobId, data: raw, expandedKey: null };
   var titleEl = document.getElementById('packCardTitle');
-  if (titleEl) titleEl.innerHTML = escapeHtml((job.catalog || '—') + ' · ' + (job.artist || '—')) +
+  if (titleEl) titleEl.innerHTML = 'PACK CARD — ' + escapeHtml((job.catalog || '—') + ' · ' + (job.artist || '—')) +
     ' <button type="button" class="pk-go-notes" onclick="event.stopPropagation();goToNotesFromPackCard()" title="Open NOTES for this job">◇ NOTES</button>';
   renderPackCard();
   document.getElementById('packCardOverlay').classList.add('on');
@@ -1552,8 +1552,8 @@ function addTodo(key) {
 // ============================================================
 let logNumpadValue = '0';
 let logMode = 'press';
-try { logMode = sessionStorage.getItem('logMode') || 'press'; } catch (e) {}
-let logAction = logMode === 'outbound' ? 'packed' : 'press';
+try { var _lm = sessionStorage.getItem('logMode') || 'press'; logMode = _lm === 'outbound' ? 'ship' : _lm; } catch (e) {}
+let logAction = logMode === 'ship' ? 'packed' : 'press';
 let logViewDate = new Date().toDateString();
 let pendingLogRejectQty = 0;
 let pendingLogHeldQty = 0;
@@ -1590,7 +1590,7 @@ function setLogAction(action) {
 
 function setLogMode(mode) {
   logMode = mode;
-  logAction = mode === 'outbound' ? 'packed' : 'press';
+  logAction = mode === 'ship' ? 'packed' : 'press';
   logNumpadValue = '0';
   try { sessionStorage.setItem('logMode', mode); } catch (e) {}
   renderLog();
@@ -1665,12 +1665,12 @@ async function unifiedLogEnter() {
     return;
   }
 
-  const simpleOutbound = { packed: 'packed', ready: 'ready', shipped: 'shipped' };
-  if (simpleOutbound[logAction]) {
+  const simpleShipActions = { packed: 'packed', ready: 'ready', shipped: 'shipped' };
+  if (simpleShipActions[logAction]) {
     try {
       const result = await logJobProgress(S.logSelectedJob, logAction, n, 'Log');
       if (!result.ok) { toastError(result.error || 'Log failed'); return; }
-      toast(`+${n.toLocaleString()} ${simpleOutbound[logAction]} → ${jobName}`);
+      toast(`+${n.toLocaleString()} ${simpleShipActions[logAction]} → ${jobName}`);
       logNumpadValue = '0';
       logNumpadUpdateDisplay();
       renderLog();
@@ -1799,9 +1799,9 @@ function renderLog() {
   }
 
   const pressToggle = document.getElementById('logModePressBtn');
-  const outToggle = document.getElementById('logModeOutboundBtn');
+  const shipToggle = document.getElementById('logModeShipBtn');
   if (pressToggle) pressToggle.classList.toggle('active', logMode === 'press');
-  if (outToggle) outToggle.classList.toggle('active', logMode === 'outbound');
+  if (shipToggle) shipToggle.classList.toggle('active', logMode === 'ship');
 
   const picker = document.getElementById('logJobPicker');
   if (picker) {
@@ -1836,11 +1836,11 @@ function renderLog() {
   }
 
   const extraBtn4 = document.getElementById('logBtnMode4');
-  if (extraBtn4) extraBtn4.style.display = logMode === 'outbound' ? '' : 'none';
+  if (extraBtn4) extraBtn4.style.display = logMode === 'ship' ? '' : 'none';
   const extraBtn5 = document.getElementById('logBtnMode5');
   if (extraBtn5) extraBtn5.style.display = 'none';
 
-  const modeActions = logMode === 'outbound'
+  const modeActions = logMode === 'ship'
     ? [
         { id: 'logBtnPress',    key: 'packed',    label: 'PACKED',    add: 'log-action-packed',   rm: 'log-action-press' },
         { id: 'logBtnQcPass',   key: 'ready',     label: 'READY',     add: 'log-action-ready',    rm: 'log-action-qcpass' },
@@ -1885,7 +1885,7 @@ function renderLog() {
   };
   const consoleEl = document.getElementById('logConsole');
   if (consoleEl) {
-    consoleEl.classList.toggle('log-outbound-grid', logMode === 'outbound');
+    consoleEl.classList.toggle('log-ship-grid', logMode === 'ship');
     allModeClasses.forEach(c => consoleEl.classList.remove(c));
     consoleEl.classList.add(actionModeCls[logAction] || 'mode-press');
   }
@@ -1906,8 +1906,8 @@ function renderLog() {
     const feedJobs = S.jobs.filter(j => !isJobArchived(j));
     const viewDate = logViewDate;
     const pressFeedStages = { pressed: 1, qc_passed: 1 };
-    const outboundFeedStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
-    const activeFeedStages = logMode === 'outbound' ? outboundFeedStages : pressFeedStages;
+    const shipFeedStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
+    const activeFeedStages = logMode === 'ship' ? shipFeedStages : pressFeedStages;
     const stageLabel = { pressed: 'PRESS', qc_passed: 'PASS', packed: 'PACKED', ready: 'READY', shipped: '\uD83E\uDD86 OUT', picked_up: '\uD83E\uDD86 OUT', held: 'HELD' };
     const stageCls   = { pressed: 'pressed', qc_passed: 'qc_passed', packed: 'packed', ready: 'ready', shipped: 'shipped', picked_up: 'picked_up', held: 'held' };
 
@@ -1937,7 +1937,7 @@ function renderLog() {
       });
     });
 
-    if (logMode !== 'outbound') {
+    if (logMode !== 'ship') {
       viewLog.forEach(e => {
         const m = (e.job || '').match(/\(x(\d+)\)\s*$/i);
         const qty = m ? parseInt(m[1], 10) : 1;
@@ -1960,26 +1960,26 @@ function renderLog() {
 
     items.sort((a, b) => new Date(b.ts) - new Date(a.ts));
 
-    const outboundStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
+    const shipStages = { packed: 1, ready: 1, shipped: 1, picked_up: 1, held: 1 };
     if (!items.length) {
       feedEl.innerHTML = `<div class="empty">No entries ${isToday ? 'today' : 'on this date'}</div>`;
     } else {
       feedEl.innerHTML = items.map(it => {
         const time = new Date(it.ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-        const isOut = !!outboundStages[it.cls];
+        const isOut = !!shipStages[it.cls];
         const prefix = isOut ? '◇ ' : '+';
         const primary = it.action === 'NOTE'
           ? ('NOTE' + (it.defect ? ' · ' + escapeHtml(it.defect) : ''))
           : (`${prefix}${(it.qty || 0).toLocaleString()} ${it.action}${it.defect ? ' · ' + escapeHtml(it.defect) : ''}`);
         const metaParts = [
-          isOut ? 'OUTBOUND' : null,
+          isOut ? 'SHIP' : null,
           escapeHtml(it.source || '—'),
           it.press ? escapeHtml(it.press) : null,
           it.who ? escapeHtml(it.who) : null,
           escapeHtml(time),
           escapeHtml(it.jobLabel || '—'),
         ].filter(Boolean);
-        const laneCls = isOut ? ' log-feed-outbound' : '';
+        const laneCls = isOut ? ' log-feed-ship' : '';
         const clickable = it.cls === 'asset_note' && it.jobId && it.assetKey;
         const jobIdAttr = clickable ? String(it.jobId).replace(/'/g, '\\\'') : '';
         const assetKeyAttr = clickable ? String(it.assetKey).replace(/'/g, '\\\'') : '';
