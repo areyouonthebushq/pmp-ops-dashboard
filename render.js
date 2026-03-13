@@ -1970,52 +1970,55 @@ function renderQC() {
 // ============================================================
 // ENGINE — plant instrumentation / telemetry console
 // Pedalboard console: equal square blocks, one color, uniform period.
+// Click-through detail overlay for each metric block.
 // ============================================================
 var enginePeriod = '1M';
+
+var ENGINE_METRICS = {
+  qpm:        { label: QUACK_ICON + ' QPM',  stages: ['shipped', 'picked_up'], desc: 'Units out the door' },
+  pressed:    { label: 'PRESSED',             stages: ['pressed'],              desc: 'Press output' },
+  qc_passed:  { label: 'QC PASSED',           stages: ['qc_passed'],            desc: 'QC pass count' },
+  yield:      { label: 'YIELD',               stages: ['qc_passed', 'rejected'], desc: 'QC yield rate', isYield: true },
+  rejected:   { label: 'REJECTED',             stages: ['rejected'],             desc: 'Reject count' },
+  packed:     { label: 'PACKED',               stages: ['packed'],               desc: 'In sealed boxes' },
+  ready:      { label: 'READY',                stages: null, desc: 'Units on skids', isLive: true },
+  order_book: { label: 'ORDER BOOK',           stages: null, desc: 'Total ordered across active jobs', isLive: true }
+};
 
 function setEnginePeriod(p) {
   enginePeriod = p;
   renderEngine();
 }
 
+function enginePeriodWindow() {
+  var now = new Date();
+  var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var tomorrowStart = new Date(todayStart.getTime() + 864e5);
+  var pStart, pEnd = tomorrowStart;
+  switch (enginePeriod) {
+    case '1H':  pStart = new Date(now.getTime() - 36e5); pEnd = now; break;
+    case '1D':  pStart = todayStart; break;
+    case '1W':  pStart = new Date(todayStart.getTime() - 6 * 864e5); break;
+    case '1M':  pStart = new Date(now.getFullYear(), now.getMonth(), 1); break;
+    case '1Y':  pStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()); break;
+    case 'YTD': pStart = new Date(now.getFullYear(), 0, 1); break;
+    case 'ALL': pStart = new Date(0); break;
+    default:    pStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  return { start: pStart, end: pEnd };
+}
+
+function enginePeriodLabel() {
+  var labels = { '1H': 'Last hour', '1D': 'Today', '1W': 'Last 7 days', '1M': 'Month to date', '1Y': 'Trailing year', 'YTD': 'Year to date', 'ALL': 'All time' };
+  return labels[enginePeriod] || enginePeriod;
+}
+
 function renderEngine() {
   var grid = document.getElementById('engineGrid');
   if (!grid) return;
 
-  var now = new Date();
-  var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  var tomorrowStart = new Date(todayStart.getTime() + 864e5);
-
-  // --- resolve period window ---
-  var pStart, pEnd = tomorrowStart;
-  switch (enginePeriod) {
-    case '1H':
-      pStart = new Date(now.getTime() - 36e5);
-      pEnd = now;
-      break;
-    case '1D':
-      pStart = todayStart;
-      break;
-    case '1W':
-      pStart = new Date(todayStart.getTime() - 6 * 864e5);
-      break;
-    case '1M':
-      pStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
-    case '1Y':
-      pStart = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
-      break;
-    case 'YTD':
-      pStart = new Date(now.getFullYear(), 0, 1);
-      break;
-    case 'ALL':
-      pStart = new Date(0);
-      break;
-    default:
-      pStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  }
-
-  var d = getEngineData(S.jobs, pStart, pEnd);
+  var w = enginePeriodWindow();
+  var d = getEngineData(S.jobs, w.start, w.end);
   var quacked = d.shipped + d.pickedUp;
 
   var active = S.jobs.filter(function (j) { return !isJobArchived(j) && j.status !== 'done'; });
@@ -2030,14 +2033,13 @@ function renderEngine() {
   var yieldDenom = d.qcPassed + d.rejected;
   var yieldPct = yieldDenom > 0 ? ((d.qcPassed / yieldDenom) * 100) : null;
 
-  // --- helpers ---
   function rail(num, denom) {
     var pct = denom > 0 ? Math.min(100, (num / denom) * 100) : 0;
     return '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(pct) + '%"></div></div>';
   }
 
-  function sq(label, value, sub, railHTML) {
-    return '<div class="eng-block">'
+  function sq(key, label, value, sub, railHTML) {
+    return '<div class="eng-block" onclick="openEngineDetail(\'' + key + '\')" style="cursor:pointer">'
       + '<div class="eng-label">' + label + '</div>'
       + '<div class="eng-value">' + value + '</div>'
       + (railHTML || '')
@@ -2045,44 +2047,40 @@ function renderEngine() {
       + '</div>';
   }
 
-  // --- 8 equal blocks, uniform period ---
   var b = '';
 
-  b += sq(QUACK_ICON + ' QPM', quacked.toLocaleString(),
+  b += sq('qpm', QUACK_ICON + ' QPM', quacked.toLocaleString(),
     quacked > 0 ? 'out the door' : 'no quacks yet',
     rail(quacked, totalOrdered || 1));
 
-  b += sq('PRESSED', d.pressed.toLocaleString(),
+  b += sq('pressed', 'PRESSED', d.pressed.toLocaleString(),
     totalOrdered > 0 ? d.pressed.toLocaleString() + ' / ' + totalOrdered.toLocaleString() : '',
     rail(d.pressed, totalOrdered || 1));
 
-  b += sq('QC PASSED', d.qcPassed.toLocaleString(),
+  b += sq('qc_passed', 'QC PASSED', d.qcPassed.toLocaleString(),
     d.pressed > 0 ? d.qcPassed.toLocaleString() + ' / ' + d.pressed.toLocaleString() + ' pressed' : '',
     rail(d.qcPassed, d.pressed || 1));
 
-  b += sq('YIELD', yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—',
+  b += sq('yield', 'YIELD', yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—',
     yieldDenom > 0 ? d.qcPassed.toLocaleString() + ' / ' + yieldDenom.toLocaleString() : 'no QC data',
     yieldPct !== null ? rail(Math.round(yieldPct), 100) : '');
 
-  b += sq('REJECTED', d.rejected.toLocaleString(),
+  b += sq('rejected', 'REJECTED', d.rejected.toLocaleString(),
     d.rejected > 0 && yieldDenom > 0 ? (100 - yieldPct).toFixed(1) + '% rate' : '',
     rail(d.rejected, yieldDenom || 1));
 
-  b += sq('PACKED', d.packed.toLocaleString(),
+  b += sq('packed', 'PACKED', d.packed.toLocaleString(),
     d.qcPassed > 0 ? d.packed.toLocaleString() + ' / ' + d.qcPassed.toLocaleString() + ' QC' : '',
     rail(d.packed, d.qcPassed || 1));
 
-  b += sq('READY', liveReady.toLocaleString(),
-    liveReady > 0 ? 'on skids' : 'none staged',
-    '');
+  b += sq('ready', 'READY', liveReady.toLocaleString(),
+    liveReady > 0 ? 'on skids' : 'none staged', '');
 
-  b += sq('ORDER BOOK', totalOrdered.toLocaleString(),
-    active.length + ' active job' + (active.length !== 1 ? 's' : ''),
-    '');
+  b += sq('order_book', 'ORDER BOOK', totalOrdered.toLocaleString(),
+    active.length + ' active job' + (active.length !== 1 ? 's' : ''), '');
 
   grid.innerHTML = b;
 
-  // --- period selector strip ---
   var strip = document.getElementById('enginePeriodStrip');
   if (strip) {
     var periods = ['1H', '1D', '1W', '1M', '1Y', 'YTD', 'ALL'];
@@ -2091,13 +2089,527 @@ function renderEngine() {
     }).join('');
   }
 
-  // --- clock ---
   var clockEl = document.getElementById('engineClock');
   if (clockEl) {
     var n = new Date();
     clockEl.textContent = n.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
       + ' · ' + n.toLocaleTimeString('en-US', { hour12: false });
   }
+}
+
+// ---- ENGINE detail overlay ----
+
+var engDetailKey = null;
+var engChartPeriod = '30D';
+var engCompareKeys = [];
+var ENG_CHART_PERIODS = ['1D', '7D', '30D', 'MTD'];
+
+var ENG_COMPARE_MAP = {
+  qpm:       ['packed', 'pressed'],
+  pressed:   ['qc_passed', 'rejected'],
+  qc_passed: ['pressed', 'rejected'],
+  rejected:  ['pressed', 'qc_passed'],
+  packed:    ['qc_passed', 'qpm']
+};
+
+var ENG_COMPARE_LABELS = {
+  qpm: 'QPM', pressed: 'PRESSED', qc_passed: 'QC PASS',
+  rejected: 'REJECTED', packed: 'PACKED'
+};
+
+var ENG_OVERLAY_COLORS = [
+  { line: 'rgba(0,229,255,0.5)',  dot: 'rgba(0,229,255,0.8)' },
+  { line: 'rgba(255,179,0,0.4)',  dot: 'rgba(255,179,0,0.7)' }
+];
+
+function openEngineDetail(key) {
+  var m = ENGINE_METRICS[key];
+  if (!m) return;
+  var overlay = document.getElementById('engDetailOverlay');
+  if (!overlay) return;
+  engDetailKey = key;
+  engCompareKeys = [];
+
+  var titleEl = document.getElementById('engDetailTitle');
+  var numEl = document.getElementById('engDetailNumber');
+  var periodEl = document.getElementById('engDetailPeriodLabel');
+
+  titleEl.innerHTML = m.label;
+  periodEl.textContent = enginePeriodLabel() + (m.isLive ? ' · live snapshot' : '');
+
+  renderEngineDetailBody(key, m, numEl);
+  overlay.classList.add('on');
+}
+
+function closeEngineDetail() {
+  engDetailKey = null;
+  engCompareKeys = [];
+  var el = document.getElementById('engDetailOverlay');
+  if (el) el.classList.remove('on');
+}
+
+function setEngChartPeriod(p) {
+  engChartPeriod = p;
+  if (!engDetailKey) return;
+  var m = ENGINE_METRICS[engDetailKey];
+  if (!m) return;
+  var numEl = document.getElementById('engDetailNumber');
+  renderEngineDetailBody(engDetailKey, m, numEl);
+}
+
+function toggleEngCompare(key) {
+  var idx = engCompareKeys.indexOf(key);
+  if (idx >= 0) {
+    engCompareKeys.splice(idx, 1);
+  } else {
+    if (engCompareKeys.length >= 2) engCompareKeys.shift();
+    engCompareKeys.push(key);
+  }
+  refreshEngChartSection();
+}
+
+function refreshEngChartSection() {
+  var stripEl = document.getElementById('engCompareStrip');
+  if (stripEl) stripEl.innerHTML = engCompareTogglesInner();
+  requestAnimationFrame(function () { drawEngineChart(); });
+}
+
+function renderEngineDetailBody(key, m, numEl) {
+  var bodyEl = document.getElementById('engDetailBody');
+  if (!bodyEl) return;
+  var w = enginePeriodWindow();
+  var html = '';
+
+  if (m.isLive && key === 'ready') {
+    html = renderEngineDetailLiveReady(numEl);
+  } else if (m.isLive && key === 'order_book') {
+    html = renderEngineDetailOrderBook(numEl);
+  } else if (m.isYield) {
+    html = renderEngineDetailYield(numEl, w);
+  } else {
+    html = renderEngineDetailStage(key, m, numEl, w);
+  }
+
+  bodyEl.innerHTML = html;
+
+  requestAnimationFrame(function () { drawEngineChart(); });
+}
+
+// ---- chart period strip HTML ----
+function engChartStripHTML() {
+  return '<div class="eng-chart-strip">' + ENG_CHART_PERIODS.map(function (p) {
+    return '<button type="button" class="eng-chart-btn' + (engChartPeriod === p ? ' eng-chart-on' : '') + '" onclick="setEngChartPeriod(\'' + p + '\')">' + p + '</button>';
+  }).join('') + '</div>';
+}
+
+// ---- comparison toggles HTML ----
+function engCompareTogglesInner() {
+  var opts = ENG_COMPARE_MAP[engDetailKey];
+  if (!opts || opts.length === 0) return '';
+  return opts.map(function (k) {
+    var ci = engCompareKeys.indexOf(k);
+    var cls = ci >= 0 ? ' eng-cmp-on-' + ci : '';
+    return '<button type="button" class="eng-compare-btn' + cls + '" onclick="toggleEngCompare(\'' + k + '\')">'
+      + (ENG_COMPARE_LABELS[k] || k) + '</button>';
+  }).join('');
+}
+
+function engCompareTogglesHTML() {
+  var opts = ENG_COMPARE_MAP[engDetailKey];
+  if (!opts || opts.length === 0) return '';
+  return '<div class="eng-compare-row">'
+    + '<span class="eng-compare-label">VS</span>'
+    + '<span id="engCompareStrip">' + engCompareTogglesInner() + '</span>'
+    + '</div>';
+}
+
+// ---- chart canvas HTML shell ----
+function engChartSectionHTML(title) {
+  return '<div class="eng-detail-section">'
+    + '<div class="eng-detail-section-title">' + title + '</div>'
+    + '<div class="eng-chart-wrap"><canvas id="engChartCanvas"></canvas></div>'
+    + engCompareTogglesHTML()
+    + engChartStripHTML()
+    + '</div>';
+}
+
+// ---- compute chart time window from engChartPeriod ----
+function engChartWindow() {
+  var now = new Date();
+  var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var end = new Date(todayStart.getTime() + 864e5);
+  var start;
+  switch (engChartPeriod) {
+    case '1D':  start = todayStart; break;
+    case '7D':  start = new Date(todayStart.getTime() - 6 * 864e5); break;
+    case '30D': start = new Date(todayStart.getTime() - 29 * 864e5); break;
+    case 'MTD': start = new Date(now.getFullYear(), now.getMonth(), 1); break;
+    default:    start = new Date(todayStart.getTime() - 29 * 864e5);
+  }
+  return { start: start, end: end };
+}
+
+// ---- bucket helpers ----
+function engChartStageBuckets(stages) {
+  var cw = engChartWindow();
+  var isHourly = engChartPeriod === '1D';
+  var map = {};
+  var ps = cw.start.getTime(), pe = cw.end.getTime();
+  S.jobs.forEach(function (j) {
+    if (!j || isJobArchived(j)) return;
+    (j.progressLog || []).forEach(function (e) {
+      if (!e || !e.timestamp || stages.indexOf(e.stage) === -1) return;
+      var t = new Date(e.timestamp).getTime();
+      if (t < ps || t >= pe) return;
+      var k = isHourly
+        ? new Date(e.timestamp).getHours()
+        : new Date(e.timestamp).toISOString().slice(0, 10);
+      map[k] = (map[k] || 0) + Math.max(0, parseInt(e.qty, 10) || 0);
+    });
+  });
+
+  var labels = [], values = [];
+  if (isHourly) {
+    for (var h = 0; h < 24; h++) {
+      labels.push(h + 'h');
+      values.push(map[h] || 0);
+    }
+  } else {
+    var cur = new Date(cw.start);
+    while (cur < cw.end) {
+      var dk = cur.toISOString().slice(0, 10);
+      labels.push((cur.getMonth() + 1) + '/' + cur.getDate());
+      values.push(map[dk] || 0);
+      cur = new Date(cur.getTime() + 864e5);
+    }
+  }
+  return { labels: labels, values: values };
+}
+
+function engChartYieldBuckets() {
+  var cw = engChartWindow();
+  var isHourly = engChartPeriod === '1D';
+  var passMap = {}, rejMap = {};
+  var ps = cw.start.getTime(), pe = cw.end.getTime();
+  S.jobs.forEach(function (j) {
+    if (!j || isJobArchived(j)) return;
+    (j.progressLog || []).forEach(function (e) {
+      if (!e || !e.timestamp) return;
+      var t = new Date(e.timestamp).getTime();
+      if (t < ps || t >= pe) return;
+      var q = Math.max(0, parseInt(e.qty, 10) || 0);
+      var k = isHourly
+        ? new Date(e.timestamp).getHours()
+        : new Date(e.timestamp).toISOString().slice(0, 10);
+      if (e.stage === 'qc_passed') passMap[k] = (passMap[k] || 0) + q;
+      else if (e.stage === 'rejected') rejMap[k] = (rejMap[k] || 0) + q;
+    });
+  });
+
+  var labels = [], values = [];
+  if (isHourly) {
+    for (var h = 0; h < 24; h++) {
+      labels.push(h + 'h');
+      var p = passMap[h] || 0, r = rejMap[h] || 0;
+      values.push((p + r) > 0 ? (p / (p + r)) * 100 : -1);
+    }
+  } else {
+    var cur = new Date(cw.start);
+    while (cur < cw.end) {
+      var dk = cur.toISOString().slice(0, 10);
+      labels.push((cur.getMonth() + 1) + '/' + cur.getDate());
+      var p = passMap[dk] || 0, r = rejMap[dk] || 0;
+      values.push((p + r) > 0 ? (p / (p + r)) * 100 : -1);
+      cur = new Date(cur.getTime() + 864e5);
+    }
+  }
+  return { labels: labels, values: values, isPercent: true };
+}
+
+// ---- Canvas drawing ----
+function drawEngineChart() {
+  var canvas = document.getElementById('engChartCanvas');
+  if (!canvas) return;
+  var m = ENGINE_METRICS[engDetailKey];
+  if (!m || m.isLive) return;
+
+  var data;
+  if (m.isYield) {
+    data = engChartYieldBuckets();
+  } else {
+    data = engChartStageBuckets(m.stages);
+    data.isPercent = false;
+  }
+
+  // compute overlay series
+  var overlays = [];
+  if (!data.isPercent) {
+    engCompareKeys.forEach(function (ck, ci) {
+      var cm = ENGINE_METRICS[ck];
+      if (!cm || !cm.stages || cm.isLive || cm.isYield) return;
+      var od = engChartStageBuckets(cm.stages);
+      overlays.push({ values: od.values, colorIdx: ci });
+    });
+  }
+
+  var ctx = canvas.getContext('2d');
+  var dpr = window.devicePixelRatio || 1;
+  var w = canvas.clientWidth;
+  var h = canvas.clientHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+
+  var green = '#00e676';
+  var greenDim = 'rgba(0,230,118,0.15)';
+  var gridClr = '#1e261e';
+  var txtClr = '#3a443a';
+  var vals = data.values;
+  var lbls = data.labels;
+  var isPct = data.isPercent;
+  var n = vals.length;
+  if (n === 0) return;
+
+  var padL = 32, padR = 6, padT = 6, padB = 16;
+  var cW = w - padL - padR;
+  var cH = h - padT - padB;
+
+  var posVals = vals.map(function (v) { return v < 0 ? 0 : v; });
+  var maxV = isPct ? 100 : Math.max.apply(null, posVals);
+
+  // scale Y-axis to fit overlays too
+  overlays.forEach(function (o) {
+    var oMax = Math.max.apply(null, o.values);
+    if (oMax > maxV) maxV = oMax;
+  });
+  if (maxV === 0) maxV = 1;
+
+  // grid lines
+  ctx.strokeStyle = gridClr;
+  ctx.lineWidth = 1;
+  var gridN = 4;
+  for (var i = 0; i <= gridN; i++) {
+    var gy = padT + (cH / gridN) * i;
+    ctx.beginPath();
+    ctx.moveTo(padL, Math.round(gy) + 0.5);
+    ctx.lineTo(w - padR, Math.round(gy) + 0.5);
+    ctx.stroke();
+  }
+
+  // Y-axis labels
+  ctx.font = '9px Inconsolata, monospace';
+  ctx.fillStyle = txtClr;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (var i = 0; i <= gridN; i++) {
+    var v = Math.round(maxV * (gridN - i) / gridN);
+    ctx.fillText(isPct ? v + '%' : v.toLocaleString(), padL - 4, padT + (cH / gridN) * i);
+  }
+
+  // bar geometry
+  var gap = Math.max(1, Math.round(cW / n * 0.15));
+  var barW = Math.max(2, (cW - gap * (n + 1)) / n);
+
+  // primary bars
+  for (var i = 0; i < n; i++) {
+    var v = posVals[i];
+    var noData = vals[i] < 0;
+    var barH = maxV > 0 ? (v / maxV) * cH : 0;
+    var x = padL + gap + i * (barW + gap);
+    var y = padT + cH - barH;
+
+    if (noData) {
+      ctx.fillStyle = gridClr;
+      ctx.fillRect(x, padT, barW, cH);
+    } else if (v > 0) {
+      ctx.fillStyle = greenDim;
+      ctx.fillRect(x, padT, barW, cH);
+      ctx.fillStyle = green;
+      ctx.globalAlpha = 0.85;
+      ctx.fillRect(x, y, barW, barH);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // overlay line+dot series
+  overlays.forEach(function (o) {
+    var clr = ENG_OVERLAY_COLORS[o.colorIdx] || ENG_OVERLAY_COLORS[0];
+    var ov = o.values;
+
+    // line
+    ctx.beginPath();
+    ctx.strokeStyle = clr.line;
+    ctx.lineWidth = 1.5;
+    var started = false;
+    for (var i = 0; i < n; i++) {
+      var v = ov[i] || 0;
+      var cx = padL + gap + i * (barW + gap) + barW / 2;
+      var cy = padT + cH - (maxV > 0 ? (v / maxV) * cH : 0);
+      if (!started) { ctx.moveTo(cx, cy); started = true; }
+      else ctx.lineTo(cx, cy);
+    }
+    ctx.stroke();
+
+    // dots
+    ctx.fillStyle = clr.dot;
+    for (var i = 0; i < n; i++) {
+      var v = ov[i] || 0;
+      var cx = padL + gap + i * (barW + gap) + barW / 2;
+      var cy = padT + cH - (maxV > 0 ? (v / maxV) * cH : 0);
+      ctx.beginPath();
+      ctx.arc(cx, cy, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // X-axis labels
+  ctx.fillStyle = txtClr;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  var maxLabels = Math.floor(cW / 36);
+  var every = Math.max(1, Math.ceil(n / maxLabels));
+  for (var i = 0; i < n; i += every) {
+    var x = padL + gap + i * (barW + gap) + barW / 2;
+    ctx.fillText(lbls[i], x, padT + cH + 3);
+  }
+}
+
+// ---- bar row helper (for job breakdown) ----
+function engineDetailBarRow(label, val, maxVal) {
+  var pct = maxVal > 0 ? Math.min(100, (val / maxVal) * 100) : 0;
+  return '<div class="eng-detail-row">'
+    + '<div class="eng-detail-row-label">' + label + '</div>'
+    + '<div class="eng-detail-row-bar"><div class="eng-detail-row-bar-fill" style="width:' + Math.round(pct) + '%"></div></div>'
+    + '<div class="eng-detail-row-val">' + val.toLocaleString() + '</div>'
+    + '</div>';
+}
+
+// ---- job breakdown helper ----
+function engineDetailJobBreakdown(stages, pStart, pEnd) {
+  var jobMap = {};
+  var ps = pStart.getTime(), pe = pEnd.getTime();
+  S.jobs.forEach(function (j) {
+    if (!j || isJobArchived(j)) return;
+    var total = 0;
+    (j.progressLog || []).forEach(function (e) {
+      if (!e || !e.timestamp || stages.indexOf(e.stage) === -1) return;
+      var t = new Date(e.timestamp).getTime();
+      if (t < ps || t >= pe) return;
+      total += Math.max(0, parseInt(e.qty, 10) || 0);
+    });
+    if (total > 0) jobMap[j.title || j.id] = total;
+  });
+  var entries = Object.keys(jobMap).map(function (k) { return { name: k, qty: jobMap[k] }; });
+  entries.sort(function (a, b) { return b.qty - a.qty; });
+  if (entries.length === 0) return '';
+  var maxJob = entries[0].qty;
+  var html = '';
+  entries.forEach(function (e) {
+    var name = e.name.length > 18 ? e.name.slice(0, 17) + '…' : e.name;
+    html += engineDetailBarRow(name, e.qty, maxJob);
+  });
+  return html;
+}
+
+// ---- stage detail (QPM, PRESSED, QC PASSED, REJECTED, PACKED) ----
+function renderEngineDetailStage(key, m, numEl, w) {
+  var d = getEngineData(S.jobs, w.start, w.end);
+  var total = 0;
+  m.stages.forEach(function (s) {
+    if (s === 'shipped') total += d.shipped;
+    else if (s === 'picked_up') total += d.pickedUp;
+    else if (s === 'pressed') total += d.pressed;
+    else if (s === 'qc_passed') total += d.qcPassed;
+    else if (s === 'rejected') total += d.rejected;
+    else if (s === 'packed') total += d.packed;
+    else if (s === 'ready') total += d.ready;
+    else if (s === 'held') total += d.held;
+  });
+  numEl.textContent = total.toLocaleString();
+
+  var html = engChartSectionHTML('TREND');
+
+  var jobHTML = engineDetailJobBreakdown(m.stages, w.start, w.end);
+  if (jobHTML) {
+    html += '<div class="eng-detail-section">'
+      + '<div class="eng-detail-section-title">BY JOB</div>'
+      + jobHTML + '</div>';
+  }
+
+  return html;
+}
+
+// ---- yield detail ----
+function renderEngineDetailYield(numEl, w) {
+  var d = getEngineData(S.jobs, w.start, w.end);
+  var denom = d.qcPassed + d.rejected;
+  var pct = denom > 0 ? ((d.qcPassed / denom) * 100) : null;
+  numEl.textContent = pct !== null ? pct.toFixed(1) + '%' : '—';
+
+  var html = '<div class="eng-detail-section">'
+    + '<div class="eng-detail-section-title">BREAKDOWN</div>';
+  if (denom > 0) {
+    html += engineDetailBarRow('PASSED', d.qcPassed, denom);
+    html += engineDetailBarRow('REJECTED', d.rejected, denom);
+  } else {
+    html += '<div class="eng-detail-empty">No QC data in this period</div>';
+  }
+  html += '</div>';
+
+  html += engChartSectionHTML('DAILY YIELD');
+
+  return html;
+}
+
+// ---- live snapshot details (no chart) ----
+function renderEngineDetailLiveReady(numEl) {
+  var active = S.jobs.filter(function (j) { return !isJobArchived(j) && j.status !== 'done'; });
+  var total = 0;
+  var jobs = [];
+  active.forEach(function (j) {
+    var p = getJobProgress(j);
+    if (p.ready > 0) {
+      total += p.ready;
+      jobs.push({ name: j.title || j.id, qty: p.ready });
+    }
+  });
+  numEl.textContent = total.toLocaleString();
+  jobs.sort(function (a, b) { return b.qty - a.qty; });
+
+  if (jobs.length === 0) return '<div class="eng-detail-empty">No units currently staged</div>';
+  var maxJob = jobs[0].qty;
+  var html = '<div class="eng-detail-section">'
+    + '<div class="eng-detail-section-title">BY JOB · LIVE</div>';
+  jobs.forEach(function (e) {
+    var name = e.name.length > 18 ? e.name.slice(0, 17) + '…' : e.name;
+    html += engineDetailBarRow(name, e.qty, maxJob);
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderEngineDetailOrderBook(numEl) {
+  var active = S.jobs.filter(function (j) { return !isJobArchived(j) && j.status !== 'done'; });
+  var total = 0;
+  var jobs = [];
+  active.forEach(function (j) {
+    var q = Math.max(0, parseInt(j.qty, 10) || 0);
+    total += q;
+    if (q > 0) jobs.push({ name: j.title || j.id, qty: q });
+  });
+  numEl.textContent = total.toLocaleString();
+  jobs.sort(function (a, b) { return b.qty - a.qty; });
+
+  if (jobs.length === 0) return '<div class="eng-detail-empty">No active orders</div>';
+  var maxJob = jobs[0].qty;
+  var html = '<div class="eng-detail-section">'
+    + '<div class="eng-detail-section-title">BY JOB · ' + active.length + ' ACTIVE</div>';
+  jobs.forEach(function (e) {
+    var name = e.name.length > 18 ? e.name.slice(0, 17) + '…' : e.name;
+    html += engineDetailBarRow(name, e.qty, maxJob);
+  });
+  html += '</div>';
+  return html;
 }
 
 // ============================================================

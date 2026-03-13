@@ -4018,14 +4018,21 @@ document.addEventListener('keydown', e => {
       e.preventDefault();
       return;
     }
-    // 3b. Pack card overlay
+    // 3b. Engine detail overlay
+    const engDetailEl = document.getElementById('engDetailOverlay');
+    if (engDetailEl && engDetailEl.classList.contains('on')) {
+      if (typeof closeEngineDetail === 'function') closeEngineDetail();
+      e.preventDefault();
+      return;
+    }
+    // 3c. Pack card overlay
     const packCardEl = document.getElementById('packCardOverlay');
     if (packCardEl && packCardEl.classList.contains('on')) {
       if (typeof closePackCard === 'function') closePackCard();
       e.preventDefault();
       return;
     }
-    // 3c. Assets overlay
+    // 3d. Assets overlay
     const assetsEl = document.getElementById('assetsOverlay');
     if (assetsEl && assetsEl.classList.contains('on')) {
       // Skip save on ESC; behave like click-outside cancel

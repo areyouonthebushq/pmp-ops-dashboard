@@ -1028,6 +1028,19 @@
     </div>
     </div>
 
+    <!-- ENGINE DETAIL — telemetry deep-dive overlay (triggered from ENGINE block click) -->
+    <div class="eng-detail-overlay" id="engDetailOverlay" onclick="if(event.target===this)closeEngineDetail()">
+    <div class="eng-detail-box" onclick="event.stopPropagation()">
+        <button type="button" class="eng-detail-close" onclick="closeEngineDetail()" aria-label="Close">✕</button>
+        <div class="eng-detail-header">
+            <div class="eng-detail-title" id="engDetailTitle"></div>
+            <div class="eng-detail-number" id="engDetailNumber"></div>
+            <div class="eng-detail-period" id="engDetailPeriodLabel"></div>
+        </div>
+        <div class="eng-detail-body" id="engDetailBody"></div>
+    </div>
+    </div>
+
     <!-- PROGRESS DETAIL — job progress breakdown (triggered from Progress on press cards or floor table) -->
     <div class="progress-detail-overlay" id="progressDetailOverlay" onclick="if(event.target===this)closeProgressDetail()">
     <div class="progress-detail-box" onclick="event.stopPropagation()">
