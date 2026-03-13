@@ -430,7 +430,7 @@ function renderCrewPage() {
         );
       })
     : raw;
-  if (countEl) countEl.textContent = list.length + (raw.length ? ' / ' + raw.length : '');
+  if (countEl) countEl.textContent = '';
   if (emptyEl) {
     emptyEl.style.display = list.length === 0 && raw.length === 0 ? 'block' : 'none';
   }
@@ -1843,7 +1843,7 @@ function renderLog() {
   const jobLabel = document.getElementById('logNumpadJobLabel');
   if (jobLabel) {
     const sel = S.logSelectedJob ? S.jobs.find(j => j.id === S.logSelectedJob) : null;
-    jobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : 'Select a job above';
+    jobLabel.textContent = sel ? `${sel.catalog || '—'} · ${sel.artist || '—'}` : '';
   }
 
   const logConsoleRail = document.getElementById('logConsoleRail');

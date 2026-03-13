@@ -230,7 +230,6 @@
         <div class="jobs-header">
           <div class="jobs-header-left">
             <div class="jobs-title">JOBS</div>
-            <div class="jobs-sub">Production ledger</div>
           </div>
           <div class="jobs-header-actions">
             <select id="jobFilter" class="fs" style="width:auto;padding: var(--space-sm) var(--space-md);font-size:13px;" onchange="renderJobs()">
@@ -281,9 +280,9 @@
     <!-- ======= UNIFIED LOG PAGE (replaces Press Log + QC Log entry) ======= -->
     <div class="pg" id="pg-log">
         <div class="log-page-shell">
-            <div class="log-shell-sec">SELECT JOB</div>
+            <div class="log-shell-sec" style="display:none;">SELECT JOB</div>
             <div class="log-job-picker" id="logJobPicker"></div>
-            <div class="log-shell-sec log-shell-sec-log">LOG <button type="button" id="logAchtungCtrl" class="log-achtung-ctrl" onclick="toggleShipAchtung()" title="ACHTUNG — flag job for attention" style="display:none">⚠</button></div>
+            <div class="log-shell-sec log-shell-sec-log" style="display:none;">LOG <button type="button" id="logAchtungCtrl" class="log-achtung-ctrl" onclick="toggleShipAchtung()" title="ACHTUNG — flag job for attention" style="display:none">⚠</button></div>
             <div id="shipAchtungComposer" class="ship-achtung-composer" style="display:none">
                 <input type="text" id="shipAchtungText" class="ship-achtung-input" placeholder="Context (writes to NOTES)" onkeydown="if(event.key==='Enter'){confirmShipAchtung();event.preventDefault()}else if(event.key==='Escape'){cancelShipAchtung();event.preventDefault()}">
                 <button type="button" class="ship-achtung-send" onclick="confirmShipAchtung()">⚠ FLAG</button>
@@ -296,7 +295,7 @@
             </div>
             <div class="log-main log-faceplate" id="logConsole">
                 <div id="logConsoleRail" class="log-console-rail"></div>
-                <div class="log-fp-job" id="logNumpadJobLabel">Select a job above</div>
+                <div class="log-fp-job" id="logNumpadJobLabel"></div>
                 <button type="button" class="log-action-btn log-action-press log-fp-press" id="logBtnPress" onclick="setLogAction('press')">PRESS</button>
                 <button type="button" class="log-action-btn log-action-qcpass log-fp-qcpass" id="logBtnQcPass" onclick="setLogAction('qc_pass')">PASS</button>
                 <button type="button" class="log-action-btn log-action-qcreject log-fp-qcrej" id="logBtnQcReject" onclick="setLogAction('qc_reject')">REJECT</button>
@@ -337,7 +336,7 @@
         </div>
         </div>
         <div class="log-page-shell log-feed-shell">
-            <div class="log-shell-sec">LOG</div>
+            <div class="log-shell-sec" style="display:none;">LOG</div>
             <div class="qc-date-nav">
             <button class="qc-date-btn" onclick="logDateStep(-1)">◂ PREV</button>
             <span class="qc-date-label" id="logDateLabel"></span>
@@ -366,7 +365,7 @@
     <div class="pg" id="pg-notes">
         <div class="notes-terminal">
             <div class="notes-control-rail">
-                <div class="notes-rail-label">CHANNEL</div>
+                <div class="notes-rail-label" style="display:none;">CHANNEL</div>
                 <div class="notes-toolbar">
                     <div class="log-job-picker" id="notesJobPicker">
                         <select class="qc-job-select" id="notesJobSelect" onchange="renderNotesPage()">
@@ -397,7 +396,7 @@
                 <div></div>
                 <button type="button" class="bar-btn notes-utility-action" onclick="notesSearchAction()">SEARCH</button>
             </div>
-            <div class="notes-feed-sec">NOTES</div>
+            <div class="notes-feed-sec" style="display:none;">NOTES</div>
             <div class="notes-filter-indicator" id="notesFilterIndicator" style="display:none;"></div>
             <div class="notes-feed-wrap">
                 <div class="log-recent notes-feed" id="notesFeed"></div>
@@ -497,17 +496,12 @@
         <div class="crew-header">
           <div class="crew-header-left">
             <div class="crew-title">CREW</div>
-            <div class="crew-sub">Operational directory</div>
           </div>
           <div class="crew-header-actions">
-            <div class="search-wrap" style="min-width:160px">
-              <input class="search-input" id="crewSearch" placeholder="Search name, role, specialty…" oninput="if(typeof renderCrewPage==='function')renderCrewPage()">
-            </div>
-            <span class="search-count" id="crewCount"></span>
-            <label class="bar-btn" style="cursor:pointer;">↑ IMPORT CSV
+            <label class="bar-btn" style="cursor:pointer;display:none;">↑ IMPORT CSV
               <input type="file" id="crewCsvInput" accept=".csv" style="display:none" onchange="onCrewCsvSelected(this)">
             </label>
-            <button type="button" class="bar-btn" onclick="openEmployeeWizard()">+ ADD PERSON</button>
+            <button type="button" class="jobs-icon-btn" onclick="openEmployeeWizard()" title="Add person">+</button>
           </div>
         </div>
         <input type="file" id="crewPhotoInput" accept="image/*" style="display:none" onchange="onCrewPhotoSelected(this)">
@@ -526,7 +520,7 @@
             <tbody id="crewBody"></tbody>
           </table>
         </div>
-        <div id="crewEmpty" class="empty" style="display:none;">NO ENTRIES YET · TAP + ADD PERSON</div>
+        <div id="crewEmpty" class="empty" style="display:none;">NO ENTRIES YET · TAP + TO ADD</div>
 
         <div class="sec crew-today-sec" id="crewTodaySec">TODAY</div>
         <div class="crew-today-toolbar">
