@@ -63,7 +63,7 @@ function floorTableRowHTML(j, opts) {
   const statusId = (opts && opts.statusCellId) ? ` id="st-${j.id}"` : '';
   const cautioned = isJobCautioned(j);
   const trClass = cautioned ? ' class="job-row-cautioned"' : '';
-  const cautionTag = cautioned ? ' ' + cautionPill(j) + cautionNoteBtn(j) : '';
+  const cautionIcon = cautioned ? ' <span class="floor-caution-icon" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="Cautioned — view notes">⚠</span>' : '';
   return `
   <tr${trClass}>
   <td class="panel-trigger" style="color:var(--w);font-weight:700;cursor:pointer" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
@@ -77,7 +77,7 @@ function floorTableRowHTML(j, opts) {
   <td class="panel-trigger" onclick="openPanel('${j.id}')" title="Open job to change status" style="cursor:pointer">
     <div class="status-pill-readonly ${statusTapClass(j.status)}"${statusId}>
     ${(j.status || 'queue').toUpperCase()}
-    </div>${cautionTag}
+    </div>${cautionIcon}
   </td>
   <td class="${dueClass(j.due)}">${dueLabel(j.due)}</td>
   </tr>`;
@@ -811,9 +811,8 @@ function renderFloorCard() {
     <span class="fc-due ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
     <span class="fc-loc">${j.location ? '📍 ' + j.location : '—'}</span>
     ${j.fulfillment_phase ? '<span class="fc-fulfill">' + fulfillmentPhasePill(j.fulfillment_phase) + '</span>' : ''}
-    ${isJobCautioned(j) ? '<span class="fc-caution">' + cautionPill(j) + '</span>' : ''}
+    ${isJobCautioned(j) ? '<span class="fc-caution floor-caution-icon" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="Cautioned — view notes">⚠</span>' : ''}
   </div>
-  ${isJobCautioned(j) && j.caution.text ? '<div class="fc-caution-note">⚠ ' + escapeHtml(j.caution.text) + '</div>' : ''}
   <div class="fc-qty-strip">
     <span>Ordered: <strong>${(prog.p.ordered || 0).toLocaleString()}</strong></span>
     <span>Pressed: <strong>${(prog.p.pressed || 0).toLocaleString()}</strong></span>

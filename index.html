@@ -628,11 +628,33 @@
             <div class="panel-id" id="panelId">NEW JOB</div>
             <div class="panel-sub" id="panelSub"></div>
         </div>
-        <div style="display:flex;gap:var(--space-sm);">
+        <div class="rsp-icon-zone">
             <button class="panel-close" id="panelPoStarBtn" onclick="panelPoStarClick()" title="PO / contract image">☆</button>
+            <button class="panel-close" id="panelCautionBtn" onclick="togglePanelCaution()" title="Caution / blocker">⚠</button>
             <button class="panel-close" id="panelEditBtn" onclick="setPanelEditMode(!panelEditMode)" title="Toggle edit mode">+</button>
             <button class="panel-close" onclick="closePanel()">✕</button>
         </div>
+        </div>
+        <!-- RSP caution dropdown — lives between Icon Zone and form body -->
+        <div id="panelCautionRow" class="rsp-caution-drawer" style="display:none;">
+            <div class="rsp-caution-inner">
+            <div class="fg">
+            <label class="fl">⚠ Caution / Blocker</label>
+            <select class="fs" id="jCautionReason">
+                <option value="">— None</option>
+                <option value="stuck">Stuck</option>
+                <option value="customer">Waiting on Customer</option>
+                <option value="billing">Billing Issue</option>
+                <option value="traffic_jam">Traffic Jam</option>
+                <option value="special">Special Handling</option>
+                <option value="other">Other</option>
+            </select>
+            </div>
+            <div class="fg">
+            <label class="fl">Caution Note</label>
+            <input class="fi" id="jCautionText" placeholder="Short context (optional)">
+            </div>
+            </div>
         </div>
         <div class="panel-body" id="panelBody">
         <!-- Unified form — all sections in one scrollable view -->
@@ -656,24 +678,6 @@
             </div>
         </div>
         <div id="panelStatusSuggestion" class="panel-status-suggestion" style="display:none;"></div>
-        <div id="panelCautionRow" class="frow c2 panel-caution-row" style="display:none;">
-            <div class="fg">
-            <label class="fl">⚠ Caution / Blocker</label>
-            <select class="fs" id="jCautionReason">
-                <option value="">— None</option>
-                <option value="stuck">Stuck</option>
-                <option value="customer">Waiting on Customer</option>
-                <option value="billing">Billing Issue</option>
-                <option value="traffic_jam">Traffic Jam</option>
-                <option value="special">Special Handling</option>
-                <option value="other">Other</option>
-            </select>
-            </div>
-            <div class="fg">
-            <label class="fl">Caution Note</label>
-            <input class="fi" id="jCautionText" placeholder="Short context (optional)">
-            </div>
-        </div>
         <div class="frow c2">
             <div class="fg">
             <label class="fl">Artist</label>

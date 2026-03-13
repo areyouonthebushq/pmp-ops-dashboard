@@ -241,12 +241,14 @@ flowchart TB
 
 ---
 
-### 6.6 Panel (slide panel) — One-sheet
+### 6.6 Right-Side Panel (RSP) — One-sheet
 
 | Attribute | Detail |
 |-----------|--------|
 | **Question answered** | Full job detail and edit. |
+| **Icon Zone** | Top-right control cluster: ☆ (PO/contract image), ⚠ (caution/blocker toggle), + (edit mode), ✕ (close). Exception-style controls live here, not in the form body. |
 | **Sections** | Job details (FIELD_MAP), PO/Contract (image + fields), Progress, Notes, Assembly, Assets (link to assets overlay), actions (Save, Delete, etc.) |
+| **Caution drawer** | ⚠ in Icon Zone toggles a drawer between header and form body. Contains reason dropdown + short context field. Not part of the normal form flow. |
 | **Modes** | View vs edit (panelEditMode); suggested status when progress suggests change |
 | **Data** | S.editId, job from S.jobs; save → Storage.saveJob |
 
@@ -332,8 +334,8 @@ flowchart TB
 
 | File | Responsibility |
 |------|----------------|
-| index.html | Shells: login, launcher, TV, app, nav, all pg-* pages, overlay, panel, floor card, assets overlay, FAB, sync bar, confirm, wizards, station shells. |
-| app.js | S state, storage wiring, auth, launcher, goPg, updateFAB, panel/floor card open-close, new job, import/export, notes add (incl. attachment), asset note, saveJob, savePresses, saveTodos, notes channels, realtime/polling, TV enter/exit, theme. |
+| index.html | Shells: login, launcher, TV, app, nav, all pg-* pages, overlay, RSP (Right-Side Panel), floor card, assets overlay, FAB, sync bar, confirm, wizards, station shells. |
+| app.js | S state, storage wiring, auth, launcher, goPg, updateFAB, RSP/floor card open-close, new job, import/export, notes add (incl. attachment), asset note, saveJob, savePresses, saveTodos, notes channels, realtime/polling, TV enter/exit, theme, RSP Icon Zone toggle. |
 | render.js | renderAll entry; stats; buildPressCardHTML, buildOnDeckCardHTML; renderPresses, renderFloor, renderJobs, renderLog, renderNotesPage, renderNotesSection, renderCompoundsPage; panel body (renderPanel*); floor card; assets overlay (renderAssetsOverlay); TV; audit table; dev feed; sort/floor helpers. |
 | stations.js | Station context, setAssignment, setPressOnDeck, showOnDeckArrow, sendOnDeckToPress, assignJob, setPressStatus; Press/QC/Floor Manager shells (open, exit, render); press station job select; syncJobPressFromPresses. |
 | core.js | FIELD_MAP, ASSET_DEFS, DEFAULT_PRESSES, STATUS_ORDER, PROGRESS_STAGES, QC_TYPES; getAssetStatus, assetHealth, assetBarSegmentedHTML; progressDisplay, progressDualBarHTML; dueClass, dueLabel; ensureNotesLog; job field hash, duplicate check. |
@@ -368,7 +370,7 @@ flowchart TB
 │  FAB [+]        │
 └────────┬────────┘
          │ overlays (when open)
-         ├── #overlay (slide panel)
+         ├── #overlay (RSP — Right-Side Panel)
          ├── #floorCardOverlay
          ├── #assetsOverlay
          ├── #compoundWizardWrap
@@ -383,7 +385,7 @@ flowchart TB
 | Term | Meaning |
 |------|--------|
 | **Floor** | Page and view of “what’s running where”; press grid + floor table. |
-| **Panel** | Slide-over full job detail/edit (admin or when canUseFullPanel). |
+| **RSP (Right-Side Panel)** | Slide-over full job detail/edit (admin or when canUseFullPanel). Icon Zone at top-right for exception controls (PO star, caution, edit mode, close). |
 | **Floor card** | Quick-edit overlay for one job (status, press, location, due, notes, assembly). |
 | **Assets overlay** | Modal list of per-job assets (ASSET_DEFS) with status, notes, caution mode. |
 | **NOTES** | Communication home: job-scoped notes + channels (!TEAM, !ALERT) + optional image attachment. |
@@ -391,6 +393,8 @@ flowchart TB
 | **PVC** | Compound library (operational); cards, wizard, CSV import. |
 | **On deck** | One optional “next” job per press; shown under press card, send-to-press via arrow. |
 | **Caution mode** | Asset state “needs attention”; requires new note before row unlocks. |
+| **Job-level caution** | Exception overlay on a job (stuck, billing, traffic jam, etc.). Visible via amber glow/border. RSP Icon Zone ⚠ opens the caution drawer; Floor ⚠ routes to NOTES. |
+| **Icon Zone** | Top-right cluster of action buttons in the RSP (☆ ⚠ + ✕). Exception-style controls live here, not in the form body. |
 | **Station** | Focused shell: Press, QC, or Floor Manager (launcher choice). |
 
 ---

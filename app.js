@@ -1244,12 +1244,15 @@ function openPanel(id) {
       });
     }
     updatePoImageUI(j);
-    var cautionRow = document.getElementById('panelCautionRow');
     var cautionReasonEl = document.getElementById('jCautionReason');
     var cautionTextEl = document.getElementById('jCautionText');
-    if (cautionRow) cautionRow.style.display = '';
     if (cautionReasonEl) cautionReasonEl.value = (j.caution && j.caution.reason) ? j.caution.reason : '';
     if (cautionTextEl) cautionTextEl.value = (j.caution && j.caution.text) ? j.caution.text : '';
+    var cautionBtn = document.getElementById('panelCautionBtn');
+    var cautionDrawer = document.getElementById('panelCautionRow');
+    var hasCaution = isJobCautioned(j);
+    if (cautionBtn) cautionBtn.classList.toggle('caution-active', hasCaution);
+    if (cautionDrawer) cautionDrawer.style.display = hasCaution ? '' : 'none';
   } else {
     document.getElementById('panelId').textContent = 'NEW JOB';
     document.getElementById('panelSub').textContent = '';
@@ -1259,8 +1262,10 @@ function openPanel(id) {
     if (archiveBtn) archiveBtn.style.display = 'none';
     if (restoreBtn) restoreBtn.style.display = 'none';
     clearFields();
-    var cautionRow = document.getElementById('panelCautionRow');
-    if (cautionRow) cautionRow.style.display = 'none';
+    var cautionBtn = document.getElementById('panelCautionBtn');
+    var cautionDrawer = document.getElementById('panelCautionRow');
+    if (cautionBtn) cautionBtn.classList.remove('caution-active');
+    if (cautionDrawer) cautionDrawer.style.display = 'none';
   }
   buildAssetList();
   renderProgressSection();
@@ -2249,6 +2254,21 @@ async function saveJob() {
   } catch (e) {
     if (typeof toastError === 'function') toastError(e && (e.message || e.error) ? String(e.message || e.error) : 'Save failed');
     else toast('Save failed');
+  }
+}
+
+// ============================================================
+// RSP Icon Zone — caution drawer toggle
+// ============================================================
+function togglePanelCaution() {
+  var drawer = document.getElementById('panelCautionRow');
+  var btn = document.getElementById('panelCautionBtn');
+  if (!drawer) return;
+  var visible = drawer.style.display !== 'none';
+  drawer.style.display = visible ? 'none' : '';
+  if (!visible) {
+    var reasonEl = document.getElementById('jCautionReason');
+    if (reasonEl) reasonEl.focus();
   }
 }
 

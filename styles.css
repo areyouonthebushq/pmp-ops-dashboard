@@ -1007,7 +1007,21 @@
     /* Job-level caution treatment — amber border + subtle warm bg */
     tr.job-row-cautioned { border-left: 3px solid #ffb300 !important; background: rgba(255,179,0,0.06); }
     .job-card-cautioned { border-color: rgba(255,179,0,0.5) !important; background: rgba(255,179,0,0.06) !important; }
-    .panel-caution-row { background: rgba(255,179,0,0.06); border: 1px solid rgba(255,179,0,0.25); border-radius: var(--radius); padding: var(--space-sm); margin-bottom: var(--space-sm); }
+    /* RSP Icon Zone */
+    .rsp-icon-zone { display: flex; gap: var(--space-sm); }
+    #panelCautionBtn { font-size: 14px; }
+    #panelCautionBtn:hover { border-color: #ffb300; color: #ffb300; }
+    #panelCautionBtn.caution-active { border-color: #ffb300; color: #ffb300; background: rgba(255,179,0,0.12); box-shadow: 0 0 6px rgba(255,179,0,0.3); }
+
+    /* RSP caution drawer — slides between Icon Zone and form body */
+    .rsp-caution-drawer {
+      background: rgba(255,179,0,0.06); border-bottom: 1px solid rgba(255,179,0,0.25);
+      padding: var(--space-sm) var(--space-lg); overflow: hidden;
+      animation: rspCautionOpen 0.15s ease-out;
+    }
+    .rsp-caution-inner { display: flex; gap: var(--space-sm); align-items: flex-end; }
+    .rsp-caution-inner .fg { flex: 1; }
+    @keyframes rspCautionOpen { from { max-height: 0; opacity: 0; padding-top: 0; padding-bottom: 0; } to { max-height: 80px; opacity: 1; } }
     .caution-note-btn {
       display: inline-block; background: none; border: 1px solid rgba(255,179,0,0.5);
       color: #ffb300; font-family: 'Inconsolata', monospace; font-size: 9px; letter-spacing: 1px;
@@ -2952,7 +2966,14 @@
     .fc-notes { font-size: 14px; color: var(--d2); background: var(--b3); padding: var(--space-sm); border-radius: var(--radius); margin-top: var(--space-md); }
     .fc-notes:empty { display: none; }
     .fc-caution { font-size: 14px; }
-    .fc-caution-note { font-size: 13px; color: #ffb300; background: rgba(255,179,0,0.08); padding: var(--space-xs) var(--space-sm); border-radius: var(--radius); margin-bottom: var(--space-sm); border-left: 3px solid rgba(255,179,0,0.5); }
+
+    /* Floor caution icon — clickable, routes to NOTES */
+    .floor-caution-icon {
+      cursor: pointer; color: #ffb300; font-size: 14px;
+      animation: cautionPulse 1.6s ease-in-out infinite;
+      display: inline-block; vertical-align: middle; margin-left: 4px;
+    }
+    .floor-caution-icon:hover { color: #ffc107; text-shadow: 0 0 6px rgba(255,179,0,0.7); }
     .floor-card-trigger { cursor: pointer; padding: 2px 0; }
     .floor-card-trigger:hover { color: var(--w); }
     .fc-edit-row { margin-bottom: var(--space-sm); }
