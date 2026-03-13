@@ -3408,8 +3408,8 @@
     .fc-edit-row input, .fc-edit-row select, .fc-edit-row textarea { width: 100%; max-width: 320px; padding: 6px 8px; background: var(--b3); border: 1px solid var(--b5); color: var(--d); border-radius: var(--radius); }
     .fc-edit-actions { margin-top: var(--space-md); }
 
-    /* Assets overlay — editable asset checklist (press status / floor table) */
-    .assets-overlay {
+    /* Card Zone overlay — unified readiness card family (ASSET CARD / PACK CARD) */
+    .card-zone-overlay {
     display: none;
     position: fixed;
     inset: 0;
@@ -3419,8 +3419,8 @@
     justify-content: center;
     padding: var(--space-md);
     }
-    .assets-overlay.on { display: flex; }
-    .assets-overlay-box {
+    .card-zone-overlay.on { display: flex; }
+    .card-zone-box {
     position: relative;
     width: 100%;
     max-width: 560px;
@@ -3432,11 +3432,37 @@
     border-radius: var(--radius);
     padding: var(--space-lg);
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .assets-overlay-close {
-    position: absolute;
-    top: var(--space-sm);
-    right: var(--space-sm);
+    .card-zone-box.cz-pack-active {
+    border-color: var(--cy2);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 1px var(--cy2);
+    }
+    .cz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+    }
+    .cz-tabs { display: flex; gap: 0; }
+    .cz-tab {
+    background: var(--b3);
+    border: 1px solid var(--b4);
+    color: var(--d3);
+    font-family: 'Inconsolata', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    }
+    .cz-tab:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+    .cz-tab:last-child { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
+    .cz-tab:hover { color: var(--d); background: var(--b4); }
+    .cz-tab-active { background: var(--b5); color: var(--d); border-color: var(--d3); }
+    .cz-tab-active#czTabPack { color: var(--cy); border-color: var(--cy2); }
+    .cz-close {
     width: 32px;
     height: 32px;
     border: none;
@@ -3447,7 +3473,13 @@
     cursor: pointer;
     line-height: 1;
     }
-    .assets-overlay-close:hover { background: var(--b5); color: var(--d2); }
+    .cz-close:hover { background: var(--b5); color: var(--d2); }
+    .cz-face {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    }
     .assets-overlay-title {
     font-family: 'Inconsolata', monospace;
     font-size: 16px;
@@ -3470,24 +3502,7 @@
     .assets-overlay-list .asset-row { cursor: pointer; }
     .assets-overlay-actions { display: flex; gap: var(--space-sm); flex-shrink: 0; }
 
-    /* Pack card overlay — late-stage packing readiness (job-scoped) */
-    .pack-card-overlay {
-    display: none; position: fixed; inset: 0; z-index: 456;
-    background: rgba(0,0,0,0.75); align-items: center; justify-content: center; padding: var(--space-md);
-    }
-    .pack-card-overlay.on { display: flex; }
-    .pack-card-box {
-    position: relative; width: 100%; max-width: 480px; max-height: 85vh;
-    display: flex; flex-direction: column;
-    background: var(--b2); border: 1px solid var(--cy2); border-radius: var(--radius);
-    padding: var(--space-lg); box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 1px var(--cy2);
-    }
-    .pack-card-close {
-    position: absolute; top: var(--space-sm); right: var(--space-sm);
-    width: 32px; height: 32px; border: none; background: var(--b4); color: var(--d);
-    border-radius: var(--radius); font-size: 16px; cursor: pointer; line-height: 1;
-    }
-    .pack-card-close:hover { background: var(--b5); color: var(--d2); }
+    /* Pack card face inner styles (container is now Card Zone) */
     .pack-card-title {
     font-family: 'Inconsolata', monospace; font-size: 16px; font-weight: 700;
     color: var(--cy); margin-bottom: var(--space-xs);
@@ -3595,13 +3610,20 @@
     .pack-card-actions { display: flex; gap: var(--space-sm); flex-shrink: 0; }
     .pack-card-actions .btn.go { background: var(--cy2); border-color: var(--cy2); color: var(--cy); }
     .pack-card-actions .btn.go:hover { background: var(--cy); color: #000; box-shadow: var(--gcy); }
-    .pack-tap { cursor: pointer; }
-    .pack-tap:hover { background: var(--b3); }
-    .ph { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+    .packing-tap { cursor: pointer; }
+    .packing-tap:hover { background: var(--b3); }
+    .ph { display:flex; align-items:center; gap: var(--space-xs); font-size:12px; white-space:nowrap; }
+    .ph-bar-seg {
+    display: flex;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 2px;
+    }
+    .ph .ph-bar-seg { width: 48px; }
+    .ph-seg { height: 100%; min-width: 0; transition: background 0.2s; background: var(--s3); }
+    .ph-seg-done { background: var(--cy); }
+    .ph-count { font-weight: 700; letter-spacing: 0.5px; }
     .ph-empty { color: var(--d3); font-size: 11px; }
-
-    /* RSP pack button */
-    #panelPackBtn { font-size: 13px; }
     #panelPackBtn:hover { border-color: var(--g); color: var(--g); }
 
     /* Progress detail overlay — job progress breakdown (press status / floor table) */

@@ -114,7 +114,7 @@ function buildPressCardHTML(p, linkTo, showControls) {
       <div class="pc-progress-sub">${prog.sub}</div>
       ${prog.overQty ? '<div class="pc-progress-over">OVER QTY</div>' : ''}
     </div>
-    <div class="pc-assets pc-assets-demoted" onclick="event.stopPropagation(); openAssetsOverlay('${job.id}')" style="cursor:pointer" title="View and edit assets">
+    <div class="pc-assets pc-assets-demoted" onclick="event.stopPropagation(); openCardZone('${job.id}','asset')" style="cursor:pointer" title="Asset card">
       <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
       ${assetBarSegmentedHTML(job)}
     </div>
@@ -888,11 +888,12 @@ function closeProgressDetail() {
 }
 
 // ============================================================
-// ASSET CARD (standalone modal — incoming/material readiness)
+// CARD ZONE — unified readiness card family (ASSET CARD / PACK CARD)
 // ============================================================
 let assetsOverlayState = null;
+var cardZoneFace = 'asset';
 
-function openAssetsOverlay(jobId) {
+function prepareAssetFace(jobId) {
   clearAssetsOverlayPulseTimers();
   const job = S.jobs.find(j => j.id === jobId);
   if (!job) return;
@@ -906,8 +907,76 @@ function openAssetsOverlay(jobId) {
   assetsOverlayState = { jobId, data: raw };
   document.getElementById('assetsOverlayTitle').textContent = `ASSET CARD — ${job.catalog || '—'} · ${job.artist || '—'}`;
   renderAssetsOverlay();
-  document.getElementById('assetsOverlay').classList.add('on');
 }
+
+function preparePackFace(jobId) {
+  var job = S.jobs.find(function (j) { return j.id === jobId; });
+  if (!job) return;
+  var raw = JSON.parse(JSON.stringify(job.packCard || {}));
+  PACK_DEFS.forEach(function (d) {
+    if (!raw[d.key]) raw[d.key] = { status: '', person: '', date: '', note: '' };
+    raw[d.key].status = getPackItemStatus(raw[d.key]);
+  });
+  if (raw._packNote === undefined) raw._packNote = '';
+  packCardState = { jobId: jobId, data: raw, expandedKey: null };
+  var titleEl = document.getElementById('packCardTitle');
+  if (titleEl) titleEl.innerHTML = 'PACK CARD — ' + escapeHtml((job.catalog || '—') + ' · ' + (job.artist || '—')) +
+    ' <button type="button" class="pk-go-notes" onclick="event.stopPropagation();goToNotesFromPackCard()" title="Open NOTES for this job">◇ NOTES</button>';
+  renderPackCard();
+}
+
+function openCardZone(jobId, face) {
+  cardZoneFace = face || 'asset';
+  if (cardZoneFace === 'asset') prepareAssetFace(jobId);
+  else preparePackFace(jobId);
+  document.getElementById('czFaceAsset').style.display = cardZoneFace === 'asset' ? '' : 'none';
+  document.getElementById('czFacePack').style.display = cardZoneFace === 'pack' ? '' : 'none';
+  updateCardZoneTabs();
+  document.getElementById('cardZoneOverlay').classList.add('on');
+}
+
+function closeCardZone() {
+  if (assetsOverlayState) {
+    flushAssetsOverlayInputs();
+    var job = S.jobs.find(function(j) { return j.id === assetsOverlayState.jobId; });
+    if (job) job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+  }
+  assetsOverlayState = null;
+  if (S) S.assetsOverlayJobId = null;
+  clearAssetsOverlayPulseTimers();
+  packCardState = null;
+  var el = document.getElementById('cardZoneOverlay');
+  if (el) el.classList.remove('on');
+  renderAll();
+}
+
+function switchCardZoneFace(face) {
+  if (face === cardZoneFace) return;
+  var jobId = cardZoneFace === 'asset'
+    ? (assetsOverlayState ? assetsOverlayState.jobId : null)
+    : (packCardState ? packCardState.jobId : null);
+  if (!jobId) return;
+  if (cardZoneFace === 'asset') flushAssetsOverlayInputs();
+  else if (typeof flushPackCardInputs === 'function') flushPackCardInputs();
+  cardZoneFace = face;
+  if (face === 'asset' && !assetsOverlayState) prepareAssetFace(jobId);
+  if (face === 'pack' && !packCardState) preparePackFace(jobId);
+  document.getElementById('czFaceAsset').style.display = face === 'asset' ? '' : 'none';
+  document.getElementById('czFacePack').style.display = face === 'pack' ? '' : 'none';
+  updateCardZoneTabs();
+}
+
+function updateCardZoneTabs() {
+  var aTab = document.getElementById('czTabAsset');
+  var pTab = document.getElementById('czTabPack');
+  var box = document.getElementById('cardZoneBox');
+  if (aTab) aTab.classList.toggle('cz-tab-active', cardZoneFace === 'asset');
+  if (pTab) pTab.classList.toggle('cz-tab-active', cardZoneFace === 'pack');
+  if (box) box.classList.toggle('cz-pack-active', cardZoneFace === 'pack');
+}
+
+function openAssetsOverlay(jobId) { openCardZone(jobId, 'asset'); }
+function openPackCard(jobId) { openCardZone(jobId, 'pack'); }
 
 function clearAssetsOverlayPulseTimers() {
   const timeouts = S.assetsOverlayPulseTimeouts;
@@ -921,45 +990,7 @@ function clearAssetsOverlayPulseTimers() {
 }
 
 function closeAssetsOverlay(skipSave) {
-  if (!assetsOverlayState) {
-    assetsOverlayState = null;
-    clearAssetsOverlayPulseTimers();
-    const el = document.getElementById('assetsOverlay');
-    if (el) el.classList.remove('on');
-    return;
-  }
-  flushAssetsOverlayInputs();
-  const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
-  if (!job) {
-    assetsOverlayState = null;
-    clearAssetsOverlayPulseTimers();
-    const el = document.getElementById('assetsOverlay');
-    if (el) el.classList.remove('on');
-    return;
-  }
-  job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
-  if (skipSave) {
-    assetsOverlayState = null;
-    if (S) S.assetsOverlayJobId = null;
-    clearAssetsOverlayPulseTimers();
-    const el = document.getElementById('assetsOverlay');
-    if (el) el.classList.remove('on');
-    renderAll();
-    return;
-  }
-  clearAssetsOverlayPulseTimers();
-  Storage.updateJobAssets(job.id, job.assets)
-    .then(() => {
-      assetsOverlayState = null;
-      if (S) S.assetsOverlayJobId = null;
-      const el = document.getElementById('assetsOverlay');
-      if (el) el.classList.remove('on');
-      renderAll();
-    })
-    .catch((e) => {
-      if (typeof setSyncState === 'function') setSyncState('error', { toast: 'SAVE FAILED' });
-      if (typeof toastError === 'function') toastError('Assets save failed');
-    });
+  closeCardZone();
 }
 
 function flushAssetsOverlayInputs() {
@@ -1127,12 +1158,15 @@ async function saveAssetsOverlay() {
     }
   }
   const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
-  if (!job) { closeAssetsOverlay(true); return; }
+  if (!job) { closeCardZone(); return; }
   job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
   Storage.updateJobAssets(job.id, job.assets)
     .then(() => {
       assetsOverlayState = null;
-      const el = document.getElementById('assetsOverlay');
+      if (S) S.assetsOverlayJobId = null;
+      clearAssetsOverlayPulseTimers();
+      packCardState = null;
+      const el = document.getElementById('cardZoneOverlay');
       if (el) el.classList.remove('on');
       renderAll();
       if (typeof toast === 'function') toast('ASSET CARD SAVED');
@@ -1144,32 +1178,9 @@ async function saveAssetsOverlay() {
 }
 
 // ============================================================
-// PACK CARD — late-stage packing readiness overlay
+// PACK CARD — late-stage packing readiness (face of Card Zone)
 // ============================================================
 var packCardState = null;
-
-function openPackCard(jobId) {
-  var job = S.jobs.find(function (j) { return j.id === jobId; });
-  if (!job) return;
-  var raw = JSON.parse(JSON.stringify(job.packCard || {}));
-  PACK_DEFS.forEach(function (d) {
-    if (!raw[d.key]) raw[d.key] = { status: '', person: '', date: '', note: '' };
-    raw[d.key].status = getPackItemStatus(raw[d.key]);
-  });
-  if (raw._packNote === undefined) raw._packNote = '';
-  packCardState = { jobId: jobId, data: raw, expandedKey: null };
-  var titleEl = document.getElementById('packCardTitle');
-  if (titleEl) titleEl.innerHTML = 'PACK CARD — ' + escapeHtml((job.catalog || '—') + ' · ' + (job.artist || '—')) +
-    ' <button type="button" class="pk-go-notes" onclick="event.stopPropagation();goToNotesFromPackCard()" title="Open NOTES for this job">◇ NOTES</button>';
-  renderPackCard();
-  document.getElementById('packCardOverlay').classList.add('on');
-}
-
-function closePackCard() {
-  packCardState = null;
-  var el = document.getElementById('packCardOverlay');
-  if (el) el.classList.remove('on');
-}
 
 function flushPackCardInputs() {
   if (!packCardState) return;
@@ -1303,12 +1314,15 @@ function savePackCard() {
   if (!packCardState) return;
   flushPackCardInputs();
   var job = S.jobs.find(function (j) { return j.id === packCardState.jobId; });
-  if (!job) { closePackCard(); return; }
+  if (!job) { closeCardZone(); return; }
   job.packCard = JSON.parse(JSON.stringify(packCardState.data));
   Storage.saveJob(job)
     .then(function () {
       packCardState = null;
-      var el = document.getElementById('packCardOverlay');
+      assetsOverlayState = null;
+      if (S) S.assetsOverlayJobId = null;
+      clearAssetsOverlayPulseTimers();
+      var el = document.getElementById('cardZoneOverlay');
       if (el) el.classList.remove('on');
       renderAll();
       if (typeof toast === 'function') toast('PACK CARD SAVED');
@@ -1351,7 +1365,7 @@ function crewTableHeaderHTML() {
   }).join('') + '<th></th>';
 }
 
-const JOBS_TH_CLASS = { catalog: 'j-cat', artist: 'j-artist', album: 'j-album', format: 'j-spec', colorWt: 'j-spec', qty: 'j-spec', plus10: 'j-spec', status: 'j-state', due: 'j-state', press: 'j-support', assets: 'j-support', progress: 'j-support', location: 'j-support' };
+const JOBS_TH_CLASS = { catalog: 'j-cat', artist: 'j-artist', album: 'j-album', format: 'j-spec', colorWt: 'j-spec', qty: 'j-spec', plus10: 'j-spec', status: 'j-state', due: 'j-state', press: 'j-support', assets: 'j-support', packing: 'j-support', location: 'j-support' };
 function jobsTableHeaderHTML() {
   const ths = JOBS_COLUMNS.map(c => {
     const active = S.jobsSortBy === c.key;
@@ -1434,13 +1448,8 @@ function renderJobs() {
         <td class="j-state">${statusPill(j.status)}${jCautioned ? ' ' + cautionPill(j) + cautionNoteBtn(j) + (j.caution.text ? '<div class="j-caution-text">' + escapeHtml(j.caution.text) + '</div>' : '') : ''}</td>
         <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
         <td class="j-support">${j.press || '—'}</td>
-        <td class="j-support assets-tap" onclick="event.stopPropagation(); openAssetsOverlay('${j.id}')" title="View and edit assets">${ahHTML(j)}</td>
-        <td class="j-support pack-tap" onclick="event.stopPropagation(); openPackCard('${j.id}')" title="Pack card">${packHealthHTML(j)}</td>
-        <td class="j-support td-progress progress-tap" onclick="event.stopPropagation(); openProgressDetail('${j.id}')" title="View progress breakdown">
-        <div class="progress-main">${prog.main}</div>
-        <div class="dl-bar td">${progressDualBarHTML(prog.pressedPct, prog.qcPassedPct)}</div>
-        <div class="progress-sub">${prog.sub}</div>
-        </td>
+        <td class="j-support assets-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','asset')" title="Asset card">${ahHTML(j)}</td>
+        <td class="j-support packing-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','pack')" title="Pack card">${packHealthHTML(j)}</td>
         <td class="j-support">${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>
       </tr>`;
     }).join('');

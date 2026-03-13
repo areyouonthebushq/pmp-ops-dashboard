@@ -86,11 +86,22 @@ function packHealth(job) {
   return { done: done.length, total: applicable.length, pct: applicable.length ? done.length / applicable.length : 0 };
 }
 
+function packBarSegmentedHTML(job) {
+  var h = packHealth(job);
+  if (!h.total) return '<div class="ph-bar ph-bar-seg"><div class="ph-seg" style="width:100%"></div></div>';
+  var segPct = 100 / h.total;
+  var segs = [];
+  for (var i = 0; i < h.total; i++) {
+    segs.push('<div class="ph-seg ' + (i < h.done ? 'ph-seg-done' : '') + '" style="width:' + segPct + '%"></div>');
+  }
+  return '<div class="ph-bar ph-bar-seg">' + segs.join('') + '</div>';
+}
+
 function packHealthHTML(job) {
   var h = packHealth(job);
   if (!h.total) return '<span class="ph-empty">—</span>';
   var color = h.pct >= 1 ? 'var(--cy)' : h.pct >= 0.5 ? 'var(--w)' : 'var(--d3)';
-  return '<span class="ph" style="color:' + color + '">' + h.done + '/' + h.total + '</span>';
+  return '<div class="ph">' + packBarSegmentedHTML(job) + '<span class="ph-count" style="color:' + color + '">' + h.done + '/' + h.total + '</span></div>';
 }
 
 const DEFAULT_PRESSES = [
@@ -157,7 +168,7 @@ const JOBS_COLUMNS = [
   { key: 'due', label: 'DUE' },
   { key: 'press', label: 'PRESS' },
   { key: 'assets', label: 'ASSETS' },
-  { key: 'progress', label: 'PROGRESS' },
+  { key: 'packing', label: 'PACKING' },
   { key: 'location', label: 'LOCATION' },
 ];
 
@@ -598,7 +609,7 @@ function getJobsSortValue(j, key) {
   if (key === 'due') return (j.due || '') ? String(j.due) : '\uffff';
   if (key === 'press') return (j.press || '').toLowerCase();
   if (key === 'assets') return (assetHealth(j).done || 0);
-  if (key === 'progress') return getJobProgress(j).pressed || 0;
+  if (key === 'packing') return (packHealth(j).done || 0);
   if (key === 'location') return (j.location || '').toLowerCase();
   return '';
 }

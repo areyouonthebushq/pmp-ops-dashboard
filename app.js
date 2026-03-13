@@ -3662,14 +3662,14 @@ function goToNotesWithFilter(jobId, assetKey) {
     if (adef && adef.label) label = adef.label;
   }
   S.notesPreloadFilter = { jobId: jobId || '', search: label || '', assetLabel: label || '' };
-  if (typeof closeAssetsOverlay === 'function') closeAssetsOverlay(true);
+  if (typeof closeCardZone === 'function') closeCardZone();
   goPg('notes');
 }
 
 /** Navigate from PACK CARD to NOTES with job pre-selected (read-only jump). */
 function goToNotesFromPackCard() {
   var jobId = (typeof packCardState !== 'undefined' && packCardState) ? packCardState.jobId : '';
-  if (typeof closePackCard === 'function') closePackCard();
+  if (typeof closeCardZone === 'function') closeCardZone();
   S.notesPreloadFilter = { jobId: jobId || '', search: '', assetLabel: '' };
   goPg('notes');
 }
@@ -3685,7 +3685,10 @@ function addNoteFromPackCard() {
     Storage.saveJob(job).catch(function () {});
   }
   packCardState = null;
-  var el = document.getElementById('packCardOverlay');
+  assetsOverlayState = null;
+  if (S) S.assetsOverlayJobId = null;
+  if (typeof clearAssetsOverlayPulseTimers === 'function') clearAssetsOverlayPulseTimers();
+  var el = document.getElementById('cardZoneOverlay');
   if (el) el.classList.remove('on');
   renderAll();
   goToNotesAndOpenAdd(jobId);
@@ -3827,10 +3830,13 @@ function notesSearchAction() {
 // GLOBAL + / = SHORTCUTS — add action and search/inspect
 // ============================================================
 
-/** Job id to preselect when routing + to NOTES (panel edit, or assets overlay). */
+/** Job id to preselect when routing + to NOTES (panel edit, or Card Zone). */
 function getContextJobIdForNotes() {
-  const assetsOpen = document.getElementById('assetsOverlay')?.classList.contains('on');
-  if (assetsOpen && S.assetsOverlayJobId) return S.assetsOverlayJobId;
+  const cardZoneOpen = document.getElementById('cardZoneOverlay')?.classList.contains('on');
+  if (cardZoneOpen) {
+    if (S.assetsOverlayJobId) return S.assetsOverlayJobId;
+    if (typeof packCardState !== 'undefined' && packCardState) return packCardState.jobId;
+  }
   if (panelOpen && S.editId) return S.editId;
   return null;
 }
@@ -4025,18 +4031,10 @@ document.addEventListener('keydown', e => {
       e.preventDefault();
       return;
     }
-    // 3c. Pack card overlay
-    const packCardEl = document.getElementById('packCardOverlay');
-    if (packCardEl && packCardEl.classList.contains('on')) {
-      if (typeof closePackCard === 'function') closePackCard();
-      e.preventDefault();
-      return;
-    }
-    // 3d. Assets overlay
-    const assetsEl = document.getElementById('assetsOverlay');
-    if (assetsEl && assetsEl.classList.contains('on')) {
-      // Skip save on ESC; behave like click-outside cancel
-      if (typeof closeAssetsOverlay === 'function') closeAssetsOverlay(true);
+    // 3c. Card Zone (ASSET CARD / PACK CARD)
+    const cardZoneEl = document.getElementById('cardZoneOverlay');
+    if (cardZoneEl && cardZoneEl.classList.contains('on')) {
+      if (typeof closeCardZone === 'function') closeCardZone();
       e.preventDefault();
       return;
     }
@@ -4102,7 +4100,7 @@ document.addEventListener('keydown', e => {
 
   // + (add) and = (search) — global shortcuts; skip when typing or when a modal has focus
   const anyOverlayOpen = panelOpen ||
-    document.getElementById('assetsOverlay')?.classList.contains('on') ||
+    document.getElementById('cardZoneOverlay')?.classList.contains('on') ||
     document.getElementById('newJobChooserWrap')?.classList.contains('on') ||
     document.getElementById('wizardWrap')?.classList.contains('on') ||
     document.getElementById('compoundWizardWrap')?.classList.contains('on') ||
@@ -4123,7 +4121,7 @@ document.addEventListener('keydown', e => {
     if (isPlusKey && !formOverlayOpen) {
       e.preventDefault();
       // Panel or assets overlay: route to NOTES with context job. Else use local + or fallback to NOTES.
-      if (panelOpen || document.getElementById('assetsOverlay')?.classList.contains('on')) {
+      if (panelOpen || document.getElementById('cardZoneOverlay')?.classList.contains('on')) {
         goToNotesAndOpenAdd(getContextJobIdForNotes());
       } else if (hasLocalPlusAction()) {
         triggerLocalPlusAction();

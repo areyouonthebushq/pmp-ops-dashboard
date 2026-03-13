@@ -243,7 +243,7 @@
             <thead><tr>
             <th>CATALOG</th><th>ARTIST</th><th>ALBUM</th><th>FORMAT</th>
             <th>COLOR / WT</th><th>QTY</th><th>+10%</th>
-            <th>STATUS</th><th>DUE</th><th>PRESS</th><th>ASSETS</th><th>PACK</th><th>PROGRESS</th><th>LOCATION</th><th></th>
+            <th>STATUS</th><th>DUE</th><th>PRESS</th><th>ASSETS</th><th>PACKING</th><th>LOCATION</th><th></th>
             </tr></thead>
             <tbody id="jobsBody"></tbody>
         </table>
@@ -659,7 +659,6 @@
         <div class="rsp-icon-zone">
             <button class="panel-close" id="panelPoStarBtn" onclick="panelPoStarClick()" title="PO / contract image">☆</button>
             <button class="panel-close" id="panelCautionBtn" onclick="togglePanelCaution()" title="Caution / blocker">⚠</button>
-            <button class="panel-close" id="panelPackBtn" onclick="openPackCard(S.editId)" title="Pack card">📦</button>
             <button class="panel-close" id="panelEditBtn" onclick="setPanelEditMode(!panelEditMode)" title="Toggle edit mode">+</button>
             <button class="panel-close" onclick="closePanel()">✕</button>
         </div>
@@ -998,32 +997,37 @@
     </div>
     </div>
 
-    <!-- ASSET CARD — incoming/material readiness checklist (job-scoped overlay) -->
-    <div class="assets-overlay" id="assetsOverlay" onclick="if(event.target===this)closeAssetsOverlay(true)">
-    <div class="assets-overlay-box" onclick="event.stopPropagation()">
-        <button type="button" class="assets-overlay-close" onclick="closeAssetsOverlay(true)" aria-label="Close">✕</button>
-        <div class="assets-overlay-title" id="assetsOverlayTitle"></div>
-        <div class="assets-overlay-hint">Tap to mark received · Expand for details · N/A if not applicable</div>
-        <div class="assets-overlay-list" id="assetsOverlayList"></div>
-        <div class="assets-overlay-actions">
-            <button type="button" class="btn go" onclick="saveAssetsOverlay()">SAVE & CLOSE</button>
-            <button type="button" class="btn ghost" onclick="closeAssetsOverlay(true)">CANCEL</button>
+    <!-- CARD ZONE — job-scoped readiness card family (ASSET CARD / PACK CARD) -->
+    <div class="card-zone-overlay" id="cardZoneOverlay" onclick="if(event.target===this)closeCardZone()">
+    <div class="card-zone-box" id="cardZoneBox" onclick="event.stopPropagation()">
+        <div class="cz-header">
+            <div class="cz-tabs">
+                <button type="button" class="cz-tab cz-tab-active" id="czTabAsset" onclick="switchCardZoneFace('asset')">ASSET CARD</button>
+                <button type="button" class="cz-tab" id="czTabPack" onclick="switchCardZoneFace('pack')">PACK CARD</button>
+            </div>
+            <button type="button" class="cz-close" onclick="closeCardZone()" aria-label="Close">✕</button>
         </div>
-    </div>
-    </div>
-
-    <!-- PACK CARD — late-stage packing/assembly readiness overlay (job-scoped) -->
-    <div class="pack-card-overlay" id="packCardOverlay" onclick="if(event.target===this)closePackCard()">
-    <div class="pack-card-box" onclick="event.stopPropagation()">
-        <button type="button" class="pack-card-close" onclick="closePackCard()" aria-label="Close">✕</button>
-        <div class="pack-card-title" id="packCardTitle"></div>
-        <div class="pack-card-hint">Tap icon to cycle status · Tap name to expand · N/A if not required</div>
-        <div class="pack-card-summary" id="packCardSummary"></div>
-        <div class="pack-card-list" id="packCardList"></div>
-        <div class="pack-card-actions">
-            <button type="button" class="btn go" onclick="savePackCard()">SAVE & CLOSE</button>
-            <button type="button" class="btn ghost" onclick="addNoteFromPackCard()" title="Save pack card, then open NOTES to add a note">+ ADD NOTE</button>
-            <button type="button" class="btn ghost" onclick="closePackCard()">CANCEL</button>
+        <!-- ASSET CARD face -->
+        <div class="cz-face" id="czFaceAsset">
+            <div class="assets-overlay-title" id="assetsOverlayTitle"></div>
+            <div class="assets-overlay-hint">Tap to mark received · Expand for details · N/A if not applicable</div>
+            <div class="assets-overlay-list" id="assetsOverlayList"></div>
+            <div class="assets-overlay-actions">
+                <button type="button" class="btn go" onclick="saveAssetsOverlay()">SAVE & CLOSE</button>
+                <button type="button" class="btn ghost" onclick="closeCardZone()">CANCEL</button>
+            </div>
+        </div>
+        <!-- PACK CARD face -->
+        <div class="cz-face" id="czFacePack" style="display:none">
+            <div class="pack-card-title" id="packCardTitle"></div>
+            <div class="pack-card-hint">Tap icon to cycle status · Tap name to expand · N/A if not required</div>
+            <div class="pack-card-summary" id="packCardSummary"></div>
+            <div class="pack-card-list" id="packCardList"></div>
+            <div class="pack-card-actions">
+                <button type="button" class="btn go" onclick="savePackCard()">SAVE & CLOSE</button>
+                <button type="button" class="btn ghost" onclick="addNoteFromPackCard()" title="Save pack card, then open NOTES to add a note">+ ADD NOTE</button>
+                <button type="button" class="btn ghost" onclick="closeCardZone()">CANCEL</button>
+            </div>
         </div>
     </div>
     </div>
