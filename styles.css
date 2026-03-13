@@ -1126,7 +1126,7 @@
     tr.job-row-cautioned { border-left: 3px solid #ffb300 !important; background: rgba(255,179,0,0.06); }
     .job-card-cautioned { border-color: rgba(255,179,0,0.5) !important; background: rgba(255,179,0,0.06) !important; }
     /* RSP Icon Zone */
-    .rsp-icon-zone { display: flex; gap: var(--space-sm); }
+    .rsp-icon-zone { display: flex; gap: var(--space-sm); flex-shrink: 0; }
     #panelCautionBtn { font-size: 14px; }
     #panelCautionBtn:hover { border-color: #ffb300; color: #ffb300; }
     #panelCautionBtn.caution-active { border-color: #ffb300; color: #ffb300; background: rgba(255,179,0,0.12); box-shadow: 0 0 6px rgba(255,179,0,0.3); }
@@ -1173,8 +1173,9 @@
     display:flex; justify-content:space-between; align-items:flex-start;
     flex-shrink:0;
     }
-    .panel-id { font-family:'Special Elite',cursive; font-size:18px; color: var(--g); letter-spacing:2px; }
-    .panel-sub { font-size:12px; color: var(--d2); margin-top:2px; letter-spacing:1px; }
+    .panel-top-left { min-width: 0; flex: 1; overflow: hidden; }
+    .panel-id { font-family:'Special Elite',cursive; font-size:18px; color: var(--g); letter-spacing:2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .panel-sub { font-size:12px; color: var(--d2); margin-top:2px; letter-spacing:1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .panel-close {
     background:none; border:1px solid var(--b2); color: var(--d2);
     width:30px; height:30px; cursor:pointer; font-size:16px;
