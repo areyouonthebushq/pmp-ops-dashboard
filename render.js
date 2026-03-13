@@ -1996,14 +1996,7 @@ function renderEngine() {
     liveReady += p.ready;
   });
 
-  const pressesOnline = S.presses.filter(p => p.status === 'online').length;
-  const pressesTotal = S.presses.length;
-  const cautioned = active.filter(j => isJobCautioned(j));
-  const overdue = active.filter(j => j.due && new Date(j.due) < now);
-
-  const pressDots = S.presses.map(function (p) {
-    return p.status === 'online' ? '<span class="eng-dot eng-dot-on">◉</span>' : '<span class="eng-dot eng-dot-off">○</span>';
-  }).join(' ');
+  const quackedToday = today.shipped + today.pickedUp;
 
   function yieldColor(pct) {
     if (pct === null) return 'var(--d3)';
@@ -2017,10 +2010,10 @@ function renderEngine() {
     return '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(pct) + '%;background:' + color + '"></div></div>';
   }
 
-  function block(cls, label, tag, value, sub, railHTML) {
+  function block(cls, label, tag, value, color, sub, railHTML) {
     return '<div class="eng-block ' + cls + '">'
       + '<div class="eng-label">' + label + (tag ? '<span class="eng-tag">' + tag + '</span>' : '') + '</div>'
-      + '<div class="eng-value">' + value + '</div>'
+      + '<div class="eng-value"' + (color ? ' style="color:' + color + '"' : '') + '>' + value + '</div>'
       + (railHTML || '')
       + (sub ? '<div class="eng-sub">' + sub + '</div>' : '')
       + '</div>';
@@ -2028,47 +2021,55 @@ function renderEngine() {
 
   var blocks = '';
 
+  // 1. QPM — hero, full-width, always first
   blocks += '<div class="eng-block eng-hero">'
     + '<div class="eng-label">QPM<span class="eng-tag">MTD</span></div>'
     + '<div class="eng-value eng-value-hero">' + qpm.toLocaleString() + '</div>'
     + rail(qpm, totalOrdered || 1, 'var(--cy)')
-    + '<div class="eng-sub">' + QUACK_ICON + ' quacks this month</div>'
+    + '<div class="eng-sub">' + QUACK_ICON + ' quacks per month'
+    + (qpm === 0 ? ' · no outbound logged yet' : '') + '</div>'
     + '</div>';
 
-  blocks += block('', 'PRESSED', 'TODAY', today.pressed.toLocaleString(),
-    today.pressed.toLocaleString() + ' / ' + totalOrdered.toLocaleString(),
-    rail(today.pressed, totalOrdered || 1, 'var(--w)'));
+  // 2. QUACKED TODAY
+  blocks += block('', QUACK_ICON + ' QUACKED', 'TODAY',
+    quackedToday.toLocaleString(), 'var(--cy)',
+    quackedToday > 0 ? today.shipped.toLocaleString() + ' shipped · ' + today.pickedUp.toLocaleString() + ' picked up' : 'no outbound today',
+    rail(quackedToday, today.packed || liveReady || 1, 'var(--cy)'));
 
-  blocks += block('', 'QC PASSED', 'TODAY', today.qcPassed.toLocaleString(),
-    today.rejected > 0 ? today.rejected.toLocaleString() + ' rejected' : '',
-    rail(today.qcPassed, today.pressed || 1, 'var(--g)'));
-
+  // 3. YIELD
   blocks += block('', 'YIELD', 'TODAY',
-    yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—',
-    yieldDenom > 0 ? today.qcPassed.toLocaleString() + ' / ' + yieldDenom.toLocaleString() : 'no QC data',
+    yieldPct !== null ? yieldPct.toFixed(1) + '%' : '—', yieldColor(yieldPct),
+    yieldDenom > 0 ? today.qcPassed.toLocaleString() + ' passed / ' + yieldDenom.toLocaleString() + ' inspected' : 'no QC data today',
     yieldPct !== null ? '<div class="eng-rail"><div class="eng-rail-fill" style="width:' + Math.round(yieldPct) + '%;background:' + yieldColor(yieldPct) + '"></div></div>' : '');
 
-  blocks += block('', 'PACKED', 'MTD', mtd.packed.toLocaleString(),
-    '',
+  // 4. PRESSED
+  blocks += block('', 'PRESSED', 'TODAY',
+    today.pressed.toLocaleString(), 'var(--w)',
+    totalOrdered > 0 ? today.pressed.toLocaleString() + ' / ' + totalOrdered.toLocaleString() + ' ordered' : '',
+    rail(today.pressed, totalOrdered || 1, 'var(--w)'));
+
+  // 5. QC PASSED
+  blocks += block('', 'QC PASSED', 'TODAY',
+    today.qcPassed.toLocaleString(), 'var(--g)',
+    today.pressed > 0 ? today.qcPassed.toLocaleString() + ' / ' + today.pressed.toLocaleString() + ' pressed' : '',
+    rail(today.qcPassed, today.pressed || 1, 'var(--g)'));
+
+  // 6. REJECTED
+  blocks += block(today.rejected > 0 ? 'eng-alert' : '', 'REJECTED', 'TODAY',
+    today.rejected.toLocaleString(), today.rejected > 0 ? 'var(--r)' : 'var(--d3)',
+    today.rejected > 0 && yieldDenom > 0 ? (100 - yieldPct).toFixed(1) + '% reject rate' : '',
+    rail(today.rejected, yieldDenom || 1, 'var(--r)'));
+
+  // 7. PACKED
+  blocks += block('', 'PACKED', 'MTD',
+    mtd.packed.toLocaleString(), 'var(--cy)',
+    mtd.qcPassed > 0 ? mtd.packed.toLocaleString() + ' / ' + mtd.qcPassed.toLocaleString() + ' QC passed' : '',
     rail(mtd.packed, mtd.qcPassed || 1, 'var(--cy)'));
 
-  blocks += block('', 'QUACKED', 'MTD', qpm.toLocaleString(),
-    (mtd.shipped > 0 || mtd.pickedUp > 0) ? QUACK_ICON + ' ' + mtd.shipped.toLocaleString() + ' shipped · ' + mtd.pickedUp.toLocaleString() + ' picked up' : '',
-    rail(qpm, mtd.packed || 1, 'var(--cy)'));
-
-  blocks += block('', 'PRESSES', 'LIVE',
-    pressesOnline + ' / ' + pressesTotal,
-    pressDots,
-    '');
-
-  blocks += block(cautioned.length > 0 ? 'eng-warn' : '', '⚠ CAUTIONED', 'LIVE',
-    cautioned.length.toString(),
-    cautioned.length > 0 ? cautioned.slice(0, 3).map(function (j) { return escapeHtml(j.catalog || j.artist || '—'); }).join(' · ') + (cautioned.length > 3 ? ' +' + (cautioned.length - 3) : '') : '',
-    '');
-
-  blocks += block(overdue.length > 0 ? 'eng-alert' : '', 'OVERDUE', 'LIVE',
-    overdue.length.toString(),
-    overdue.length > 0 ? overdue.slice(0, 3).map(function (j) { return escapeHtml(j.catalog || j.artist || '—'); }).join(' · ') + (overdue.length > 3 ? ' +' + (overdue.length - 3) : '') : '',
+  // 8. READY
+  blocks += block('', 'READY', 'LIVE',
+    liveReady.toLocaleString(), 'var(--cy)',
+    liveReady > 0 ? 'on skids · waiting for truck' : 'no units staged',
     '');
 
   grid.innerHTML = blocks;
