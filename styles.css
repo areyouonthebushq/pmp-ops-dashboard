@@ -2920,7 +2920,7 @@
     border-bottom:1px solid var(--b1);
     }
     .jobs-shell {
-    max-width: 980px; margin: 0 auto;
+    max-width: 1280px; margin: 0 auto;
     border: 1px solid var(--b2); background: var(--s1);
     padding: var(--space-lg);
     display: flex; flex-direction: column; gap: var(--space-md);
