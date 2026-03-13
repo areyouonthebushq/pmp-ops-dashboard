@@ -1375,7 +1375,7 @@ function crewTableHeaderHTML() {
   }).join('') + '<th></th>';
 }
 
-const JOBS_TH_CLASS = { catalog: 'j-cat', artist: 'j-artist', album: 'j-album', format: 'j-spec', colorWt: 'j-spec', qty: 'j-spec', plus10: 'j-spec', status: 'j-state', due: 'j-state', press: 'j-support', assets: 'j-support', packing: 'j-support', location: 'j-support' };
+const JOBS_TH_CLASS = { catalog: 'j-cat', artist: 'j-artist', album: 'j-album', format: 'j-spec', colorWt: 'j-spec', qty: 'j-spec', plus10: 'j-spec', status: 'j-state', due: 'j-state', press: 'j-press', assets: 'j-support', packing: 'j-support', location: 'j-support' };
 function jobsTableHeaderHTML() {
   const ths = JOBS_COLUMNS.map(c => {
     const active = S.jobsSortBy === c.key;
@@ -1475,7 +1475,7 @@ function renderJobs() {
         <td class="j-spec j-plus10">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
         <td class="j-state j-live-cell">${dots}${statusMicro}${cautionDot}</td>
         <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
-        <td class="j-support">${pressCell}</td>
+        <td class="j-press">${pressCell}</td>
         <td class="j-support assets-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','asset')" title="Asset card">${ahHTML(j)}</td>
         <td class="j-support packing-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','pack')" title="Pack card">${packHealthHTML(j)}</td>
         <td class="j-support">${j.location ? `<span class="loc">${j.location}</span>` : '—'}</td>

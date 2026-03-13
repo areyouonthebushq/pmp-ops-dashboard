@@ -224,27 +224,34 @@
 
     <!-- ======= JOBS PAGE ======= -->
     <div class="pg" id="pg-jobs">
-        <div class="jobs-toolbar">
-        <select id="jobFilter" class="fs" style="width:auto;padding: var(--space-sm) var(--space-md);font-size:13px;" onchange="renderJobs()">
-            <option value="">ALL JOBS</option>
-            <option value="pressing">PRESSING</option>
-            <option value="queue">QUEUED</option>
-            <option value="assembly">ASSEMBLY</option>
-            <option value="hold">ON HOLD</option>
-            <option value="done">DONE</option>
-            <option value="cautioned">⚠ ACHTUNG</option>
-            <option value="archived">ARCHIVED</option>
-        </select>
-        <div class="search-wrap" style="min-width:180px">
-            <input class="search-input" id="jobSearch" placeholder="SEARCH JOBS…">
-        </div>
-        <span class="search-count" id="jobCount"></span>
-        <button type="button" class="bar-btn" onclick="openNewJobChooser()">+ ADD JOB</button>
-        <label class="bar-btn" style="cursor:pointer;border:1px solid var(--b2);padding: var(--space-sm) var(--space-md);">
-            ↑ IMPORT CSV
-            <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(this)">
-        </label>
-        <button type="button" class="bar-btn" onclick="exportCSV()" title="Download jobs as CSV">↓ CSV</button>
+      <div class="jobs-shell">
+        <div class="jobs-header">
+          <div class="jobs-header-left">
+            <div class="jobs-title">JOBS</div>
+            <div class="jobs-sub">Production ledger</div>
+          </div>
+          <div class="jobs-header-actions">
+            <select id="jobFilter" class="fs" style="width:auto;padding: var(--space-sm) var(--space-md);font-size:13px;" onchange="renderJobs()">
+              <option value="">ALL JOBS</option>
+              <option value="pressing">PRESSING</option>
+              <option value="queue">QUEUED</option>
+              <option value="assembly">ASSEMBLY</option>
+              <option value="hold">ON HOLD</option>
+              <option value="done">DONE</option>
+              <option value="cautioned">⚠ ACHTUNG</option>
+              <option value="archived">ARCHIVED</option>
+            </select>
+            <div class="search-wrap" style="min-width:180px">
+              <input class="search-input" id="jobSearch" placeholder="SEARCH JOBS…">
+            </div>
+            <span class="search-count" id="jobCount"></span>
+            <button type="button" class="bar-btn" onclick="openNewJobChooser()">+ ADD JOB</button>
+            <label class="bar-btn" style="cursor:pointer;border:1px solid var(--b2);padding: var(--space-sm) var(--space-md);">
+              ↑ IMPORT CSV
+              <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(this)">
+            </label>
+            <button type="button" class="bar-btn" onclick="exportCSV()" title="Download jobs as CSV">↓ CSV</button>
+          </div>
         </div>
         <div class="tbl-wrap">
         <table id="jobsTbl">
@@ -260,6 +267,7 @@
         <div id="jobsEmpty" class="empty" style="display:none;">
         NO JOBS IN SYSTEM · TAP + TO ADD
         </div>
+      </div>
     </div>
 
     <!-- ======= TODOS PAGE ======= -->

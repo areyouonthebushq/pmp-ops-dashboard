@@ -975,6 +975,9 @@
     border-left: 1px solid var(--b1);
     padding-left: var(--space-md);
     }
+    #pg-jobs #jobsTbl thead th.j-press {
+    font-size: 9px; letter-spacing: 1px; color: var(--d3); white-space: nowrap;
+    }
     #pg-jobs #jobsTbl thead th.j-support {
     font-size: 9px;
     letter-spacing: 1px;
@@ -1023,6 +1026,9 @@
     border-left: 1px solid var(--b1);
     padding-left: var(--space-md);
     font-weight: 600;
+    }
+    #pg-jobs #jobsTbl tbody td.j-press {
+    font-size: 12px; white-space: nowrap; min-width: 80px;
     }
     #pg-jobs #jobsTbl tbody td.j-support {
     font-size: 11px;
@@ -1086,9 +1092,13 @@
     .status-micro.st-queue    { color: var(--d3); }
 
     /* Press column — live state indicators */
-    .press-live { color: var(--g); font-weight: 600; }
-    .press-live-glow { text-shadow: 0 0 6px rgba(0,230,118,0.35); }
-    .press-deck { color: var(--d3); font-weight: 500; }
+    .press-live { color: var(--g); font-weight: 600; white-space: nowrap; }
+    .press-live-glow { animation: pressGlow 3s ease-in-out infinite; }
+    @keyframes pressGlow {
+      0%, 100% { text-shadow: 0 0 3px rgba(0,230,118,0.2); }
+      50% { text-shadow: 0 0 6px rgba(0,230,118,0.4); }
+    }
+    .press-deck { color: var(--d3); font-weight: 500; white-space: nowrap; }
 
     /* Caution dot — symbol-only in LIVE cell */
     .caution-dot {
@@ -2909,7 +2919,24 @@
     margin: var(--space-lg) 0 var(--space-md); padding-bottom: var(--space-sm);
     border-bottom:1px solid var(--b1);
     }
-    .jobs-toolbar { display:flex; gap: var(--space-sm); align-items:center; flex-wrap:wrap; margin-bottom: var(--space-md); }
+    .jobs-shell {
+    max-width: 980px; margin: 0 auto;
+    border: 1px solid var(--b2); background: var(--s1);
+    padding: var(--space-lg);
+    display: flex; flex-direction: column; gap: var(--space-md);
+    }
+    .jobs-header {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); flex-wrap: wrap;
+    }
+    .jobs-header-left { display: flex; align-items: baseline; gap: var(--space-md); }
+    .jobs-title {
+    font-family: 'Special Elite', cursive; font-size: 18px;
+    letter-spacing: 3px; color: var(--d2);
+    }
+    .jobs-sub { font-size: 11px; color: var(--d3); letter-spacing: 0.5px; }
+    .jobs-header-actions {
+    display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap;
+    }
     .audit-toolbar { display:flex; align-items:center; gap: var(--space-md); margin-bottom: var(--space-md); flex-wrap:wrap; }
     .audit-toolbar label { font-size:11px; letter-spacing:1px; color: var(--d3); }
     /* ----- NOTES PAGE: terminal containment (sibling to LOG) ----- */
