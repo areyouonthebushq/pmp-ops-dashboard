@@ -480,16 +480,21 @@
 
     <div class="pg" id="pg-crew">
       <div class="crew-shell">
-        <div class="sec">DIRECTORY</div>
-        <div class="crew-toolbar">
-          <div class="search-wrap" style="min-width:180px">
-            <input class="search-input" id="crewSearch" placeholder="Search name, role, specialty…" oninput="if(typeof renderCrewPage==='function')renderCrewPage()">
+        <div class="crew-header">
+          <div class="crew-header-left">
+            <div class="crew-title">CREW</div>
+            <div class="crew-sub">Operational directory</div>
           </div>
-          <span class="search-count" id="crewCount"></span>
-          <label class="bar-btn" style="cursor:pointer;">↑ IMPORT CSV
-            <input type="file" id="crewCsvInput" accept=".csv" style="display:none" onchange="onCrewCsvSelected(this)">
-          </label>
-          <button type="button" class="bar-btn" onclick="openEmployeeWizard()">+ ADD PERSON</button>
+          <div class="crew-header-actions">
+            <div class="search-wrap" style="min-width:160px">
+              <input class="search-input" id="crewSearch" placeholder="Search name, role, specialty…" oninput="if(typeof renderCrewPage==='function')renderCrewPage()">
+            </div>
+            <span class="search-count" id="crewCount"></span>
+            <label class="bar-btn" style="cursor:pointer;">↑ IMPORT CSV
+              <input type="file" id="crewCsvInput" accept=".csv" style="display:none" onchange="onCrewCsvSelected(this)">
+            </label>
+            <button type="button" class="bar-btn" onclick="openEmployeeWizard()">+ ADD PERSON</button>
+          </div>
         </div>
         <input type="file" id="crewPhotoInput" accept="image/*" style="display:none" onchange="onCrewPhotoSelected(this)">
         <div class="tbl-wrap">
