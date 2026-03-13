@@ -3234,12 +3234,13 @@
     word-break: break-word;
     max-width: 100%;
     }
-    /* Zone 3: Provenance — person + timestamp, muted, bottom-right */
+    /* Zone 3: Provenance — person + timestamp, muted, bottom-right flush to card edge */
     .notes-feed .notes-entry-meta {
     font-size: 10px;
     letter-spacing: 0.5px;
     color: var(--d3);
     margin-top: var(--space-xs);
+    margin-right: -56px;
     text-align: right;
     }
     .notes-feed .notes-entry-asset {
@@ -3247,6 +3248,7 @@
     letter-spacing: 0.5px;
     color: var(--d3);
     margin-top: var(--space-xs);
+    margin-right: -56px;
     text-align: right;
     }
     .notes-entry-caution-icon {
