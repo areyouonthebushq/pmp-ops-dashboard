@@ -2361,6 +2361,10 @@
     align-items: center;
     justify-content: center;
     }
+    .log-enter-btn.log-enter-mode-press { border-color: var(--w2); color: var(--w); background: rgba(51,30,0,0.4); }
+    .log-enter-btn.log-enter-mode-press:hover:not(:disabled) { background: var(--w2); }
+    .log-enter-btn.log-enter-mode-ship { border-color: var(--cy2); color: var(--cy); background: rgba(0,42,51,0.4); }
+    .log-enter-btn.log-enter-mode-ship:hover:not(:disabled) { background: var(--cy2); }
     .log-enter-btn.log-enter-press { color: var(--w); background: var(--w2); border-color: var(--w2); }
     .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gg); }
     .log-enter-btn.log-enter-qcpass { color: var(--g); background: var(--g3); border-color: var(--g2); }
