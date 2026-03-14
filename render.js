@@ -117,7 +117,7 @@ function buildPressCardHTML(p, linkTo, showControls) {
       <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
       ${assetBarSegmentedHTML(job)}
     </div>
-    ` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>')}
+    ` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>'}
     ${showControls ? `
     <div class="pc-controls" onclick="event.stopPropagation()">
       <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
@@ -3364,7 +3364,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const asset = e.assetLabel || e.assetKey || '';
         const cautionIcon = e.isCautionAsset ? '<span class="notes-entry-caution-icon" aria-hidden="true">\u26A0\uFE0E</span> ' : '';
         const assetHtml = asset ? `<div class="notes-entry-asset">${cautionIcon}${escapeHtml(asset)}</div>` : '';
-        const wrenchHtml = e.wrenchLabel ? '<div class="notes-entry-wrench">\uD83D\uDD27 ' + escapeHtml(e.wrenchLabel) + '</div>' : '';
+        const wrenchHtml = e.wrenchLabel ? '<div class="notes-entry-wrench">🔧 ' + escapeHtml(e.wrenchLabel) + '</div>' : '';
         const rowCls = e.jobId === '!ALERT' ? ' notes-row-alert' : '';
         var noteThumbSrc = e.attachment_thumb_url || e.attachment_url;
         const thumbHtml = e.attachment_url
