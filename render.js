@@ -1463,7 +1463,7 @@ function renderJobs() {
         + (ra.ready    ? '<span class="live-dot live-dot-ready" title="Ready (1h)"></span>' : '')
         + (ra.shipped  ? '<span class="live-quack" title="Quacked (1h)">' + QUACK_ICON + '</span>' : '');
       const st = j.status || 'queue';
-      const statusMicro = st === 'pressing' ? '' : '<span class="status-micro st-' + st + '">' + st.toUpperCase() + '</span>';
+      const statusMicro = '';
       const cautionDot = jCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">\u26A0\uFE0E</span>' : '';
       const pressCell = pi.onPress
         ? '<span class="press-live' + (ra.pressed ? ' press-live-glow' : '') + '">' + escapeHtml(pi.onPress) + '</span>'
@@ -1504,7 +1504,7 @@ function renderJobs() {
         + (ra.ready    ? '<span class="live-dot live-dot-ready" title="Ready (1h)"></span>' : '')
         + (ra.shipped  ? '<span class="live-quack" title="Quacked (1h)">' + QUACK_ICON + '</span>' : '');
       const st = j.status || 'queue';
-      const statusMicro = st === 'pressing' ? '' : '<span class="status-micro st-' + st + '">' + st.toUpperCase() + '</span>';
+      const statusMicro = '';
       const cautionDot = jcCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">\u26A0\uFE0E</span>' : '';
       const pressTag = pi.onPress
         ? '<span class="jc-detail press-live' + (ra.pressed ? ' press-live-glow' : '') + '">⬡ ' + escapeHtml(pi.onPress) + '</span>'
