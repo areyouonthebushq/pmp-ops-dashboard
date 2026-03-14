@@ -1455,7 +1455,8 @@ function renderJobs() {
       const onPress = isJobOnPress(j);
       const ra = recentLogActivity(j);
       const pi = jobPressInfo(j);
-      const dots = (onPress   ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
+      const pressRested = onPress && new Date().getHours() >= 17 && !ra.pressed;
+      const dots = (onPress && !pressRested ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
         + (ra.pressed  ? '<span class="live-dot live-dot-pressed" title="Pressed (1h)"></span>' : '')
         + (ra.qc_passed? '<span class="live-dot live-dot-qcpass" title="QC pass (1h)"></span>' : '')
         + (ra.rejected ? '<span class="live-dot live-dot-reject" title="Rejected (1h)"></span>' : '')
@@ -1496,7 +1497,8 @@ function renderJobs() {
       const onPress = isJobOnPress(j);
       const ra = recentLogActivity(j);
       const pi = jobPressInfo(j);
-      const dots = (onPress   ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
+      const pressRested = onPress && new Date().getHours() >= 17 && !ra.pressed;
+      const dots = (onPress && !pressRested ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
         + (ra.pressed  ? '<span class="live-dot live-dot-pressed" title="Pressed (1h)"></span>' : '')
         + (ra.qc_passed? '<span class="live-dot live-dot-qcpass" title="QC pass (1h)"></span>' : '')
         + (ra.rejected ? '<span class="live-dot live-dot-reject" title="Rejected (1h)"></span>' : '')
