@@ -1009,15 +1009,15 @@
     <div class="card-zone-box" id="cardZoneBox" onclick="event.stopPropagation()">
         <div class="cz-header">
             <div class="cz-tabs">
-                <button type="button" class="cz-tab cz-tab-active" id="czTabAsset" onclick="switchCardZoneFace('asset')">ASSET CARD</button>
-                <button type="button" class="cz-tab" id="czTabPack" onclick="switchCardZoneFace('pack')">PACK CARD</button>
+                <button type="button" class="cz-tab cz-tab-active" id="czTabAsset" onclick="switchCardZoneFace('asset')">ASSETS</button>
+                <button type="button" class="cz-tab" id="czTabPack" onclick="switchCardZoneFace('pack')">PACKING</button>
             </div>
             <button type="button" class="cz-close" onclick="closeCardZone()" aria-label="Close">✕</button>
         </div>
         <!-- ASSET CARD face -->
         <div class="cz-face" id="czFaceAsset">
             <div class="assets-overlay-title" id="assetsOverlayTitle"></div>
-            <div class="assets-overlay-hint">Tap to mark received · Expand for details · N/A if not applicable</div>
+            <div class="assets-overlay-hint" style="display:none;"></div>
             <div class="assets-overlay-list" id="assetsOverlayList"></div>
             <div class="assets-overlay-actions">
                 <button type="button" class="btn go" onclick="saveAssetsOverlay()">SAVE & CLOSE</button>
@@ -1027,12 +1027,11 @@
         <!-- PACK CARD face -->
         <div class="cz-face" id="czFacePack" style="display:none">
             <div class="pack-card-title" id="packCardTitle"></div>
-            <div class="pack-card-hint">Tap icon to cycle status · Tap name to expand · N/A if not required</div>
+            <div class="pack-card-hint" style="display:none;"></div>
             <div class="pack-card-summary" id="packCardSummary"></div>
             <div class="pack-card-list" id="packCardList"></div>
             <div class="pack-card-actions">
                 <button type="button" class="btn go" onclick="savePackCard()">SAVE & CLOSE</button>
-                <button type="button" class="btn ghost" onclick="addNoteFromPackCard()" title="Save pack card, then open NOTES to add a note">+ ADD NOTE</button>
                 <button type="button" class="btn ghost" onclick="closeCardZone()">CANCEL</button>
             </div>
         </div>

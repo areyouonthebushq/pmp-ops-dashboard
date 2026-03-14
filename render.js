@@ -914,7 +914,7 @@ function prepareAssetFace(jobId) {
     raw[a.key] = { status, date: d.date || '', person: d.person || '', note: d.note || '', received: status === 'received', na: status === 'na', cautionSince: d.cautionSince || '' };
   });
   assetsOverlayState = { jobId, data: raw };
-  document.getElementById('assetsOverlayTitle').textContent = `ASSET CARD — ${job.catalog || '—'} · ${job.artist || '—'}`;
+  document.getElementById('assetsOverlayTitle').textContent = `${job.catalog || '—'} · ${job.artist || '—'}`;
   renderAssetsOverlay();
 }
 
@@ -929,8 +929,7 @@ function preparePackFace(jobId) {
   if (raw._packNote === undefined) raw._packNote = '';
   packCardState = { jobId: jobId, data: raw, expandedKey: null };
   var titleEl = document.getElementById('packCardTitle');
-  if (titleEl) titleEl.innerHTML = 'PACK CARD — ' + escapeHtml((job.catalog || '—') + ' · ' + (job.artist || '—')) +
-    ' <button type="button" class="pk-go-notes" onclick="event.stopPropagation();goToNotesFromPackCard()" title="Open NOTES for this job">◇ NOTES</button>';
+  if (titleEl) titleEl.textContent = (job.catalog || '—') + ' · ' + (job.artist || '—');
   renderPackCard();
 }
 
@@ -1233,35 +1232,9 @@ function renderPackCard() {
   var listEl = document.getElementById('packCardList');
   if (!listEl) return;
 
-  var notesCtx = '';
-  if (job) {
-    var notes = Array.isArray(job.notesLog) ? job.notesLog : [];
-    var recent = notes.slice(-3).reverse();
-    if (recent.length) {
-      notesCtx = '<div class="pk-notes-ctx">' +
-        '<div class="pk-notes-ctx-head">RECENT NOTES</div>' +
-        recent.map(function (n) {
-          var age = '';
-          if (n.timestamp) {
-            var ms = Date.now() - new Date(n.timestamp).getTime();
-            if (ms < 36e5) age = Math.max(1, Math.round(ms / 6e4)) + 'm';
-            else if (ms < 864e5) age = Math.round(ms / 36e5) + 'h';
-            else age = Math.round(ms / 864e5) + 'd';
-          }
-          var tag = n.assetLabel ? '<span class="pk-notes-tag">' + escapeHtml(n.assetLabel) + '</span> ' : '';
-          var snippet = escapeHtml((n.text || '').length > 60 ? (n.text || '').slice(0, 60) + '…' : (n.text || ''));
-          return '<div class="pk-notes-ctx-entry">' +
-            '<span class="pk-notes-ctx-text">' + tag + snippet + '</span>' +
-            '<span class="pk-notes-ctx-age">' + (n.person ? escapeHtml(n.person) + ' · ' : '') + age + '</span>' +
-            '</div>';
-        }).join('') +
-        '</div>';
-    }
-  }
-
   var notesLog = (job && Array.isArray(job.notesLog)) ? job.notesLog : [];
 
-  listEl.innerHTML = notesCtx + PACK_DEFS.map(function (d) {
+  listEl.innerHTML = PACK_DEFS.map(function (d) {
     var item = data[d.key] || { status: '', person: '', date: '', note: '' };
     var status = getPackItemStatus(item);
     var cautionSince = (status === 'caution' && item.cautionSince) ? item.cautionSince : '';
@@ -1295,11 +1268,7 @@ function renderPackCard() {
       '</div>' +
       detail +
       '</div>';
-  }).join('') +
-    '<div class="pk-pack-note-section">' +
-      '<div class="pk-dl">PACKING NOTE</div>' +
-      '<textarea class="pk-pack-note" id="pkPackNote" rows="2" placeholder="Free-form packing context…">' + escapeHtml(data._packNote || '') + '</textarea>' +
-    '</div>';
+  }).join('');
 }
 
 function togglePackDetail(key) {
