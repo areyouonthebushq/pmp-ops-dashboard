@@ -2361,20 +2361,16 @@
     align-items: center;
     justify-content: center;
     }
-    .log-enter-btn.log-enter-mode-press { border-color: var(--w2); color: var(--w); background: rgba(51,30,0,0.4); }
-    .log-enter-btn.log-enter-mode-press:hover:not(:disabled) { background: var(--w2); }
-    .log-enter-btn.log-enter-mode-ship { border-color: var(--cy2); color: var(--cy); background: rgba(0,42,51,0.4); }
-    .log-enter-btn.log-enter-mode-ship:hover:not(:disabled) { background: var(--cy2); }
     .log-enter-btn.log-enter-press { color: var(--w); background: var(--w2); border-color: var(--w2); }
-    .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gg); }
+    .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gw); }
     .log-enter-btn.log-enter-qcpass { color: var(--g); background: var(--g3); border-color: var(--g2); }
     .log-enter-btn.log-enter-qcpass:hover:not(:disabled) { background: var(--g); color: #000; border-color: var(--g); box-shadow: var(--gg); }
     .log-enter-btn.log-enter-qcreject { color: var(--r); background: var(--r2); border-color: var(--r2); }
-    .log-enter-btn.log-enter-qcreject:hover:not(:disabled) { background: var(--r); color: #fff; border-color: var(--r); box-shadow: var(--gg); }
+    .log-enter-btn.log-enter-qcreject:hover:not(:disabled) { background: var(--r); color: #fff; border-color: var(--r); box-shadow: 0 0 8px rgba(255,82,82,0.5); }
     .log-enter-btn.log-enter-packed { color: var(--cy); background: var(--cy2); border-color: var(--cy2); }
     .log-enter-btn.log-enter-packed:hover:not(:disabled) { background: var(--cy); color: #000; border-color: var(--cy); box-shadow: var(--gcy); }
     .log-enter-btn.log-enter-ready { color: var(--d); background: var(--b3); border-color: var(--b3); }
-    .log-enter-btn.log-enter-ready:hover:not(:disabled) { background: var(--d); color: var(--s1); border-color: var(--d); }
+    .log-enter-btn.log-enter-ready:hover:not(:disabled) { background: var(--d); color: var(--s1); border-color: var(--d); box-shadow: 0 0 8px rgba(255,255,255,0.3); }
     .log-enter-btn.log-enter-shipped { color: #003d12; background: var(--g); border-color: var(--g); }
     .log-enter-btn.log-enter-shipped:hover:not(:disabled) { background: #33ff99; color: #002a0d; border-color: #33ff99; box-shadow: var(--gg); }
     .log-enter-btn.log-enter-pickedup { color: var(--g); background: var(--g3); border-color: var(--g2); }

@@ -1950,13 +1950,12 @@ function renderLog() {
   const enterBtn = document.getElementById('logEnterBtn');
   if (enterBtn) {
     const e = enterMap[logAction];
-    var modeCls = logMode === 'press' ? 'log-enter-mode-press' : 'log-enter-mode-ship';
     if (e) {
       enterBtn.innerHTML = e.label;
-      enterBtn.className = 'log-enter-btn ' + e.cls + ' ' + modeCls;
+      enterBtn.className = 'log-enter-btn ' + e.cls;
     } else {
-      enterBtn.innerHTML = logMode === 'press' ? 'LOG' : 'LOG';
-      enterBtn.className = 'log-enter-btn ' + modeCls;
+      enterBtn.innerHTML = 'LOG';
+      enterBtn.className = 'log-enter-btn';
     }
   }
 
