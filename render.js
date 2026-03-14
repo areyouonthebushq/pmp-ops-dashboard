@@ -186,7 +186,7 @@ function renderAdminShell() {
     case 'log':
     case 'qc':        renderLog(); break;
     case 'notes':     renderNotesPage(); break;
-    case 'ship':      renderShip(); break;
+    /* PURGATORY: case 'ship' removed (2026-03-06). See docs/purgatory-protocol.md */
     case 'crew':      renderCrewPage(); break;
     case 'compounds': renderCompoundsPage(); break;
     case 'dev':       renderDevPage(); break;
@@ -263,146 +263,9 @@ function renderCompoundsPage() {
   }).join('');
 }
 
-// ============================================================
-// SHIP — fulfillment / pickup / shipping
-// ============================================================
-
-function getShipJobs() {
-  return S.jobs.filter(function (j) {
-    if (isJobArchived(j)) return false;
-    return j.status === 'done' || j.status === 'assembly' || !!j.fulfillment_phase;
-  });
-}
-
-function renderShip() {
-  var bodyEl = document.getElementById('shipBody');
-  var countEl = document.getElementById('shipCount');
-  var emptyEl = document.getElementById('shipEmpty');
-  var summaryEl = document.getElementById('shipSummary');
-  if (!bodyEl) return;
-
-  var filterEl = document.getElementById('shipFilter');
-  var filter = filterEl ? filterEl.value : '';
-  var q = (document.getElementById('shipSearch')?.value || '').toLowerCase().trim();
-
-  var all = getShipJobs();
-
-  var jobs;
-  if (filter === 'unset') {
-    jobs = all.filter(function (j) { return !j.fulfillment_phase; });
-  } else if (filter) {
-    jobs = all.filter(function (j) { return j.fulfillment_phase === filter; });
-  } else {
-    jobs = all.slice();
-  }
-
-  if (q) {
-    jobs = jobs.filter(function (j) {
-      return (j.catalog || '').toLowerCase().includes(q) ||
-        (j.artist || '').toLowerCase().includes(q) ||
-        (j.album || '').toLowerCase().includes(q) ||
-        (j.location || '').toLowerCase().includes(q);
-    });
-  }
-
-  jobs.sort(function (a, b) {
-    var pa = a.fulfillment_phase || '';
-    var pb = b.fulfillment_phase || '';
-    if (pa === 'shipped' && pb !== 'shipped') return 1;
-    if (pb === 'shipped' && pa !== 'shipped') return -1;
-    if (pa === 'held_exception' && pb !== 'held_exception') return -1;
-    if (pb === 'held_exception' && pa !== 'held_exception') return 1;
-    var da = a.due || '\uffff';
-    var db = b.due || '\uffff';
-    if (da !== db) return da < db ? -1 : 1;
-    return (a.catalog || '').localeCompare(b.catalog || '');
-  });
-
-  if (countEl) countEl.textContent = jobs.length + ' of ' + all.length;
-
-  if (summaryEl) {
-    var counts = {};
-    all.forEach(function (j) {
-      var p = j.fulfillment_phase || '_unset';
-      counts[p] = (counts[p] || 0) + 1;
-    });
-    var pills = [];
-    if (counts.held_exception) pills.push('<span class="ship-sum-item ship-sum-held">' + counts.held_exception + ' held</span>');
-    if (counts.awaiting_instructions) pills.push('<span class="ship-sum-item ship-sum-await">' + counts.awaiting_instructions + ' awaiting</span>');
-    if (counts.ready_to_ship) pills.push('<span class="ship-sum-item ship-sum-ready">' + counts.ready_to_ship + ' ready to ship</span>');
-    if (counts.ready_for_pickup) pills.push('<span class="ship-sum-item ship-sum-pickup">' + counts.ready_for_pickup + ' ready for pickup</span>');
-    if (counts.local_pickup) pills.push('<span class="ship-sum-item">' + counts.local_pickup + ' local</span>');
-    if (counts.in_house_fulfillment) pills.push('<span class="ship-sum-item">' + counts.in_house_fulfillment + ' in-house</span>');
-    if (counts.shipped) pills.push('<span class="ship-sum-item ship-sum-shipped">' + counts.shipped + ' shipped</span>');
-    if (counts._unset) pills.push('<span class="ship-sum-item ship-sum-unset">' + counts._unset + ' no phase</span>');
-    summaryEl.innerHTML = pills.length ? pills.join('') : '';
-  }
-
-  if (jobs.length === 0) {
-    bodyEl.innerHTML = '';
-    if (emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = filter ? 'NO JOBS IN THIS PHASE' : 'NO LATE-STAGE JOBS'; }
-    return;
-  }
-  if (emptyEl) emptyEl.style.display = 'none';
-
-  bodyEl.innerHTML = jobs.map(function (j) {
-    var esc = typeof escapeHtml === 'function' ? escapeHtml : function (s) { return s || ''; };
-    var phaseOpts = typeof FULFILLMENT_PHASES !== 'undefined'
-      ? FULFILLMENT_PHASES.map(function (o) { return '<option value="' + o.v + '"' + ((j.fulfillment_phase || '') === o.v ? ' selected' : '') + '>' + esc(o.l) + '</option>'; }).join('')
-      : '';
-
-    var notes = Array.isArray(j.notesLog) ? j.notesLog : [];
-    var attachCount = notes.filter(function (n) { return !!n.attachment_url; }).length;
-    var lastNote = null;
-    for (var ni = notes.length - 1; ni >= 0; ni--) { if (notes[ni] && notes[ni].text) { lastNote = notes[ni]; break; } }
-    var noteSnippet = '';
-    if (lastNote) {
-      var txt = (lastNote.text || '').trim();
-      if (txt.length > 50) txt = txt.slice(0, 47) + '…';
-      var ago = '';
-      if (lastNote.timestamp) {
-        var ms = Date.now() - new Date(lastNote.timestamp).getTime();
-        if (ms < 36e5) ago = Math.max(1, Math.round(ms / 6e4)) + 'm';
-        else if (ms < 864e5) ago = Math.round(ms / 36e5) + 'h';
-        else ago = Math.round(ms / 864e5) + 'd';
-      }
-      noteSnippet = '<span class="ship-note-text" title="' + esc(lastNote.text || '').replace(/"/g, '&quot;') + '">' + esc(txt) + '</span>' +
-        (ago ? ' <span class="ship-note-ago">' + ago + '</span>' : '');
-    }
-    var proofBadge = attachCount > 0
-      ? '<span class="ship-proof-badge" title="' + attachCount + ' image' + (attachCount > 1 ? 's' : '') + ' attached">📎' + attachCount + '</span>'
-      : '';
-    var noteCountBadge = notes.length > 0
-      ? '<span class="ship-notes-count">' + notes.length + '</span>'
-      : '';
-
-    var noteCell = '<div class="ship-note-cell">';
-    if (noteSnippet || proofBadge) {
-      noteCell += '<div class="ship-note-preview">' + proofBadge + noteSnippet + '</div>';
-    } else {
-      noteCell += '<span class="ship-no-phase">—</span>';
-    }
-    noteCell += '<div class="ship-note-actions">' +
-      '<button type="button" class="ship-note-btn" onclick="goToNotesAndOpenAdd(\'' + j.id + '\')" title="Add shipping note">+ NOTE' + noteCountBadge + '</button>' +
-    '</div>';
-    noteCell += '</div>';
-
-    var shipCautioned = isJobCautioned(j);
-    return '<tr class="ship-row' + (j.fulfillment_phase === 'held_exception' ? ' ship-row-held' : '') + (j.fulfillment_phase === 'shipped' ? ' ship-row-shipped' : '') + (shipCautioned ? ' job-row-cautioned' : '') + '" data-jid="' + j.id + '">' +
-      '<td class="ship-cat panel-trigger" onclick="openPanel(\'' + j.id + '\')" title="Open job">' + esc(j.catalog || '—') + '</td>' +
-      '<td class="ship-artist panel-trigger" onclick="openPanel(\'' + j.id + '\')" title="Open job">' + esc(j.artist || '—') + (j.album ? ' <span class="ship-album">' + esc(j.album) + '</span>' : '') + '</td>' +
-      '<td>' + (j.format ? '<span class="pill ' + (j.format.includes('7"') ? 'seven' : 'go') + '">' + esc(j.format) + '</span>' : '—') + '</td>' +
-      '<td>' + (j.qty ? parseInt(j.qty).toLocaleString() : '—') + '</td>' +
-      '<td>' + statusPill(j.status) + (shipCautioned ? ' ' + cautionPill(j) : '') + '</td>' +
-      '<td class="ship-phase-cell">' +
-        '<select class="ship-phase-select" onchange="setFulfillmentPhase(\'' + j.id + '\', this.value)">' + phaseOpts + '</select>' +
-      '</td>' +
-      '<td class="' + (typeof dueClass === 'function' ? dueClass(j.due) : '') + '">' + (typeof dueLabel === 'function' ? dueLabel(j.due) : (j.due || '—')) + '</td>' +
-      '<td class="ship-td-note">' + noteCell + '</td>' +
-      '<td><button type="button" class="bar-btn ship-open-btn" onclick="openPanel(\'' + j.id + '\')">OPEN</button></td>' +
-    '</tr>';
-  }).join('');
-}
+/* PURGATORY: SHIP page render functions (getShipJobs, renderShip) removed (2026-03-06).
+   Late-stage visibility now handled by LOG SHIP actions, JOBS LIVE column, and Card Zone PACKING.
+   See docs/purgatory-protocol.md. */
 
 // ============================================================
 // CREW — operational directory

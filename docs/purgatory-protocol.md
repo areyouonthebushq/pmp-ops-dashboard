@@ -139,17 +139,20 @@ Every quarter (or every major product pass), scan the ledger:
 | Field | Value |
 |-------|-------|
 | **Type** | surface |
-| **Status** | hidden — candidate for formal purge |
-| **Date purged** | 2026-03-04 (hidden from nav) |
-| **Former location** | Main nav utility menu, `pg-ship` page |
-| **Purpose** | Fulfillment phase grouping view — jobs organized by shipping stage |
-| **Why tabled** | LOG SHIP actions and PACKING card now handle the late-stage workflow. SHIP page was redundant surface area with low daily use. |
-| **What replaced it** | LOG SHIP actions (counting), Card Zone PACKING face (readiness), JOBS LIVE column (visibility) |
-| **Runtime dependencies** | `renderShip()` still exists in render switch. `goPg('ship')` still works if called. Menu item hidden via `display:none`. `fulfillment_phase` field still in data model. Not yet formally purged from runtime — still wired, just not visible in nav. |
-| **Files touched** | `index.html` (menu item hidden), `app.js` (utility menu toggle) |
-| **Revival conditions** | If a dedicated fulfillment-phase grouping view is needed again beyond what JOBS filtering provides |
-| **Revival risks** | JOBS LIVE column now covers most of the at-a-glance need. Reviving SHIP would create redundant signal unless it offers something JOBS + LOG don't. |
-| **Git reference** | (record commit hash when formally purged) |
+| **Status** | purged (purgatory) |
+| **Date hidden** | 2026-03-04 (hidden from nav) |
+| **Date purged** | 2026-03-06 (formal purge from runtime) |
+| **Former location** | Main nav utility menu (`utilShip`), `pg-ship` page shell, `renderShip()` in render.js, keyboard/search handlers in app.js |
+| **Purpose** | Fulfillment phase grouping view — jobs organized by shipping stage with filter, search, inline phase-change dropdowns, and note preview |
+| **Why purged** | LOG SHIP actions, Card Zone PACKING face, JOBS LIVE column, and RSP panel dropdown now fully cover the late-stage workflow. SHIP page was a redundant surface creating signal confusion between page-level fulfillment view and LOG-level counted movement. |
+| **What replaced it** | LOG SHIP actions (BOXED/READY/QUACK counting), Card Zone PACKING face (readiness checklist), JOBS LIVE column (at-a-glance movement signals), RSP fulfillment_phase dropdown (per-job phase setting) |
+| **What was purged** | `pg-ship` HTML shell and all child elements (filter, search, summary, table, empty state). `renderShip()` and `getShipJobs()` functions. `renderAdminShell` case for `'ship'`. Ship search keyboard handler and event listener. Ship-achtung composer HTML and JS (`toggleShipAchtung`, `showShipAchtungComposer`, `confirmShipAchtung`, `cancelShipAchtung`). All `.ship-*` and `.ship-achtung-*` CSS (~90 rules). Nav menu entry. FAB hide logic for ship page. |
+| **What was preserved** | `setFulfillmentPhase()` (still used by RSP panel dropdown). `FULFILLMENT_PHASES` constant and `fulfillmentPhaseLabel()` helper (used by RSP and data model). `fulfillment_phase` field in data model (unchanged). `logMode = 'ship'` and all LOG SHIP action logic (BOXED/READY/QUACK — this is LOG behavior, not the SHIP page). `hideShipAchtungComposer()` retained as no-op stub (called from `setLogMode` cleanup path). `log-feed-ship` CSS class (LOG feed lane styling, not SHIP page). |
+| **Files touched** | `index.html` (nav entry, HTML shell, achtung composer removed), `render.js` (renderShip/getShipJobs removed, renderAdminShell case removed), `app.js` (ship-achtung functions removed, keyboard/search handlers removed, FAB logic cleaned, setFulfillmentPhase row-flash removed), `styles.css` (all .ship-* and .ship-achtung-* rules removed) |
+| **Revival conditions** | If a dedicated fulfillment-phase grouping view is needed again that provides something JOBS filtering + RSP dropdown + LOG SHIP don't |
+| **Revival risks** | JOBS LIVE column, LOG SHIP, and RSP now fully cover the signal space. Reviving SHIP would create redundant surface area and signal confusion. Would need to re-create HTML, render function, and CSS from Git history. |
+| **Known leftovers** | `goPg('ship')` still technically callable (navigates to empty `pg-ship` div — now removed, so it would show nothing). The `'ship'` string appears in LOG mode logic (`logMode = 'ship'`) — this is intentional and refers to LOG SHIP actions, not the SHIP page. `shipped` as a progress stage remains in `PROGRESS_STAGES`, `getJobProgress()`, engine metrics — this is data-model vocabulary, not SHIP page. |
+| **Git reference** | Recoverable from Git history prior to 2026-03-06 purge |
 
 ### AUDIT Page
 

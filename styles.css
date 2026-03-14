@@ -1649,95 +1649,7 @@
     .crew-today-tbl-wrap { margin-bottom: var(--space-md); }
     .crew-today-tbl .crew-cell-notes { max-width: 200px; }
 
-    /* ============================================================ SHIP — fulfillment / pickup / shipping */
-    .ship-shell { padding: 0; }
-    .ship-toolbar {
-    display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap;
-    margin-bottom: var(--space-md);
-    }
-    .ship-toolbar-left { display: flex; align-items: baseline; gap: var(--space-md); }
-    .ship-title {
-    font-family: 'Special Elite', cursive; font-size: 18px;
-    letter-spacing: 3px; color: var(--d2);
-    }
-    .ship-sub {
-    font-size: 10px; letter-spacing: 2px; color: var(--d3);
-    text-transform: uppercase;
-    }
-    .ship-summary {
-    display: flex; flex-wrap: wrap; gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-    }
-    .ship-sum-item {
-    font-size: 12px; letter-spacing: 1px; color: var(--d2);
-    padding: 3px var(--space-sm);
-    border: 1px solid var(--b1); background: var(--s1);
-    font-family: 'Inconsolata', monospace;
-    }
-    .ship-sum-held { color: var(--r); border-color: var(--r2); }
-    .ship-sum-await { color: var(--w); border-color: var(--w2); }
-    .ship-sum-ready { color: var(--g); border-color: var(--g2); }
-    .ship-sum-pickup { color: var(--g); border-color: var(--g2); }
-    .ship-sum-shipped { color: var(--d3); border-color: var(--b1); }
-    .ship-sum-unset { color: var(--d3); }
-    .ship-tbl { width: 100%; border-collapse: collapse; }
-    .ship-tbl th {
-    text-align: left; padding: var(--space-sm) var(--space-md);
-    font-size: 10px; letter-spacing: 1px; color: var(--d2); text-transform: uppercase;
-    border-bottom: 1px solid var(--b2);
-    }
-    .ship-tbl td {
-    padding: var(--space-md) var(--space-md);
-    border-bottom: 1px solid var(--b1);
-    font-size: 13px; vertical-align: middle;
-    }
-    .ship-row:hover { background: var(--s2); }
-    .ship-row-held { border-left: 3px solid var(--r); }
-    .ship-row-shipped { opacity: 0.55; }
-    .ship-row-flash { animation: shipRowFlash 0.6s ease-out; }
-    @keyframes shipRowFlash {
-      0%   { background: rgba(0,230,118,0.18); }
-      100% { background: transparent; }
-    }
-    .ship-cat {
-    font-weight: 700; color: var(--w); cursor: pointer;
-    letter-spacing: 0.5px;
-    }
-    .ship-artist { cursor: pointer; }
-    .ship-album { color: var(--d3); font-size: 12px; }
-    .ship-no-phase { color: var(--d3); }
-    .ship-phase-cell { min-width: 160px; }
-    .ship-phase-select {
-    background: var(--s2); border: 1px solid var(--b2);
-    color: var(--d); font-family: 'Inconsolata', monospace; font-size: 12px;
-    padding: 3px var(--space-sm); cursor: pointer;
-    }
-    .ship-phase-select:focus { border-color: var(--g2); outline: none; }
-    .ship-open-btn { font-size: 10px; padding: 3px var(--space-sm); }
-    .ship-td-note { min-width: 180px; max-width: 280px; }
-    .ship-note-cell { display: flex; flex-direction: column; gap: 4px; }
-    .ship-note-preview {
-    display: flex; align-items: center; gap: var(--space-xs);
-    font-size: 12px; line-height: 1.3;
-    }
-    .ship-note-text { color: var(--d2); }
-    .ship-note-ago { color: var(--d3); font-size: 10px; white-space: nowrap; }
-    .ship-proof-badge {
-    font-size: 11px; color: var(--g); white-space: nowrap;
-    margin-right: 2px;
-    }
-    .ship-notes-count {
-    font-size: 9px; color: var(--d3); margin-left: 3px;
-    vertical-align: super;
-    }
-    .ship-note-actions { display: flex; gap: var(--space-xs); }
-    .ship-note-btn {
-    background: none; border: 1px solid var(--b1); color: var(--d3);
-    font-family: 'Inconsolata', monospace; font-size: 10px; letter-spacing: 1px;
-    padding: 2px var(--space-sm); cursor: pointer;
-    transition: color 0.15s, border-color 0.15s;
-    }
-    .ship-note-btn:hover { color: var(--g); border-color: var(--g2); }
+    /* PURGATORY: SHIP page styles removed (2026-03-06). See docs/purgatory-protocol.md */
 
     /* ============================================================ FORM SYSTEM */
     .fg { display:flex; flex-direction:column; gap: var(--space-xs); margin-bottom: var(--space-md); }
@@ -2137,29 +2049,7 @@
     .log-achtung-ctrl.achtung-pulse {
       animation: cautionPulse 1.6s ease-in-out infinite;
     }
-    .ship-achtung-composer {
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 10px; background: rgba(255,179,0,0.06); border: 1px solid rgba(255,179,0,0.25);
-      border-radius: 4px; margin-bottom: 6px;
-    }
-    .ship-achtung-input {
-      flex: 1; background: var(--s1); color: var(--w); border: 1px solid var(--b1);
-      border-radius: 3px; padding: 4px 8px; font-family: 'Inconsolata', monospace;
-      font-size: 12px; outline: none;
-    }
-    .ship-achtung-input:focus { border-color: rgba(255,179,0,0.5); }
-    .ship-achtung-send {
-      background: rgba(255,179,0,0.15); color: #ffb300; border: 1px solid rgba(255,179,0,0.4);
-      border-radius: 3px; padding: 4px 10px; font-family: 'Inconsolata', monospace;
-      font-size: 11px; letter-spacing: 1px; cursor: pointer; white-space: nowrap;
-    }
-    .ship-achtung-send:hover { background: rgba(255,179,0,0.25); }
-    .ship-achtung-cancel {
-      background: none; color: var(--d3); border: 1px solid var(--b1);
-      border-radius: 3px; padding: 4px 6px; cursor: pointer; font-size: 12px;
-      font-family: 'Inconsolata', monospace;
-    }
-    .ship-achtung-cancel:hover { color: var(--w); border-color: var(--d3); }
+    /* PURGATORY: .ship-achtung-* styles removed (2026-03-06). WRENCH popup (RSP) replaces this. */
     .log-page-shell .log-job-picker { margin: 0; max-width: 100%; }
     .log-page-shell .log-console-wrap { margin: 0; }
     #pg-log .log-job-picker {

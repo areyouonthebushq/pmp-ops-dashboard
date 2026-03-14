@@ -1129,7 +1129,7 @@ function updateFAB() {
     fab.style.display = 'flex';
     fab.textContent = '+';
     if (label) { label.textContent = 'NEW JOB [N]'; }
-  } else if (currentPage === 'audit' || currentPage === 'crew' || currentPage === 'ship') {
+  } else if (currentPage === 'audit' || currentPage === 'crew') {
     fab.style.display = 'none';
   } else {
     fab.style.display = 'none';
@@ -2524,41 +2524,13 @@ function clearCaution(jobId) {
   setCaution(jobId, '', '');
 }
 
-function toggleShipAchtung() {
-  if (!S.logSelectedJob) { toast('Select a job first'); return; }
-  const job = S.jobs.find(function (x) { return x.id === S.logSelectedJob; });
-  if (!job) return;
-  if (isJobCautioned(job)) {
-    goToNotesWithFilter(job.id);
-  } else {
-    showShipAchtungComposer();
-  }
-}
-
-function showShipAchtungComposer() {
-  var c = document.getElementById('shipAchtungComposer');
-  if (c) { c.style.display = ''; var inp = document.getElementById('shipAchtungText'); if (inp) { inp.value = ''; inp.focus(); } }
-}
-
-function hideShipAchtungComposer() {
-  var c = document.getElementById('shipAchtungComposer');
-  if (c) c.style.display = 'none';
-}
-
-function confirmShipAchtung() {
-  if (!S.logSelectedJob) return;
-  var inp = document.getElementById('shipAchtungText');
-  var text = inp ? inp.value.trim() : '';
-  setCaution(S.logSelectedJob, 'achtung', text);
-  hideShipAchtungComposer();
-}
-
-function cancelShipAchtung() {
-  hideShipAchtungComposer();
-}
+/* PURGATORY: toggleShipAchtung, showShipAchtungComposer, hideShipAchtungComposer,
+   confirmShipAchtung, cancelShipAchtung removed (2026-03-06).
+   WRENCH popup (RSP) replaces this flow. See docs/purgatory-protocol.md. */
+function hideShipAchtungComposer() {} // no-op stub; called from setLogMode cleanup path
 
 // ============================================================
-// SHIP — set fulfillment phase
+// FULFILLMENT PHASE — set from RSP panel dropdown
 // ============================================================
 async function setFulfillmentPhase(jobId, phase) {
   const j = S.jobs.find(function (x) { return x.id === jobId; });
@@ -2567,10 +2539,6 @@ async function setFulfillmentPhase(jobId, phase) {
   try { await Storage.saveJob(j); } catch (e) { toastError('Phase save failed'); }
   renderAll();
   toast(phase ? fulfillmentPhaseLabel(phase) : 'Phase cleared');
-  requestAnimationFrame(function () {
-    var row = document.querySelector('.ship-row[data-jid="' + jobId + '"]');
-    if (row) { row.classList.add('ship-row-flash'); setTimeout(function () { row.classList.remove('ship-row-flash'); }, 600); }
-  });
 }
 
 // ============================================================
@@ -4201,7 +4169,6 @@ function hasLocalSearchAction() {
   if (currentPage === 'floor' && document.getElementById('floorSearch')) return true;
   if (currentPage === 'jobs' && document.getElementById('jobSearch')) return true;
   if (currentPage === 'crew' && document.getElementById('crewSearch')) return true;
-  if (currentPage === 'ship' && document.getElementById('shipSearch')) return true;
   const fmShell = document.getElementById('floorManagerShell');
   if (fmShell && fmShell.classList.contains('on') && document.getElementById('fmFloorSearch')) return true;
   return false;
@@ -4227,9 +4194,6 @@ function triggerLocalSearchAction() {
     jobSearch.focus();
   } else if (currentPage === 'crew' && crewSearch) {
     crewSearch.focus();
-  } else if (currentPage === 'ship') {
-    var shipSearch = document.getElementById('shipSearch');
-    if (shipSearch) shipSearch.focus();
   } else if (floorSearch) {
     floorSearch.focus();
   } else if (jobSearch) {
@@ -4500,6 +4464,4 @@ document.addEventListener('keydown', e => {
   if (jobEl) jobEl.addEventListener('input', debounce(renderJobs, 280));
   var fmEl = document.getElementById('fmFloorSearch');
   if (fmEl) fmEl.addEventListener('input', debounce(renderFloorManagerShell, 280));
-  var shipEl = document.getElementById('shipSearch');
-  if (shipEl) shipEl.addEventListener('input', debounce(renderShip, 280));
 })();

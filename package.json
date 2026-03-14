@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest run",
+    "preflight": "node preflight.js",
+    "test": "npm run preflight && vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {

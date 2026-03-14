@@ -161,7 +161,7 @@
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="3" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="7" cy="11" r="1.2"/></svg>
             </button>
             <div class="bar-util-menu" id="utilMenu">
-                <div class="bar-util-item" id="utilShip" onclick="goPgUtil('ship')" style="display:none">◇ SHIP</div>
+                <!-- PURGATORY: SHIP page nav entry removed (2026-03-06). See docs/purgatory-protocol.md -->
                 <div class="bar-util-item" onclick="goPgUtil('crew')">◉ CREW</div>
                 <div class="bar-util-item" onclick="goPgUtil('compounds')">◌ PVC</div>
                 <div class="bar-util-item bar-util-dev" id="utilDev" onclick="goPgUtil('dev')" style="display:none">♛ DEV</div>
@@ -268,12 +268,8 @@
         <div class="log-page-shell">
             <div class="log-shell-sec" style="display:none;">SELECT JOB</div>
             <div class="log-job-picker" id="logJobPicker"></div>
-            <div class="log-shell-sec log-shell-sec-log" style="display:none;">LOG <button type="button" id="logAchtungCtrl" class="log-achtung-ctrl" onclick="toggleShipAchtung()" title="ACHTUNG — flag job for attention" style="display:none">⚠</button></div>
-            <div id="shipAchtungComposer" class="ship-achtung-composer" style="display:none">
-                <input type="text" id="shipAchtungText" class="ship-achtung-input" placeholder="Context (writes to NOTES)" onkeydown="if(event.key==='Enter'){confirmShipAchtung();event.preventDefault()}else if(event.key==='Escape'){cancelShipAchtung();event.preventDefault()}">
-                <button type="button" class="ship-achtung-send" onclick="confirmShipAchtung()">⚠ FLAG</button>
-                <button type="button" class="ship-achtung-cancel" onclick="cancelShipAchtung()">✕</button>
-            </div>
+            <div class="log-shell-sec log-shell-sec-log" style="display:none;">LOG</div>
+            <!-- PURGATORY: Ship-achtung composer removed (2026-03-06). WRENCH popup (RSP) replaces this. -->
             <div class="log-console-wrap">
             <div class="log-mode-toggle" id="logModeToggle">
                 <button type="button" class="log-mode-btn" id="logModePressBtn" onclick="setLogMode('press')">◉ PRESS</button>
@@ -439,43 +435,7 @@
     </div>
 
     <!-- ======= CREW PAGE (operational directory) ======= -->
-    <!-- ======= SHIP PAGE (fulfillment / pickup / shipping) ======= -->
-    <div class="pg" id="pg-ship">
-      <div class="ship-shell">
-        <div class="ship-toolbar">
-          <div class="ship-toolbar-left">
-            <div class="ship-title">SHIP</div>
-            <div class="ship-sub">Fulfillment · Pickup · Shipping</div>
-          </div>
-          <select id="shipFilter" class="fs" style="width:auto;padding:var(--space-sm) var(--space-md);font-size:13px;" onchange="renderShip()">
-            <option value="">ALL LATE-STAGE</option>
-            <option value="awaiting_instructions">AWAITING INSTRUCTIONS</option>
-            <option value="ready_for_pickup">READY FOR PICKUP</option>
-            <option value="ready_to_ship">READY TO SHIP</option>
-            <option value="local_pickup">LOCAL PICKUP</option>
-            <option value="in_house_fulfillment">IN-HOUSE FULFILLMENT</option>
-            <option value="held_exception">HELD / EXCEPTION</option>
-            <option value="shipped">SHIPPED / PICKED UP</option>
-            <option value="unset">NO PHASE SET</option>
-          </select>
-          <div class="search-wrap" style="min-width:160px">
-            <input class="search-input" id="shipSearch" placeholder="SEARCH CATALOG, ARTIST…">
-          </div>
-          <span class="search-count" id="shipCount"></span>
-        </div>
-        <div class="ship-summary" id="shipSummary"></div>
-        <div class="tbl-wrap">
-          <table class="ship-tbl">
-            <thead><tr>
-              <th>CATALOG</th><th>ARTIST / ALBUM</th><th>FORMAT</th><th>QTY</th>
-              <th>STATUS</th><th>FULFILLMENT</th><th>DUE</th><th>LAST NOTE</th><th></th>
-            </tr></thead>
-            <tbody id="shipBody"></tbody>
-          </table>
-        </div>
-        <div id="shipEmpty" class="empty" style="display:none;">NO LATE-STAGE JOBS</div>
-      </div>
-    </div>
+    <!-- PURGATORY: SHIP page HTML shell removed (2026-03-06). See docs/purgatory-protocol.md -->
 
     <div class="pg" id="pg-crew">
       <div class="crew-shell">
