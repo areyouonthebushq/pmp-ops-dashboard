@@ -243,9 +243,9 @@ function renderCompoundsPage() {
   }
 
   listEl.innerHTML = compounds.map((c) => {
-    var imageUrl = (c.imageUrl || '').trim();
-    var hasImage = !!imageUrl;
-    var thumbStyle = hasImage ? ' style="background-image:url(\'' + imageUrl.replace(/'/g, "\\'") + '\')"' : '';
+    var displayUrl = ((c.thumbUrl || c.imageUrl) || '').trim();
+    var hasImage = !!displayUrl;
+    var thumbStyle = hasImage ? ' style="background-image:url(\'' + displayUrl.replace(/'/g, "\\'") + '\')"' : '';
     var thumbClass = 'compound-thumb' + (hasImage ? ' compound-thumb-hasimg' : '');
     var thumbOnclick = 'event.stopPropagation();pvcThumbClick(\'' + c.id.replace(/'/g, "\\'") + '\',' + hasImage + ')';
     var thumb = '<div class="' + thumbClass + '"' + thumbStyle + ' onclick="' + thumbOnclick + '" role="button" aria-label="' + (hasImage ? 'View or replace photo' : 'Upload photo') + '" title="' + (hasImage ? 'View / Replace photo' : 'Upload photo') + '"></div>';
@@ -465,12 +465,13 @@ function renderCrewPage() {
     var notes = (e.notes || '').trim();
     var notesShort = notes.length > 40 ? notes.slice(0, 37) + '…' : notes;
     var photoUrl = (e.photo_url || '').trim();
+    var photoDisplay = ((e.thumb_url || e.photo_url) || '').trim();
     var hasPhoto = !!photoUrl;
     var thumbClick = 'event.stopPropagation();crewThumbClick(\'' + (e.id || '').replace(/'/g, "\\'") + '\',' + hasPhoto + ')';
     var thumbTitle = hasPhoto ? 'View / Replace photo' : 'Upload photo';
     var thumb = '';
     if (hasPhoto) {
-      thumb = '<div class="crew-thumb crew-thumb-img crew-thumb-btn" style="background-image:url(\'' + photoUrl.replace(/'/g, "\\'") + '\')" role="button" aria-label="' + thumbTitle + '" title="' + thumbTitle + '" onclick="' + thumbClick + '"></div>';
+      thumb = '<div class="crew-thumb crew-thumb-img crew-thumb-btn" style="background-image:url(\'' + photoDisplay.replace(/'/g, "\\'") + '\')" role="button" aria-label="' + thumbTitle + '" title="' + thumbTitle + '" onclick="' + thumbClick + '"></div>';
     } else {
       var initial = name.charAt(0).toUpperCase();
       thumb = '<div class="crew-thumb crew-thumb-initial crew-thumb-btn" role="button" aria-label="' + thumbTitle + '" title="' + thumbTitle + '" onclick="' + thumbClick + '">' + (typeof escapeHtml === 'function' ? escapeHtml(initial) : initial) + '</div>';
@@ -3271,6 +3272,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
           attachment_name: e.attachment_name || null,
           attachment_type: e.attachment_type || null,
           attachment_thumb: e.attachment_thumb || null,
+          attachment_thumb_url: e.attachment_thumb_url || null,
           isCautionAsset: isCautionAsset,
         });
       });
@@ -3296,6 +3298,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
           attachment_name: e.attachment_name || null,
           attachment_type: e.attachment_type || null,
           attachment_thumb: e.attachment_thumb || null,
+          attachment_thumb_url: e.attachment_thumb_url || null,
           isCautionAsset: isCautionAsset,
         });
       });
@@ -3345,8 +3348,9 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const cautionIcon = e.isCautionAsset ? '<span class="notes-entry-caution-icon" aria-hidden="true">\u26A0\uFE0E</span> ' : '';
         const assetHtml = asset ? `<div class="notes-entry-asset">${cautionIcon}${escapeHtml(asset)}</div>` : '';
         const rowCls = e.jobId === '!ALERT' ? ' notes-row-alert' : '';
+        var noteThumbSrc = e.attachment_thumb_url || e.attachment_url;
         const thumbHtml = e.attachment_url
-          ? '<div class="notes-entry-thumb" role="button" tabindex="0" data-src="' + escapeHtml(e.attachment_url) + '" onclick="openPoImageLightbox(this.getAttribute(\'data-src\'))" title="View image"><img src="' + escapeHtml(e.attachment_url) + '" alt="" loading="lazy"></div>'
+          ? '<div class="notes-entry-thumb" role="button" tabindex="0" data-src="' + escapeHtml(e.attachment_url) + '" onclick="openPoImageLightbox(this.getAttribute(\'data-src\'))" title="View image"><img src="' + escapeHtml(noteThumbSrc) + '" alt="" loading="lazy"></div>'
           : '';
         const inner = '<div class="notes-entry-job"><span class="notes-entry-cat">' + cat + '</span> <span class="notes-entry-artist">' + artist + '</span></div><div class="notes-entry-text">' + escapeHtml(e.text) + '</div>' + assetHtml + '<div class="notes-entry-meta">' + meta + '</div>';
         return '<div class="progress-entry' + rowCls + '"><div class="progress-entry-inner">' + inner + '</div>' + thumbHtml + '</div>';

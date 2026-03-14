@@ -17,17 +17,89 @@ async function safeGet(k) {
   } catch { return null; }
 }
 
+const LS_SAFE_CEILING = 4_500_000;
+
 async function safeSet(k, v) {
   const data = JSON.stringify(v);
+  var sizeKB = Math.round(data.length / 1024);
+  var success = false;
+
+  if (data.length > LS_SAFE_CEILING) {
+    if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'localStorage write SKIPPED — over ceiling', level: 'warning', data: { key: k, sizeKB: sizeKB } });
+    console.warn('[PMP] localStorage write skipped — payload ' + sizeKB + 'KB exceeds ' + Math.round(LS_SAFE_CEILING / 1024) + 'KB ceiling (' + k + ')');
+    return false;
+  }
+
   try {
     if (window.storage && typeof window.storage.set === 'function') {
       await window.storage.set(k, data, true);
-      return;
+      success = true;
     }
-  } catch {}
-  try {
-    localStorage.setItem(k, data);
-  } catch {}
+  } catch (e) {
+    console.warn('[PMP] window.storage.set failed for ' + k, e);
+  }
+
+  if (!success) {
+    try {
+      localStorage.setItem(k, data);
+      success = true;
+    } catch (e) {
+      console.warn('[PMP] localStorage.setItem failed for ' + k, e);
+    }
+  }
+
+  if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'localStorage write', level: success ? 'info' : 'warning', data: { key: k, sizeKB: sizeKB, success: success } });
+  return success;
+}
+
+function pruneForQuota(payload) {
+  var steps = [];
+  var cutoff30d = new Date(Date.now() - 30 * 86400000).toISOString();
+  var cutoff7d = new Date(Date.now() - 7 * 86400000).toISOString();
+
+  try { localStorage.removeItem(OFFLINE_SNAPSHOT_KEY); steps.push('offline_snapshot'); } catch (e) {}
+
+  if (Array.isArray(payload.qcLog) && payload.qcLog.length) {
+    var before = payload.qcLog.length;
+    payload.qcLog = payload.qcLog.filter(function (e) { return e.timestamp >= cutoff30d; });
+    if (payload.qcLog.length < before) steps.push('qcLog_30d');
+  }
+
+  if (Array.isArray(payload.devNotes) && payload.devNotes.length) {
+    var before2 = payload.devNotes.length;
+    payload.devNotes = payload.devNotes.filter(function (e) { return e.timestamp >= cutoff30d; });
+    if (payload.devNotes.length < before2) steps.push('devNotes_30d');
+  }
+
+  if (Array.isArray(payload.jobs)) {
+    payload.jobs.forEach(function (j) {
+      if (j.archived_at && Array.isArray(j.progressLog) && j.progressLog.length) {
+        j.progressLog = [];
+        if (steps.indexOf('archived_progressLog') === -1) steps.push('archived_progressLog');
+      }
+    });
+  }
+
+  if (Array.isArray(payload.scheduleEntries) && payload.scheduleEntries.length) {
+    var before3 = payload.scheduleEntries.length;
+    payload.scheduleEntries = payload.scheduleEntries.filter(function (e) { return (e.date || e.timestamp || '') >= cutoff30d; });
+    if (payload.scheduleEntries.length < before3) steps.push('scheduleEntries_30d');
+  }
+
+  if (payload.notesChannels && typeof payload.notesChannels === 'object') {
+    Object.keys(payload.notesChannels).forEach(function (ch) {
+      var arr = payload.notesChannels[ch];
+      if (Array.isArray(arr) && arr.length) {
+        var before4 = arr.length;
+        payload.notesChannels[ch] = arr.filter(function (e) { return (e.timestamp || '') >= cutoff7d; });
+        if (payload.notesChannels[ch].length < before4 && steps.indexOf('notesChannels_7d') === -1) steps.push('notesChannels_7d');
+      }
+    });
+  }
+
+  if (steps.length) console.log('[PMP] Pruned for quota:', steps.join(', '));
+  if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'pruneForQuota', level: 'info', data: { steps: steps } });
+  return { payload: payload, steps: steps };
 }
 
 function useSupabase() {
@@ -43,6 +115,7 @@ const SYNC_STATES = {
   saving: { text: '● SAVING…', class: 'sync-save' },
   synced: { text: '● SYNCED', class: 'sync-ok' },
   error: { text: '● ERR', class: 'sync-err' },
+  quota: { text: '● STORAGE FULL', class: 'sync-err' },
   local: { text: '● LOCAL', class: 'sync-ok' },
   offline: { text: '● OFFLINE', class: 'sync-err' },
   stale: { text: '● STALE', class: 'sync-save' },
@@ -78,22 +151,42 @@ function getOfflineSnapshot() {
 }
 
 function setOfflineSnapshot(data) {
+  if (!data) return;
+  var payload = {
+    jobs: data.jobs || [],
+    presses: data.presses || [],
+    todos: data.todos || null,
+    qcLog: data.qcLog || [],
+    devNotes: data.devNotes || [],
+    compounds: data.compounds || [],
+    employees: data.employees || [],
+    scheduleEntries: data.scheduleEntries || [],
+    lastReset: data.lastReset || null,
+    fetchedAt: new Date().toISOString(),
+  };
+  var serialized = JSON.stringify(payload);
+  var sizeKB = Math.round(serialized.length / 1024);
+
+  var usedEstimate = 0;
   try {
-    if (!data) return;
-    const payload = {
-      jobs: data.jobs || [],
-      presses: data.presses || [],
-      todos: data.todos || null,
-      qcLog: data.qcLog || [],
-      devNotes: data.devNotes || [],
-      compounds: data.compounds || [],
-      employees: data.employees || [],
-      scheduleEntries: data.scheduleEntries || [],
-      lastReset: data.lastReset || null,
-      fetchedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(OFFLINE_SNAPSHOT_KEY, JSON.stringify(payload));
-  } catch {}
+    var primary = localStorage.getItem(STORE_KEY);
+    if (primary) usedEstimate = primary.length;
+  } catch (e) {}
+
+  var pressureThreshold = LS_SAFE_CEILING * 0.8;
+  if (usedEstimate + serialized.length > pressureThreshold) {
+    if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'Skipping offline snapshot — storage pressure', level: 'warning', data: { primaryKB: Math.round(usedEstimate / 1024), snapshotKB: sizeKB } });
+    console.log('[PMP] Skipping offline snapshot write — storage pressure (' + sizeKB + 'KB snapshot, ' + Math.round(usedEstimate / 1024) + 'KB primary)');
+    return;
+  }
+
+  try {
+    localStorage.setItem(OFFLINE_SNAPSHOT_KEY, serialized);
+    if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'offline snapshot written', level: 'info', data: { sizeKB: sizeKB } });
+  } catch (e) {
+    console.warn('[PMP] Offline snapshot write failed', e);
+    if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'offline snapshot write FAILED', level: 'warning', data: { sizeKB: sizeKB } });
+  }
 }
 
 function getOfflineQueue() {
@@ -483,12 +576,8 @@ const Storage = {
   },
 };
 
-function flushLocalSave() {
-  if (useSupabase()) return Promise.resolve();
-  setSyncState('saving');
-  clearTimeout(saveTimer);
-  saveTimer = null;
-  const payload = {
+function buildLocalPayload() {
+  return {
     jobs: S.jobs,
     presses: S.presses,
     todos: S.todos,
@@ -500,26 +589,40 @@ function flushLocalSave() {
     lastReset: S._lastReset || new Date().toDateString(),
     notesChannels: S.notesChannels || null,
   };
-  return safeSet(STORE_KEY, payload).then(() => setSyncState('synced'));
+}
+
+async function guardedLocalWrite() {
+  var payload = buildLocalPayload();
+  var ok = await safeSet(STORE_KEY, payload);
+  if (ok) {
+    setSyncState('synced');
+    return true;
+  }
+
+  var pruned = pruneForQuota(JSON.parse(JSON.stringify(payload)));
+  ok = await safeSet(STORE_KEY, pruned.payload);
+  if (ok) {
+    setSyncState('synced');
+    if (typeof toast === 'function') toast('Storage recovered — some history pruned');
+    return true;
+  }
+
+  setSyncState('quota');
+  if (typeof toastError === 'function') toastError('Local storage full — data may not be saved');
+  return false;
+}
+
+function flushLocalSave() {
+  if (useSupabase()) return Promise.resolve();
+  setSyncState('saving');
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  return guardedLocalWrite();
 }
 
 function scheduleSave() {
   if (useSupabase()) return;
   setSyncState('saving');
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    await safeSet(STORE_KEY, {
-      jobs: S.jobs,
-      presses: S.presses,
-      todos: S.todos,
-      qcLog: S.qcLog,
-      devNotes: S.devNotes || [],
-      compounds: S.compounds || [],
-      employees: S.employees || [],
-      scheduleEntries: S.scheduleEntries || [],
-      lastReset: S._lastReset || new Date().toDateString(),
-      notesChannels: S.notesChannels || null,
-    });
-    setSyncState('synced');
-  }, 800);
+  saveTimer = setTimeout(function () { guardedLocalWrite(); }, 800);
 }

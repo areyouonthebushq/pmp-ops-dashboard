@@ -437,21 +437,27 @@
      * Fetch audit log (admin only; RLS enforces). For minimal UI or export.
      * @param {Object} opts - { limit?: number, table_name?: string, entity_id?: string, since?: string (ISO date) }
      */
-    /** PO image: bucket and path convention. Path = {jobId}/po.{ext}. Requires bucket "po-images" (public read, auth write). */
-    getPoImagePath(jobId, filename) {
-      if (!jobId || !filename) return null;
-      const ext = (filename.match(/\.(jpe?g|png|gif|webp)$/i) || [])[1] || 'jpg';
-      return jobId + '/po.' + ext.toLowerCase();
+    /** PO image: bucket and path convention. Path = {jobId}/po.jpg. Requires bucket "po-images" (public read, auth write). */
+    getPoImagePath(jobId) {
+      if (!jobId) return null;
+      return jobId + '/po.jpg';
     },
 
-    async uploadPoImage(jobId, file) {
-      if (!jobId || !file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid job or image file');
+    async uploadPoImage(jobId, blobs) {
+      if (!jobId || !blobs || !blobs.full) throw new Error('Invalid job or image data');
       const client = getClient();
-      const path = this.getPoImagePath(jobId, file.name);
-      const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
+      const fullPath = this.getPoImagePath(jobId);
+      const thumbPath = fullPath.replace('.jpg', '_thumb.jpg');
+      const { error } = await client.storage.from('po-images').upload(fullPath, blobs.full, { upsert: true, contentType: 'image/jpeg' });
       if (error) throw error;
-      const { data } = client.storage.from('po-images').getPublicUrl(path);
-      return { path, url: data.publicUrl + '?t=' + Date.now() };
+      const { data } = client.storage.from('po-images').getPublicUrl(fullPath);
+      var result = { path: fullPath, url: data.publicUrl };
+      try {
+        await client.storage.from('po-images').upload(thumbPath, blobs.thumb, { upsert: true, contentType: 'image/jpeg' });
+        var td = client.storage.from('po-images').getPublicUrl(thumbPath);
+        result.thumbUrl = td.data.publicUrl;
+      } catch (e) { console.warn('[PMP] PO thumb upload failed, continuing with full only', e); }
+      return result;
     },
 
     async deletePoImage(path) {
@@ -461,48 +467,66 @@
       if (error) throw error;
     },
 
-    /** Compound color image: path = compounds/{compoundId}/color.{ext}. Same bucket as PO. */
-    getCompoundImagePath(compoundId, filename) {
-      if (!compoundId || !filename) return null;
-      const ext = (filename.match(/\.(jpe?g|png|gif|webp)$/i) || [])[1] || 'jpg';
-      return 'compounds/' + compoundId + '/color.' + ext.toLowerCase();
+    /** Compound color image: path = compounds/{compoundId}/color.jpg. Same bucket as PO. */
+    getCompoundImagePath(compoundId) {
+      if (!compoundId) return null;
+      return 'compounds/' + compoundId + '/color.jpg';
     },
-    async uploadCompoundImage(compoundId, file) {
-      if (!compoundId || !file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid compound or image file');
+    async uploadCompoundImage(compoundId, blobs) {
+      if (!compoundId || !blobs || !blobs.full) throw new Error('Invalid compound or image data');
       const client = getClient();
-      const path = this.getCompoundImagePath(compoundId, file.name);
-      const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
+      const fullPath = this.getCompoundImagePath(compoundId);
+      const thumbPath = fullPath.replace('.jpg', '_thumb.jpg');
+      const { error } = await client.storage.from('po-images').upload(fullPath, blobs.full, { upsert: true, contentType: 'image/jpeg' });
       if (error) throw error;
-      const { data } = client.storage.from('po-images').getPublicUrl(path);
-      return { path, url: data.publicUrl + '?t=' + Date.now() };
+      const { data } = client.storage.from('po-images').getPublicUrl(fullPath);
+      var result = { path: fullPath, url: data.publicUrl };
+      try {
+        await client.storage.from('po-images').upload(thumbPath, blobs.thumb, { upsert: true, contentType: 'image/jpeg' });
+        var td = client.storage.from('po-images').getPublicUrl(thumbPath);
+        result.thumbUrl = td.data.publicUrl;
+      } catch (e) { console.warn('[PMP] Compound thumb upload failed, continuing with full only', e); }
+      return result;
     },
 
-    /** Crew photo: path = crew/{employeeId}/photo.{ext}. Same bucket as PO. */
-    getCrewPhotoPath(employeeId, filename) {
-      if (!employeeId || !filename) return null;
-      const ext = (filename.match(/\.(jpe?g|png|gif|webp)$/i) || [])[1] || 'jpg';
-      return 'crew/' + employeeId + '/photo.' + ext.toLowerCase();
+    /** Crew photo: path = crew/{employeeId}/photo.jpg. Same bucket as PO. */
+    getCrewPhotoPath(employeeId) {
+      if (!employeeId) return null;
+      return 'crew/' + employeeId + '/photo.jpg';
     },
-    async uploadCrewPhoto(employeeId, file) {
-      if (!employeeId || !file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid employee or image file');
+    async uploadCrewPhoto(employeeId, blobs) {
+      if (!employeeId || !blobs || !blobs.full) throw new Error('Invalid employee or image data');
       const client = getClient();
-      const path = this.getCrewPhotoPath(employeeId, file.name);
-      const { error } = await client.storage.from('po-images').upload(path, file, { upsert: true });
+      const fullPath = this.getCrewPhotoPath(employeeId);
+      const thumbPath = fullPath.replace('.jpg', '_thumb.jpg');
+      const { error } = await client.storage.from('po-images').upload(fullPath, blobs.full, { upsert: true, contentType: 'image/jpeg' });
       if (error) throw error;
-      const { data } = client.storage.from('po-images').getPublicUrl(path);
-      return { path, url: data.publicUrl + '?t=' + Date.now() };
+      const { data } = client.storage.from('po-images').getPublicUrl(fullPath);
+      var result = { path: fullPath, url: data.publicUrl };
+      try {
+        await client.storage.from('po-images').upload(thumbPath, blobs.thumb, { upsert: true, contentType: 'image/jpeg' });
+        var td = client.storage.from('po-images').getPublicUrl(thumbPath);
+        result.thumbUrl = td.data.publicUrl;
+      } catch (e) { console.warn('[PMP] Crew thumb upload failed, continuing with full only', e); }
+      return result;
     },
 
-    /** Note attachment: path = notes/{timestamp}_{id}.{ext}. Uses po-images bucket. */
-    async uploadNoteAttachment(file) {
-      if (!file || !file.type || !file.type.startsWith('image/')) throw new Error('Invalid image file');
+    /** Note attachment: path = notes/{timestamp}_{id}.jpg. Uses po-images bucket. */
+    async uploadNoteAttachment(blobs) {
+      if (!blobs || !blobs.full) throw new Error('Invalid image data');
       const client = getClient();
-      const ext = (file.name.match(/\.(jpe?g|png|gif|webp)$/i) || [])[1] || 'jpg';
-      const path = 'notes/' + Date.now() + '_' + Math.random().toString(36).slice(2, 9) + '.' + ext.toLowerCase();
-      const { error } = await client.storage.from('po-images').upload(path, file, { upsert: false });
+      const basePath = 'notes/' + Date.now() + '_' + Math.random().toString(36).slice(2, 9) + '.jpg';
+      const thumbPath = basePath.replace('.jpg', '_thumb.jpg');
+      const { error } = await client.storage.from('po-images').upload(basePath, blobs.full, { upsert: false, contentType: 'image/jpeg' });
       if (error) throw error;
-      const { data } = client.storage.from('po-images').getPublicUrl(path);
-      return { path, url: data.publicUrl };
+      const { data } = client.storage.from('po-images').getPublicUrl(basePath);
+      var result = { path: basePath, url: data.publicUrl };
+      try {
+        await client.storage.from('po-images').upload(thumbPath, blobs.thumb, { upsert: false, contentType: 'image/jpeg' });
+        var td = client.storage.from('po-images').getPublicUrl(thumbPath);
+        result.thumbUrl = td.data.publicUrl;
+      } catch (e) { console.warn('[PMP] Note thumb upload failed, continuing with full only', e); }
+      return result;
     },
 
     async getAuditLog(opts = {}) {

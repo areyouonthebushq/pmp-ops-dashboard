@@ -81,6 +81,60 @@ window.addEventListener('unhandledrejection', function (event) {
 })();
 
 // ============================================================
+// IMAGE PIPELINE — client-side resize, file-size guard, dual output
+// ============================================================
+var IMG_LIMITS = { po: 10 * 1024 * 1024, crew: 5 * 1024 * 1024, compound: 5 * 1024 * 1024, note: 10 * 1024 * 1024 };
+var IMG_FULL_MAX = 1200;
+var IMG_THUMB_MAX = 200;
+var IMG_FULL_QUALITY = 0.85;
+var IMG_THUMB_QUALITY = 0.70;
+var IMG_SKIP_THRESHOLD = 200 * 1024;
+
+function resizeImage(file, maxDim, quality) {
+  return new Promise(function (resolve, reject) {
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if (Math.max(w, h) <= maxDim && file.size <= IMG_SKIP_THRESHOLD && maxDim === IMG_FULL_MAX) {
+        resolve(file);
+        return;
+      }
+      var scale = Math.min(maxDim / Math.max(w, h), 1);
+      var nw = Math.round(w * scale), nh = Math.round(h * scale);
+      var canvas = document.createElement('canvas');
+      canvas.width = nw;
+      canvas.height = nh;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, nw, nh);
+      canvas.toBlob(function (blob) {
+        if (!blob) { reject(new Error('Canvas export failed')); return; }
+        resolve(blob);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+    img.src = url;
+  });
+}
+
+function checkImageSize(file, limitBytes, typeName) {
+  if (file.size > limitBytes) {
+    var maxMB = Math.round(limitBytes / (1024 * 1024));
+    if (typeof toastError === 'function') toastError((typeName || 'Image') + ' exceeds ' + maxMB + 'MB limit');
+    return false;
+  }
+  return true;
+}
+
+function processImage(file) {
+  return Promise.all([
+    resizeImage(file, IMG_FULL_MAX, IMG_FULL_QUALITY),
+    resizeImage(file, IMG_THUMB_MAX, IMG_THUMB_QUALITY)
+  ]).then(function (blobs) { return { full: blobs[0], thumb: blobs[1] }; });
+}
+
+// ============================================================
 // THEME: MINIMAL — toggle + persist (localStorage)
 // ============================================================
 function applyMinimalThemeFromStorage() {
@@ -1401,13 +1455,14 @@ function updatePoImageUI(job) {
   const input = document.getElementById('jPoImageInput');
   const actionsEl = document.querySelector('.po-image-actions');
   if (!placeholder || !preview || !uploadBtn || !replaceBtn || !removeBtn || !input) return;
-  const url = job && job.poContract && job.poContract.imageUrl;
-  if (url) {
+  const fullUrl = job && job.poContract && job.poContract.imageUrl;
+  const thumbPo = job && job.poContract && job.poContract.thumbUrl;
+  if (fullUrl) {
     placeholder.style.display = 'none';
     preview.style.display = 'block';
-    preview.src = url;
+    preview.src = thumbPo || fullUrl;
     preview.classList.add('po-image-clickable');
-    preview.onclick = function () { openPoImageLightbox(preview.src); };
+    preview.onclick = function () { openPoImageLightbox(fullUrl); };
     if (actionsEl) actionsEl.style.display = panelEditMode ? '' : 'none';
     uploadBtn.style.display = 'none';
     replaceBtn.style.display = panelEditMode ? '' : 'none';
@@ -1558,34 +1613,35 @@ function pvcThumbClick(compoundId, hasImage) {
   }
 }
 
-function onPvcCompoundImageSelected(input) {
+async function onPvcCompoundImageSelected(input) {
   var file = input && input.files && input.files[0];
   input.value = '';
   var compoundId = S.pvcUploadCompoundId;
   S.pvcUploadCompoundId = null;
   if (!file || !compoundId) return;
+  if (!checkImageSize(file, IMG_LIMITS.compound, 'Compound image')) return;
   if (!window.PMP || !window.PMP.Supabase || typeof window.PMP.Supabase.uploadCompoundImage !== 'function') {
     if (typeof toast === 'function') toast('Storage not available.');
     return;
   }
-  window.PMP.Supabase.uploadCompoundImage(compoundId, file).then(function (res) {
+  try {
+    var blobs = await processImage(file);
+    var res = await window.PMP.Supabase.uploadCompoundImage(compoundId, blobs);
     var list = Array.isArray(S.compounds) ? S.compounds.slice() : [];
     var idx = list.findIndex(function (x) { return x.id === compoundId; });
     if (idx !== -1) {
       list[idx] = Object.assign({}, list[idx], { imageUrl: res.url });
+      if (res.thumbUrl) list[idx].thumbUrl = res.thumbUrl;
       S.compounds = list;
-      Storage.saveCompounds(S.compounds).then(function () {
-        closePoImageLightbox();
-        renderCompoundsPage();
-        if (typeof toast === 'function') toast('Photo uploaded.');
-      }).catch(function () {
-        if (typeof toast === 'function') toast('Save failed.');
-      });
+      await Storage.saveCompounds(S.compounds);
+      closePoImageLightbox();
+      renderCompoundsPage();
+      if (typeof toast === 'function') toast('Photo uploaded.');
     }
-  }).catch(function (e) {
+  } catch (e) {
     console.error('[PMP] Compound image upload failed', e);
     if (typeof toast === 'function') toast(e && e.message ? e.message : 'Upload failed.');
-  });
+  }
 }
 
 function editCompound(id) {
@@ -1717,35 +1773,40 @@ function crewThumbClick(employeeId, hasImage) {
   }
 }
 
-function onCrewPhotoSelected(input) {
+async function onCrewPhotoSelected(input) {
   var file = input && input.files && input.files[0];
   input.value = '';
   var employeeId = S.crewUploadEmployeeId;
   S.crewUploadEmployeeId = null;
   if (!file || !employeeId) return;
+  if (!checkImageSize(file, IMG_LIMITS.crew, 'Crew photo')) return;
   if (!window.PMP || !window.PMP.Supabase || typeof window.PMP.Supabase.uploadCrewPhoto !== 'function') {
     if (typeof toast === 'function') toast('Storage not available.');
     return;
   }
-  window.PMP.Supabase.uploadCrewPhoto(employeeId, file).then(function (res) {
+  try {
+    var blobs = await processImage(file);
+    var res = await window.PMP.Supabase.uploadCrewPhoto(employeeId, blobs);
     var list = Array.isArray(S.employees) ? S.employees.slice() : [];
     var idx = list.findIndex(function (x) { return x.id === employeeId; });
     if (idx !== -1) {
       list[idx] = Object.assign({}, list[idx], { photo_url: res.url });
+      if (res.thumbUrl) list[idx].thumb_url = res.thumbUrl;
       S.employees = list;
-      Storage.saveEmployees(S.employees).then(function () {
+      try {
+        await Storage.saveEmployees(S.employees);
         closePoImageLightbox();
         renderCrewPage();
         if (typeof toast === 'function') toast('Photo uploaded.');
-      }).catch(function () {
+      } catch (_) {
         renderCrewPage();
         if (typeof toast === 'function') toast('Photo saved locally.');
-      });
+      }
     }
-  }).catch(function (err) {
+  } catch (err) {
     if (typeof toastError === 'function') toastError('Upload failed: ' + (err.message || err));
     else if (typeof toast === 'function') toast('Upload failed.');
-  });
+  }
 }
 
 // ============================================================
@@ -2213,6 +2274,7 @@ function closePoImageLightbox() {
 async function onPoImageFileSelected(input) {
   const file = input && input.files && input.files[0];
   if (!file) return;
+  if (!checkImageSize(file, IMG_LIMITS.po, 'PO image')) { input.value = ''; return; }
   const jobId = S.editId;
   if (!jobId) {
     if (typeof toast === 'function') toast('Save the job first to add a PO image.');
@@ -2230,10 +2292,12 @@ async function onPoImageFileSelected(input) {
     if (j.poContract && j.poContract.imagePath && window.PMP.Supabase.deletePoImage) {
       try { await window.PMP.Supabase.deletePoImage(j.poContract.imagePath); } catch (_) {}
     }
-    const { path, url } = await window.PMP.Supabase.uploadPoImage(jobId, file);
+    var blobs = await processImage(file);
+    const res = await window.PMP.Supabase.uploadPoImage(jobId, blobs);
     if (!j.poContract || typeof j.poContract !== 'object') j.poContract = {};
-    j.poContract.imageUrl = url;
-    j.poContract.imagePath = path;
+    j.poContract.imageUrl = res.url;
+    j.poContract.imagePath = res.path;
+    if (res.thumbUrl) j.poContract.thumbUrl = res.thumbUrl;
     j.poContract.uploadedAt = new Date().toISOString();
     await Storage.saveJob(j);
     updatePoImageUI(j);
@@ -3714,6 +3778,7 @@ function mergeNoteAttachment(entry, attachment) {
   if (attachment.attachment_name) out.attachment_name = attachment.attachment_name;
   if (attachment.attachment_type) out.attachment_type = attachment.attachment_type;
   if (attachment.attachment_thumb) out.attachment_thumb = attachment.attachment_thumb;
+  if (attachment.attachment_thumb_url) out.attachment_thumb_url = attachment.attachment_thumb_url;
   return out;
 }
 
@@ -3727,9 +3792,10 @@ function clearNotesComposerAttachment() {
   if (cell) cell.style.display = '';
 }
 
-function onNotesAttachmentSelected(input) {
+async function onNotesAttachmentSelected(input) {
   const file = input && input.files && input.files[0];
   if (!file || !file.type.startsWith('image/')) return;
+  if (!checkImageSize(file, IMG_LIMITS.note, 'Note image')) { input.value = ''; return; }
   if (!window.PMP || !window.PMP.Supabase || typeof window.PMP.Supabase.uploadNoteAttachment !== 'function') {
     if (typeof toast === 'function') toast('Upload not available');
     input.value = '';
@@ -3739,20 +3805,23 @@ function onNotesAttachmentSelected(input) {
   const btnEl = document.getElementById('notesAttachmentBtn');
   if (progressEl) progressEl.style.display = 'block';
   if (btnEl) btnEl.disabled = true;
-  window.PMP.Supabase.uploadNoteAttachment(file).then(function (res) {
+  try {
+    var blobs = await processImage(file);
+    var res = await window.PMP.Supabase.uploadNoteAttachment(blobs);
     S.notesPendingAttachment = { attachment_url: res.url, attachment_name: file.name, attachment_type: 'image' };
+    if (res.thumbUrl) S.notesPendingAttachment.attachment_thumb_url = res.thumbUrl;
     const hint = document.getElementById('notesAttachmentHint');
     if (hint) hint.textContent = '1 image';
     const cell = document.getElementById('notesAttachCell');
     if (cell) cell.style.display = 'none';
     input.value = '';
-  }).catch(function (e) {
+  } catch (e) {
     if (typeof toastError === 'function') toastError(e && e.message ? e.message : 'Upload failed');
     input.value = '';
-  }).finally(function () {
+  } finally {
     if (progressEl) progressEl.style.display = 'none';
     if (btnEl) btnEl.disabled = false;
-  });
+  }
 }
 
 async function addNoteFromNotesPage() {
