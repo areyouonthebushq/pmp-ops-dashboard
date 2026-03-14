@@ -197,7 +197,7 @@
     <!-- ======= FLOOR PAGE ======= -->
     <div class="pg on" id="pg-floor">
       <div class="floor-shell">
-        <div class="sec">PRESS STATUS</div>
+        <div class="sec" style="display:none;">PRESS STATUS</div>
         <div class="press-grid" id="pressGrid"></div>
         <div class="stats" id="statsRow"></div>
         <div id="floorStatFilterHint" class="floor-stat-filter-hint" style="display:none"></div>
@@ -228,9 +228,6 @@
     <div class="pg" id="pg-jobs">
       <div class="jobs-shell">
         <div class="jobs-header">
-          <div class="jobs-header-left">
-            <div class="jobs-title">JOBS</div>
-          </div>
           <div class="jobs-header-actions">
             <select id="jobFilter" class="fs" style="width:auto;padding: var(--space-sm) var(--space-md);font-size:13px;" onchange="renderJobs()">
               <option value="">ALL JOBS</option>
@@ -242,11 +239,12 @@
               <option value="cautioned">⚠ ACHTUNG</option>
               <option value="archived">ARCHIVED</option>
             </select>
-            <div class="search-wrap" style="min-width:180px">
-              <input class="search-input" id="jobSearch" placeholder="SEARCH JOBS…">
+            <div class="search-wrap jobs-search-wrap" id="jobsSearchWrap" style="min-width:180px;display:none;">
+              <input class="search-input" id="jobSearch" placeholder="SEARCH JOBS…" oninput="renderJobs()">
             </div>
-            <span class="search-count" id="jobCount"></span>
+            <span class="search-count" id="jobCount" style="display:none;"></span>
             <div class="jobs-icon-zone">
+              <button type="button" class="jobs-icon-btn" onclick="toggleJobsSearch()" title="Search jobs">⌕</button>
               <button type="button" class="jobs-icon-btn" onclick="openNewJobChooser()" title="Add job">+</button>
               <label class="jobs-icon-btn" title="Import CSV">↑
                 <input type="file" id="csvFileInput" accept=".csv" style="display:none" onchange="importCSV(this)">
@@ -433,7 +431,7 @@
     <div class="pg" id="pg-dev">
       <div class="dev-terminal">
         <div class="dev-control-rail">
-          <div class="dev-rail-label">CHANNEL</div>
+          <div class="dev-rail-label" style="display:none;">CHANNEL</div>
           <div class="dev-toolbar">
             <select id="devAreaSelect" class="fs dev-area-select" onchange="onDevAreaChange()">
               <option value="">ALL CHANNELS</option>
@@ -443,9 +441,9 @@
         </div>
         <div class="dev-utility-row">
           <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)" onkeydown="devComposerKeydown(event)"></textarea>
-          <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">ADD</button>
+          <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">+</button>
         </div>
-        <div class="dev-feed-sec">DEV NOTES</div>
+        <div class="dev-feed-sec" style="display:none;">DEV NOTES</div>
         <div class="dev-feed-wrap">
           <div class="log-recent dev-feed" id="devFeed"></div>
         </div>
@@ -495,7 +493,7 @@
       <div class="crew-shell">
         <div class="crew-header">
           <div class="crew-header-left">
-            <div class="crew-title">CREW</div>
+            <div class="crew-title" style="display:none;">CREW</div>
           </div>
           <div class="crew-header-actions">
             <label class="bar-btn" style="cursor:pointer;display:none;">↑ IMPORT CSV
@@ -546,16 +544,19 @@
     <div class="pg" id="pg-compounds">
       <div class="compound-shell">
         <div class="compound-toolbar">
-          <div class="compound-toolbar-left">
-            <div class="compound-title">PVC</div>
-            <div class="compound-sub">Operational compound library</div>
-          </div>
           <div class="compound-toolbar-actions">
-            <label class="bar-btn pvc-import-label" style="cursor:pointer;">↑ IMPORT CSV
-              <input type="file" id="pvcCsvInput" accept=".csv" style="display:none" onchange="onPvcCsvSelected(this)">
-            </label>
-            <button type="button" class="bar-btn pvc-add-btn" onclick="openCompoundWizard()">+ ADD COMPOUND</button>
+            <div class="jobs-icon-zone">
+              <label class="jobs-icon-btn" title="Import CSV">↑
+                <input type="file" id="pvcCsvInput" accept=".csv" style="display:none" onchange="onPvcCsvSelected(this)">
+              </label>
+              <button type="button" class="jobs-icon-btn" onclick="exportPvcCSV()" title="Download CSV">↓</button>
+              <button type="button" class="jobs-icon-btn" onclick="openCompoundWizard()" title="Add compound">+</button>
+              <button type="button" class="jobs-icon-btn" onclick="togglePvcSearch()" title="Search compounds">⌕</button>
+            </div>
           </div>
+        </div>
+        <div class="search-wrap pvc-search-wrap" id="pvcSearchWrap" style="display:none;">
+          <input class="search-input" id="pvcSearch" placeholder="SEARCH COMPOUNDS…" oninput="renderCompoundsPage()">
         </div>
         <input type="file" id="pvcCompoundImageInput" accept="image/*" style="display:none" onchange="onPvcCompoundImageSelected(this)">
         <div class="compound-list" id="compoundList"></div>

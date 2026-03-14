@@ -225,10 +225,18 @@ function renderCompoundsPage() {
   if (!listEl) return;
 
   const raw = Array.isArray(S.compounds) ? S.compounds : [];
-  const compounds = sortCompoundsByNumber(raw);
+  const pvcQ = (document.getElementById('pvcSearch')?.value || '').toLowerCase().trim();
+  const sorted = sortCompoundsByNumber(raw);
+  const compounds = pvcQ
+    ? sorted.filter(c =>
+        (c.number || '').toLowerCase().includes(pvcQ) ||
+        (c.code_name || '').toLowerCase().includes(pvcQ) ||
+        (c.color || '').toLowerCase().includes(pvcQ) ||
+        (c.notes || '').toLowerCase().includes(pvcQ))
+    : sorted;
 
   if (!compounds.length) {
-    listEl.innerHTML = '<div class="empty">NO COMPOUNDS YET · TAP + ADD COMPOUND</div>';
+    listEl.innerHTML = '<div class="empty">' + (pvcQ ? 'NO MATCHES' : 'NO COMPOUNDS YET · TAP + TO ADD') + '</div>';
     return;
   }
 
@@ -1417,9 +1425,7 @@ function renderJobs() {
   jobs = sortJobsList(jobs);
 
   const countEl = document.getElementById('jobCount');
-  if (countEl) {
-    countEl.textContent = `${jobs.length} of ${totalForCount}`;
-  }
+  if (countEl) countEl.textContent = '';
 
   const tbody = document.getElementById('jobsBody');
   const cards = document.getElementById('jobCards');

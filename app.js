@@ -3487,8 +3487,54 @@ function doUndo() {
 }
 
 // ============================================================
+// SEARCH TOGGLES
+// ============================================================
+function toggleJobsSearch() {
+  const wrap = document.getElementById('jobsSearchWrap');
+  const input = document.getElementById('jobSearch');
+  if (!wrap) return;
+  const showing = wrap.style.display !== 'none';
+  wrap.style.display = showing ? 'none' : '';
+  if (showing) {
+    if (input) { input.value = ''; renderJobs(); }
+  } else {
+    if (input) input.focus();
+  }
+}
+
+function togglePvcSearch() {
+  const wrap = document.getElementById('pvcSearchWrap');
+  const input = document.getElementById('pvcSearch');
+  if (!wrap) return;
+  const showing = wrap.style.display !== 'none';
+  wrap.style.display = showing ? 'none' : '';
+  if (showing) {
+    if (input) { input.value = ''; renderCompoundsPage(); }
+  } else {
+    if (input) input.focus();
+  }
+}
+
+// ============================================================
 // EXPORT / IMPORT / BACKUP
 // ============================================================
+function exportPvcCSV() {
+  const compounds = Array.isArray(S.compounds) ? S.compounds : [];
+  if (!compounds.length) { toast('NO COMPOUNDS TO EXPORT'); return; }
+  const h = ['NUMBER','CODE_NAME','COLOR','AMOUNT_ON_HAND','NOTES'];
+  const rows = compounds.map(c => {
+    return [
+      c.number, c.code_name, c.color, c.amount_on_hand,
+      (c.notes || '').replace(/"/g, '""')
+    ].map(v => `"${v || ''}"`).join(',');
+  });
+  const csv = [h.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `PVC_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click(); toast('PVC CSV EXPORTED');
+}
+
 function exportCSV() {
   const h = ['CATALOG','ARTIST','ALBUM','FORMAT','COLOR','WEIGHT','QTY','OVERAGE_10PCT','STATUS','PRESS','LOCATION','DUE','PRESSED','QC_PASSED','REJECTED','INVOICE','CLIENT','SPECIALTY','NOTES'];
   const rows = S.jobs.map(j => {
