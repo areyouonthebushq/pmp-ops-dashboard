@@ -3778,6 +3778,26 @@
     margin-bottom: var(--space-md);
     }
     .assets-overlay-list .asset-summary { margin-bottom: var(--space-sm); }
+    .cz-summary {
+    display: flex; align-items: center; gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md); margin-bottom: var(--space-sm);
+    background: var(--s2); border: 1px solid var(--b1);
+    justify-content: flex-end;
+    }
+    .cz-sum-frac {
+    font-family: 'Inconsolata', monospace; font-size: 20px; font-weight: 700; letter-spacing: 1px;
+    }
+    .cz-summary-receiving .cz-sum-frac { color: var(--g); }
+    .cz-summary-packing .cz-sum-frac { color: var(--cy); }
+    .cz-sum-done {
+    font-size: 20px; font-weight: 700;
+    }
+    .cz-summary-receiving .cz-sum-done { color: var(--g); }
+    .cz-summary-packing .cz-sum-done { color: var(--cy); }
+    .cz-sum-achtung {
+    font-family: 'Inconsolata', monospace; font-size: 14px; font-weight: 700;
+    color: var(--w); letter-spacing: 0.5px;
+    }
     .assets-overlay-list .asset-row { cursor: pointer; }
     /* Pack card face — unified with Asset card visual language */
     .pack-card-title {

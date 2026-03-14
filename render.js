@@ -1050,14 +1050,12 @@ function renderAssetsOverlay() {
   const na = ASSET_DEFS.filter(a => getStatus(data[a.key]) === 'na').length;
   const caution = ASSET_DEFS.filter(a => getStatus(data[a.key]) === 'caution').length;
   const remaining = ASSET_DEFS.filter(a => !getStatus(data[a.key]) || getStatus(data[a.key]) === '').length;
+  const relevant = ASSET_DEFS.length - na;
   const allDone = remaining === 0 && caution === 0;
-  let summaryHTML = `<div class="asset-summary">
-    <span class="as-received"><span class="as-num">${received}</span> received</span>
-    <span class="as-na"><span class="as-num">${na}</span> N/A</span>
-    <span class="as-caution"><span class="as-num">${caution}</span> achtung</span>
-    <span class="as-remaining"><span class="as-num">${remaining}</span> remaining</span>
-    ${allDone ? '<span class="as-complete">✓ ALL ASSETS READY</span>' : ''}
-  </div>`;
+  const cautionHtml = caution > 0 ? '<span class="cz-sum-achtung">\u26A0\uFE0E ' + caution + '</span>' : '';
+  let summaryHTML = `<div class="cz-summary cz-summary-receiving">` +
+    (allDone ? '<span class="cz-sum-done">\u2713</span>' : '<span class="cz-sum-frac">' + received + '/' + relevant + '</span>') +
+    cautionHtml + `</div>`;
   const job = (S.jobs || []).find(function (j) { return j.id === assetsOverlayState.jobId; });
   const notesLog = (job && job.notesLog) || [];
   if (!S.assetsOverlayPulseKeys) S.assetsOverlayPulseKeys = {};
@@ -1239,14 +1237,14 @@ function renderPackCard() {
   });
   var allDone = remaining === 0 && caution === 0;
 
+  var relevant = PACK_DEFS.length - na;
+  var cautionHtml = caution > 0 ? '<span class="cz-sum-achtung">\u26A0\uFE0E ' + caution + '</span>' : '';
   var summaryEl = document.getElementById('packCardSummary');
   if (summaryEl) {
     summaryEl.innerHTML =
-      '<span class="pk-ready"><span class="pk-num">' + ready + '</span> ready</span>' +
-      '<span class="pk-na"><span class="pk-num">' + na + '</span> N/A</span>' +
-      '<span class="pk-caution"><span class="pk-num">' + caution + '</span> achtung</span>' +
-      '<span class="pk-remaining"><span class="pk-num">' + remaining + '</span> remaining</span>' +
-      (allDone ? '<span class="pk-complete">✓ ALL PACKING READY</span>' : '');
+      '<div class="cz-summary cz-summary-packing">' +
+      (allDone ? '<span class="cz-sum-done">\u2713</span>' : '<span class="cz-sum-frac">' + ready + '/' + relevant + '</span>') +
+      cautionHtml + '</div>';
   }
 
   var jobId = packCardState.jobId;
