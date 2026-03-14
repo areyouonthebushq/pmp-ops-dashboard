@@ -1097,8 +1097,8 @@
     }
     .live-po-star:hover { color: var(--d); }
     .live-po-star-glow {
-      color: var(--g);
-      filter: drop-shadow(0 0 3px var(--g));
+      color: var(--d);
+      filter: drop-shadow(0 0 3px rgba(255,255,255,0.5));
       animation: livePulse 2s ease-in-out infinite;
     }
     .status-micro {
