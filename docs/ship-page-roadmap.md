@@ -1,5 +1,7 @@
 # SHIP Page Roadmap — Lightweight Fulfillment / Pickup / Shipping
 
+> **⚠ SUPERSEDED** — SHIP page was implemented, then hidden from nav (2026-03-04). Its role has been absorbed by LOG SHIP actions (BOXED/READY/QUACK), Card Zone PACKING face, and the JOBS LIVE column. This document is preserved as historical reference. See `docs/purgatory-protocol.md` for current status.
+
 **Purpose:** Design a SHIP page for PMP OPS as a lightweight operational surface for late-stage fulfillment, pickup, and shipping — without building a full TMS or CRM.
 
 **Scope:** Read-only planning/documentation. No code changes. Optimizes for practical plant usefulness.

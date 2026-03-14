@@ -88,10 +88,9 @@ function buildPressCardHTML(p, linkTo, showControls) {
   const job = p.job_id ? S.jobs.find(j => j.id === p.job_id) : null;
   const ah = job ? assetHealth(job) : { done: 0, total: 0, pct: 0 };
   const prog = job ? progressDisplay(job) : null;
-  const isPressStation = linkTo === 'pressStation';
-  const jobBlockClick = (isPressStation && showControls && job) ? `openPanel('${job.id}')` : (linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : linkTo === 'pressStation' ? `openPressStation('${p.id}')` : `openPanel('${job?.id}')`);
-  const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : linkTo === 'pressStation' ? (showControls ? 'TAP → JOB PANEL' : 'TAP → STATION') : 'TAP TO OPEN →';
-  const nameClick = isPressStation ? ` onclick="openPressStation('${p.id}')" style="cursor:pointer" title="Open Press Station"` : '';
+  const jobBlockClick = linkTo === 'floorCard' ? `openFloorCard('${job?.id}')` : `openPanel('${job?.id}')`;
+  const hint = linkTo === 'floorCard' ? 'TAP → STATBOARD' : 'TAP TO OPEN →';
+  const nameClick = '';
   return `
   <div class="press-card ${p.status}">
     <div class="pc-head">
@@ -102,7 +101,7 @@ function buildPressCardHTML(p, linkTo, showControls) {
     </div>
     </div>
     ${job ? `
-    <div class="pc-job-link" onclick="${jobBlockClick}" title="${linkTo === 'floorCard' ? 'Open statboard' : (isPressStation && showControls ? 'Open job panel' : 'Open job')}">
+    <div class="pc-job-link" onclick="${jobBlockClick}" title="${linkTo === 'floorCard' ? 'Open statboard' : 'Open job'}">
       <div class="pc-job"><span class="job-id">${job.catalog || '—'}</span> — ${job.artist || ''}</div>
       <div class="pc-meta">${job.format || ''} · ${job.color || 'Black'} · ${job.weight || ''}</div>
       <div class="pc-meta">Qty: ${job.qty ? parseInt(job.qty).toLocaleString() : '—'}</div>
@@ -118,7 +117,7 @@ function buildPressCardHTML(p, linkTo, showControls) {
       <div class="pc-assets-label">Assets ${ah.done}/${ah.total}</div>
       ${assetBarSegmentedHTML(job)}
     </div>
-    ` : (isPressStation ? `<div class="pc-job-link" onclick="openPressStation('${p.id}')" title="Open Press Station" style="cursor:pointer"><div class="pc-idle-msg">NO JOB ASSIGNED</div></div>` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>')}
+    ` : '<div class="pc-idle-msg">NO JOB ASSIGNED</div>')}
     ${showControls ? `
     <div class="pc-controls" onclick="event.stopPropagation()">
       <select class="pc-select" onchange="assignJob('${p.id}',this.value)">
@@ -168,14 +167,7 @@ function buildOnDeckCardHTML(p) {
 // ============================================================
 function renderAll() {
   const ctx = getStationContext();
-  if (ctx && isStationType('press')) {
-    if (typeof psNumpadValue !== 'undefined' && psNumpadValue !== '0') {
-      if (typeof updatePressStationProgress === 'function') updatePressStationProgress();
-      return;
-    }
-    renderPressStationShell();
-    return;
-  }
+  /* PURGATORY: Press Station renderAll branch removed (2026-03-06). */
   if (ctx && isStationType('floor_manager')) {
     renderFloorManagerShell();
     return;
@@ -651,7 +643,7 @@ function renderPresses() {
   if (active && active.tagName === 'SELECT' && el.contains(active)) return;
   const isAdmin = S.mode === 'admin';
   el.innerHTML = S.presses.map(p => {
-    const main = buildPressCardHTML(p, isAdmin ? 'pressStation' : 'panel', isAdmin);
+    const main = buildPressCardHTML(p, 'panel', isAdmin);
     const onDeck = buildOnDeckCardHTML(p);
     return '<div class="press-card-wrap">' + main + onDeck + '</div>';
   }).join('');
@@ -1148,6 +1140,13 @@ function cycleAssetsOverlayStatus(key) {
   const cur = getStatus(d);
   const next = cur === '' ? 'received' : cur === 'received' ? 'na' : cur === 'na' ? 'caution' : '';
   const cautionSince = next === 'caution' ? new Date().toISOString() : '';
+  if (next === 'caution') {
+    var adef = typeof ASSET_DEFS !== 'undefined' ? ASSET_DEFS.find(function (x) { return x.key === key; }) : null;
+    var label = (adef && adef.label) ? adef.label : key;
+    setTimeout(function () {
+      if (typeof openCardAchtungPopup === 'function') openCardAchtungPopup(assetsOverlayState.jobId, key, label, 'asset');
+    }, 1500);
+  }
   assetsOverlayState.data[key] = {
     ...d,
     status: next,
@@ -1332,6 +1331,13 @@ function cyclePackStatus(key) {
   item.status = next;
   if (next === 'ready' && !item.date) item.date = new Date().toISOString().split('T')[0];
   item.cautionSince = next === 'caution' ? new Date().toISOString() : '';
+  if (next === 'caution') {
+    var pdef = typeof PACK_DEFS !== 'undefined' ? PACK_DEFS.find(function (x) { return x.key === key; }) : null;
+    var label = (pdef && pdef.label) ? pdef.label : key;
+    setTimeout(function () {
+      if (typeof openCardAchtungPopup === 'function') openCardAchtungPopup(packCardState.jobId, key, label, 'pack');
+    }, 1500);
+  }
   renderPackCard();
 }
 

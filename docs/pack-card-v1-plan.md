@@ -1,5 +1,7 @@
 # PACK CARD v1 — Planning Document
 
+> **⚠ TERMINOLOGY NOTE** — "Pack Card" is now the **PACKING** face of **Card Zone**. This planning document uses the original "Pack Card" name throughout. See `docs/informationarchitecturev3.md` §6.8 and §11 glossary for current terminology.
+
 **Purpose:** Plan a job-scoped late-stage assembly/packing overlay that answers "are we ready to pack this correctly?" without building a full PACK page or logistics surface.
 
 **Scope:** Read-only planning. No code changes. Optimizes for clean object/surface architecture.

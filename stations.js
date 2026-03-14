@@ -14,15 +14,7 @@ function isStationType(type) {
   return S.stationType === type;
 }
 
-function getStationPress() {
-  if (S.stationType !== 'press' || !S.assignedPressId) return null;
-  return S.presses.find(p => p.id === S.assignedPressId) || null;
-}
-
-function getStationJob() {
-  const press = getStationPress();
-  return press && press.job_id ? S.jobs.find(j => j.id === press.job_id) || null : null;
-}
+/* PURGATORY: getStationPress() and getStationJob() removed (2026-03-06). Only used by Press Station. */
 
 function setStationContext(opts) {
   S.stationType = opts.stationType ?? null;
@@ -33,7 +25,7 @@ function setStationContext(opts) {
 // ============================================================
 // SHELL VISIBILITY — admin vs station shells
 // ============================================================
-const STATION_SHELL_IDS = ['pressStationShell', 'qcStationShell', 'floorManagerShell'];
+const STATION_SHELL_IDS = ['qcStationShell', 'floorManagerShell'];
 
 /** Hide station shells only (no app/fab change). Use when returning to launcher. */
 function hideStationShellsOnly() {
@@ -209,14 +201,7 @@ function assignJob(pid, jid) {
   }
 }
 
-/** Press Station: change which job is assigned to the current press. Same job list/sort as LOG picker. */
-function selectPressStationJob(jobId) {
-  const press = getStationPress();
-  if (!press) return;
-  setAssignment(press.id, jobId || null);
-  Storage.savePresses(S.presses);
-  renderAll();
-}
+/* PURGATORY: selectPressStationJob() removed (2026-03-06). Press assignment now via FLOOR admin controls only. */
 
 function setPressOnDeck(pid, jobId) {
   const p = S.presses.find(x => x.id === pid);
@@ -256,229 +241,11 @@ function setPressStatus(pid, st) {
   }
 }
 
-// ============================================================
-// PRESS STATION SHELL
-// ============================================================
-function openPressStation(pressId) {
-  const p = S.presses.find(x => x.id === pressId);
-  if (!p) return;
-  setStationContext({ stationType: 'press', stationId: pressId, assignedPressId: pressId });
-  showShell('pressStationShell');
-  renderAll();
-}
-
-function exitPressStation() {
-  if (getAuthRole() === 'admin' || S.mode === 'admin') returnToAdmin();
-  else doLogout();
-}
-
-let psNumpadValue = '0';
-
-function psNumpadTap(digit) {
-  if (psNumpadValue === '0') psNumpadValue = digit;
-  else if (psNumpadValue.length < 5) psNumpadValue += digit;
-  psNumpadUpdateDisplay();
-}
-
-function psNumpadClear() {
-  psNumpadValue = '0';
-  psNumpadUpdateDisplay();
-}
-
-function psNumpadBack() {
-  psNumpadValue = psNumpadValue.length > 1 ? psNumpadValue.slice(0, -1) : '0';
-  psNumpadUpdateDisplay();
-}
-
-function psNumpadSet(n) {
-  psNumpadValue = String(n);
-  psNumpadUpdateDisplay();
-}
-
-function psNumpadUpdateDisplay() {
-  const el = document.getElementById('psNumpadDisplay');
-  if (el) {
-    const n = parseInt(psNumpadValue, 10) || 0;
-    el.textContent = n.toLocaleString();
-    el.classList.toggle('has-value', n > 0);
-  }
-  const btn = document.getElementById('psNumpadLog');
-  if (btn) {
-    const n = parseInt(psNumpadValue, 10) || 0;
-    btn.disabled = n === 0;
-    btn.textContent = n > 0 ? `LOG +${n.toLocaleString()} PRESSED` : 'LOG PRESSED';
-  }
-}
-
-function psNumpadSubmit() {
-  const n = parseInt(psNumpadValue, 10) || 0;
-  if (n < 1) return;
-  pressStationLogPressed(n);
-  psNumpadValue = '0';
-  psNumpadUpdateDisplay();
-}
-
-function renderPressStationShell() {
-  const press = getStationPress();
-  const job = getStationJob();
-  const nameEl = document.getElementById('psPressName');
-  const contentEl = document.getElementById('pressStationContent');
-  const logEl = document.getElementById('pressStationLog');
-  if (!nameEl || !contentEl || !logEl) return;
-
-  nameEl.textContent = press ? press.name : '—';
-  nameEl.classList.toggle('seven', press && press.type === '7"');
-
-  const allJobs = typeof sortJobsByCatalogAsc === 'function'
-    ? sortJobsByCatalogAsc(S.jobs.filter(function (j) { return !isJobArchived(j) && j.status !== 'done'; }))
-    : [];
-  const selectedId = (press && press.job_id) || '';
-
-  const jobPickerHTML = `
-  <div class="ps-v1-sec">SELECT JOB</div>
-  <div class="ps-v1-job-picker">
-    <select class="qc-job-select" onchange="selectPressStationJob(this.value || null)">
-      <option value="">— No job —</option>
-      ${allJobs.map(function (j) {
-        return '<option value="' + j.id + '" ' + (selectedId === j.id ? 'selected' : '') + '>' + (j.catalog || '—') + ' · ' + (j.artist || '—') + (j.status ? ' (' + j.status + ')' : '') + '</option>';
-      }).join('')}
-    </select>
-  </div>`;
-
-  if (!job) {
-    contentEl.innerHTML = `<div class="ps-v1-console-wrap">${jobPickerHTML}<div class="ps-v1-sec">JOB</div><div class="ps-v1-idle">NO JOB ASSIGNED</div><p style="color:var(--d3);margin-top:var(--space-sm)">Choose a job above to start logging.</p></div>`;
-    logEl.innerHTML = '';
-    return;
-  }
-
-  const prog = getJobProgress(job);
-  const ordered = prog.ordered;
-  const pressed = prog.pressed;
-  const remaining = Math.max(0, ordered - pressed);
-  const pct = ordered ? Math.min(100, (pressed / ordered) * 100) : 0;
-  const blocked = [];
-  if (job.status === 'hold') blocked.push('Job on hold');
-  if (remaining <= 0 && ordered > 0) blocked.push('Order complete');
-
-  contentEl.innerHTML = `
-  <div class="ps-v1-console-wrap">
-  ${jobPickerHTML}
-  <div class="ps-v1-sec">JOB</div>
-  <div class="ps-v1-job-title">${(job.catalog || '—')} · ${(job.artist || '—')}</div>
-  <div class="ps-v1-job-meta">${job.album || ''} ${job.format ? ' · ' + job.format : ''}</div>
-  <div class="ps-v1-rail">${typeof logConsoleRailHTML === 'function' ? logConsoleRailHTML(job, 'press') : ''}</div>
-  ${blocked.length ? `<div class="ps-v1-blocked">${blocked.join(' · ')}</div>` : ''}
-  ${remaining > 0 ? `
-<div class="ps-v1-sec">LOG PRESSED</div>
-<div class="ps-numpad">
-  <div class="ps-numpad-display" id="psNumpadDisplay">0</div>
-  <div class="ps-numpad-grid">
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('7')">7</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('8')">8</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('9')">9</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('4')">4</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('5')">5</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('6')">6</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('1')">1</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('2')">2</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('3')">3</button>
-    <button type="button" class="ps-numpad-btn ps-numpad-clear" onclick="psNumpadClear()">C</button>
-    <button type="button" class="ps-numpad-btn" onclick="psNumpadTap('0')">0</button>
-    <button type="button" class="ps-numpad-btn ps-numpad-back" onclick="psNumpadBack()">←</button>
-  </div>
-  <div class="ps-numpad-presets">
-    <button type="button" class="ps-numpad-preset" onclick="psNumpadSet(25)">25</button>
-    <button type="button" class="ps-numpad-preset" onclick="psNumpadSet(50)">50</button>
-    <button type="button" class="ps-numpad-preset" onclick="psNumpadSet(100)">100</button>
-  </div>
-  <button type="button" class="ps-numpad-log" id="psNumpadLog" onclick="psNumpadSubmit()">
-    LOG PRESSED
-  </button>
-</div>
-` : ''}
-  </div>`;
-  logEl.innerHTML = '';
-  requestAnimationFrame(() => {
-    if (typeof psNumpadUpdateDisplay === 'function') psNumpadUpdateDisplay();
-  });
-}
-
-function triggerPressStationRailGlow() {
-  const rail = document.querySelector('.ps-v1-rail');
-  if (!rail) return;
-  rail.classList.remove('rail-glow-press');
-  rail.classList.add('rail-glow-press');
-  setTimeout(function () { rail.classList.remove('rail-glow-press'); }, 750);
-}
-
-/** Update only the progress bar and % on the press station rail without rebuilding the numpad. */
-function updatePressStationProgress() {
-  const job = getStationJob();
-  if (!job) return;
-  const prog = getJobProgress(job);
-  const ordered = prog.ordered;
-  const pressed = prog.pressed;
-  const pct = ordered ? Math.min(100, (pressed / ordered) * 100) : 0;
-  const pctText = Math.round(pct) + '%';
-
-  const rail = document.querySelector('.ps-v1-rail');
-  if (!rail) return;
-  const barFill = rail.querySelector('.log-rail-fill');
-  const pctEl = rail.querySelector('.log-rail-pct');
-  if (barFill) barFill.style.width = `${pct}%`;
-  if (pctEl) pctEl.textContent = pctText;
-}
-
-async function pressStationLogPressed(qty) {
-  if (!getStationEditPermissions().canLogPressProgress) return;
-  const job = getStationJob();
-  if (!job) return;
-  S._pressStationWrite = true;
-  setTimeout(function () { if (S._pressStationWrite) S._pressStationWrite = false; }, 5000);
-  try {
-    const result = await logJobProgress(job.id, 'pressed', qty, 'Press Station');
-    if (result.ok) {
-      renderPressStationShell();
-      toast(`+${qty} logged`);
-      triggerPressStationRailGlow();
-    } else {
-      toastError(result.error || 'Log failed');
-    }
-  } catch (e) {
-    toastError(e?.message || 'Log failed');
-  }
-}
-
-async function pressStationHold() {
-  const job = getStationJob();
-  if (!job) return;
-  job.status = 'hold';
-  S._pressStationWrite = true;
-  try { await Storage.saveJob(job); } catch (e) { if (typeof toastError === 'function') toastError('Hold save failed'); }
-  renderPressStationShell();
-  toast('Job on hold');
-}
-
-async function pressStationResume() {
-  const job = getStationJob();
-  if (!job) return;
-  job.status = 'pressing';
-  S._pressStationWrite = true;
-  try { await Storage.saveJob(job); } catch (e) { if (typeof toastError === 'function') toastError('Resume save failed'); }
-  renderPressStationShell();
-  toast('Job resumed');
-}
-
-async function pressStationSaveNote() {
-  const job = getStationJob();
-  if (!job) return;
-  const el = document.getElementById('psStationNote');
-  if (el) job.notes = el.value.trim();
-  S._pressStationWrite = true;
-  try { await Storage.saveJob(job); } catch (e) { if (typeof toastError === 'function') toastError('Note save failed'); }
-  renderPressStationShell();
-  toast('Note saved');
-}
+/* PURGATORY: Entire Press Station shell section removed (2026-03-06).
+   Functions purged: openPressStation, exitPressStation, psNumpad*, renderPressStationShell,
+   triggerPressStationRailGlow, updatePressStationProgress, pressStationLogPressed,
+   pressStationHold, pressStationResume, pressStationSaveNote.
+   LOG console now serves all counted movement. See docs/purgatory-protocol.md. */
 
 // ============================================================
 // QC STATION SHELL

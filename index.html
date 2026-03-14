@@ -88,19 +88,7 @@
                 <div class="mb-sub">Operations overview · statboard · quick edit</div>
                 </div>
             </button>
-            <button type="button" class="launcher-btn press" onclick="toggleLauncherPressPicker()">
-                <span class="mb-icon">⬢</span>
-                <div>
-                <div class="mb-label">Press Station</div>
-                <div class="mb-sub">Single-press view · log qty</div>
-                </div>
-            </button>
-            <div class="launcher-press-row" id="launcherPressPicker">
-                <button type="button" class="launcher-press-btn" onclick="enterByLauncher('press','p1')">Press 1</button>
-                <button type="button" class="launcher-press-btn" onclick="enterByLauncher('press','p2')">Press 2</button>
-                <button type="button" class="launcher-press-btn" onclick="enterByLauncher('press','p3')">Press 3</button>
-                <button type="button" class="launcher-press-btn" onclick="enterByLauncher('press','p4')">7" Press</button>
-            </div>
+            <!-- PURGATORY: Press Station launcher removed (2026-03-06). See docs/purgatory-protocol.md -->
             <button type="button" class="launcher-btn qc" onclick="enterByLauncher('qc')">
                 <span class="mb-icon">⚠</span>
                 <div>
@@ -599,17 +587,7 @@
     </div>
     </div>
 
-    <!-- ============================================================ PRESS STATION SHELL (v1) -->
-    <div id="pressStationShell" class="press-station-shell station-shell">
-    <div class="ps-v1 station-inner">
-        <header class="ps-v1-header station-header">
-            <span class="ps-v1-press-name station-name" id="psPressName">—</span>
-            <button type="button" class="ps-v1-back station-back" onclick="exitPressStation()">← BACK</button>
-        </header>
-        <div class="ps-v1-content station-content" id="pressStationContent"></div>
-        <div class="ps-v1-log" id="pressStationLog"></div>
-    </div>
-    </div>
+    <!-- PURGATORY: Press Station shell removed (2026-03-06). See docs/purgatory-protocol.md -->
 
     <!-- ============================================================ QC STATION SHELL (v1) -->
     <div id="qcStationShell" class="qc-station-shell station-shell">

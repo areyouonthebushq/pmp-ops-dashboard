@@ -693,11 +693,7 @@ function enterByLauncher(choice, pressId) {
     openFloorManager();
     return;
   }
-  if (choice === 'press' && effectivePressId) {
-    setLastLauncherChoice({ stationType: 'press', assignedPressId: effectivePressId });
-    openPressStation(effectivePressId);
-    return;
-  }
+  /* PURGATORY: Press Station launcher entry removed (2026-03-06). */
   if (choice === 'qc') {
     setLastLauncherChoice({ stationType: 'qc' });
     setStationContext({});
@@ -714,17 +710,8 @@ function enterByLauncher(choice, pressId) {
   }
 }
 
-function toggleLauncherPressPicker() {
-  const el = document.getElementById('launcherPressPicker');
-  if (!el) return;
-  el.classList.toggle('on');
-  el.style.display = el.classList.contains('on') ? 'flex' : 'none';
-}
-
-function hideLauncherPressPicker() {
-  const el = document.getElementById('launcherPressPicker');
-  if (el) { el.classList.remove('on'); el.style.display = 'none'; }
-}
+/* PURGATORY: toggleLauncherPressPicker / hideLauncherPressPicker removed (2026-03-06). */
+function hideLauncherPressPicker() {} // no-op stub; called by enterByLauncher cleanup path
 
 function openLastLauncherChoice() {
   const last = getLastLauncherChoice();
@@ -737,10 +724,7 @@ function openLastLauncherChoice() {
     enterByLauncher('floor_manager');
     return;
   }
-  if (last.stationType === 'press' && last.assignedPressId) {
-    enterByLauncher('press', last.assignedPressId);
-    return;
-  }
+  /* PURGATORY: Press Station last-launcher-choice branch removed (2026-03-06). */
   if (last.stationType === 'qc') {
     enterByLauncher('qc');
     return;
@@ -853,11 +837,8 @@ function applyLauncherByRole() {
   const role = getAuthRole();
   const adminBtn = document.querySelector('.launcher-btn.admin');
   const fmBtn = document.querySelector('.launcher-btn.fm');
-  const pressBtn = document.querySelector('.launcher-btn.press');
-  const pressRow = document.getElementById('launcherPressPicker');
   const qcBtn = document.querySelector('.launcher-btn.qc');
   const show = (el, on) => { if (el) el.style.display = on ? '' : 'none'; };
-  const showRow = (el, on) => { if (el) el.style.display = on ? 'flex' : 'none'; };
   const noRoleEl = document.getElementById('launcherNoRole');
   if (noRoleEl) noRoleEl.style.display = 'none';
 
@@ -865,16 +846,12 @@ function applyLauncherByRole() {
   if (!role && !hasProfileNoRole) {
     show(adminBtn, true);
     show(fmBtn, false);
-    show(pressBtn, true);
-    showRow(pressRow, false);
     show(qcBtn, true);
     return;
   }
   if (hasProfileNoRole) {
     show(adminBtn, false);
     show(fmBtn, false);
-    show(pressBtn, false);
-    showRow(pressRow, false);
     show(qcBtn, false);
     if (noRoleEl) noRoleEl.style.display = 'block';
     return;
@@ -883,42 +860,27 @@ function applyLauncherByRole() {
     case 'admin':
       show(adminBtn, true);
       show(fmBtn, false);
-      show(pressBtn, true);
-      if (pressBtn) pressBtn.onclick = toggleLauncherPressPicker;
-      if (pressRow) { pressRow.querySelectorAll('.launcher-press-btn').forEach(b => { b.style.display = ''; }); pressRow.style.display = 'none'; }
       show(qcBtn, true);
       break;
     case 'floor_manager':
       show(adminBtn, true);
       show(fmBtn, false);
-      show(pressBtn, true);
-      showRow(pressRow, false);
       show(qcBtn, true);
       break;
-    case 'press': {
+    case 'press':
+      /* PURGATORY: 'press' role users currently see no station. They need role reassignment or LOG access. */
       show(adminBtn, false);
       show(fmBtn, false);
-      show(pressBtn, true);
-      if (pressBtn) pressBtn.onclick = toggleLauncherPressPicker;
-      if (pressRow) {
-        pressRow.querySelectorAll('.launcher-press-btn').forEach(btn => { btn.style.display = ''; });
-        pressRow.style.display = 'none';
-      }
       show(qcBtn, false);
       break;
-    }
     case 'qc':
       show(adminBtn, false);
       show(fmBtn, false);
-      show(pressBtn, false);
-      showRow(pressRow, false);
       show(qcBtn, true);
       break;
     default:
       show(adminBtn, true);
       show(fmBtn, false);
-      show(pressBtn, true);
-      showRow(pressRow, false);
       show(qcBtn, true);
   }
 }
@@ -3959,6 +3921,63 @@ function addNoteFromPackCard() {
   goToNotesAndOpenAdd(jobId);
 }
 
+// ============================================================
+// CARD ACHTUNG POPUP — specialized composer for Card Zone caution notes
+// ============================================================
+function openCardAchtungPopup(jobId, itemKey, itemLabel, face) {
+  var el = document.getElementById('cardAchtungPopup');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'cardAchtungPopup';
+    el.className = 'card-achtung-popup';
+    el.innerHTML = '<div class="card-achtung-popup-card"></div>';
+    el.onclick = function (e) { if (e.target === el) closeCardAchtungPopup(); };
+    document.body.appendChild(el);
+  }
+  var card = el.querySelector('.card-achtung-popup-card');
+  var faceName = face === 'pack' ? 'PACKING' : 'RECEIVING';
+  card.innerHTML =
+    '<div class="card-achtung-popup-header">' +
+      '<span class="card-achtung-popup-tri">\u26A0\uFE0E</span>' +
+      '<span class="card-achtung-popup-title">ACHTUNG</span>' +
+    '</div>' +
+    '<div class="card-achtung-popup-tag">' + escapeHtml(itemLabel) + ' <span class="card-achtung-popup-face">' + faceName + '</span></div>' +
+    '<textarea class="card-achtung-popup-input" id="cardAchtungText" placeholder="What needs attention?" rows="3"></textarea>' +
+    '<button type="button" class="card-achtung-popup-btn" id="cardAchtungAdd">ADD</button>' +
+    '<button type="button" class="card-achtung-popup-cancel" onclick="closeCardAchtungPopup()">Cancel</button>';
+  el.dataset.jobId = jobId;
+  el.dataset.itemKey = itemKey;
+  el.dataset.itemLabel = itemLabel;
+  el.dataset.face = face || '';
+  var textEl = document.getElementById('cardAchtungText');
+  if (textEl) {
+    textEl.value = '';
+    textEl.onkeydown = function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitCardAchtungPopup(); } };
+  }
+  var addBtn = document.getElementById('cardAchtungAdd');
+  if (addBtn) addBtn.onclick = function () { submitCardAchtungPopup(); };
+  el.classList.add('open');
+  setTimeout(function () { if (textEl) textEl.focus(); }, 80);
+}
+
+function closeCardAchtungPopup() {
+  var el = document.getElementById('cardAchtungPopup');
+  if (el) el.classList.remove('open');
+}
+
+async function submitCardAchtungPopup() {
+  var el = document.getElementById('cardAchtungPopup');
+  if (!el) return;
+  var jobId = el.dataset.jobId;
+  var itemKey = el.dataset.itemKey;
+  var itemLabel = el.dataset.itemLabel;
+  var textEl = document.getElementById('cardAchtungText');
+  var text = textEl ? textEl.value.trim() : '';
+  if (!text) { if (typeof toast === 'function') toast('Write a note'); return; }
+  closeCardAchtungPopup();
+  await addAssetNoteFromOverlay(jobId, itemKey, itemLabel, text);
+}
+
 /** Open inline asset-note composer for this asset row (called from Assets overlay). */
 function openAssetNoteComposer(jobId, assetKey) {
   S.assetsOverlayAddingNoteKey = assetKey;
@@ -4414,6 +4433,7 @@ document.addEventListener('keydown', e => {
       has('progressDetailOverlay') ||
       has('engDetailOverlay') ||
       has('cautionPopup', 'open') ||
+      has('cardAchtungPopup', 'open') ||
       document.getElementById('poImageLightbox') ||
       document.querySelector('.po-upload-prompt'));
   }

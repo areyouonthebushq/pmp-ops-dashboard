@@ -139,13 +139,13 @@ Every quarter (or every major product pass), scan the ledger:
 | Field | Value |
 |-------|-------|
 | **Type** | surface |
-| **Status** | purged (hidden) |
-| **Date purged** | 2026-03-04 |
+| **Status** | hidden — candidate for formal purge |
+| **Date purged** | 2026-03-04 (hidden from nav) |
 | **Former location** | Main nav utility menu, `pg-ship` page |
 | **Purpose** | Fulfillment phase grouping view — jobs organized by shipping stage |
-| **Why tabled** | LOG OUTBOUND mode and PACK CARD now handle the late-stage workflow. SHIP page was redundant surface area with low daily use. |
-| **What replaced it** | LOG OUTBOUND mode (counting), PACK CARD (readiness), JOBS LIVE column (visibility) |
-| **Runtime dependencies** | `renderShip()` still exists. `goPg('ship')` still works if called. Menu item hidden via `display:none`. `fulfillment_phase` field still in data model. |
+| **Why tabled** | LOG SHIP actions and PACKING card now handle the late-stage workflow. SHIP page was redundant surface area with low daily use. |
+| **What replaced it** | LOG SHIP actions (counting), Card Zone PACKING face (readiness), JOBS LIVE column (visibility) |
+| **Runtime dependencies** | `renderShip()` still exists in render switch. `goPg('ship')` still works if called. Menu item hidden via `display:none`. `fulfillment_phase` field still in data model. Not yet formally purged from runtime — still wired, just not visible in nav. |
 | **Files touched** | `index.html` (menu item hidden), `app.js` (utility menu toggle) |
 | **Revival conditions** | If a dedicated fulfillment-phase grouping view is needed again beyond what JOBS filtering provides |
 | **Revival risks** | JOBS LIVE column now covers most of the at-a-glance need. Reviving SHIP would create redundant signal unless it offers something JOBS + LOG don't. |
@@ -156,8 +156,8 @@ Every quarter (or every major product pass), scan the ledger:
 | Field | Value |
 |-------|-------|
 | **Type** | surface |
-| **Status** | purged (hidden) |
-| **Date purged** | 2026-03-04 |
+| **Status** | hidden — candidate for formal purge |
+| **Date purged** | 2026-03-04 (hidden from nav) |
 | **Former location** | Admin utility dropdown menu |
 | **Purpose** | Audit trail viewer (admin-only) |
 | **Why tabled** | Linked in Supabase-synced footer instead. Low daily use for in-app surface. |
@@ -167,6 +167,25 @@ Every quarter (or every major product pass), scan the ledger:
 | **Revival conditions** | If in-app audit viewing is needed for non-Supabase-connected sessions |
 | **Revival risks** | Low. The page implementation is intact. |
 | **Git reference** | (record commit hash when formally purged) |
+
+### Press Station
+
+| Field | Value |
+|-------|-------|
+| **Type** | surface (station shell) |
+| **Status** | purged |
+| **Date purged** | 2026-03-06 |
+| **Former location** | Launcher → "Press Station" button → press picker (p1–p4). Rendered into `#pressStationShell`. Entered via `openPressStation(pressId)`. |
+| **Purpose** | Single-press focused shell: assign a job to a specific press, log pressed quantity via numpad, hold/resume, save notes. Essentially a parallel counted-movement logging surface scoped to one press. |
+| **Why tabled** | LOG console now serves all counted movement (PRESS/PASS/REJECT/BOXED/READY/QUACK) with a 6-action interface. Press Station was a parallel logging path that muddied the distinction between *press information* (what's running where) and *logging behavior* (counted movement). FLOOR press grid + RSP already provide press information. |
+| **What replaced it** | LOG console (counted movement for all actions), FLOOR page press grid (press information and assignment), RSP (job detail). |
+| **Runtime dependencies removed** | Launcher button + press picker row (`index.html`). Shell HTML (`#pressStationShell`). All `ps-v1-*` rendering and CSS. All Press Station JS: `openPressStation`, `exitPressStation`, `renderPressStationShell`, `psNumpad*`, `pressStationLogPressed`, `pressStationHold`, `pressStationResume`, `pressStationSaveNote`, `selectPressStationJob`, `getStationPress`, `getStationJob`, `triggerPressStationRailGlow`, `updatePressStationProgress`. `S._pressStationWrite` flag and its error-logging paths in `storage.js`. `renderAll()` press station branch. `buildPressCardHTML` `linkTo='pressStation'` behavior. |
+| **Files touched** | `index.html`, `stations.js`, `app.js`, `render.js`, `storage.js`, `styles.css` |
+| **Intentionally preserved** | Shared station infrastructure (`getStationContext`, `setStationContext`, `isStationType`, `hideAllShells`, `showShell`, `returnToAdmin`, `isStationShellVisible`) — used by QC and Floor Manager. Press ASSIGNMENT logic (`syncJobPressFromPresses`, `setAssignment`, `assignJob`, `setPressOnDeck`, `sendOnDeckToPress`, `setPressStatus`) — this is press information, not Press Station. `.ps-numpad-btn` / `.ps-numpad-clear` / `.ps-numpad-back` CSS classes — shared with LOG console numpad. `getStationEditPermissions` / `mayEnterStation` with `'press'` cases — inert (no entry point reaches them) but preserved for auth role backward compatibility. |
+| **Revival conditions** | If a dedicated per-press operator shell is needed again — e.g., for a locked-down tablet on each press that only shows that press's job and a log numpad. |
+| **Revival risks** | LOG console is now the canonical movement surface. Reviving Press Station would recreate the parallel-logging problem unless it is redesigned as a *read-only press information surface* (no logging) or a *press-scoped LOG entry point* that routes through the same LOG infrastructure. `buildPressCardHTML` no longer has `pressStation` behavior. `S._pressStationWrite` error paths are gone. The full rendering code was removed, not commented — recovery requires reading this entry + Git history. |
+| **Known leftovers** | `'press'` role in auth/database still exists; users with this role see an empty launcher (no available stations). Requires role reassignment or a future press-role routing decision. `getStationEditPermissions` still has a `case 'press'` branch that is now unreachable. `mayEnterStation` still has a `'press'` case. These are inert but present. |
+| **Git reference** | (record commit hash of this purge) |
 
 ---
 

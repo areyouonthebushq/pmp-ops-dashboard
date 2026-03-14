@@ -1374,6 +1374,59 @@
     }
     .caution-popup-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
+    /* Card ACHTUNG popup — specialized composer for Card Zone caution notes */
+    .card-achtung-popup {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.7); display: none;
+    align-items: center; justify-content: center;
+    }
+    .card-achtung-popup.open { display: flex; }
+    .card-achtung-popup-card {
+    border: 1px solid rgba(255,179,0,0.4); background: var(--s1);
+    padding: var(--space-lg); max-width: 340px; width: 90%;
+    display: flex; flex-direction: column; gap: var(--space-md);
+    text-align: center;
+    }
+    .card-achtung-popup-header {
+    display: flex; align-items: center; justify-content: center; gap: var(--space-sm);
+    }
+    .card-achtung-popup-tri {
+    font-size: 20px; color: #ffb300; line-height: 1;
+    }
+    .card-achtung-popup-title {
+    font-family: 'Special Elite', cursive; font-size: 16px;
+    letter-spacing: 2px; color: #ffb300;
+    }
+    .card-achtung-popup-tag {
+    font-family: 'Inconsolata', monospace; font-size: 13px;
+    color: var(--d); letter-spacing: 0.5px;
+    background: rgba(255,179,0,0.08); border: 1px solid rgba(255,179,0,0.2);
+    padding: var(--space-xs) var(--space-sm);
+    }
+    .card-achtung-popup-face {
+    font-size: 10px; color: var(--d3); letter-spacing: 1px; margin-left: var(--space-xs);
+    }
+    .card-achtung-popup-input {
+    padding: var(--space-sm); background: var(--s2); color: var(--d);
+    border: 1px solid var(--b2); font-family: 'Inconsolata', monospace; font-size: 13px;
+    resize: vertical; min-height: 60px;
+    }
+    .card-achtung-popup-input::placeholder { color: var(--d3); }
+    .card-achtung-popup-btn {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid rgba(255,179,0,0.5); background: rgba(255,179,0,0.12); color: #ffb300;
+    font-family: 'Inconsolata', monospace; font-size: 13px; font-weight: 700;
+    letter-spacing: 1px; cursor: pointer; transition: all 0.15s;
+    }
+    .card-achtung-popup-btn:hover { background: #ffb300; color: #000; border-color: #ffb300; box-shadow: 0 0 12px rgba(255,179,0,0.4); }
+    .card-achtung-popup-cancel {
+    padding: var(--space-xs) var(--space-md);
+    border: 1px solid var(--b2); background: transparent; color: var(--d3);
+    font-family: 'Inconsolata', monospace; font-size: 11px;
+    cursor: pointer; transition: all 0.15s;
+    }
+    .card-achtung-popup-cancel:hover { border-color: var(--d2); color: var(--d2); }
+
     .panel-notes .fg { margin-bottom: var(--space-sm); }
     .panel-notes .fl { font-size:9px; color: var(--d3); letter-spacing:1.5px; }
     .panel-notes .fta { background: var(--s1); border-color: var(--b1); font-size:13px; color: var(--d2); min-height:56px; }
@@ -1712,7 +1765,8 @@
     .asset-row.got,
     .asset-row-received { border-left-color: var(--g); background:rgba(0,230,118,0.03); }
     .asset-row.na,
-    .asset-row-na { opacity:0.7; border-left-color: var(--d3); }
+    .asset-row-na { opacity: 1; border-left-color: var(--d3); border-left-style: dashed; background: rgba(200,200,200,0.03); }
+    .asset-row-na .aname { color: var(--d3); text-decoration: line-through; text-decoration-color: var(--d3); }
     .asset-row-caution { border-left-color: var(--w); background: rgba(255,193,7,0.08); }
 
     .acheck,
@@ -1723,7 +1777,7 @@
     }
     .asset-row.got .acheck,
     .astat-received { background: var(--g); border-color: var(--g); color:#000; }
-    .astat-na { background: var(--s2); border-color: var(--d3); color: var(--d3); }
+    .astat-na { background: var(--s3); border-color: var(--d3); color: var(--d3); border-style: dashed; }
     .astat-caution { background: var(--w2); border-color: var(--w); color: #000; }
 
     .aname { font-size:13px; color: var(--d); }
@@ -1915,7 +1969,7 @@
     .qc-passed-input:disabled, .qc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .qc-btns .qc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* QC Numpad — reuses .ps-numpad-btn from press station */
+    /* QC Numpad — reuses .ps-numpad-btn (shared numpad button class) */
     .qc-numpad-block { max-width: 360px; margin-bottom: var(--space-lg); touch-action: manipulation; }
     .qc-numpad-job { font-size: 14px; color: var(--d2); margin-bottom: var(--space-sm); font-family: 'Inconsolata', monospace; }
     .qc-numpad { max-width: 320px; }
@@ -2167,37 +2221,28 @@
     .log-main.mode-pickedup { border-color: var(--g2); }
     .log-main.mode-held { border-color: var(--w2); }
     .log-console-rail { grid-area: rail; min-height: 36px; border-bottom: 1px solid var(--b1); padding: var(--space-xs) 0; }
-    .log-console-rail .log-rail-simple,
-    .ps-v1-rail .log-rail-simple {
+    .log-console-rail .log-rail-simple {
       display: flex; align-items: center; gap: var(--space-sm); min-height: 28px;
       font-family: 'Inconsolata', monospace; font-size: 11px; letter-spacing: 1px;
     }
-    .log-console-rail .log-rail-bar,
-    .ps-v1-rail .log-rail-bar {
+    .log-console-rail .log-rail-bar {
       flex: 1; min-width: 0; height: 10px; background: var(--s3); border: 1px solid var(--b2);
       overflow: hidden; border-radius: 2px; transition: box-shadow 0.75s ease-out;
     }
-    .log-console-rail .log-rail-fill,
-    .ps-v1-rail .log-rail-fill {
+    .log-console-rail .log-rail-fill {
       height: 100%; border-radius: 1px; transition: width 0.25s ease-out;
     }
-    .log-console-rail .log-rail-simple.mode-press .log-rail-fill,
-    .ps-v1-rail .log-rail-simple.mode-press .log-rail-fill { background: var(--w2); }
-    .log-console-rail .log-rail-simple.mode-qcpass .log-rail-fill,
-    .ps-v1-rail .log-rail-simple.mode-qcpass .log-rail-fill { background: var(--g2); }
-    .log-console-rail .log-rail-simple.mode-qcreject .log-rail-fill,
-    .ps-v1-rail .log-rail-simple.mode-qcreject .log-rail-fill { background: var(--r2); }
+    .log-console-rail .log-rail-simple.mode-press .log-rail-fill { background: var(--w2); }
+    .log-console-rail .log-rail-simple.mode-qcpass .log-rail-fill { background: var(--g2); }
+    .log-console-rail .log-rail-simple.mode-qcreject .log-rail-fill { background: var(--r2); }
     .log-console-rail .log-rail-simple.mode-packed .log-rail-fill { background: var(--cy2); }
     .log-console-rail .log-rail-simple.mode-ready .log-rail-fill { background: var(--b3); }
     .log-console-rail .log-rail-simple.mode-shipped .log-rail-fill { background: var(--g2); }
     .log-console-rail .log-rail-simple.mode-pickedup .log-rail-fill { background: var(--g2); }
     .log-console-rail .log-rail-simple.mode-held .log-rail-fill { background: var(--w2); }
-    .log-console-rail .log-rail-simple.log-rail-placeholder .log-rail-fill,
-    .ps-v1-rail .log-rail-simple.log-rail-placeholder .log-rail-fill { background: var(--d3); }
-    .log-console-rail .log-rail-pct,
-    .ps-v1-rail .log-rail-pct { color: var(--d2); font-weight: 700; min-width: 2.2em; text-align: right; }
-    .log-console-rail.rail-glow-press .log-rail-bar,
-    .ps-v1-rail.rail-glow-press .log-rail-bar { animation: log-rail-glow-w 0.75s ease-out 1; }
+    .log-console-rail .log-rail-simple.log-rail-placeholder .log-rail-fill { background: var(--d3); }
+    .log-console-rail .log-rail-pct { color: var(--d2); font-weight: 700; min-width: 2.2em; text-align: right; }
+    .log-console-rail.rail-glow-press .log-rail-bar { animation: log-rail-glow-w 0.75s ease-out 1; }
     .log-console-rail.rail-glow-qcpass .log-rail-bar { animation: log-rail-glow-g 0.75s ease-out 1; }
     .log-console-rail.rail-glow-qcreject .log-rail-bar { animation: log-rail-glow-r 0.75s ease-out 1; }
     @keyframes log-rail-glow-w {
@@ -2232,7 +2277,7 @@
     }
     .log-fp-job { grid-area: job; font-size: 14px; color: var(--d2); padding: var(--space-xs) 0; font-family: 'Inconsolata', monospace; border-bottom: 1px solid var(--b1); }
 
-    /* Status rail — shared by LOG console and Press Station (ORDERED · PRESSED · REMAINING + bar) */
+    /* Status rail — used by LOG console (ORDERED · PRESSED · REMAINING + bar) */
     .status-rail {
     display: flex;
     flex-wrap: wrap;
@@ -3835,13 +3880,13 @@
     font-size:12px; transition:all 0.15s; flex-shrink:0;
     }
     .pk-stat-ready { background: var(--cy); border-color: var(--cy); color:#000; }
-    .pk-stat-na { background: var(--s2); border-color: var(--d3); color: var(--d3); }
+    .pk-stat-na { background: var(--s3); border-color: var(--d3); color: var(--d3); border-style: dashed; }
     .pk-stat-caution { background: var(--w2); border-color: var(--w); color: #000; }
     .pk-name { font-size: 13px; color: var(--d); }
     .pk-row-ready { border-left-color: var(--cy); background: rgba(0,229,255,0.04); }
     .pk-row-ready .pk-name { color: var(--cy); }
-    .pk-row-na { opacity:0.7; border-left-color: var(--d3); }
-    .pk-row-na .pk-name { color: var(--d3); }
+    .pk-row-na { opacity: 1; border-left-color: var(--d3); border-left-style: dashed; background: rgba(200,200,200,0.03); }
+    .pk-row-na .pk-name { color: var(--d3); text-decoration: line-through; text-decoration-color: var(--d3); }
     .pk-row-caution { border-left-color: var(--w); background: rgba(255,193,7,0.08); }
     .pk-row-caution .pk-name { color: var(--d); }
     .pk-row-caution-locked { background: rgba(255,179,0,0.10); }
@@ -4037,121 +4082,9 @@
     }
     .station-content { flex: 1; margin-bottom: var(--space-sm); }
 
-    /* Press Station v1 — single-press workstation; extends press-card / floor language */
-    .ps-v1-console-wrap { max-width: 360px; }
-    .ps-v1-job-picker {
-    display: flex; flex-wrap: wrap; gap: var(--space-sm); margin-bottom: var(--space-md);
-    padding: var(--space-sm) var(--space-md); border: 1px solid var(--b1); background: var(--s1);
-    }
-    .ps-v1-job-picker .qc-job-select { width: 100%; max-width: 100%; }
-    .ps-v1-sec { font-family: 'Special Elite', cursive; font-size: 13px; color: var(--d2); letter-spacing: 3px; text-transform: uppercase; margin: var(--space-md) 0 var(--space-sm); padding-bottom: var(--space-xs); border-bottom: 1px solid var(--b1); }
-    .ps-v1-sec:first-child { margin-top: 0; }
-    .ps-v1-rail { margin-bottom: var(--space-sm); min-height: 36px; padding: var(--space-xs) 0; }
-    .ps-v1-press-name.station-name { color: var(--w); }
-    .ps-v1-stat-block { background: var(--s1); border: 1px solid var(--b1); padding: var(--space-md); margin-bottom: var(--space-sm); }
-    .ps-v1-job-title { font-size: 15px; font-weight: 700; color: var(--d); margin-bottom: var(--space-xs); font-family: 'Inconsolata', monospace; }
-    .ps-v1-job-meta { font-size: 13px; color: var(--d3); margin-bottom: var(--space-sm); font-family: 'Inconsolata', monospace; letter-spacing: 0.5px; }
-    .ps-v1-stat-row { display: flex; flex-wrap: wrap; gap: var(--space-md); margin-bottom: var(--space-xs); }
-    .ps-v1-stat { font-size: 13px; font-family: 'Inconsolata', monospace; }
-    .ps-v1-stat .num { font-weight: 700; color: var(--g); }
-    .ps-v1-stat .lbl { color: var(--d3); font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
-    .ps-v1-remaining { font-size: 14px; font-weight: 700; color: var(--w); margin: var(--space-xs) 0; font-family: 'Inconsolata', monospace; }
-    .ps-v1-blocked { font-size: 12px; color: var(--r); margin-top: var(--space-xs); font-family: 'Inconsolata', monospace; }
-    .ps-v1-bar { height: 8px; background: var(--s3); border: 1px solid var(--b2); overflow: hidden; margin: var(--space-xs) 0; border-radius: 1px; }
-    .ps-v1-bar-fill { height: 100%; background: var(--w2); transition: width 0.2s; border-radius: 1px; }
-    .ps-v1-idle { font-size: 15px; color: var(--d3); font-weight: 600; font-family: 'Inconsolata', monospace; }
-    .ps-v1-edit {
-    margin-top: var(--space-md);
-    padding-top: var(--space-sm);
-    border-top: 1px solid var(--b1);
-    }
-    .ps-v1-edit-label { font-size: 10px; color: var(--d3); letter-spacing: 2px; margin-bottom: var(--space-xs); font-family: 'Inconsolata', monospace; }
-    .ps-v1-note { width: 100%; max-width: 400px; min-height: 56px; padding: var(--space-sm); background: var(--s1); border: 1px solid var(--b2); color: var(--d); font-size: 13px; font-family: 'Inconsolata', monospace; outline: none; border-radius: 1px; }
-    .ps-v1-edit-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; margin-top: var(--space-sm); }
-    .ps-v1-hold-btn {
-    padding: var(--space-sm) var(--space-lg);
-    font-family: 'Inconsolata', monospace;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    min-height: 38px;
-    border: 1px solid;
-    cursor: pointer;
-    transition: all 0.15s;
-    }
-    .ps-v1-hold-btn.hold { background: transparent; border-color: var(--r2); color: var(--r); }
-    .ps-v1-hold-btn.hold:hover { background: var(--r2); }
-    .ps-v1-hold-btn.resume { background: var(--g3); border-color: var(--g2); color: var(--g); }
-    .ps-v1-hold-btn.resume:hover { background: var(--g); color: #000; box-shadow: var(--gg); }
-    .ps-v1-save-note {
-    padding: var(--space-sm) var(--space-lg);
-    font-family: 'Inconsolata', monospace;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    min-height: 38px;
-    border: 1px solid var(--b2);
-    background: transparent;
-    color: var(--d2);
-    cursor: pointer;
-    transition: all 0.15s;
-    }
-    .ps-v1-save-note:hover { border-color: var(--d2); color: var(--d); }
-    .ps-v1-log {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    align-items: flex-start;
-    padding-top: var(--space-sm);
-    border-top: 1px solid var(--b1);
-    flex-shrink: 0;
-    }
-    .ps-v1-log:empty { border-top: none; padding-top: 0; }
-    .ps-v1-log-btns { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: center; }
-    .ps-v1-log-btn {
-    min-width: 72px;
-    min-height: 36px;
-    padding: var(--space-sm) var(--space-md);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    border: 1px solid var(--w2);
-    background: var(--w2);
-    color: var(--w);
-    font-family: 'Inconsolata', monospace;
-    cursor: pointer;
-    transition: all 0.15s;
-    }
-    .ps-v1-log-btn:hover { background: var(--w); color: #000; box-shadow: var(--gg); }
-    .ps-v1-log-btn:active { transform: scale(0.98); }
+    /* PURGATORY: Press Station v1 styles removed (2026-03-06). See docs/purgatory-protocol.md. */
 
-    /* Press Station numpad — microwave-simple: big display, big buttons, one action. Min 48px touch targets. */
-    .ps-numpad { max-width: 320px; margin: 0; touch-action: manipulation; }
-    .ps-numpad-display {
-        font-family: 'Inconsolata', monospace;
-        font-size: 48px;
-        font-weight: 700;
-        color: var(--d3);
-        text-align: right;
-        padding: var(--space-md) var(--space-lg);
-        background: var(--s1);
-        border: 1px solid var(--b2);
-        margin-bottom: var(--space-sm);
-        min-height: 72px;
-        line-height: 1;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        letter-spacing: 2px;
-    }
-    .ps-numpad-display.has-value { color: var(--w); }
-    .ps-numpad-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        margin-bottom: var(--space-sm);
-    }
+    /* Numpad buttons — shared by LOG console (originally from Press Station) */
     .ps-numpad-btn {
         min-height: 56px;
         font-family: 'Inconsolata', monospace;
@@ -4173,47 +4106,8 @@
     .ps-numpad-clear { color: var(--r); border-color: var(--r2); }
     .ps-numpad-clear:hover { background: var(--r2); }
     .ps-numpad-back { color: var(--d2); font-size: 20px; }
-    .ps-numpad-presets { display: flex; gap: 4px; margin-bottom: var(--space-sm); }
-    .ps-numpad-preset {
-        flex: 1;
-        min-height: 40px;
-        font-family: 'Inconsolata', monospace;
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 1px;
-        color: var(--d3);
-        background: transparent;
-        border: 1px solid var(--b1);
-        cursor: pointer;
-        transition: all 0.1s;
-    }
-    .ps-numpad-preset:hover { border-color: var(--b2); color: var(--d2); }
-    .ps-numpad-log {
-        width: 100%;
-        min-height: 56px;
-        font-family: 'Inconsolata', monospace;
-        font-size: 18px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        color: var(--w);
-        background: var(--w2);
-        border: 1px solid var(--w2);
-        cursor: pointer;
-        transition: all 0.15s;
-    }
-    .ps-numpad-log:hover { background: var(--w); color: #000; box-shadow: var(--gg); }
-    .ps-numpad-log:active { transform: scale(0.98); }
-    .ps-numpad-log:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
-        box-shadow: none;
-    }
-    .ps-numpad-log:disabled:hover { background: var(--s2); border-color: var(--b2); color: var(--d3); }
     @media (max-width: 600px) {
-        .ps-numpad { max-width: 100%; }
         .ps-numpad-btn { min-height: 64px; font-size: 26px; }
-        .ps-numpad-display { font-size: 56px; min-height: 80px; }
-        .ps-numpad-log { min-height: 64px; font-size: 20px; }
     }
 
     .pc-station-btn {
