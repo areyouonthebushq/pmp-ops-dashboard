@@ -1447,6 +1447,14 @@ function panelPoStarClick() {
   }
 }
 
+function triggerPoFileInput() {
+  var input = document.getElementById('jPoImageInput');
+  if (!input) return;
+  input.removeAttribute('disabled');
+  input.style.pointerEvents = '';
+  input.click();
+}
+
 function openPoUploadPrompt() {
   var el = document.getElementById('poUploadPrompt');
   if (!el) {
@@ -1457,7 +1465,7 @@ function openPoUploadPrompt() {
       '<div class="po-upload-prompt-card">' +
         '<div class="po-upload-prompt-title">Source of Truth</div>' +
         '<div class="po-upload-prompt-sub">Add official Job PO only</div>' +
-        '<button type="button" class="po-upload-prompt-btn" onclick="closePoUploadPrompt(); document.getElementById(\'jPoImageInput\').click();">Upload Image</button>' +
+        '<button type="button" class="po-upload-prompt-btn" onclick="closePoUploadPrompt(); triggerPoFileInput();">Upload Image</button>' +
         '<button type="button" class="po-upload-prompt-cancel" onclick="closePoUploadPrompt()">Cancel</button>' +
       '</div>';
     el.onclick = function (e) { if (e.target === el) closePoUploadPrompt(); };
@@ -2226,6 +2234,7 @@ async function onPoImageFileSelected(input) {
     if (!j.poContract || typeof j.poContract !== 'object') j.poContract = {};
     j.poContract.imageUrl = url;
     j.poContract.imagePath = path;
+    j.poContract.uploadedAt = new Date().toISOString();
     await Storage.saveJob(j);
     updatePoImageUI(j);
     updatePanelPoStar(j);
@@ -3814,6 +3823,7 @@ async function addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text, attach
     renderLog();
   }
   if (typeof renderAssetsOverlay === 'function') renderAssetsOverlay();
+  if (typeof renderPackCard === 'function') renderPackCard();
   if (typeof toast === 'function') toast('NOTE LOGGED');
 }
 
@@ -3934,6 +3944,45 @@ function assetNoteComposerKeydown(e) {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     submitAssetNoteFromOverlay();
+    return;
+  }
+}
+
+function openPackNoteComposer(jobId, packKey) {
+  S.packCardAddingNoteKey = packKey;
+  S.packCardNoteJobId = jobId;
+  var pdef = typeof PACK_DEFS !== 'undefined' ? PACK_DEFS.find(function (x) { return x.key === packKey; }) : null;
+  S.packCardNoteLabel = (pdef && pdef.label) ? pdef.label : packKey;
+  if (typeof renderPackCard === 'function') renderPackCard();
+  setTimeout(function () {
+    var el = document.getElementById('packNoteComposerText');
+    if (el) el.focus();
+  }, 80);
+}
+
+async function submitPackNoteFromOverlay() {
+  var textEl = document.getElementById('packNoteComposerText');
+  var text = textEl && textEl.value ? textEl.value.trim() : '';
+  var jobId = S.packCardNoteJobId;
+  var packKey = S.packCardAddingNoteKey;
+  var packLabel = S.packCardNoteLabel || packKey;
+  S.packCardAddingNoteKey = null;
+  S.packCardNoteJobId = null;
+  S.packCardNoteLabel = null;
+  if (!jobId || !packKey || !text) {
+    if (typeof renderPackCard === 'function') renderPackCard();
+    return;
+  }
+  await addAssetNoteFromOverlay(jobId, packKey, packLabel, text);
+  if (textEl) textEl.value = '';
+  if (typeof renderPackCard === 'function') renderPackCard();
+}
+
+function packNoteComposerKeydown(e) {
+  if (!e) return;
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    submitPackNoteFromOverlay();
     return;
   }
 }

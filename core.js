@@ -671,6 +671,20 @@ function pressShortName(name) {
   return name.replace(/\bpress\s*/gi, '').trim() || name;
 }
 
+function isPoRecent(job, withinMs) {
+  if (!job || !job.poContract || !job.poContract.imageUrl) return false;
+  var ts = job.poContract.uploadedAt || job.poContract.imagePath;
+  if (!ts) return false;
+  if (job.poContract.uploadedAt) {
+    return (Date.now() - new Date(job.poContract.uploadedAt).getTime()) < (withinMs || 3600000);
+  }
+  var match = typeof ts === 'string' && ts.match(/\/(\d+)[-_]/);
+  if (match) {
+    return (Date.now() - parseInt(match[1])) < (withinMs || 3600000);
+  }
+  return false;
+}
+
 function recentLogActivity(job, withinMs) {
   var out = { pressed: false, qc_passed: false, rejected: false, packed: false, ready: false, shipped: false };
   if (!job || !Array.isArray(job.progressLog)) return out;

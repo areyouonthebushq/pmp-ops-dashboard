@@ -953,6 +953,8 @@ function closeCardZone() {
   if (S) S.assetsOverlayJobId = null;
   clearAssetsOverlayPulseTimers();
   packCardState = null;
+  if (typeof clearPackCardPulseTimers === 'function') clearPackCardPulseTimers();
+  S.packCardAddingNoteKey = null;
   var el = document.getElementById('cardZoneOverlay');
   if (el) el.classList.remove('on');
   renderAll();
@@ -1187,24 +1189,16 @@ async function saveAssetsOverlay() {
 
 // ============================================================
 // PACK CARD — late-stage packing readiness (face of Card Zone)
+// Unified with Asset card visual & interaction language
 // ============================================================
 var packCardState = null;
 
 function flushPackCardInputs() {
   if (!packCardState) return;
-  PACK_DEFS.forEach(function (d) {
-    var noteEl = document.getElementById('pkn-' + d.key);
-    var whoEl = document.getElementById('pkw-' + d.key);
-    if (noteEl) packCardState.data[d.key].note = noteEl.value;
-    if (whoEl) packCardState.data[d.key].person = whoEl.value;
-  });
-  var packNoteEl = document.getElementById('pkPackNote');
-  if (packNoteEl) packCardState.data._packNote = packNoteEl.value;
 }
 
 function renderPackCard() {
   if (!packCardState) return;
-  flushPackCardInputs();
   var data = packCardState.data;
   var ready = 0, na = 0, caution = 0, remaining = 0;
   PACK_DEFS.forEach(function (d) {
@@ -1223,70 +1217,88 @@ function renderPackCard() {
       '<span class="pk-na"><span class="pk-num">' + na + '</span> N/A</span>' +
       '<span class="pk-caution"><span class="pk-num">' + caution + '</span> achtung</span>' +
       '<span class="pk-remaining"><span class="pk-num">' + remaining + '</span> remaining</span>' +
-      (allDone ? '<span class="pk-complete">✓ PACK READY</span>' : '');
+      (allDone ? '<span class="pk-complete">✓ ALL PACKING READY</span>' : '');
   }
 
   var jobId = packCardState.jobId;
   var job = S.jobs.find(function (j) { return j.id === jobId; });
-  var expanded = packCardState.expandedKey;
   var listEl = document.getElementById('packCardList');
   if (!listEl) return;
 
   var notesLog = (job && Array.isArray(job.notesLog)) ? job.notesLog : [];
+  if (!S.packCardPulseKeys) S.packCardPulseKeys = {};
+  if (!S.packCardPulseTimeouts) S.packCardPulseTimeouts = {};
+  var pulseActive = {};
+  var now = Date.now();
+
+  PACK_DEFS.forEach(function (d) {
+    var item = data[d.key] || {};
+    var status = getPackItemStatus(item);
+    var cautionSince = (item.cautionSince || '').trim();
+    var hasNote = cautionSince && notesLog.some(function (n) { return n.assetKey === d.key && n.timestamp && n.timestamp >= cautionSince; });
+    var locked = status === 'caution' && cautionSince && !hasNote;
+    if (locked) {
+      var elapsed = now - new Date(cautionSince).getTime();
+      if (elapsed >= 1500 || S.packCardPulseKeys[d.key]) {
+        pulseActive[d.key] = true;
+      } else {
+        if (!S.packCardPulseTimeouts[d.key]) {
+          S.packCardPulseTimeouts[d.key] = setTimeout(function () {
+            S.packCardPulseKeys[d.key] = true;
+            if (S.packCardPulseTimeouts) delete S.packCardPulseTimeouts[d.key];
+            renderPackCard();
+          }, 1500 - elapsed);
+        }
+      }
+    } else {
+      if (S.packCardPulseTimeouts[d.key]) {
+        clearTimeout(S.packCardPulseTimeouts[d.key]);
+        delete S.packCardPulseTimeouts[d.key];
+      }
+      delete S.packCardPulseKeys[d.key];
+    }
+  });
+
+  var addingNoteKey = S.packCardAddingNoteKey;
 
   listEl.innerHTML = PACK_DEFS.map(function (d) {
     var item = data[d.key] || { status: '', person: '', date: '', note: '' };
     var status = getPackItemStatus(item);
     var cautionSince = (status === 'caution' && item.cautionSince) ? item.cautionSince : '';
-    var hasNoteSinceCaution = cautionSince && notesLog.some(function (n) { return n.timestamp && n.timestamp >= cautionSince; });
+    var hasNoteSinceCaution = cautionSince && notesLog.some(function (n) { return n.assetKey === d.key && n.timestamp && n.timestamp >= cautionSince; });
     var cautionLocked = status === 'caution' && cautionSince && !hasNoteSinceCaution;
+    var showPulse = cautionLocked && (pulseActive[d.key] || S.packCardPulseKeys[d.key]);
     var rowClass = status === 'ready' ? 'pk-row-ready' : status === 'na' ? 'pk-row-na' : status === 'caution' ? 'pk-row-caution' : '';
     var lockedClass = cautionLocked ? ' pk-row-caution-locked' : '';
     var icon = status === 'ready' ? '✓' : status === 'na' ? '−' : status === 'caution' ? '\u26A0\uFE0E' : '';
     var statClass = status === 'ready' ? 'pk-stat pk-stat-ready' : status === 'na' ? 'pk-stat pk-stat-na' : status === 'caution' ? 'pk-stat pk-stat-caution' : 'pk-stat';
-    if (cautionLocked) statClass += ' pk-btn-pulse';
-    var noteSnippet = item.note ? '<span class="pk-note-hint">' + escapeHtml(item.note.length > 30 ? item.note.slice(0, 30) + '…' : item.note) + '</span>' : '';
-    var cautionBtn = status === 'caution'
-      ? '<button type="button" class="pk-notes-btn" onclick="event.stopPropagation();goToNotesWithFilter(\'' + jobId + '\')" title="View notes">⌕</button>'
-      : '';
 
-    var isExpanded = expanded === d.key;
-    var detail = isExpanded
-      ? '<div class="pk-detail">' +
-        '<div class="pk-detail-row">' +
-          '<div class="pk-detail-field"><div class="pk-dl">NOTE</div><input type="text" class="pk-di" id="pkn-' + d.key + '" value="' + escapeHtml(item.note || '') + '" placeholder="Packing note…" onclick="event.stopPropagation()"></div>' +
-          '<div class="pk-detail-field"><div class="pk-dl">WHO</div><input type="text" class="pk-di" id="pkw-' + d.key + '" value="' + escapeHtml(item.person || '') + '" placeholder="Name" onclick="event.stopPropagation()"></div>' +
-        '</div>' +
-        '</div>'
-      : '';
+    var addBtnClass = showPulse ? ' asset-row-btn-pulse' : '';
+    var viewNotesBtn = cautionLocked
+      ? '<button type="button" class="asset-row-btn asset-row-btn-disabled" disabled title="Add a note first (use +)">⌕</button>'
+      : '<button type="button" class="asset-row-btn" onclick="event.stopPropagation();goToNotesWithFilter(\'' + jobId + '\',\'' + d.key + '\')" title="View notes for this item">⌕</button>';
+
+    var addingNote = addingNoteKey === d.key;
 
     return '<div class="pk-item">' +
-      '<div class="pk-row ' + rowClass + lockedClass + '">' +
-        '<div class="' + statClass + '" onclick="event.stopPropagation();cyclePackStatus(\'' + d.key + '\')" title="Tap to cycle status">' + icon + '</div>' +
-        '<div class="pk-name" onclick="togglePackDetail(\'' + d.key + '\')">' + d.label + noteSnippet + '</div>' +
-        '<div class="pk-row-actions">' + cautionBtn + '<span class="pk-expand-arrow" onclick="event.stopPropagation();togglePackDetail(\'' + d.key + '\')" title="Details">' + (isExpanded ? '▾' : '▸') + '</span></div>' +
+      '<div class="pk-row ' + rowClass + lockedClass + '" onclick="cyclePackStatus(\'' + d.key + '\')">' +
+        '<div class="' + statClass + '">' + icon + '</div>' +
+        '<div class="pk-name">' + d.label + '</div>' +
+        '<div style="display:flex;gap: var(--space-sm);align-items:center">' +
+          '<button type="button" class="asset-row-btn' + addBtnClass + '" onclick="event.stopPropagation();openPackNoteComposer(\'' + jobId + '\',\'' + d.key + '\')" title="Add note">+</button>' +
+          viewNotesBtn +
+        '</div>' +
       '</div>' +
-      detail +
+      (addingNote ? '<div class="pk-note-composer">' +
+        '<textarea id="packNoteComposerText" class="fta notes-textarea" placeholder="Add note (lands in NOTES)…" rows="2" onkeydown="packNoteComposerKeydown(event)"></textarea>' +
+        '<button type="button" class="bar-btn notes-utility-action" onclick="submitPackNoteFromOverlay()">ADD</button>' +
+        '</div>' : '') +
       '</div>';
   }).join('');
 }
 
-function togglePackDetail(key) {
-  if (!packCardState) return;
-  flushPackCardInputs();
-  packCardState.expandedKey = packCardState.expandedKey === key ? null : key;
-  renderPackCard();
-  if (packCardState.expandedKey === key) {
-    setTimeout(function () {
-      var el = document.getElementById('pkn-' + key);
-      if (el) el.focus();
-    }, 60);
-  }
-}
-
 function cyclePackStatus(key) {
   if (!packCardState || !packCardState.data[key]) return;
-  flushPackCardInputs();
   var item = packCardState.data[key];
   var cur = getPackItemStatus(item);
   var next = cur === '' ? 'ready' : cur === 'ready' ? 'na' : cur === 'na' ? 'caution' : '';
@@ -1296,9 +1308,19 @@ function cyclePackStatus(key) {
   renderPackCard();
 }
 
+function clearPackCardPulseTimers() {
+  var timeouts = S.packCardPulseTimeouts;
+  if (timeouts && typeof timeouts === 'object') {
+    Object.keys(timeouts).forEach(function (k) {
+      if (timeouts[k] != null) clearTimeout(timeouts[k]);
+    });
+  }
+  if (S.packCardPulseTimeouts) S.packCardPulseTimeouts = {};
+  if (S.packCardPulseKeys) S.packCardPulseKeys = {};
+}
+
 function savePackCard() {
   if (!packCardState) return;
-  flushPackCardInputs();
   var job = S.jobs.find(function (j) { return j.id === packCardState.jobId; });
   if (!job) { closeCardZone(); return; }
   job.packCard = JSON.parse(JSON.stringify(packCardState.data));
@@ -1308,6 +1330,7 @@ function savePackCard() {
       assetsOverlayState = null;
       if (S) S.assetsOverlayJobId = null;
       clearAssetsOverlayPulseTimers();
+      clearPackCardPulseTimers();
       var el = document.getElementById('cardZoneOverlay');
       if (el) el.classList.remove('on');
       renderAll();
@@ -1425,7 +1448,10 @@ function renderJobs() {
       const ra = recentLogActivity(j);
       const pi = jobPressInfo(j);
       const pressRested = onPress && new Date().getHours() >= 17 && !ra.pressed;
-      const dots = (onPress && !pressRested ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
+      const poUrl = j.poContract && j.poContract.imageUrl;
+      const poStar = poUrl ? '<span class="live-po-star' + (isPoRecent(j) ? ' live-po-star-glow' : '') + '" onclick="event.stopPropagation();openPoImageLightbox(\'' + poUrl.replace(/'/g, "\\'") + '\')" title="View PO image">★</span>' : '';
+      const dots = poStar
+        + (onPress && !pressRested ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
         + (ra.pressed  ? '<span class="live-dot live-dot-pressed" title="Pressed (1h)"></span>' : '')
         + (ra.qc_passed? '<span class="live-dot live-dot-qcpass" title="QC pass (1h)"></span>' : '')
         + (ra.rejected ? '<span class="live-dot live-dot-reject" title="Rejected (1h)"></span>' : '')
@@ -1467,7 +1493,10 @@ function renderJobs() {
       const ra = recentLogActivity(j);
       const pi = jobPressInfo(j);
       const pressRested = onPress && new Date().getHours() >= 17 && !ra.pressed;
-      const dots = (onPress && !pressRested ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
+      const poUrl2 = j.poContract && j.poContract.imageUrl;
+      const poStar2 = poUrl2 ? '<span class="live-po-star' + (isPoRecent(j) ? ' live-po-star-glow' : '') + '" onclick="event.stopPropagation();openPoImageLightbox(\'' + poUrl2.replace(/'/g, "\\'") + '\')" title="View PO image">★</span>' : '';
+      const dots = poStar2
+        + (onPress && !pressRested ? '<span class="live-dot live-dot-press" title="On press"></span>' : '')
         + (ra.pressed  ? '<span class="live-dot live-dot-pressed" title="Pressed (1h)"></span>' : '')
         + (ra.qc_passed? '<span class="live-dot live-dot-qcpass" title="QC pass (1h)"></span>' : '')
         + (ra.rejected ? '<span class="live-dot live-dot-reject" title="Rejected (1h)"></span>' : '')
