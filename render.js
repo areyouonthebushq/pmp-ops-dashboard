@@ -1469,7 +1469,7 @@ function renderJobs() {
         ? '<span class="press-live' + (ra.pressed ? ' press-live-glow' : '') + '">' + escapeHtml(pi.onPress) + '</span>'
         : pi.onDeck
           ? '<span class="press-deck">' + escapeHtml(pi.onDeck) + '</span>'
-          : (j.press || '—');
+          : (j.press ? escapeHtml(pressShortName(j.press)) : '—');
       return `<tr data-status="${j.status || ''}"${jCautioned ? ' class="job-row-cautioned"' : ''}>
         <td class="j-cat panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.catalog || '—'}</td>
         <td class="j-artist panel-trigger" onclick="openPanel('${j.id}')" title="Open job">${j.artist || '—'}</td>
@@ -1479,7 +1479,7 @@ function renderJobs() {
         <td class="j-spec">${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</td>
         <td class="j-spec j-plus10">${j.qty ? Math.ceil(parseInt(j.qty) * 1.1).toLocaleString() : '—'}</td>
         <td class="j-state j-live-cell">${dots}${statusMicro}${cautionDot}</td>
-        <td class="j-state ${dueClass(j.due)}">${dueLabel(j.due)}</td>
+        <td class="j-state">${dueDelta(j.due)}</td>
         <td class="j-press">${pressCell}</td>
         <td class="j-support assets-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','asset')" title="Asset card">${ahHTML(j)}</td>
         <td class="j-support packing-tap" onclick="event.stopPropagation(); openCardZone('${j.id}','pack')" title="Pack card">${packHealthHTML(j)}</td>
@@ -1510,7 +1510,7 @@ function renderJobs() {
         ? '<span class="jc-detail press-live' + (ra.pressed ? ' press-live-glow' : '') + '">⬡ ' + escapeHtml(pi.onPress) + '</span>'
         : pi.onDeck
           ? '<span class="jc-detail press-deck">⬡ ' + escapeHtml(pi.onDeck) + '</span>'
-          : (j.press ? `<span class="jc-detail">⬡ ${j.press}</span>` : '');
+          : (j.press ? `<span class="jc-detail">⬡ ${escapeHtml(pressShortName(j.press))}</span>` : '');
       return `
         <div class="job-card st-${j.status}${jcCautioned ? ' job-card-cautioned' : ''}" onclick="openPanel('${j.id}')">
         <div class="jc-top">
@@ -1528,7 +1528,7 @@ function renderJobs() {
           <span class="jc-detail">Qty: ${j.qty ? parseInt(j.qty).toLocaleString() : '—'}</span>
         </div>
         <div class="jc-row">
-          <span class="jc-detail ${dueClass(j.due)}">Due: ${dueLabel(j.due)}</span>
+          <span class="jc-detail">${dueDelta(j.due)}</span>
           ${ahHTML(j)}
           ${pressTag}
           ${j.location ? `<span class="loc">${j.location}</span>` : ''}

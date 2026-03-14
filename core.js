@@ -519,6 +519,14 @@ function dueLabel(due) {
   return due;
 }
 
+function dueDelta(due) {
+  if (!due) return '<span style="color:var(--d3)">—</span>';
+  const d = Math.ceil((new Date(due) - Date.now()) / 864e5);
+  if (d < 0) return '<span style="color:var(--r)">+' + Math.abs(d) + '</span>';
+  if (d === 0) return '<span style="color:var(--r)">0</span>';
+  return '<span style="color:var(--d3)">-' + d + '</span>';
+}
+
 function statusPill(s) {
   const map = {
     pressing: '<span class="pill go">PRESSING</span>',
@@ -652,10 +660,15 @@ function jobPressInfo(job) {
   if (!job || !Array.isArray(S.presses)) return out;
   for (var i = 0; i < S.presses.length; i++) {
     var p = S.presses[i];
-    if (p.job_id === job.id) out.onPress = p.name;
-    if (p.on_deck_job_id === job.id) out.onDeck = p.name;
+    if (p.job_id === job.id) out.onPress = pressShortName(p.name);
+    if (p.on_deck_job_id === job.id) out.onDeck = pressShortName(p.name);
   }
   return out;
+}
+
+function pressShortName(name) {
+  if (!name) return name;
+  return name.replace(/\bpress\s*/gi, '').trim() || name;
 }
 
 function recentLogActivity(job, withinMs) {
