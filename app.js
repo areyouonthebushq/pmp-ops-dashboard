@@ -2462,12 +2462,12 @@ function submitCautionPopup() {
 // ============================================================
 // JOB-LEVEL ACHTUNG — set / clear exception overlay
 // ============================================================
-function setCaution(jobId, reason, text) {
+async function setCaution(jobId, reason, text) {
   const j = S.jobs.find(function (x) { return x.id === jobId; });
   if (!j) return;
   if (!reason) {
     j.caution = null;
-    Storage.saveJob(j);
+    try { await Storage.saveJob(j); } catch (e) { toastError('Caution save failed'); }
     renderAll();
     toast('ACHTUNG cleared');
     return;
@@ -2480,7 +2480,7 @@ function setCaution(jobId, reason, text) {
     var person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
     j.notesLog.push({ text: '⚠ ' + cautionReasonLabel(reason).toUpperCase() + ': ' + trimmed, person: person, timestamp: ts, cautionContext: true });
   }
-  Storage.saveJob(j);
+  try { await Storage.saveJob(j); } catch (e) { toastError('Caution save failed'); }
   renderAll();
   toast('⚠ ' + cautionReasonLabel(reason));
 }
@@ -2525,11 +2525,11 @@ function cancelShipAchtung() {
 // ============================================================
 // SHIP — set fulfillment phase
 // ============================================================
-function setFulfillmentPhase(jobId, phase) {
+async function setFulfillmentPhase(jobId, phase) {
   const j = S.jobs.find(function (x) { return x.id === jobId; });
   if (!j) return;
   j.fulfillment_phase = phase || null;
-  Storage.saveJob(j);
+  try { await Storage.saveJob(j); } catch (e) { toastError('Phase save failed'); }
   renderAll();
   toast(phase ? fulfillmentPhaseLabel(phase) : 'Phase cleared');
   requestAnimationFrame(function () {
@@ -3393,14 +3393,14 @@ function closeDuplicateModal() {
 // ============================================================
 // SUGGESTED STATUS — from progress; apply in panel
 // ============================================================
-function applySuggestedStatus(jobId) {
+async function applySuggestedStatus(jobId) {
   const j = S.jobs.find(x => x.id === jobId);
   if (!j) return;
   const isAssigned = S.presses.some(p => p.job_id === j.id);
   const suggestion = suggestedStatus(j, isAssigned);
   if (!suggestion) return;
   j.status = suggestion.suggested;
-  Storage.saveJob(j);
+  try { await Storage.saveJob(j); } catch (e) { toastError('Status save failed'); }
   const sel = document.getElementById('jStat');
   if (sel) sel.value = suggestion.suggested;
   const suggestionEl = document.getElementById('panelStatusSuggestion');
@@ -3435,7 +3435,7 @@ function cycleStatus(jid) {
   applyStatusCycle(j, prevStatus, next, jid);
 }
 
-function applyStatusCycle(j, prevStatus, next, jid) {
+async function applyStatusCycle(j, prevStatus, next, jid) {
   j.status = next;
 
   if (prevStatus === 'pressing' && j.status !== 'pressing') {
@@ -3450,12 +3450,12 @@ function applyStatusCycle(j, prevStatus, next, jid) {
     Storage.savePresses(S.presses);
   }
 
-  Storage.saveJob(j);
+  try { await Storage.saveJob(j); } catch (e) { toastError('Status save failed'); }
   renderAll();
 
   showUndoToast(
     `${j.catalog || j.artist || 'Job'} → ${j.status.toUpperCase()}`,
-    () => {
+    async () => {
       j.status = prevStatus;
       if (prevStatus === 'pressing' && j.press) {
         j.press.split(',').map(s => s.trim()).filter(Boolean).forEach(pressName => {
@@ -3466,7 +3466,7 @@ function applyStatusCycle(j, prevStatus, next, jid) {
         releasePressByJob(j.id);
       }
       Storage.savePresses(S.presses);
-      Storage.saveJob(j);
+      try { await Storage.saveJob(j); } catch (e) { toastError('Undo save failed'); }
       renderAll();
       toast('UNDONE');
     }
@@ -3869,7 +3869,7 @@ function addNoteFromPackCard() {
   var job = S.jobs.find(function (j) { return j.id === jobId; });
   if (job) {
     job.packCard = JSON.parse(JSON.stringify(packCardState.data));
-    Storage.saveJob(job).catch(function () {});
+    Storage.saveJob(job).catch(function (e) { toastError('Pack card save failed'); });
   }
   packCardState = null;
   assetsOverlayState = null;

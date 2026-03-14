@@ -449,33 +449,33 @@ async function pressStationLogPressed(qty) {
   }
 }
 
-function pressStationHold() {
+async function pressStationHold() {
   const job = getStationJob();
   if (!job) return;
   job.status = 'hold';
   S._pressStationWrite = true;
-  Storage.saveJob(job);
+  try { await Storage.saveJob(job); } catch (e) { if (typeof toastError === 'function') toastError('Hold save failed'); }
   renderPressStationShell();
   toast('Job on hold');
 }
 
-function pressStationResume() {
+async function pressStationResume() {
   const job = getStationJob();
   if (!job) return;
   job.status = 'pressing';
   S._pressStationWrite = true;
-  Storage.saveJob(job);
+  try { await Storage.saveJob(job); } catch (e) { if (typeof toastError === 'function') toastError('Resume save failed'); }
   renderPressStationShell();
   toast('Job resumed');
 }
 
-function pressStationSaveNote() {
+async function pressStationSaveNote() {
   const job = getStationJob();
   if (!job) return;
   const el = document.getElementById('psStationNote');
   if (el) job.notes = el.value.trim();
   S._pressStationWrite = true;
-  Storage.saveJob(job);
+  try { await Storage.saveJob(job); } catch (e) { if (typeof toastError === 'function') toastError('Note save failed'); }
   renderPressStationShell();
   toast('Note saved');
 }

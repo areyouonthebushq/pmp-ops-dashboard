@@ -741,7 +741,7 @@ function toggleFloorCardEdit() {
   renderFloorCard();
 }
 
-function saveFloorCardQuickEdit() {
+async function saveFloorCardQuickEdit() {
   const j = S.jobs.find(x => x.id === S.floorCardJobId);
   if (!j) return;
   const get = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
@@ -762,7 +762,7 @@ function saveFloorCardQuickEdit() {
       j.caution = null;
     }
   }
-  Storage.saveJob(j);
+  try { await Storage.saveJob(j); } catch (e) { toastError('Floor card save failed'); }
   S.floorCardEditMode = false;
   const btn = document.getElementById('floorCardQuickEditBtn');
   if (btn) { btn.textContent = 'QUICK EDIT'; btn.classList.remove('edit-mode'); }
