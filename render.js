@@ -650,7 +650,7 @@ function renderFloorCard() {
       getRow('notes', '<label>Production notes</label>', `<textarea id="fcNotes" rows="3">${(j.notes || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
       getRow('assembly', '<label>Assembly / location notes</label>', `<textarea id="fcAssembly" rows="2">${(j.assembly || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>`),
       getRow('fulfillment_phase', '<label>Fulfillment</label>', `<select id="fcFulfillment">${FULFILLMENT_PHASES.map(o => `<option value="${o.v}" ${(j.fulfillment_phase || '') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
-      getRow('caution', '<label>⚠ ACHTUNG</label>', `<select id="fcCautionReason">${CAUTION_REASONS.map(o => `<option value="${o.v}" ${((j.caution && j.caution.reason) || '') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
+      getRow('caution', '<label>' + WRENCH_ICON + ' WRENCH</label>', `<select id="fcCautionReason">${CAUTION_REASONS.map(o => `<option value="${o.v}" ${((j.caution && j.caution.reason) || '') === o.v ? 'selected' : ''}>${o.l}</option>`).join('')}</select>`),
     ].join('');
     content.innerHTML = `
     <div class="fc-header">
@@ -1364,7 +1364,10 @@ function renderJobs() {
         + (ra.shipped  ? '<span class="live-quack" title="Quacked (1h)">' + QUACK_ICON + '</span>' : '');
       const st = j.status || 'queue';
       const statusMicro = '';
-      const cautionDot = jCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">\u26A0\uFE0E</span>' : '';
+      const isWrn = jCautioned && isJobWrench(j);
+      const cautionDot = jCautioned
+        ? ' <span class="' + (isWrn ? 'wrench-dot' : 'caution-dot') + (cautionNeedsNote(j) ? (isWrn ? ' wrench-dot-pulse' : ' caution-dot-pulse') : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">' + (isWrn ? WRENCH_ICON : '\u26A0\uFE0E') + '</span>'
+        : '';
       const pressCell = pi.onPress
         ? '<span class="press-live' + (ra.pressed ? ' press-live-glow' : '') + '">' + escapeHtml(pi.onPress) + '</span>'
         : pi.onDeck
@@ -1409,7 +1412,10 @@ function renderJobs() {
         + (ra.shipped  ? '<span class="live-quack" title="Quacked (1h)">' + QUACK_ICON + '</span>' : '');
       const st = j.status || 'queue';
       const statusMicro = '';
-      const cautionDot = jcCautioned ? ' <span class="caution-dot' + (cautionNeedsNote(j) ? ' caution-dot-pulse' : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">\u26A0\uFE0E</span>' : '';
+      const isWrn2 = jcCautioned && isJobWrench(j);
+      const cautionDot = jcCautioned
+        ? ' <span class="' + (isWrn2 ? 'wrench-dot' : 'caution-dot') + (cautionNeedsNote(j) ? (isWrn2 ? ' wrench-dot-pulse' : ' caution-dot-pulse') : '') + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + j.id + '\')" title="' + cautionReasonLabel((j.caution||{}).reason||'').toUpperCase() + '">' + (isWrn2 ? WRENCH_ICON : '\u26A0\uFE0E') + '</span>'
+        : '';
       const pressTag = pi.onPress
         ? '<span class="jc-detail press-live' + (ra.pressed ? ' press-live-glow' : '') + '">⬡ ' + escapeHtml(pi.onPress) + '</span>'
         : pi.onDeck
@@ -3227,7 +3233,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const asset = e.assetLabel || e.assetKey || '';
         const cautionIcon = e.isCautionAsset ? '<span class="notes-entry-caution-icon" aria-hidden="true">\u26A0\uFE0E</span> ' : '';
         const assetHtml = asset ? `<div class="notes-entry-asset">${cautionIcon}${escapeHtml(asset)}</div>` : '';
-        const wrenchHtml = e.wrenchLabel ? '<div class="notes-entry-wrench">🔧 ' + escapeHtml(e.wrenchLabel) + '</div>' : '';
+        const wrenchHtml = e.wrenchLabel ? '<div class="notes-entry-wrench">' + WRENCH_ICON + ' ' + escapeHtml(e.wrenchLabel) + '</div>' : '';
         const rowCls = e.jobId === '!ALERT' ? ' notes-row-alert' : '';
         var noteThumbSrc = e.attachment_thumb_url || e.attachment_url;
         const thumbHtml = e.attachment_url

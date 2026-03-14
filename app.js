@@ -2452,7 +2452,7 @@ function openCautionPopup(jobId) {
   var card = el.querySelector('.caution-popup-card');
   card.innerHTML =
     '<div class="caution-popup-header" id="cautionPopupHeaderLink" role="button" tabindex="0" title="View in NOTES">' +
-      '<span class="caution-popup-tri">\uD83D\uDD27</span>' +
+      '<span class="caution-popup-tri">' + WRENCH_ICON + '</span>' +
       '<span class="caution-popup-title">WRENCH</span>' +
     '</div>' +
     '<div class="caution-popup-sub">Flag this job for intervention</div>' +
@@ -2517,7 +2517,7 @@ async function setCaution(jobId, reason, text) {
   }
   try { await Storage.saveJob(j); } catch (e) { toastError('Caution save failed'); }
   renderAll();
-  toast('🔧 ' + cautionReasonLabel(reason));
+  toast('WRENCH: ' + cautionReasonLabel(reason));
 }
 
 function clearCaution(jobId) {

@@ -145,6 +145,8 @@ const HELD_REASONS = ['BILLING HOLD','CUSTOMER HOLD','DAMAGE','SHORT COUNT','WRO
 
 const QUACK_ICON = '<svg class="quack-ico" viewBox="0 0 24 24" width="1em" height="1em" fill="currentColor" style="vertical-align:-.125em"><path fill-rule="evenodd" d="M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm11 7h-5v2h5v-2zM12.5 8a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/></svg>';
 
+const WRENCH_ICON = '<svg class="wrench-ico" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-.125em"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>';
+
 const FLOOR_COLUMNS = [
   { key: 'catalog', label: 'CATALOG' },
   { key: 'artistAlbum', label: 'ARTIST / ALBUM' },
@@ -241,6 +243,15 @@ const _LEGACY_REASON_LABELS = {
 
 function isJobCautioned(job) {
   return !!(job && job.caution && job.caution.reason);
+}
+
+function isWrenchReason(reason) {
+  if (!reason) return false;
+  return CAUTION_REASONS.some(function (x) { return x.v === reason && x.v !== ''; });
+}
+
+function isJobWrench(job) {
+  return isJobCautioned(job) && isWrenchReason(job.caution.reason);
 }
 
 function cautionReasonLabel(reason) {

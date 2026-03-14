@@ -1127,7 +1127,7 @@
     }
     .press-deck { color: var(--d3); font-weight: 500; white-space: nowrap; }
 
-    /* Caution dot — symbol-only in LIVE cell */
+    /* Caution dot — symbol-only in LIVE cell (ACHTUNG = yellow ⚠, WRENCH = steel blue 🔧) */
     .caution-dot {
       cursor: pointer; font-size: 12px; color: #ffb300;
       text-shadow: 0 0 4px rgba(255,179,0,0.4);
@@ -1137,13 +1137,24 @@
       0%, 100% { opacity: 1; text-shadow: 0 0 4px rgba(255,179,0,0.4); }
       50% { opacity: 0.5; text-shadow: 0 0 8px rgba(255,179,0,0.7); }
     }
+    .wrench-dot {
+      cursor: pointer; display: inline-flex; align-items: center;
+      color: #5c9ece; filter: drop-shadow(0 0 3px rgba(92,158,206,0.4));
+    }
+    .wrench-dot .wrench-ico { width: 12px; height: 12px; }
+    .wrench-dot-pulse { animation: wrenchDotPulse 1.6s ease-in-out infinite; }
+    @keyframes wrenchDotPulse {
+      0%, 100% { opacity: 1; filter: drop-shadow(0 0 3px rgba(92,158,206,0.4)); }
+      50% { opacity: 0.5; filter: drop-shadow(0 0 6px rgba(92,158,206,0.7)); }
+    }
 
     /* Job-level caution treatment — amber border + subtle warm bg */
     tr.job-row-cautioned { border-left: 3px solid #ffb300 !important; background: rgba(255,179,0,0.06); }
     .job-card-cautioned { border-color: rgba(255,179,0,0.5) !important; background: rgba(255,179,0,0.06) !important; }
     /* RSP Icon Zone */
     .rsp-icon-zone { display: flex; gap: var(--space-sm); flex-shrink: 0; }
-    #panelCautionBtn { font-size: 14px; }
+    #panelCautionBtn { font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+    #panelCautionBtn svg { width: 14px; height: 14px; }
     #panelCautionBtn:hover { border-color: #5c9ece; color: #5c9ece; }
     #panelCautionBtn.caution-active { border-color: #5c9ece; color: #5c9ece; background: rgba(92,158,206,0.12); box-shadow: 0 0 6px rgba(92,158,206,0.3); }
     #panelCautionBtn.caution-pulse { animation: wrenchPulse 1.6s ease-in-out infinite; }
@@ -1344,8 +1355,9 @@
     }
     .caution-popup-header:hover { opacity: 0.7; }
     .caution-popup-tri {
-    font-size: 20px; color: #5c9ece; line-height: 1;
+    font-size: 20px; color: #5c9ece; line-height: 1; display: inline-flex; align-items: center;
     }
+    .caution-popup-tri .wrench-ico { width: 20px; height: 20px; }
     .caution-popup-title {
     font-family: 'Special Elite', cursive; font-size: 16px;
     letter-spacing: 2px; color: #5c9ece;
@@ -2252,6 +2264,7 @@
     .log-action-shipped { color: var(--d2); }
     .log-action-shipped.active { background: var(--g); color: #003d12; border-color: var(--g); }
     .quack-ico { display: inline-block; vertical-align: -0.125em; }
+    .wrench-ico { display: inline-block; vertical-align: -0.125em; }
     .log-action-held { color: var(--d2); }
     .log-action-held.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
     .log-fp-display {
@@ -3225,7 +3238,9 @@
     margin-top: var(--space-xs);
     margin-right: -56px;
     text-align: right;
+    display: flex; align-items: center; justify-content: flex-end; gap: 3px;
     }
+    .notes-feed .notes-entry-wrench .wrench-ico { width: 10px; height: 10px; }
     .notes-feed .progress-empty {
     padding: var(--space-lg) 0;
     color: var(--d3);
