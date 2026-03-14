@@ -2500,7 +2500,7 @@ function openCautionPopup(jobId) {
     '<button type="button" class="caution-popup-cancel" onclick="closeCautionPopup()">Cancel</button>';
   el.dataset.jobId = jobId;
   var headerLink = document.getElementById('cautionPopupHeaderLink');
-  if (headerLink) headerLink.onclick = function () { closeCautionPopup(); goToNotesWithFilter(jobId); };
+  if (headerLink) headerLink.onclick = function () { closeCautionPopup(); closePanel(); goToNotesWithFilter(jobId); };
   var reasonEl = document.getElementById('cautionPopupReason');
   var textEl = document.getElementById('cautionPopupText');
   if (reasonEl) reasonEl.selectedIndex = 0;
@@ -2528,8 +2528,7 @@ function submitCautionPopup() {
   if (!reason) { toast('Select a reason'); return; }
   setCaution(jobId, reason, text);
   closeCautionPopup();
-  var btn = document.getElementById('panelCautionBtn');
-  if (btn) btn.classList.add('caution-active');
+  closePanel();
   goToNotesWithFilter(jobId);
 }
 

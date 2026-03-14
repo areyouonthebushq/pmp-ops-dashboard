@@ -525,6 +525,12 @@ Mode is persisted in `sessionStorage`. Toggling resets `logAction` and numpad bu
 | **Fulfillment phase** | Job field for SHIP page grouping (awaiting instructions, ready to ship, local pickup, etc.). |
 | **HELD_REASONS** | Outbound hold reasons: BILLING HOLD, CUSTOMER HOLD, DAMAGE, SHORT COUNT, WRONG CONFIG, OTHER. |
 | **Station** | Focused shell: Press, QC, or Floor Manager (launcher choice). |
+| **Purge** | Send to purgatory. Remove from active runtime, nav, shortcuts, render paths, and save logic. Document the removal. Code may remain in the repo but must be inert. |
+| **Purgatory** | Intentionally decommissioned. Documented. Recoverable. Not part of active runtime behavior. Not visible to users. Not consuming cycles. See `docs/purgatory-protocol.md`. |
+| **Delete** | Fully removed from active code. Recoverable only through Git history. No documentation obligation beyond the commit message. |
+| **Card Zone** | One overlay object with two faces: **RECEIVING** (incoming material readiness) and **PACKING** (late-stage finishing readiness). Opened from JOBS progress bars or RSP. |
+| **RECEIVING** | Card Zone face for incoming asset readiness (records, jackets, inserts, etc.). Green-coded. Formerly called "Asset Card." |
+| **PACKING** | Card Zone face for late-stage pack readiness (sleeve, wrap, sticker, etc.). Blue/cyan-coded. |
 
 ---
 
