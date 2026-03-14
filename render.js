@@ -1143,7 +1143,11 @@ function cycleAssetsOverlayStatus(key) {
   if (next === 'caution') {
     var adef = typeof ASSET_DEFS !== 'undefined' ? ASSET_DEFS.find(function (x) { return x.key === key; }) : null;
     var label = (adef && adef.label) ? adef.label : key;
+    var stampedAt = cautionSince;
     setTimeout(function () {
+      if (!assetsOverlayState) return;
+      var cur = assetsOverlayState.data[key];
+      if (!cur || cur.cautionSince !== stampedAt) return;
       if (typeof openCardAchtungPopup === 'function') openCardAchtungPopup(assetsOverlayState.jobId, key, label, 'asset');
     }, 1500);
   }
@@ -1334,7 +1338,11 @@ function cyclePackStatus(key) {
   if (next === 'caution') {
     var pdef = typeof PACK_DEFS !== 'undefined' ? PACK_DEFS.find(function (x) { return x.key === key; }) : null;
     var label = (pdef && pdef.label) ? pdef.label : key;
+    var stampedAt = item.cautionSince;
     setTimeout(function () {
+      if (!packCardState) return;
+      var cur = packCardState.data[key];
+      if (!cur || cur.cautionSince !== stampedAt) return;
       if (typeof openCardAchtungPopup === 'function') openCardAchtungPopup(packCardState.jobId, key, label, 'pack');
     }, 1500);
   }
