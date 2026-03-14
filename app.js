@@ -475,7 +475,7 @@ function startPollInterval() {
     if (panelOpen) return;
     if (saveInFlight) return;
     await loadAll();
-  }, 5000);
+  }, 30000);
 }
 
 function startPolling() {
@@ -2796,44 +2796,58 @@ function buildExtractedRowFromParsedFields(parsed, rowIndex) {
   return { rowIndex: rowIndex ?? 0, includeInCreate: true, action: 'create', updateJobId: null, fields };
 }
 
-// Extract raw text from PDF (first page only in phase 1). Returns '' on failure or if PDF.js not loaded.
-function extractTextFromPdf(file) {
-  const lib = typeof window !== 'undefined' && window.pdfjsLib;
-  if (!lib || !file) return Promise.resolve('');
-  if (lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc) {
-    lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-  }
-  return file
-    .arrayBuffer()
-    .then(function (buf) {
-      return lib.getDocument(buf).promise;
-    })
-    .then(function (doc) {
-      return doc.getPage(1);
-    })
-    .then(function (page) {
-      return page.getTextContent();
-    })
-    .then(function (content) {
-      const items = (content && content.items) || [];
-      return items.map(function (i) { return i.str || ''; }).join(' ');
-    })
-    .catch(function () {
-      return '';
-    });
+// Lazy-load a script by URL; resolves when loaded, rejects on error. Caches the promise.
+var _scriptCache = {};
+function loadScript(url) {
+  if (_scriptCache[url]) return _scriptCache[url];
+  _scriptCache[url] = new Promise(function (resolve, reject) {
+    var s = document.createElement('script');
+    s.src = url;
+    s.onload = resolve;
+    s.onerror = function () { delete _scriptCache[url]; reject(new Error('Failed to load ' + url)); };
+    document.head.appendChild(s);
+  });
+  return _scriptCache[url];
 }
 
-// Extract text from image via OCR (Tesseract). Returns '' if Tesseract not loaded or on failure.
-function extractTextFromImage(file) {
-  const T = typeof window !== 'undefined' && window.Tesseract;
-  if (!T || !file) return Promise.resolve('');
-  return T.recognize(file)
-    .then(function (r) {
-      return (r && r.data && r.data.text) ? r.data.text : '';
+// Extract raw text from PDF (first page only in phase 1). Lazy-loads pdf.js on demand.
+function extractTextFromPdf(file) {
+  if (!file) return Promise.resolve('');
+  var pdfUrl = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js';
+  return loadScript(pdfUrl)
+    .then(function () {
+      var lib = window.pdfjsLib;
+      if (!lib) return '';
+      if (lib.GlobalWorkerOptions && !lib.GlobalWorkerOptions.workerSrc) {
+        lib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+      }
+      return file.arrayBuffer().then(function (buf) {
+        return lib.getDocument(buf).promise;
+      }).then(function (doc) {
+        return doc.getPage(1);
+      }).then(function (page) {
+        return page.getTextContent();
+      }).then(function (content) {
+        var items = (content && content.items) || [];
+        return items.map(function (i) { return i.str || ''; }).join(' ');
+      });
     })
-    .catch(function () {
-      return '';
-    });
+    .catch(function () { return ''; });
+}
+
+// Extract text from image via OCR (Tesseract). Lazy-loads tesseract.js on demand.
+function extractTextFromImage(file) {
+  if (!file) return Promise.resolve('');
+  var tessUrl = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  return loadScript(tessUrl)
+    .then(function () {
+      var T = window.Tesseract;
+      if (!T) return '';
+      return T.recognize(file).then(function (r) {
+        return (r && r.data && r.data.text) ? r.data.text : '';
+      });
+    })
+    .catch(function () { return ''; });
 }
 
 // CSV header (lowercase) -> job field key

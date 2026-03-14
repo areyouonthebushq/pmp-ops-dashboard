@@ -187,19 +187,21 @@ function renderAll() {
 }
 
 function renderAdminShell() {
-  renderStats();
-  renderPresses();
-  renderFloor();
-  renderJobs();
-  renderTodos();
-  renderLog();
-  renderEngine();
-  renderNotesPage();
-  renderShip();
-  renderCrewPage();
-  renderCompoundsPage();
-  renderDevPage();
-  renderTV();
+  var pg = typeof currentPage !== 'undefined' ? currentPage : 'floor';
+  switch (pg) {
+    case 'floor':     renderStats(); renderPresses(); renderFloor(); break;
+    case 'jobs':      renderJobs(); break;
+    case 'log':
+    case 'qc':        renderLog(); break;
+    case 'notes':     renderNotesPage(); break;
+    case 'ship':      renderShip(); break;
+    case 'crew':      renderCrewPage(); break;
+    case 'compounds': renderCompoundsPage(); break;
+    case 'dev':       renderDevPage(); break;
+    case 'tv':        renderTV(); break;
+    case 'engine':    renderEngine(); break;
+    case 'todos':     renderTodos(); break;
+  }
 }
 
 // ============================================================
@@ -944,11 +946,34 @@ function openCardZone(jobId, face) {
 }
 
 function closeCardZone() {
+  var saveTarget = null;
+
   if (assetsOverlayState) {
     flushAssetsOverlayInputs();
-    var job = S.jobs.find(function(j) { return j.id === assetsOverlayState.jobId; });
-    if (job) job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+    var aJob = S.jobs.find(function(j) { return j.id === assetsOverlayState.jobId; });
+    if (aJob) {
+      aJob.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+      if (panelOpen && S.editId === assetsOverlayState.jobId) {
+        curAssets = JSON.parse(JSON.stringify(aJob.assets));
+      }
+      saveTarget = aJob;
+    }
   }
+
+  if (packCardState) {
+    var pJob = S.jobs.find(function(j) { return j.id === packCardState.jobId; });
+    if (pJob) {
+      pJob.packCard = JSON.parse(JSON.stringify(packCardState.data));
+      if (!saveTarget) saveTarget = pJob;
+    }
+  }
+
+  if (saveTarget) {
+    Storage.saveJob(saveTarget).catch(function(e) {
+      if (typeof toastError === 'function') toastError('Card zone changes may not have saved');
+    });
+  }
+
   assetsOverlayState = null;
   if (S) S.assetsOverlayJobId = null;
   clearAssetsOverlayPulseTimers();
@@ -1170,6 +1195,9 @@ async function saveAssetsOverlay() {
   const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
   if (!job) { closeCardZone(); return; }
   job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
+  if (panelOpen && S.editId === assetsOverlayState.jobId) {
+    curAssets = JSON.parse(JSON.stringify(job.assets));
+  }
   Storage.updateJobAssets(job.id, job.assets)
     .then(() => {
       assetsOverlayState = null;

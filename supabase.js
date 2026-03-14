@@ -262,15 +262,13 @@
       ]);
 
       const jobs = (jobsRes.data || []).map(rowToJob);
+      const jobMap = new Map();
+      jobs.forEach((j) => { j.progressLog = []; jobMap.set(j.id, j); });
       const progressLogs = progressRes.data || [];
       progressLogs.forEach((row) => {
-        const job = jobs.find((j) => j.id === row.job_id);
-        if (job) {
-          if (!job.progressLog) job.progressLog = [];
-          job.progressLog.push(progressRowToEntry(row));
-        }
+        const job = jobMap.get(row.job_id);
+        if (job) job.progressLog.push(progressRowToEntry(row));
       });
-      jobs.forEach((j) => { if (!Array.isArray(j.progressLog)) j.progressLog = []; });
 
       const presses = (pressesRes.data || []).map(rowToPress);
       const todoRows = todosRes.data || [];

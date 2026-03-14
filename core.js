@@ -396,12 +396,12 @@ function logConsoleRailHTML(job, mode) {
   const p = getJobProgress(job);
   const ordered = p.ordered;
   let num, denom, modeClass;
-  if (mode === 'packed')        { num = p.packed;   denom = ordered;             modeClass = 'mode-packed'; }
-  else if (mode === 'ready')    { num = p.ready;    denom = p.packed || ordered;  modeClass = 'mode-ready'; }
-  else if (mode === 'shipped')  { num = p.shipped + p.pickedUp;  denom = p.ready || ordered;   modeClass = 'mode-shipped'; }
-  else if (mode === 'press')    { num = p.pressed;  denom = ordered;              modeClass = 'mode-press'; }
-  else if (mode === 'qc_pass')  { num = p.qcPassed; denom = ordered;             modeClass = 'mode-qcpass'; }
-  else                          { num = p.rejected; denom = ordered;              modeClass = 'mode-qcreject'; }
+  if (mode === 'packed')        { num = p.packed;   denom = ordered;  modeClass = 'mode-packed'; }
+  else if (mode === 'ready')    { num = p.ready;    denom = ordered;  modeClass = 'mode-ready'; }
+  else if (mode === 'shipped')  { num = p.shipped + p.pickedUp;  denom = ordered;  modeClass = 'mode-shipped'; }
+  else if (mode === 'press')    { num = p.pressed;  denom = ordered;  modeClass = 'mode-press'; }
+  else if (mode === 'qc_pass')  { num = p.qcPassed; denom = ordered;  modeClass = 'mode-qcpass'; }
+  else                          { num = p.rejected; denom = ordered;  modeClass = 'mode-qcreject'; }
   const pct = denom ? Math.min(100, (num / denom) * 100) : 0;
   const pctText = Math.round(pct) + '%';
   return `<div class="log-rail-simple ${modeClass}">
