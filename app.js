@@ -622,6 +622,14 @@ function setPanelEditMode(enabled) {
   }
 }
 
+function panelEditToggle() {
+  if (panelEditMode) {
+    saveJob();
+  } else {
+    setPanelEditMode(true);
+  }
+}
+
 // ============================================================
 // LAUNCHER — single entry point, persist last choice
 // ============================================================
@@ -2463,11 +2471,7 @@ function togglePanelCaution() {
   if (!jobId) return;
   var j = S.jobs.find(function (x) { return x.id === jobId; });
   if (!j) return;
-  if (isJobCautioned(j)) {
-    goToNotesWithFilter(j.id);
-  } else {
-    openCautionPopup(j.id);
-  }
+  openCautionPopup(j.id);
 }
 
 function openCautionPopup(jobId) {
@@ -2476,22 +2480,27 @@ function openCautionPopup(jobId) {
     el = document.createElement('div');
     el.id = 'cautionPopup';
     el.className = 'caution-popup';
-    var opts = CAUTION_REASONS.filter(function (r) { return r.v !== ''; }).map(function (r) {
-      return '<option value="' + r.v + '">' + r.l + '</option>';
-    }).join('');
-    el.innerHTML =
-      '<div class="caution-popup-card">' +
-        '<div class="caution-popup-title">ACHTUNG</div>' +
-        '<div class="caution-popup-sub">Flag this job for attention</div>' +
-        '<select class="caution-popup-select" id="cautionPopupReason">' + opts + '</select>' +
-        '<input class="caution-popup-input" id="cautionPopupText" placeholder="Context note (optional)">' +
-        '<button type="button" class="caution-popup-btn" id="cautionPopupAdd">ADD</button>' +
-        '<button type="button" class="caution-popup-cancel" onclick="closeCautionPopup()">Cancel</button>' +
-      '</div>';
+    el.innerHTML = '<div class="caution-popup-card"></div>';
     el.onclick = function (e) { if (e.target === el) closeCautionPopup(); };
     document.body.appendChild(el);
   }
+  var opts = CAUTION_REASONS.filter(function (r) { return r.v !== ''; }).map(function (r) {
+    return '<option value="' + r.v + '">' + r.l + '</option>';
+  }).join('');
+  var card = el.querySelector('.caution-popup-card');
+  card.innerHTML =
+    '<div class="caution-popup-header" id="cautionPopupHeaderLink" role="button" tabindex="0" title="View in NOTES">' +
+      '<span class="caution-popup-tri">\u26A0\uFE0E</span>' +
+      '<span class="caution-popup-title">ACHTUNG</span>' +
+    '</div>' +
+    '<div class="caution-popup-sub">Flag this job for attention</div>' +
+    '<select class="caution-popup-select" id="cautionPopupReason">' + opts + '</select>' +
+    '<input class="caution-popup-input" id="cautionPopupText" placeholder="Context note (optional)">' +
+    '<button type="button" class="caution-popup-btn" id="cautionPopupAdd">ADD</button>' +
+    '<button type="button" class="caution-popup-cancel" onclick="closeCautionPopup()">Cancel</button>';
   el.dataset.jobId = jobId;
+  var headerLink = document.getElementById('cautionPopupHeaderLink');
+  if (headerLink) headerLink.onclick = function () { closeCautionPopup(); goToNotesWithFilter(jobId); };
   var reasonEl = document.getElementById('cautionPopupReason');
   var textEl = document.getElementById('cautionPopupText');
   if (reasonEl) reasonEl.selectedIndex = 0;
@@ -2521,6 +2530,7 @@ function submitCautionPopup() {
   closeCautionPopup();
   var btn = document.getElementById('panelCautionBtn');
   if (btn) btn.classList.add('caution-active');
+  goToNotesWithFilter(jobId);
 }
 
 // ============================================================
@@ -4390,45 +4400,43 @@ document.addEventListener('keydown', e => {
     return;
   }
 
-  if ((e.key === 'f' || e.key === 'F') && !isTyping) {
+  function isBlockingSurfaceOpen() {
+    var has = function (id, cls) { var el = document.getElementById(id); return el && el.classList.contains(cls || 'on'); };
+    return !!(panelOpen ||
+      has('cardZoneOverlay') ||
+      has('newJobChooserWrap') ||
+      has('wizardWrap') ||
+      has('compoundWizardWrap') ||
+      has('employeeWizardWrap') ||
+      has('scheduleEntryWizardWrap') ||
+      has('importReviewWrap') ||
+      has('confirmWrap', 'open') ||
+      has('duplicateJobWrap') ||
+      has('progressDetailOverlay') ||
+      has('engDetailOverlay') ||
+      has('cautionPopup', 'open') ||
+      document.getElementById('poImageLightbox') ||
+      document.querySelector('.po-upload-prompt'));
+  }
+
+  if ((e.key === 'f' || e.key === 'F') && !isTyping && !isBlockingSurfaceOpen()) {
     e.preventDefault();
     toggleFullscreen();
     return;
   }
-
-  // + (add) and = (search) — global shortcuts; skip when typing or when a modal has focus
-  const anyOverlayOpen = panelOpen ||
-    document.getElementById('cardZoneOverlay')?.classList.contains('on') ||
-    document.getElementById('newJobChooserWrap')?.classList.contains('on') ||
-    document.getElementById('wizardWrap')?.classList.contains('on') ||
-    document.getElementById('compoundWizardWrap')?.classList.contains('on') ||
-    document.getElementById('employeeWizardWrap')?.classList.contains('on') ||
-    document.getElementById('scheduleEntryWizardWrap')?.classList.contains('on') ||
-    document.getElementById('importReviewWrap')?.classList.contains('on') ||
-    (document.getElementById('confirmWrap') && document.getElementById('confirmWrap').classList.contains('open'));
-  const formOverlayOpen = document.getElementById('newJobChooserWrap')?.classList.contains('on') ||
-    document.getElementById('wizardWrap')?.classList.contains('on') ||
-    document.getElementById('compoundWizardWrap')?.classList.contains('on') ||
-    document.getElementById('employeeWizardWrap')?.classList.contains('on') ||
-    document.getElementById('scheduleEntryWizardWrap')?.classList.contains('on') ||
-    document.getElementById('importReviewWrap')?.classList.contains('on') ||
-    (document.getElementById('confirmWrap') && document.getElementById('confirmWrap').classList.contains('open'));
-  if (!isTyping && !stationVisible) {
+  if (!isTyping && !stationVisible && !isBlockingSurfaceOpen()) {
     const isPlusKey = (e.key === '+' || (e.key === '=' && e.shiftKey));
     const isEqualsKey = (e.key === '=' && !e.shiftKey);
-    if (isPlusKey && !formOverlayOpen) {
+    if (isPlusKey) {
       e.preventDefault();
-      // Panel or assets overlay: route to NOTES with context job. Else use local + or fallback to NOTES.
-      if (panelOpen || document.getElementById('cardZoneOverlay')?.classList.contains('on')) {
-        goToNotesAndOpenAdd(getContextJobIdForNotes());
-      } else if (hasLocalPlusAction()) {
+      if (hasLocalPlusAction()) {
         triggerLocalPlusAction();
       } else {
         goToNotesAndOpenAdd(getContextJobIdForNotes());
       }
       return;
     }
-    if (isEqualsKey && !anyOverlayOpen) {
+    if (isEqualsKey) {
       e.preventDefault();
       if (hasLocalSearchAction()) {
         triggerLocalSearchAction();
@@ -4437,7 +4445,7 @@ document.addEventListener('keydown', e => {
     }
   }
 
-  if (!isTyping && !panelOpen && !stationVisible) {
+  if (!isTyping && !stationVisible && !isBlockingSurfaceOpen()) {
     const qcPage = document.getElementById('pg-qc');
     if (qcPage && qcPage.classList.contains('on')) {
       const n = parseInt(e.key);
@@ -4459,8 +4467,7 @@ document.addEventListener('keydown', e => {
       }
     }
 
-    const chooserOrWizardOpen = document.getElementById('newJobChooserWrap')?.classList.contains('on') || document.getElementById('wizardWrap')?.classList.contains('on');
-    if ((e.key === 'n' || e.key === 'N') && (currentPage === 'floor' || currentPage === 'jobs') && !chooserOrWizardOpen) {
+    if ((e.key === 'n' || e.key === 'N') && (currentPage === 'floor' || currentPage === 'jobs')) {
       openNewJobChooser();
     }
   }

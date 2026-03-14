@@ -684,7 +684,7 @@
             <div class="panel-sub" id="panelSub"></div>
         </div>
         <div class="rsp-icon-zone">
-            <button class="panel-close" id="panelEditBtn" onclick="setPanelEditMode(!panelEditMode)" title="Toggle edit mode">+</button>
+            <button class="panel-close" id="panelEditBtn" onclick="panelEditToggle()" title="Toggle edit mode">+</button>
             <button class="panel-close" id="panelPoStarBtn" onclick="panelPoStarClick()" title="PO / contract image">☆</button>
             <button class="panel-close" id="panelCautionBtn" onclick="togglePanelCaution()" title="ACHTUNG — flag for attention">⚠</button>
             <button class="panel-close" onclick="closePanel()">✕</button>
@@ -1004,36 +1004,28 @@
     </div>
     </div>
 
-    <!-- CARD ZONE — job-scoped readiness card family (ASSET CARD / PACK CARD) -->
+    <!-- CARD ZONE — job-scoped readiness card (RECEIVING / PACKING) -->
     <div class="card-zone-overlay" id="cardZoneOverlay" onclick="if(event.target===this)closeCardZone()">
     <div class="card-zone-box" id="cardZoneBox" onclick="event.stopPropagation()">
         <div class="cz-header">
             <div class="cz-tabs">
-                <button type="button" class="cz-tab cz-tab-active" id="czTabAsset" onclick="switchCardZoneFace('asset')">ASSETS</button>
+                <button type="button" class="cz-tab cz-tab-active" id="czTabAsset" onclick="switchCardZoneFace('asset')">RECEIVING</button>
                 <button type="button" class="cz-tab" id="czTabPack" onclick="switchCardZoneFace('pack')">PACKING</button>
             </div>
             <button type="button" class="cz-close" onclick="closeCardZone()" aria-label="Close">✕</button>
         </div>
-        <!-- ASSET CARD face -->
+        <!-- RECEIVING face -->
         <div class="cz-face" id="czFaceAsset">
             <div class="assets-overlay-title" id="assetsOverlayTitle"></div>
             <div class="assets-overlay-hint" style="display:none;"></div>
             <div class="assets-overlay-list" id="assetsOverlayList"></div>
-            <div class="assets-overlay-actions">
-                <button type="button" class="btn go" onclick="saveAssetsOverlay()">SAVE & CLOSE</button>
-                <button type="button" class="btn ghost" onclick="closeCardZone()">CANCEL</button>
-            </div>
         </div>
-        <!-- PACK CARD face -->
+        <!-- PACKING face -->
         <div class="cz-face" id="czFacePack" style="display:none">
             <div class="pack-card-title" id="packCardTitle"></div>
             <div class="pack-card-hint" style="display:none;"></div>
             <div class="pack-card-summary" id="packCardSummary"></div>
             <div class="pack-card-list" id="packCardList"></div>
-            <div class="pack-card-actions">
-                <button type="button" class="btn go" onclick="savePackCard()">SAVE & CLOSE</button>
-                <button type="button" class="btn ghost" onclick="closeCardZone()">CANCEL</button>
-            </div>
         </div>
     </div>
     </div>

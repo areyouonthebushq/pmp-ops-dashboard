@@ -1333,6 +1333,15 @@
     display: flex; flex-direction: column; gap: var(--space-md);
     text-align: center;
     }
+    .caution-popup-header {
+    display: flex; align-items: center; justify-content: center; gap: var(--space-sm);
+    cursor: pointer; padding: var(--space-xs); border-radius: 3px;
+    transition: opacity 0.15s;
+    }
+    .caution-popup-header:hover { opacity: 0.7; }
+    .caution-popup-tri {
+    font-size: 20px; color: #ffb300; line-height: 1;
+    }
     .caution-popup-title {
     font-family: 'Special Elite', cursive; font-size: 16px;
     letter-spacing: 2px; color: #ffb300;
@@ -3692,6 +3701,7 @@
     position: relative;
     width: 100%;
     max-width: 560px;
+    min-height: 420px;
     max-height: 90vh;
     display: flex;
     flex-direction: column;
@@ -3700,11 +3710,12 @@
     border-radius: var(--radius);
     padding: var(--space-lg);
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
     }
     .card-zone-box.cz-pack-active {
-    border-color: var(--d3);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    border-color: var(--cy2);
+    background: #0d1f26;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 1px var(--cy2);
     }
     .cz-header {
     display: flex;
@@ -3729,6 +3740,7 @@
     .cz-tab:last-child { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
     .cz-tab:hover { color: var(--d); background: var(--b4); }
     .cz-tab-active { background: var(--b5); color: var(--d); border-color: var(--d3); }
+    .cz-pack-active .cz-tab-active#czTabPack { background: var(--cy2); color: var(--cy); border-color: var(--cy2); }
     .cz-close {
     width: 32px;
     height: 32px;
@@ -3767,8 +3779,6 @@
     }
     .assets-overlay-list .asset-summary { margin-bottom: var(--space-sm); }
     .assets-overlay-list .asset-row { cursor: pointer; }
-    .assets-overlay-actions { display: flex; gap: var(--space-sm); flex-shrink: 0; }
-
     /* Pack card face — unified with Asset card visual language */
     .pack-card-title {
     font-family: 'Inconsolata', monospace; font-size: 16px; font-weight: 700;
@@ -3784,11 +3794,11 @@
     font-size:12px; letter-spacing:1px;
     }
     .pack-card-summary .pk-num { font-weight:700; font-size:16px; }
-    .pk-ready .pk-num { color: var(--g); font-weight: 700; }
+    .pk-ready .pk-num { color: var(--cy); font-weight: 700; }
     .pk-na .pk-num { color: var(--d3); font-weight: 700; }
     .pk-caution .pk-num { color: var(--w); font-weight: 700; }
     .pk-remaining .pk-num { color: var(--d2); font-weight: 700; }
-    .pk-complete { color: var(--g); font-weight: 700; letter-spacing: 2px; }
+    .pk-complete { color: var(--cy); font-weight: 700; letter-spacing: 2px; }
     .pack-card-list { flex: 1; overflow-y: auto; margin-bottom: var(--space-md); }
 
     .pk-row {
@@ -3804,12 +3814,12 @@
     display:flex; align-items:center; justify-content:center;
     font-size:12px; transition:all 0.15s; flex-shrink:0;
     }
-    .pk-stat-ready { background: var(--g); border-color: var(--g); color:#000; }
+    .pk-stat-ready { background: var(--cy); border-color: var(--cy); color:#000; }
     .pk-stat-na { background: var(--s2); border-color: var(--d3); color: var(--d3); }
     .pk-stat-caution { background: var(--w2); border-color: var(--w); color: #000; }
     .pk-name { font-size: 13px; color: var(--d); }
-    .pk-row-ready { border-left-color: var(--g); background:rgba(0,230,118,0.03); }
-    .pk-row-ready .pk-name { color: var(--g); }
+    .pk-row-ready { border-left-color: var(--cy); background: rgba(0,229,255,0.04); }
+    .pk-row-ready .pk-name { color: var(--cy); }
     .pk-row-na { opacity:0.7; border-left-color: var(--d3); }
     .pk-row-na .pk-name { color: var(--d3); }
     .pk-row-caution { border-left-color: var(--w); background: rgba(255,193,7,0.08); }
@@ -3830,7 +3840,6 @@
     }
     .pk-note-composer .bar-btn { flex-shrink: 0; }
 
-    .pack-card-actions { display: flex; gap: var(--space-sm); flex-shrink: 0; }
     .packing-tap { cursor: pointer; }
     .packing-tap:hover { background: var(--b3); }
     .ph { display:flex; align-items:center; gap: var(--space-xs); font-size:12px; white-space:nowrap; }
