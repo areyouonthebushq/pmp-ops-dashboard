@@ -221,18 +221,23 @@ function fulfillmentPhaseLabel(phase) {
 }
 
 // ============================================================
-// JOB-LEVEL ACHTUNG — lightweight exception overlay
+// JOB-LEVEL WRENCH — process exception overlay (intervention taxonomy)
 // ============================================================
 const CAUTION_REASONS = [
-  { v: '',            l: '— None' },
-  { v: 'stuck',       l: 'Stuck' },
-  { v: 'customer',    l: 'Waiting on Customer' },
-  { v: 'billing',     l: 'Billing Issue' },
-  { v: 'traffic_jam', l: 'Traffic Jam' },
-  { v: 'special',     l: 'Special Handling' },
-  { v: 'other',       l: 'Other' },
-  { v: 'achtung',     l: 'Achtung' },
+  { v: '',           l: '— None' },
+  { v: 'customer',   l: 'Customer' },
+  { v: 'commercial', l: 'Commercial' },
+  { v: 'internal',   l: 'Internal' },
+  { v: 'mismatch',   l: 'Mismatch' },
+  { v: 'external',   l: 'External' },
+  { v: 'review',     l: 'Review' },
+  { v: 'other',      l: 'Other' },
 ];
+
+const _LEGACY_REASON_LABELS = {
+  stuck: 'Stuck', billing: 'Billing Issue', traffic_jam: 'Traffic Jam',
+  special: 'Special Handling', achtung: 'Achtung',
+};
 
 function isJobCautioned(job) {
   return !!(job && job.caution && job.caution.reason);
@@ -241,7 +246,8 @@ function isJobCautioned(job) {
 function cautionReasonLabel(reason) {
   if (!reason) return '';
   var r = CAUTION_REASONS.find(function (x) { return x.v === reason; });
-  return r ? r.l : reason;
+  if (r) return r.l;
+  return _LEGACY_REASON_LABELS[reason] || reason;
 }
 
 function cautionPill(job) {

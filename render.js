@@ -3286,6 +3286,8 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
           attachment_thumb: e.attachment_thumb || null,
           attachment_thumb_url: e.attachment_thumb_url || null,
           isCautionAsset: isCautionAsset,
+          wrenchReason: e.wrenchReason || null,
+          wrenchLabel: e.wrenchLabel || null,
         });
       });
     }
@@ -3312,6 +3314,8 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
           attachment_thumb: e.attachment_thumb || null,
           attachment_thumb_url: e.attachment_thumb_url || null,
           isCautionAsset: isCautionAsset,
+          wrenchReason: e.wrenchReason || null,
+          wrenchLabel: e.wrenchLabel || null,
         });
       });
     });
@@ -3330,6 +3334,7 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         e.jobId || '',
         e.assetLabel || '',
         e.assetKey || '',
+        e.wrenchLabel || '',
       ].join(' ').toLowerCase();
       return hay.includes(q);
     });
@@ -3359,12 +3364,13 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
         const asset = e.assetLabel || e.assetKey || '';
         const cautionIcon = e.isCautionAsset ? '<span class="notes-entry-caution-icon" aria-hidden="true">\u26A0\uFE0E</span> ' : '';
         const assetHtml = asset ? `<div class="notes-entry-asset">${cautionIcon}${escapeHtml(asset)}</div>` : '';
+        const wrenchHtml = e.wrenchLabel ? '<div class="notes-entry-wrench">\uD83D\uDD27 ' + escapeHtml(e.wrenchLabel) + '</div>' : '';
         const rowCls = e.jobId === '!ALERT' ? ' notes-row-alert' : '';
         var noteThumbSrc = e.attachment_thumb_url || e.attachment_url;
         const thumbHtml = e.attachment_url
           ? '<div class="notes-entry-thumb" role="button" tabindex="0" data-src="' + escapeHtml(e.attachment_url) + '" onclick="openPoImageLightbox(this.getAttribute(\'data-src\'))" title="View image"><img src="' + escapeHtml(noteThumbSrc) + '" alt="" loading="lazy"></div>'
           : '';
-        const inner = '<div class="notes-entry-job"><span class="notes-entry-cat">' + cat + '</span> <span class="notes-entry-artist">' + artist + '</span></div><div class="notes-entry-text">' + escapeHtml(e.text) + '</div>' + assetHtml + '<div class="notes-entry-meta">' + meta + '</div>';
+        const inner = '<div class="notes-entry-job"><span class="notes-entry-cat">' + cat + '</span> <span class="notes-entry-artist">' + artist + '</span></div><div class="notes-entry-text">' + escapeHtml(e.text) + '</div>' + assetHtml + wrenchHtml + '<div class="notes-entry-meta">' + meta + '</div>';
         return '<div class="progress-entry' + rowCls + '"><div class="progress-entry-inner">' + inner + '</div>' + thumbHtml + '</div>';
       }).join('');
 

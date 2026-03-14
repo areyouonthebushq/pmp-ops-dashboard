@@ -555,6 +555,10 @@
       0%, 100% { box-shadow: 0 0 4px rgba(255,179,0,0.3); }
       50% { box-shadow: 0 0 10px rgba(255,179,0,0.6); }
     }
+    @keyframes wrenchPulse {
+      0%, 100% { box-shadow: 0 0 4px rgba(92,158,206,0.3); }
+      50% { box-shadow: 0 0 10px rgba(92,158,206,0.6); }
+    }
     .pill.seven{ border-color: var(--p2); color: var(--p);  background: var(--p2); }
     .pill::before { content:'●'; font-size:8px; }
 
@@ -1140,9 +1144,9 @@
     /* RSP Icon Zone */
     .rsp-icon-zone { display: flex; gap: var(--space-sm); flex-shrink: 0; }
     #panelCautionBtn { font-size: 14px; }
-    #panelCautionBtn:hover { border-color: #ffb300; color: #ffb300; }
-    #panelCautionBtn.caution-active { border-color: #ffb300; color: #ffb300; background: rgba(255,179,0,0.12); box-shadow: 0 0 6px rgba(255,179,0,0.3); }
-    #panelCautionBtn.caution-pulse { animation: cautionPulse 1.6s ease-in-out infinite; }
+    #panelCautionBtn:hover { border-color: #5c9ece; color: #5c9ece; }
+    #panelCautionBtn.caution-active { border-color: #5c9ece; color: #5c9ece; background: rgba(92,158,206,0.12); box-shadow: 0 0 6px rgba(92,158,206,0.3); }
+    #panelCautionBtn.caution-pulse { animation: wrenchPulse 1.6s ease-in-out infinite; }
 
     /* (caution drawer removed — replaced by caution-popup overlay) */
     .caution-pill { cursor: pointer; }
@@ -1320,7 +1324,7 @@
     }
     .po-upload-prompt-cancel:hover { border-color: var(--d2); color: var(--d2); }
 
-    /* Caution popup overlay */
+    /* WRENCH popup overlay (job-level process exception — RSP) */
     .caution-popup {
     position: fixed; inset: 0; z-index: 9999;
     background: rgba(0,0,0,0.7); display: none;
@@ -1328,7 +1332,7 @@
     }
     .caution-popup.open { display: flex; }
     .caution-popup-card {
-    border: 1px solid rgba(255,179,0,0.4); background: var(--s1);
+    border: 1px solid rgba(92,158,206,0.4); background: var(--s1);
     padding: var(--space-lg); max-width: 340px; width: 90%;
     display: flex; flex-direction: column; gap: var(--space-md);
     text-align: center;
@@ -1340,11 +1344,11 @@
     }
     .caution-popup-header:hover { opacity: 0.7; }
     .caution-popup-tri {
-    font-size: 20px; color: #ffb300; line-height: 1;
+    font-size: 20px; color: #5c9ece; line-height: 1;
     }
     .caution-popup-title {
     font-family: 'Special Elite', cursive; font-size: 16px;
-    letter-spacing: 2px; color: #ffb300;
+    letter-spacing: 2px; color: #5c9ece;
     }
     .caution-popup-sub {
     font-size: 12px; color: var(--d3); letter-spacing: 0.5px;
@@ -1361,11 +1365,11 @@
     .caution-popup-input::placeholder { color: var(--d3); }
     .caution-popup-btn {
     padding: var(--space-sm) var(--space-md);
-    border: 1px solid rgba(255,179,0,0.5); background: rgba(255,179,0,0.12); color: #ffb300;
+    border: 1px solid rgba(92,158,206,0.5); background: rgba(92,158,206,0.12); color: #5c9ece;
     font-family: 'Inconsolata', monospace; font-size: 13px; font-weight: 700;
     letter-spacing: 1px; cursor: pointer; transition: all 0.15s;
     }
-    .caution-popup-btn:hover { background: #ffb300; color: #000; border-color: #ffb300; box-shadow: 0 0 12px rgba(255,179,0,0.4); }
+    .caution-popup-btn:hover { background: #5c9ece; color: #000; border-color: #5c9ece; box-shadow: 0 0 12px rgba(92,158,206,0.4); }
     .caution-popup-cancel {
     padding: var(--space-xs) var(--space-md);
     border: 1px solid var(--b2); background: transparent; color: var(--d3);
@@ -3323,6 +3327,14 @@
     color: var(--w);
     font-size: 10px;
     margin-right: 2px;
+    }
+    .notes-feed .notes-entry-wrench {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: #5c9ece;
+    margin-top: var(--space-xs);
+    margin-right: -56px;
+    text-align: right;
     }
     .notes-feed .progress-empty {
     padding: var(--space-lg) 0;

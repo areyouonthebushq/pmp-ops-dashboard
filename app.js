@@ -2426,7 +2426,7 @@ async function saveJob() {
 }
 
 // ============================================================
-// RSP Icon Zone — ACHTUNG popup (self-contained, no edit mode)
+// RSP Icon Zone — WRENCH popup (job-level process exception)
 // ============================================================
 function togglePanelCaution() {
   var jobId = S.editId;
@@ -2452,10 +2452,10 @@ function openCautionPopup(jobId) {
   var card = el.querySelector('.caution-popup-card');
   card.innerHTML =
     '<div class="caution-popup-header" id="cautionPopupHeaderLink" role="button" tabindex="0" title="View in NOTES">' +
-      '<span class="caution-popup-tri">\u26A0\uFE0E</span>' +
-      '<span class="caution-popup-title">ACHTUNG</span>' +
+      '<span class="caution-popup-tri">\uD83D\uDD27</span>' +
+      '<span class="caution-popup-title">WRENCH</span>' +
     '</div>' +
-    '<div class="caution-popup-sub">Flag this job for attention</div>' +
+    '<div class="caution-popup-sub">Flag this job for intervention</div>' +
     '<select class="caution-popup-select" id="cautionPopupReason">' + opts + '</select>' +
     '<input class="caution-popup-input" id="cautionPopupText" placeholder="Context note (optional)">' +
     '<button type="button" class="caution-popup-btn" id="cautionPopupAdd">ADD</button>' +
@@ -2495,7 +2495,7 @@ function submitCautionPopup() {
 }
 
 // ============================================================
-// JOB-LEVEL ACHTUNG — set / clear exception overlay
+// JOB-LEVEL WRENCH — set / clear process exception overlay
 // ============================================================
 async function setCaution(jobId, reason, text) {
   const j = S.jobs.find(function (x) { return x.id === jobId; });
@@ -2504,7 +2504,7 @@ async function setCaution(jobId, reason, text) {
     j.caution = null;
     try { await Storage.saveJob(j); } catch (e) { toastError('Caution save failed'); }
     renderAll();
-    toast('ACHTUNG cleared');
+    toast('WRENCH cleared');
     return;
   }
   var ts = new Date().toISOString();
@@ -2513,11 +2513,11 @@ async function setCaution(jobId, reason, text) {
   if (trimmed) {
     ensureNotesLog(j);
     var person = window.PMP?.userProfile?.display_name || (S.mode === 'admin' ? 'Admin' : 'Operator');
-    j.notesLog.push({ text: '⚠ ' + cautionReasonLabel(reason).toUpperCase() + ': ' + trimmed, person: person, timestamp: ts, cautionContext: true });
+    j.notesLog.push({ text: trimmed, person: person, timestamp: ts, cautionContext: true, wrenchReason: reason, wrenchLabel: cautionReasonLabel(reason).toUpperCase() });
   }
   try { await Storage.saveJob(j); } catch (e) { toastError('Caution save failed'); }
   renderAll();
-  toast('⚠ ' + cautionReasonLabel(reason));
+  toast('🔧 ' + cautionReasonLabel(reason));
 }
 
 function clearCaution(jobId) {
