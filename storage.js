@@ -503,6 +503,11 @@ const Storage = {
     S.devNotes.push(note);
     return flushLocalSave();
   },
+  /** Persist current S.devNotes (e.g. after bulk dedup in DevTools). Local: writes payload. Supabase: no-op — table is source of truth; dedup only affects local until next fetch. */
+  saveDevNotes() {
+    if (useSupabase()) return Promise.resolve();
+    return flushLocalSave();
+  },
   saveCompounds(compounds) {
     const list = Array.isArray(compounds) ? compounds : [];
     if (useSupabase()) {
