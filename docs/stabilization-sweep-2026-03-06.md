@@ -32,42 +32,32 @@ Post-change-cluster bug bash covering: Press Station purge, SHIP page purge, Car
 
 ---
 
-## Confirmed Issues — Document Only (Not Fixed in This Pass)
+## Fixes Applied — Issues 4–8 (Second Pass)
 
-### ISSUE 4 — P2: Dead `saveAssetsOverlay()` / `savePackCard()` / `closeAssetsOverlay()` functions
+### FIX 4 — P2: Dead `saveAssetsOverlay()` / `savePackCard()` / `closeAssetsOverlay()` removed
 
-**File:** `render.js:1040–1081` (saveAssetsOverlay), `render.js:1226–1246` (savePackCard), `render.js:883–885` (closeAssetsOverlay)
-**What:** These three functions are remnants of the old Save & Close / Cancel buttons. They are never called from any HTML or JS. `saveAssetsOverlay()` uses a different save API (`Storage.updateJobAssets`) than the current canonical save path (`Storage.saveJob` in `closeCardZone`).
-**Risk:** Low — dead code, but could cause confusion if someone accidentally re-introduces a call. `saveAssetsOverlay` would use the wrong save API.
-**Recommended fix:** Remove all three functions. Quick, safe, no dependencies.
+**File:** `render.js`
+**Fix:** Removed `closeAssetsOverlay()` (was ~883–885), `saveAssetsOverlay()` (was ~1040–1081), and `savePackCard()` (was ~1226–1246). No callers; dead code only.
 
-### ISSUE 5 — P2: Dead `hideShipAchtungComposer` no-op stub + caller
+### FIX 5 — P2: Dead `hideShipAchtungComposer` stub + caller removed
 
-**Files:** `app.js:2530` (stub), `render.js:1586` (caller)
-**What:** The no-op stub and its single caller in `selectLogJob()` are harmless but dead code.
-**Risk:** None. Two lines total.
-**Recommended fix:** Remove both. Quick, safe.
+**Files:** `app.js`, `render.js`
+**Fix:** Removed the no-op `hideShipAchtungComposer()` stub from app.js and the single call in `selectLogJob()` in render.js.
 
-### ISSUE 6 — P2: `sessionStorage.setItem('logMode', mode)` is dead code
+### FIX 6 — P2: `logMode` sessionStorage read at init
 
-**File:** `render.js:1564`
-**What:** `setLogMode()` writes the current log mode to sessionStorage, but the variable initialization at `render.js:1525` is hardcoded `let logMode = 'ship'`. There's no corresponding `sessionStorage.getItem('logMode')` anywhere. The write does nothing useful.
-**Risk:** None. Dead write.
-**Recommended fix:** Either remove the write, or add the read at init. If the intent was to persist mode across page refreshes, add the read; otherwise remove the write.
+**File:** `render.js`
+**Fix:** Initialization now reads `sessionStorage.getItem('logMode') || 'ship'` (with try/catch), so the existing `setLogMode()` write persists mode across refreshes.
 
-### ISSUE 7 — P2: No "clear WRENCH" path from the WRENCH popup
+### FIX 7 — P2: Clear WRENCH from RSP popup
 
-**File:** `app.js:2449`
-**What:** The WRENCH popup filters out the empty "— None" option from `CAUTION_REASONS`, so there's no way to clear an existing WRENCH from the popup. Clearing requires using the Floor Card dropdown (which includes the full reason list).
-**Risk:** Low — operators can still clear WRENCH, just not from the RSP popup. This may be intentional (the popup is for *setting*, not *clearing*).
-**Recommended fix:** Design decision. If clearing from RSP is wanted, add a "CLEAR" button to the popup rather than adding the empty option back to the dropdown.
+**File:** `app.js`
+**Fix:** WRENCH popup now includes full `CAUTION_REASONS` (including "— None"). Submitting with "— None" calls `setCaution(jobId, '', '')` to clear. Subtitle updated to "or choose — None to clear".
 
-### ISSUE 8 — P2: Purgatory doc incorrectly says `hideShipAchtungComposer` is called from `setLogMode`
+### FIX 8 — P2: Purgatory doc corrected
 
 **File:** `docs/purgatory-protocol.md`
-**What:** The doc says "called from setLogMode cleanup path" but the actual call site is `selectLogJob` in `render.js:1586`.
-**Risk:** None (doc-only).
-**Recommended fix:** Correct the doc, or remove both the stub and caller (Issue 5).
+**Fix:** SHIP ledger entry updated: "hideShipAchtungComposer() stub removed 2026-03-06 (was called from selectLogJob in render.js)".
 
 ---
 
@@ -81,7 +71,7 @@ Post-change-cluster bug bash covering: Press Station purge, SHIP page purge, Car
 | **RSP panelCautionBtn** | Clean | Uses inline SVG wrench, not emoji |
 | **Card Zone RECEIVING/PACKING toggle** | Clean | Labels correct, shell min-height 420px shared, PACKING has cyan identity |
 | **Card Zone close-save** | Clean | `closeCardZone()` persists both asset and pack data via `Storage.saveJob` |
-| **Card Zone Save/Cancel removal** | Clean | No remnants in HTML. Dead functions remain in JS (Issue 4) |
+| **Card Zone Save/Cancel removal** | Clean | No remnants in HTML or JS (dead functions removed in FIX 4) |
 | **Card ACHTUNG popup 1.5s delay** | Clean | Both `cycleAssetsOverlayStatus` and `cyclePackStatus` use `stampedAt` guard |
 | **Card ACHTUNG stale-popup cancel** | Clean | Guards compare `cautionSince !== stampedAt` before opening |
 | **NOTES — wrench fields in both loops** | Clean | Both single-job and all-jobs entry loops pass `wrenchReason`/`wrenchLabel` |

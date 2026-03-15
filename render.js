@@ -880,10 +880,6 @@ function clearAssetsOverlayPulseTimers() {
   if (S.assetsOverlayPulseKeys) S.assetsOverlayPulseKeys = {};
 }
 
-function closeAssetsOverlay(skipSave) {
-  closeCardZone();
-}
-
 function flushAssetsOverlayInputs() {
   if (!assetsOverlayState) return;
   ASSET_DEFS.forEach(a => {
@@ -1037,49 +1033,6 @@ function updateAssetsOverlay(key, field, val) {
   assetsOverlayState.data[key][field] = val;
 }
 
-async function saveAssetsOverlay() {
-  if (!assetsOverlayState) return;
-  flushAssetsOverlayInputs();
-  // If an asset note composer is open with text, log that note before saving assets.
-  if (S.assetsOverlayNoteJobId && S.assetsOverlayAddingNoteKey) {
-    const textEl = document.getElementById('assetNoteComposerText');
-    const text = textEl && textEl.value ? textEl.value.trim() : '';
-    if (text) {
-      const jobId = S.assetsOverlayNoteJobId;
-      const assetKey = S.assetsOverlayAddingNoteKey;
-      const assetLabel = S.assetsOverlayNoteLabel || assetKey;
-      S.assetsOverlayAddingNoteKey = null;
-      S.assetsOverlayNoteJobId = null;
-      S.assetsOverlayNoteLabel = null;
-      if (typeof addAssetNoteFromOverlay === 'function') {
-        await addAssetNoteFromOverlay(jobId, assetKey, assetLabel, text);
-      }
-      if (textEl) textEl.value = '';
-    }
-  }
-  const job = S.jobs.find(j => j.id === assetsOverlayState.jobId);
-  if (!job) { closeCardZone(); return; }
-  job.assets = JSON.parse(JSON.stringify(assetsOverlayState.data));
-  if (panelOpen && S.editId === assetsOverlayState.jobId) {
-    curAssets = JSON.parse(JSON.stringify(job.assets));
-  }
-  Storage.updateJobAssets(job.id, job.assets)
-    .then(() => {
-      assetsOverlayState = null;
-      if (S) S.assetsOverlayJobId = null;
-      clearAssetsOverlayPulseTimers();
-      packCardState = null;
-      const el = document.getElementById('cardZoneOverlay');
-      if (el) el.classList.remove('on');
-      renderAll();
-      if (typeof toast === 'function') toast('ASSET CARD SAVED');
-    })
-    .catch((e) => {
-      if (typeof setSyncState === 'function') setSyncState('error', { toast: 'SAVE FAILED' });
-      if (typeof toastError === 'function') toastError('Assets save failed');
-    });
-}
-
 // ============================================================
 // PACK CARD — late-stage packing readiness (face of Card Zone)
 // Unified with Asset card visual & interaction language
@@ -1221,28 +1174,6 @@ function clearPackCardPulseTimers() {
   }
   if (S.packCardPulseTimeouts) S.packCardPulseTimeouts = {};
   if (S.packCardPulseKeys) S.packCardPulseKeys = {};
-}
-
-function savePackCard() {
-  if (!packCardState) return;
-  var job = S.jobs.find(function (j) { return j.id === packCardState.jobId; });
-  if (!job) { closeCardZone(); return; }
-  job.packCard = JSON.parse(JSON.stringify(packCardState.data));
-  Storage.saveJob(job)
-    .then(function () {
-      packCardState = null;
-      assetsOverlayState = null;
-      if (S) S.assetsOverlayJobId = null;
-      clearAssetsOverlayPulseTimers();
-      clearPackCardPulseTimers();
-      var el = document.getElementById('cardZoneOverlay');
-      if (el) el.classList.remove('on');
-      renderAll();
-      if (typeof toast === 'function') toast('PACK CARD SAVED');
-    })
-    .catch(function () {
-      if (typeof toastError === 'function') toastError('Pack card save failed');
-    });
 }
 
 // ============================================================
@@ -1522,7 +1453,7 @@ function addTodo(key) {
 // Replaces separate Press Log and QC Log entry surfaces.
 // ============================================================
 let logNumpadValue = '0';
-let logMode = 'ship';
+let logMode = (function () { try { return sessionStorage.getItem('logMode') || 'ship'; } catch (e) { return 'ship'; } })();
 let logAction = '';
 let logViewDate = new Date().toDateString();
 let pendingLogRejectQty = 0;
@@ -1583,7 +1514,6 @@ function selectLogJob(jobId) {
   S.logSelectedJob = (jobId && String(jobId).trim()) ? jobId : null;
   logNumpadValue = '0';
   logNumpadUpdateDisplay();
-  if (typeof hideShipAchtungComposer === 'function') hideShipAchtungComposer();
   renderLog();
 }
 

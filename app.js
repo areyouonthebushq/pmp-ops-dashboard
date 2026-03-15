@@ -2487,7 +2487,6 @@ function submitCautionPopup() {
   var textEl = document.getElementById('cautionPopupText');
   var reason = reasonEl ? reasonEl.value : '';
   var text = textEl ? textEl.value.trim() : '';
-  if (!reason) { toast('Select a reason'); return; }
   setCaution(jobId, reason, text);
   closeCautionPopup();
   closePanel();
@@ -2527,7 +2526,6 @@ function clearCaution(jobId) {
 /* PURGATORY: toggleShipAchtung, showShipAchtungComposer, hideShipAchtungComposer,
    confirmShipAchtung, cancelShipAchtung removed (2026-03-06).
    WRENCH popup (RSP) replaces this flow. See docs/purgatory-protocol.md. */
-function hideShipAchtungComposer() {} // no-op stub; called from setLogMode cleanup path
 
 // ============================================================
 // FULFILLMENT PHASE — set from RSP panel dropdown
