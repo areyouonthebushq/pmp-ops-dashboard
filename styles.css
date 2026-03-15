@@ -624,8 +624,10 @@
     margin: 0;
     padding: 0 var(--space-xs);
     font-family: 'Inconsolata', monospace;
-    font-size: 12px;
+    font-size: 22px;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     border: 1px solid var(--b2);
     cursor: pointer;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
