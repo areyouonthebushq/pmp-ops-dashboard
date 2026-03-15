@@ -458,54 +458,59 @@
     flex-direction: column;
     gap: var(--space-md);
     }
-    /* 2×2: row1 = control-rail | toggle (toggle matches full console height); row2 = textarea | + (+, textarea same height) */
+    /* Hierarchy: row1 = composer (textarea + add); row2 = filter bands (entity, type, stage) + toggle */
     #pg-dev .dev-composer-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto minmax(56px, auto);
+    grid-template-rows: minmax(56px, auto) auto;
     gap: var(--space-sm);
     align-items: stretch;
     }
-    #pg-dev .dev-composer-row .dev-control-rail { grid-column: 1; grid-row: 1; }
-    #pg-dev .dev-composer-row .dev-view-toggle { grid-column: 2; grid-row: 1; }
-    #pg-dev .dev-composer-row .dev-textarea { grid-column: 1; grid-row: 2; }
-    #pg-dev .dev-composer-row .dev-add-btn { grid-column: 2; grid-row: 2; }
+    #pg-dev .dev-composer-row .dev-control-rail { grid-column: 1; grid-row: 2; }
+    #pg-dev .dev-composer-row .dev-view-toggle { grid-column: 2; grid-row: 2; }
+    #pg-dev .dev-composer-row .dev-textarea { grid-column: 1; grid-row: 1; }
+    #pg-dev .dev-composer-row .dev-add-btn { grid-column: 2; grid-row: 1; }
+    /* Single band container: no outer box, one ruled line below to separate from notes list */
     .dev-control-rail {
     display: flex;
     flex-direction: column;
     gap: 0;
     border-bottom: 1px solid var(--b2);
-    padding-bottom: var(--space-sm);
+    padding-bottom: var(--space-md);
     }
-    /* Three instrument panels + EXPORT; Entity rail replaces devAreaSelect */
+    /* Three horizontal bands (Entity, Type, Stage); no per-panel frames */
     #pg-dev .dev-panels-row {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    flex-direction: column;
+    flex-wrap: nowrap;
     align-items: stretch;
-    gap: var(--space-sm);
+    gap: 0;
     width: 100%;
     }
     #pg-dev .dev-panel {
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    gap: 2px;
-    background: var(--s1);
-    border: 1px solid var(--b2);
-    padding: 4px;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--b2);
+    background: transparent;
     }
-    /* 50/25/25 so each button cell ≈ same width: Entity 4 cols, Type 2 cols, Stage 2 cols → 4:2:2 */
-    #pg-dev .dev-panel-entity { flex: 2 1 0; }
-    #pg-dev .dev-panel-type { flex: 1 1 0; }
-    #pg-dev .dev-panel-stage { flex: 1 1 0; }
+    #pg-dev .dev-panel:first-child { border-top: none; padding-top: 0; }
+    #pg-dev .dev-panel-entity { order: 1; }
+    #pg-dev .dev-panel-type { order: 2; }
+    #pg-dev .dev-panel-stage { order: 3; }
+    /* Structural label: quiet, editorial */
     #pg-dev .dev-panel-label {
     font-family: 'Inconsolata', monospace;
-    font-size: clamp(8px, 1.8vmin, 10px);
+    font-size: 9px;
     font-weight: 600;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.2em;
     color: var(--d3);
     text-transform: uppercase;
+    flex-shrink: 0;
+    width: 3.2em;
     }
     /* EXPORT hidden; will be relocated. Panels use full width. */
     #pg-dev .dev-export-wrap {
@@ -572,6 +577,7 @@
     background: var(--s2);
     max-height: 420px;
     overflow-y: auto;
+    margin-top: var(--space-md);
     }
     .dev-feed {
     padding: var(--space-sm);
@@ -776,69 +782,59 @@
     text-align: right;
     }
 
-    /* ============================================================ DEV 2.0 — three panels, grid of touching buttons */
+    /* DEV control bands: horizontal strips, segment-style options (no button matrix) */
     #pg-dev .dev-rail {
-    display: grid;
-    gap: 1px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-md);
     flex: 1 1 auto;
     min-height: 0;
-    }
-    /* Stage: 3×2; Type: 3×2; Entity: 4×3 (11 buttons). minmax(0,1fr) prevents overflow. */
-    #pg-dev .dev-panel-stage .dev-rail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(3, 1fr);
-    }
-    #pg-dev .dev-panel-type .dev-rail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(3, 1fr);
-    }
-    #pg-dev .dev-panel-entity .dev-rail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: repeat(3, 1fr);
+    align-items: center;
     }
     #pg-dev .dev-rail-btn {
-    min-height: clamp(28px, 6vmin, 32px);
+    min-height: 28px;
     margin: 0;
-    padding: 0 clamp(2px, 1vw, 4px);
+    padding: 2px 0;
     font-family: 'Inconsolata', monospace;
-    font-size: clamp(11px, 4vmin, 22px);
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 400;
     text-transform: uppercase;
-    letter-spacing: 0.02em;
-    border: 1px solid var(--b2);
+    letter-spacing: 0.08em;
+    border: none;
+    border-radius: 0;
     box-sizing: border-box;
     min-width: 0;
-    white-space: normal;
-    word-break: break-word;
-    line-height: 1.15;
-    text-align: center;
+    white-space: nowrap;
+    line-height: 1.2;
+    text-align: left;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
-    background: var(--s2);
-    color: var(--d2);
-    display: flex;
+    transition: color 0.12s, border-color 0.12s, font-weight 0.12s;
+    background: transparent;
+    color: var(--d3);
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    border-bottom: 2px solid transparent;
     }
     #pg-dev .dev-rail-btn:hover:not(.active) {
-    background: var(--s3);
+    color: var(--d2);
     }
-    /* One color per rail family: Stage green, Type blue, Entity purple (console only; feed meta stays grey) */
+    /* Active: precise, severe — family color + weight + rule only (no filled box) */
     #pg-dev .dev-panel-stage .dev-rail-btn.active {
-    background: hsl(140, 40%, 30%);
-    color: #a8e6a8;
-    border-color: hsl(140, 40%, 35%);
+    color: var(--g);
+    font-weight: 700;
+    border-bottom-color: var(--g2);
     }
     #pg-dev .dev-panel-type .dev-rail-btn.active {
-    background: hsl(210, 45%, 35%);
-    color: #a8c8f0;
-    border-color: hsl(210, 45%, 42%);
+    color: #8ab4e8;
+    font-weight: 700;
+    border-bottom-color: hsl(210, 45%, 42%);
     }
     #pg-dev .dev-panel-entity .dev-rail-btn.active,
     #pg-dev .dev-rail .dev-rail-btn.dev-entity-exception.active {
-    background: hsl(270, 40%, 35%);
     color: #d4b8f0;
-    border-color: hsl(270, 40%, 42%);
+    font-weight: 700;
+    border-bottom-color: hsl(270, 40%, 42%);
     }
     /* Narrow: stack panels and board columns vertically */
     @media (max-width: 720px) {
