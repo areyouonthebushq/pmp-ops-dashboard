@@ -4238,7 +4238,38 @@ function toastError(msg) {
 }
 
 // ============================================================
-// KEYBOARD — Escape, QC shortcuts (1-6), search focus (/), N new job
+// LOG CONSOLE — sound effects (quack / laser) + numpad keyboard
+// ============================================================
+function playLogQuack() {
+  try {
+    const C = window.PMP_LOG_AUDIO_CTX || (window.PMP_LOG_AUDIO_CTX = new (window.AudioContext || window.webkitAudioContext)());
+    const t = C.currentTime;
+    const play = (freq, start, dur, type) => {
+      const o = C.createOscillator();
+      const g = C.createGain();
+      o.connect(g); g.connect(C.destination);
+      o.type = type || 'sine'; o.frequency.setValueAtTime(freq, start); o.frequency.exponentialRampToValueAtTime(freq * 0.6, start + dur);
+      g.gain.setValueAtTime(0.15, start); g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+      o.start(start); o.stop(start + dur);
+    };
+    play(400, t, 0.06, 'sine'); play(280, t + 0.05, 0.08, 'sine');
+  } catch (err) {}
+}
+function playLogLaser() {
+  try {
+    const C = window.PMP_LOG_AUDIO_CTX || (window.PMP_LOG_AUDIO_CTX = new (window.AudioContext || window.webkitAudioContext)());
+    const t = C.currentTime;
+    const o = C.createOscillator();
+    const g = C.createGain();
+    const n = C.createBufferSource(); const buf = C.createBuffer(1, C.sampleRate * 0.08, C.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (d.length * 0.3)); n.buffer = buf; n.connect(g);
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.06); o.connect(g); g.connect(C.destination);
+    g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    o.start(t); o.stop(t + 0.08); n.start(t); n.stop(t + 0.08);
+  } catch (err) {}
+}
+
+// ============================================================
+// KEYBOARD — Escape, QC shortcuts (1-6), search focus (/), N new job, LOG numpad
 // ============================================================
 document.addEventListener('keydown', e => {
   const tag = document.activeElement?.tagName;
@@ -4424,6 +4455,25 @@ document.addEventListener('keydown', e => {
         triggerLocalSearchAction();
       }
       return;
+    }
+  }
+
+  if (!isTyping && !stationVisible && !isBlockingSurfaceOpen()) {
+    const logPg = document.getElementById('pg-log');
+    const onLog = logPg && logPg.classList.contains('on');
+    if (onLog && typeof logNumpadTap === 'function') {
+      if (e.key >= '0' && e.key <= '9') {
+        e.preventDefault();
+        logNumpadTap(e.key);
+        return;
+      }
+      if (e.key === 'Enter') {
+        if (typeof unifiedLogEnter === 'function' && typeof logNumpadValue !== 'undefined' && logNumpadValue !== '0' && S.logSelectedJob) {
+          e.preventDefault();
+          unifiedLogEnter();
+        }
+        return;
+      }
     }
   }
 

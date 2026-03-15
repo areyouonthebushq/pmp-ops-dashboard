@@ -2252,16 +2252,22 @@
     }
     .log-action-btn:hover:not(.active) { background: var(--s3); }
     .log-action-press { color: var(--d2); }
+    #pg-log .log-action-btn.log-action-press.active,
     .log-action-press.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
     .log-action-qcpass { color: var(--d2); }
+    #pg-log .log-action-btn.log-action-qcpass.active,
     .log-action-qcpass.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
     .log-action-qcreject { color: var(--d2); }
+    #pg-log .log-action-btn.log-action-qcreject.active,
     .log-action-qcreject.active { background: var(--r2); color: var(--r); border-color: var(--r2); }
     .log-action-packed { color: var(--d2); }
+    #pg-log .log-action-btn.log-action-packed.active,
     .log-action-packed.active { background: var(--cy2); color: var(--cy); border-color: var(--cy2); }
     .log-action-ready { color: var(--d2); }
+    #pg-log .log-action-btn.log-action-ready.active,
     .log-action-ready.active { background: var(--b3); color: var(--d); border-color: var(--b3); }
     .log-action-shipped { color: var(--d2); }
+    #pg-log .log-action-btn.log-action-shipped.active,
     .log-action-shipped.active { background: var(--g); color: #003d12; border-color: var(--g); }
     .quack-ico { display: inline-block; vertical-align: -0.125em; }
     .wrench-ico { display: inline-block; vertical-align: -0.125em; }
@@ -2313,31 +2319,32 @@
     align-items: center;
     justify-content: center;
     }
-    .log-enter-btn.log-enter-press { color: var(--w); background: var(--w2); border-color: var(--w2); }
-    .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gw); }
-    .log-enter-btn.log-enter-qcpass { color: var(--g); background: var(--g3); border-color: var(--g2); }
+    /* Theme colors when mode engaged (same specificity as base so they win) */
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-press { color: var(--w); background: var(--w2); border-color: var(--w2); }
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-press:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gw); }
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-qcpass { color: var(--g); background: var(--g3); border-color: var(--g2); }
     .log-enter-btn.log-enter-qcpass:hover:not(:disabled) { background: var(--g); color: #000; border-color: var(--g); box-shadow: var(--gg); }
-    .log-enter-btn.log-enter-qcreject { color: var(--r); background: var(--r2); border-color: var(--r2); }
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-qcreject { color: var(--r); background: var(--r2); border-color: var(--r2); }
     .log-enter-btn.log-enter-qcreject:hover:not(:disabled) { background: var(--r); color: #fff; border-color: var(--r); box-shadow: 0 0 8px rgba(255,82,82,0.5); }
-    .log-enter-btn.log-enter-packed { color: var(--cy); background: var(--cy2); border-color: var(--cy2); }
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-packed { color: var(--cy); background: var(--cy2); border-color: var(--cy2); }
     .log-enter-btn.log-enter-packed:hover:not(:disabled) { background: var(--cy); color: #000; border-color: var(--cy); box-shadow: var(--gcy); }
-    .log-enter-btn.log-enter-ready { color: var(--d); background: var(--b3); border-color: var(--b3); }
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-ready { color: var(--d); background: var(--b3); border-color: var(--b3); }
     .log-enter-btn.log-enter-ready:hover:not(:disabled) { background: var(--d); color: var(--s1); border-color: var(--d); box-shadow: 0 0 8px rgba(255,255,255,0.3); }
-    .log-enter-btn.log-enter-shipped { color: #003d12; background: var(--g); border-color: var(--g); }
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-shipped { color: #003d12; background: var(--g); border-color: var(--g); }
     .log-enter-btn.log-enter-shipped:hover:not(:disabled) { background: #33ff99; color: #002a0d; border-color: #33ff99; box-shadow: var(--gg); }
-    .log-enter-btn.log-enter-pickedup { color: var(--g); background: var(--g3); border-color: var(--g2); }
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-pickedup { color: var(--g); background: var(--g3); border-color: var(--g2); }
     .log-enter-btn.log-enter-pickedup:hover:not(:disabled) { background: var(--g); color: #000; border-color: var(--g); box-shadow: var(--gg); }
-    .log-enter-btn.log-enter-held { color: var(--w); background: var(--w2); border-color: var(--w2); }
+    #pg-log .log-main.log-faceplate .log-enter-btn.log-enter-held { color: var(--w); background: var(--w2); border-color: var(--w2); }
     .log-enter-btn.log-enter-held:hover:not(:disabled) { background: var(--w); color: #000; border-color: var(--w); box-shadow: var(--gw); }
     .log-enter-btn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
-    .log-enter-btn:disabled.log-enter-press { background: var(--s2); border-color: var(--b2); color: var(--d3); }
-    .log-enter-btn:disabled.log-enter-qcpass { background: var(--g3); color: var(--g); border-color: var(--g2); }
-    .log-enter-btn:disabled.log-enter-qcreject { background: var(--s2); border-color: var(--b2); color: var(--d3); }
-    .log-enter-btn:disabled.log-enter-packed { background: var(--s2); border-color: var(--b2); color: var(--d3); }
-    .log-enter-btn:disabled.log-enter-ready { background: var(--s2); border-color: var(--b2); color: var(--d3); }
-    .log-enter-btn:disabled.log-enter-shipped { background: var(--s2); border-color: var(--b2); color: var(--d3); }
-    .log-enter-btn:disabled.log-enter-pickedup { background: var(--s2); border-color: var(--b2); color: var(--d3); }
-    .log-enter-btn:disabled.log-enter-held { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    #pg-log .log-main.log-faceplate .log-enter-btn:disabled.log-enter-press { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    #pg-log .log-main.log-faceplate .log-enter-btn:disabled.log-enter-qcpass { background: var(--g3); color: var(--g); border-color: var(--g2); }
+    #pg-log .log-main.log-faceplate .log-enter-btn:disabled.log-enter-qcreject { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    #pg-log .log-main.log-faceplate .log-enter-btn:disabled.log-enter-packed { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    #pg-log .log-main.log-faceplate .log-enter-btn:disabled.log-enter-ready { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    #pg-log .log-main.log-faceplate .log-enter-btn:disabled.log-enter-shipped { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    #pg-log .log-main.log-faceplate .log-enter-btn:disabled.log-enter-pickedup { background: var(--s2); border-color: var(--b2); color: var(--d3); }
+    #pg-log .log-main.log-faceplate .log-enter-btn:disabled.log-enter-held { background: var(--s2); border-color: var(--b2); color: var(--d3); }
     .log-enter-btn:active { transform: scale(0.98); }
     .log-recent { margin-bottom: var(--space-lg); }
     .log-recent .progress-entry { padding: var(--space-xs) 0; border-bottom: 1px solid var(--b1); font-size: 12px; color: var(--d2); }

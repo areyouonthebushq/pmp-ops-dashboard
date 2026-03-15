@@ -1485,6 +1485,8 @@ function logNumpadUpdateDisplay() {
 
 function setLogAction(action) {
   logAction = action;
+  if (action === 'shipped' && typeof playLogQuack === 'function') playLogQuack();
+  else if (action && typeof playLogLaser === 'function') playLogLaser();
   renderLog();
 }
 
@@ -1520,6 +1522,8 @@ function selectLogJob(jobId) {
 async function unifiedLogEnter() {
   const n = parseInt(logNumpadValue, 10) || 0;
   if (n < 1 || !S.logSelectedJob) return;
+  if (logAction === 'shipped' && typeof playLogQuack === 'function') playLogQuack();
+  else if (logAction && typeof playLogLaser === 'function') playLogLaser();
   const job = S.jobs.find(j => j.id === S.logSelectedJob);
   const jobName = job ? (job.catalog || job.artist || '—') : '—';
 
