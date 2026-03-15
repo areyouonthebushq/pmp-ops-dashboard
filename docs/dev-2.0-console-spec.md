@@ -166,15 +166,79 @@ After patching, report: 1. Exact files changed. 2. Export or global: are the con
 - In index.html, replace (or augment) the single `devAreaSelect` dropdown with three containers, e.g. `id="devStageRail"`, `id="devTypeRail"`, `id="devEntityRail"`.
 - In `renderDevPage()` (or new `renderDevRails()`), for each rail: clear container, loop constants, create buttons, set `onclick` to the corresponding setter, set `classList.toggle('active', currentValue === key)`, append. Call this after existing DEV DOM setup.
 
+**Ready-to-use prompt for Cursor** (follows `docs/HOW_TO_PROMPT_CURSOR_SUCCESSFULLY.md`):
+
+```text
+Implement Step 2 only of docs/dev-2.0-console-spec.md: DEV rails HTML and render. Add the three button rails to the DEV page; do not change submit or persistence yet.
+
+PART 1 — HTML
+1. In index.html, inside the DEV page (pg-dev), in dev-control-rail / dev-toolbar: add three rail containers above or beside the existing devAreaSelect and EXPORT button. Use ids: devStageRail, devTypeRail, devEntityRail. Each is a wrapper (e.g. div) with class "dev-rail" so CSS can target it. You may keep devAreaSelect for now (filter) or remove it; spec says "replace or augment" — prefer adding the three rails and keeping EXPORT; if space is tight, the rails can replace the channel dropdown and filter can be revisited in Phase 2.
+2. Ensure the three containers are in the DOM and empty so render can fill them.
+
+PART 2 — Render
+3. In render.js, from DEV_STAGES, DEV_WORK_TYPES, DEV_ENTITIES (core.js): for each rail container by id, clear it, then for each constant entry create a button. Button: type="button", class "dev-rail-btn" plus the entry's cls (e.g. dev-stage-note), text = entry.label, onclick = call the corresponding setter with entry.key (setDevStage, setDevType, setDevEntity). After creating each button, set classList.toggle('active', currentValue === entry.key) where currentValue is devStage, devType, or devEntity respectively. Append button to the rail container.
+4. Call this rail-render logic from renderDevPage() after the existing DEV DOM setup (e.g. after devAreaSelect binding and before or after the feed render). You may factor a small function renderDevRails() that renderDevPage() calls.
+
+Requirements:
+- Do not change addDevNote, Storage.logDevNote, or the shape of the note payload. Step 4 will wire persistence.
+- Preserve existing DEV page behavior (textarea, + button, feed, export). Rails are additive.
+- Use the existing state (devStage, devType, devEntity) and setters (setDevStage, setDevType, setDevEntity). Constants are in core.js.
+
+After patching, report: 1. Exact files changed. 2. Where you placed the three rail containers in the layout (above textarea, same row as toolbar, etc.). 3. Whether devAreaSelect was kept or removed and why.
+```
+
 ### Step 3 — CSS for rails
 
 - Add `.dev-rail`, `.dev-rail-btn` base styles (similar to `.log-action-btn`: flex, border, cursor).
 - Add one theme class per option (e.g. `.dev-stage-note.active { … }`) and ensure `.dev-rail-btn.active` wins with sufficient specificity (e.g. `#pg-dev .dev-rail .dev-rail-btn.<option>.active`).
 
+**Ready-to-use prompt for Cursor** (follows `docs/HOW_TO_PROMPT_CURSOR_SUCCESSFULLY.md`):
+
+```text
+Implement Step 3 only of docs/dev-2.0-console-spec.md: CSS for the DEV 2.0 three rails. Styles only; no HTML or JS changes.
+
+PART 1 — Base rail styles
+1. Add .dev-rail: a horizontal flex container for the rail buttons (e.g. display: flex; flex-wrap: wrap; gap; align-items: center). Match the project’s spacing (var(--space-*) if available).
+2. Add .dev-rail-btn: base button style similar to .log-action-btn in styles.css (min-height, font-family Inconsolata, font-weight 700, border 1px solid var(--b2), cursor pointer, transition, background var(--s2), color var(--d2), display flex, align-items center, justify-content center). So the DEV rail buttons look like the LOG action row: compact, console-like.
+3. Add .dev-rail-btn:hover:not(.active) { background: var(--s3); } so unselected buttons have a hover state.
+
+PART 2 — Active (selected) theme per option
+4. For each DEV_STAGES key, add a rule so the button shows a theme color when .active. Use high specificity so it wins: #pg-dev .dev-rail .dev-rail-btn.dev-stage-note.active { … }, and similarly for dev-stage-playground, dev-stage-testing, dev-stage-live, dev-stage-the-shop, dev-stage-purgatory. Reuse the LOG palette where it fits (e.g. note = neutral, live = green, purgatory = muted, the_shop = amber) or assign a simple palette; spec says "reuse LOG’s approach" and "stage = one set of colors" for Phase 1.
+5. Same for DEV_WORK_TYPES: #pg-dev .dev-rail .dev-rail-btn.dev-type-bug.active, .dev-type-polish.active, … (bug could be red, polish green, think blue, etc.).
+6. Same for DEV_ENTITIES: #pg-dev .dev-rail .dev-rail-btn.dev-entity-rsp.active, … through dev-entity-audit. Entity rail can use a single neutral “selected” color (e.g. var(--g3) or var(--s3)) so all 11 don’t need 11 distinct colors.
+
+Requirements:
+- Do not change any LOG or other page styles. Scope limited to #pg-dev and .dev-rail, .dev-rail-btn.
+- Ensure .active wins over base: use #pg-dev .dev-rail .dev-rail-btn.<option>.active for every option so the theme color shows when that rail option is selected.
+
+After patching, report: 1. Exact file changed (should be styles.css only). 2. Where you placed the new block (e.g. after existing .dev-* rules, or in a new #pg-dev section). 3. Brief note on palette (which variables you used for stage vs type vs entity).
+```
+
 ### Step 4 — Wire submit and persistence
 
 - In `addDevNote()`: read `devStage`, `devType`, `devEntity` from state; pass to `Storage.logDevNote({ stage, type, entity, text, person, timestamp })`.
 - Extend storage/sync payload and Supabase schema (if applicable) to include `stage`, `type`, `entity`. Keep backward compatibility: notes without these fields remain valid.
+
+**Ready-to-use prompt for Cursor** (follows `docs/HOW_TO_PROMPT_CURSOR_SUCCESSFULLY.md`):
+
+```text
+Implement Step 4 only of docs/dev-2.0-console-spec.md: wire DEV rail state into submit and persistence. Notes must store optional stage, type, entity; existing notes without these fields remain valid.
+
+PART 1 — Submit
+1. In app.js, in addDevNote(): read the current devStage, devType, devEntity from the global state (they live in render.js; they are global so app.js can read them). Build the note payload to include stage, type, entity (strings; use "" when empty). Call Storage.logDevNote({ stage, type, entity, text, person, timestamp }) with those fields. Do not remove or change how text, person, timestamp are set; add the three new fields.
+2. Keep existing behavior: clear textarea after successful submit; call renderDevPage(). Do not clear rail selection after submit (spec: "optionally clear rail selection or leave it for next note" — leave it so the next note can reuse the same tags).
+
+PART 2 — Storage and sync
+3. In storage.js: ensure the payload passed to logDevNote is persisted. Wherever dev notes are written (local and/or Supabase), include stage, type, entity in the stored object. If the write path expects a fixed shape, extend it to accept and store these optional fields; notes missing stage/type/entity must still load and display (backward compatibility).
+4. If Supabase is used for dev_notes: ensure the table or sync payload includes stage, type, entity columns or keys. If the schema does not have them yet, add them as nullable or default null so existing rows remain valid. Document any schema change in a one-line comment or existing docs if applicable.
+
+Requirements:
+- Backward compatibility: reading old notes (no stage, type, entity) must not break. When displaying or exporting, treat missing fields as "" or "—".
+- Do not change the DEV rail UI, renderDevRails(), or the feed layout in this step. Step 5 will add feed display of stage/type/entity. This step is submit + persistence only.
+- Preserve existing export and filter behavior; extend export to include stage, type, entity columns if the export currently has columns (e.g. CSV), so exported data is complete.
+
+After patching, report: 1. Exact files changed. 2. Where stage/type/entity are written (local, Supabase, or both) and how backward compatibility is preserved. 3. Any schema or API change (e.g. Supabase column names) so we can document or migrate if needed.
+```
 
 ### Step 5 — Feed and filtering (Phase 2)
 

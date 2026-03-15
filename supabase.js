@@ -289,6 +289,9 @@
 
       const devNotes = (devRes.data || []).map((row) => ({
         area: row.area || '',
+        stage: row.stage != null ? String(row.stage) : '',
+        type: row.type != null ? String(row.type) : '',
+        entity: row.entity != null ? String(row.entity) : '',
         text: row.text || '',
         person: row.person || '',
         timestamp: row.timestamp || null,
@@ -383,6 +386,9 @@
         text: entry.text,
         person: entry.person || 'Unknown',
         timestamp: entry.timestamp || new Date().toISOString(),
+        stage: entry.stage != null ? entry.stage : null,
+        type: entry.type != null ? entry.type : null,
+        entity: entry.entity != null ? entry.entity : null,
       };
       const { error } = await client.from('dev_notes').insert(row);
       if (error) throw error;

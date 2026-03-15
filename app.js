@@ -354,7 +354,10 @@ function addDevNote() {
   if (!text) return;
   const person = currentDevPersonLabel();
   const timestamp = new Date().toISOString();
-  Storage.logDevNote({ area, text, person, timestamp })
+  const stage = (typeof devStage !== 'undefined' ? devStage : '') || '';
+  const type = (typeof devType !== 'undefined' ? devType : '') || '';
+  const entity = (typeof devEntity !== 'undefined' ? devEntity : '') || '';
+  Storage.logDevNote({ area, stage, type, entity, text, person, timestamp })
     .then(() => {
       textEl.value = '';
       renderDevPage();
@@ -376,13 +379,16 @@ function onDevAreaChange() {
 function exportDevNotes() {
   const notes = Array.isArray(S.devNotes) ? S.devNotes.slice() : [];
   if (!notes.length) return;
-  const rows = [['channel', 'timestamp', 'person', 'text']];
+  const rows = [['channel', 'stage', 'type', 'entity', 'timestamp', 'person', 'text']];
   notes
     .slice()
     .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0))
     .forEach(n => {
       rows.push([
         (n.area || '').replace(/"/g, '""'),
+        (n.stage != null ? String(n.stage) : '').replace(/"/g, '""'),
+        (n.type != null ? String(n.type) : '').replace(/"/g, '""'),
+        (n.entity != null ? String(n.entity) : '').replace(/"/g, '""'),
         n.timestamp || '',
         (n.person || '').replace(/"/g, '""'),
         (n.text || '').replace(/"/g, '""'),

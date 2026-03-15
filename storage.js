@@ -467,6 +467,9 @@ const Storage = {
     if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'logDevNote: ' + (entry.area || '?'), level: 'info' });
     const note = {
       area: entry.area || '',
+      stage: entry.stage != null ? String(entry.stage) : '',
+      type: entry.type != null ? String(entry.type) : '',
+      entity: entry.entity != null ? String(entry.entity) : '',
       text: entry.text || '',
       person: entry.person || '',
       timestamp: entry.timestamp || new Date().toISOString(),

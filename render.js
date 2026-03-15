@@ -443,6 +443,35 @@ function getDevAreaFilter() {
   return sel.value || '';
 }
 
+function renderDevRails() {
+  const stageEl = document.getElementById('devStageRail');
+  const typeEl = document.getElementById('devTypeRail');
+  const entityEl = document.getElementById('devEntityRail');
+  if (!stageEl || !typeEl || !entityEl) return;
+
+  function fillRail(container, options, currentValue, setterName) {
+    container.innerHTML = '';
+    if (!Array.isArray(options)) return;
+    options.forEach(function (entry) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'dev-rail-btn ' + (entry.cls || '');
+      btn.textContent = entry.label;
+      btn.onclick = function () {
+        if (setterName === 'setDevStage') setDevStage(entry.key);
+        else if (setterName === 'setDevType') setDevType(entry.key);
+        else if (setterName === 'setDevEntity') setDevEntity(entry.key);
+      };
+      btn.classList.toggle('active', currentValue === entry.key);
+      container.appendChild(btn);
+    });
+  }
+
+  fillRail(stageEl, typeof DEV_STAGES !== 'undefined' ? DEV_STAGES : [], devStage, 'setDevStage');
+  fillRail(typeEl, typeof DEV_WORK_TYPES !== 'undefined' ? DEV_WORK_TYPES : [], devType, 'setDevType');
+  fillRail(entityEl, typeof DEV_ENTITIES !== 'undefined' ? DEV_ENTITIES : [], devEntity, 'setDevEntity');
+}
+
 function renderDevPage() {
   const shell = document.getElementById('pg-dev');
   if (!shell) return;
@@ -457,6 +486,8 @@ function renderDevPage() {
     }).join('');
     sel.dataset.bound = '1';
   }
+
+  renderDevRails();
 
   const feedEl = document.getElementById('devFeed');
   if (!feedEl) return;

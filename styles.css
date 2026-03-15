@@ -536,6 +536,62 @@
     line-height: 1.4;
     }
 
+    /* ============================================================ DEV 2.0 — three rails (stage / type / entity) */
+    #pg-dev .dev-rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+    }
+    #pg-dev .dev-rail-btn {
+    min-height: 32px;
+    padding: 0 var(--space-md);
+    font-family: 'Inconsolata', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1px solid var(--b2);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--s2);
+    color: var(--d2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+    #pg-dev .dev-rail-btn:hover:not(.active) {
+    background: var(--s3);
+    }
+    /* Stage rail — active theme */
+    #pg-dev .dev-rail .dev-rail-btn.dev-stage-note.active { background: var(--s3); color: var(--d); border-color: var(--b2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-stage-playground.active { background: var(--cy2); color: var(--cy); border-color: var(--cy2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-stage-testing.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-stage-live.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-stage-the-shop.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-stage-purgatory.active { background: var(--s3); color: var(--d3); border-color: var(--b2); }
+    /* Work type rail — active theme */
+    #pg-dev .dev-rail .dev-rail-btn.dev-type-bug.active { background: var(--r2); color: var(--r); border-color: var(--r2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-type-polish.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-type-think.active { background: var(--b3); color: var(--d); border-color: var(--b3); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-type-tune-up.active { background: var(--cy2); color: var(--cy); border-color: var(--cy2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-type-purge.active { background: var(--s3); color: var(--d3); border-color: var(--b2); }
+    #pg-dev .dev-rail .dev-rail-btn.dev-type-debug.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
+    /* Entity rail — single neutral selected */
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-rsp.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-card.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-log.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-notes.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-floor.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-jobs.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-engine.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-dev.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-crew.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-pvc.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-audit.active {
+    background: var(--g3);
+    color: var(--g);
+    border-color: var(--g2);
+    }
+
     /* ============================================================ SIGNAL PILLS */
     .pill {
     display:inline-flex; align-items:center; gap: var(--space-xs);
