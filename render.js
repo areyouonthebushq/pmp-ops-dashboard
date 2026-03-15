@@ -408,6 +408,12 @@ function renderCrewPage() {
 let devStage = 'note';
 let devType = '';
 let devEntity = '';
+let devViewMode = 'feed';
+
+function setDevViewMode(mode) {
+  devViewMode = mode === 'board' ? 'board' : 'feed';
+  if (typeof renderDevPage === 'function') renderDevPage();
+}
 
 function setDevStage(value) {
   devStage = value;
@@ -478,6 +484,25 @@ function renderDevPage() {
   const isAdmin = S.mode === 'admin';
   shell.style.display = isAdmin ? '' : 'none';
 
+  if (!window._devEscapeBound) {
+    window._devEscapeBound = true;
+    document.addEventListener('keydown', function devEscapeHandler(e) {
+      if (e.key !== 'Escape') return;
+      var pg = document.getElementById('pg-dev');
+      if (!pg || pg.style.display === 'none') return;
+      if (document.activeElement && document.activeElement.id === 'devText') return;
+      devStage = '';
+      devType = '';
+      devEntity = '';
+      if (typeof renderDevPage === 'function') renderDevPage();
+    });
+  }
+
+  var feedBtn = document.getElementById('devViewFeedBtn');
+  var boardBtn = document.getElementById('devViewBoardBtn');
+  if (feedBtn) feedBtn.classList.toggle('active', devViewMode === 'feed');
+  if (boardBtn) boardBtn.classList.toggle('active', devViewMode === 'board');
+
   const sel = document.getElementById('devAreaSelect');
   if (sel && !sel.dataset.bound) {
     sel.innerHTML = [''].concat(DEV_AREAS).map(v => {
@@ -495,7 +520,37 @@ function renderDevPage() {
   const notes = (Array.isArray(S.devNotes) ? S.devNotes : []).slice().sort((a, b) => {
     return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
   });
-  const filtered = filter ? notes.filter(n => (n.area || '') === filter) : notes;
+  let filtered = filter ? notes.filter(n => (n.area || '') === filter) : notes;
+  if (devEntity) filtered = filtered.filter(n => (n.entity || '') === devEntity);
+  if (devType) filtered = filtered.filter(n => (n.type || '') === devType);
+  if (devStage) filtered = filtered.filter(n => (n.stage || 'note') === devStage);
+
+  if (devViewMode === 'board') {
+    var stages = typeof DEV_STAGES !== 'undefined' ? DEV_STAGES : [];
+    var summaryParts = stages.map(function (s) {
+      var count = filtered.filter(function (n) { return (n.stage || 'note') === s.key; }).length;
+      return '<div class="dev-board-summary-cell"><span class="dev-board-summary-num">' + count + '</span><span class="dev-board-summary-label">' + (s.label || s.key) + '</span></div>';
+    });
+    var totalHtml = '<div class="dev-board-summary-total">Total: ' + filtered.length + '</div>';
+    var summaryHtml = '<div class="dev-board-summary-row">' + summaryParts.join('') + '</div>' + totalHtml;
+    var colsHtml = stages.map(function (s) {
+      var colNotes = filtered.filter(function (n) { return (n.stage || 'note') === s.key; });
+      var headerCls = 'dev-board-header dev-board-header-' + (s.key === 'note' ? 'note' : s.key === 'playground' ? 'play' : s.key === 'testing' ? 'test' : s.key === 'live' ? 'live' : s.key === 'the_shop' ? 'shop' : 'purge');
+      var cardsHtml = colNotes.map(function (n) {
+        var text = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if (text.length > 120) text = text.slice(0, 117) + '...';
+        var entityLabel = (n.entity && typeof DEV_ENTITIES !== 'undefined') ? (DEV_ENTITIES.find(function (x) { return x.key === n.entity; }) || {}).label || n.entity : '';
+        var typeLabel = (n.type && typeof DEV_WORK_TYPES !== 'undefined') ? (DEV_WORK_TYPES.find(function (x) { return x.key === n.type; }) || {}).label || n.type : '';
+        var metaParts = [entityLabel, typeLabel].filter(Boolean);
+        var metaHtml = metaParts.length ? '<div class="dev-board-card-meta">' + metaParts.join(' · ') + '</div>' : '';
+        return '<div class="dev-board-card"><div class="dev-board-card-text">' + text.replace(/\n/g, '<br>') + '</div>' + metaHtml + '</div>';
+      }).join('');
+      return '<div class="dev-board-col"><div class="' + headerCls + '">' + (s.label || s.key) + '</div><div class="dev-board-col-body">' + cardsHtml + '</div></div>';
+    }).join('');
+    feedEl.innerHTML = '<div class="dev-board-wrap">' + summaryHtml + '<div class="dev-board-cols">' + colsHtml + '</div></div>';
+    return;
+  }
+
   if (!filtered.length) {
     feedEl.innerHTML = '<div class="empty">NO DEV NOTES YET</div>';
     return;

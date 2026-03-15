@@ -615,6 +615,165 @@
     line-height: 1.4;
     }
 
+    /* DEV view toggle: FEED | BOARD */
+    #pg-dev .dev-view-toggle {
+    display: flex;
+    gap: 1px;
+    }
+    #pg-dev .dev-view-toggle-btn {
+    flex: 1;
+    padding: 4px var(--space-sm);
+    font-family: 'Inconsolata', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: 1px solid var(--b2);
+    background: var(--s2);
+    color: var(--d3);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    #pg-dev .dev-view-toggle-btn:hover:not(.active) {
+    background: var(--s3);
+    color: var(--d2);
+    }
+    #pg-dev .dev-view-toggle-btn.active {
+    background: var(--g3);
+    color: var(--g);
+    border-color: var(--g2);
+    }
+
+    /* DEV board view — stage columns, summary, cards */
+    #pg-dev .dev-board-wrap {
+    padding: var(--space-sm);
+    }
+    #pg-dev .dev-board-summary-row {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1px;
+    margin-bottom: var(--space-sm);
+    background: var(--b2);
+    border: 1px solid var(--b2);
+    }
+    #pg-dev .dev-board-summary-cell {
+    background: var(--s1);
+    padding: 4px var(--space-xs);
+    text-align: center;
+    }
+    #pg-dev .dev-board-summary-num {
+    display: block;
+    font-family: 'Inconsolata', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--g);
+    }
+    #pg-dev .dev-board-summary-label {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--d3);
+    text-transform: uppercase;
+    }
+    #pg-dev .dev-board-summary-total {
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--d3);
+    margin-top: 2px;
+    }
+    #pg-dev .dev-board-cols {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--b2);
+    border: 1px solid var(--b2);
+    min-height: 200px;
+    }
+    #pg-dev .dev-board-col {
+    background: var(--s1);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    }
+    #pg-dev .dev-board-header {
+    padding: 6px 4px;
+    text-align: center;
+    font-family: 'Inconsolata', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 2px solid;
+    }
+    #pg-dev .dev-board-header-note {
+    color: #001a0a;
+    background: var(--g3);
+    border-color: var(--g2);
+    }
+    #pg-dev .dev-board-header-play {
+    color: #a8e6a8;
+    background: hsl(140, 35%, 22%);
+    border-color: hsl(140, 35%, 25%);
+    }
+    #pg-dev .dev-board-header-test {
+    color: #a8e6a8;
+    background: hsl(140, 30%, 18%);
+    border-color: hsl(140, 30%, 20%);
+    }
+    #pg-dev .dev-board-header-live {
+    color: #001a0a;
+    background: var(--g);
+    border-color: var(--g);
+    }
+    #pg-dev .dev-board-header-shop {
+    color: var(--w);
+    background: var(--w2);
+    border-color: var(--w2);
+    }
+    #pg-dev .dev-board-header-purge {
+    color: var(--d3);
+    background: var(--s2);
+    border-color: var(--b2);
+    }
+    #pg-dev .dev-board-col-body {
+    padding: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 400px;
+    overflow-y: auto;
+    min-height: 60px;
+    }
+    #pg-dev .dev-board-card {
+    background: var(--s2);
+    border: 1px solid var(--b2);
+    padding: 6px 8px;
+    font-family: 'Inconsolata', monospace;
+    font-size: 11px;
+    line-height: 1.35;
+    }
+    #pg-dev .dev-board-card:hover {
+    border-color: var(--b4);
+    }
+    #pg-dev .dev-board-card-text {
+    color: var(--d);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    line-clamp: 4;
+    }
+    #pg-dev .dev-board-card-meta {
+    margin-top: 4px;
+    font-size: 9px;
+    letter-spacing: 0.5px;
+    color: var(--d3);
+    text-transform: uppercase;
+    text-align: right;
+    }
+
     /* ============================================================ DEV 2.0 — three panels, grid of touching buttons */
     #pg-dev .dev-rail {
     display: grid;
@@ -679,7 +838,7 @@
     color: #d4b8f0;
     border-color: hsl(270, 40%, 42%);
     }
-    /* Narrow: stack panels vertically, one per row */
+    /* Narrow: stack panels and board columns vertically */
     @media (max-width: 720px) {
     #pg-dev .dev-panels-row {
       flex-direction: column;
@@ -692,6 +851,9 @@
       width: 100%;
       justify-content: flex-end;
       padding-left: 0;
+    }
+    #pg-dev .dev-board-cols {
+      grid-template-columns: 1fr;
     }
     }
 
