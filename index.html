@@ -415,14 +415,28 @@
     <div class="pg" id="pg-dev">
       <div class="dev-terminal">
         <div class="dev-control-rail">
-          <div id="devStageRail" class="dev-rail"></div>
-          <div id="devTypeRail" class="dev-rail"></div>
-          <div id="devEntityRail" class="dev-rail"></div>
-          <div class="dev-toolbar">
+          <div class="dev-panels-row">
+            <div class="dev-panel dev-panel-stage">
+              <span class="dev-panel-label">STAGE</span>
+              <div id="devStageRail" class="dev-rail"></div>
+            </div>
+            <div class="dev-panel dev-panel-type">
+              <span class="dev-panel-label">TYPE</span>
+              <div id="devTypeRail" class="dev-rail"></div>
+            </div>
+            <div class="dev-panel dev-panel-entity">
+              <span class="dev-panel-label">ENTITY</span>
+              <div id="devEntityRail" class="dev-rail"></div>
+            </div>
+            <div class="dev-export-wrap">
+              <button type="button" class="bar-btn dev-export-btn" onclick="exportDevNotes()">EXPORT</button>
+            </div>
+          </div>
+          <!-- devAreaSelect kept for JS (getDevAreaFilter / onDevAreaChange); hidden from UI, Entity rail replaces it -->
+          <div class="dev-area-select-wrap" aria-hidden="true">
             <select id="devAreaSelect" class="fs dev-area-select" onchange="onDevAreaChange()">
               <option value="">ALL CHANNELS</option>
             </select>
-            <button type="button" class="bar-btn dev-export-btn" onclick="exportDevNotes()">EXPORT</button>
           </div>
         </div>
         <div class="dev-utility-row">

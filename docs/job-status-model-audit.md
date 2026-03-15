@@ -133,7 +133,7 @@ Per pipeline taxonomy and this audit:
 
 ## 5. Highest-value cleanup moves (if any)
 
-1. **Document the “assembly” double meaning** (status vs field) in `informationarchitecturev3.md` or a short glossary so future changes don’t blur the line.
+1. **Document the “assembly” double meaning** (status vs field) in `INFORMATION-ARCHITECTURE.md` or a short glossary so future changes don’t blur the line.
 2. **Optional hold_reason (or “reason on hold”)** — When status = hold, a short optional field (text or enum) for “Billing,” “Client,” “Traffic jam,” etc. Enables “Show all billing holds” without parsing notes. Low code cost, high clarity; can be phased in later.
 3. **Suggested status copy** — Panel already shows “Suggested: ASSEMBLY — Off press at qty; QC pending.” No structural change; ensure copy stays aligned with pipeline taxonomy (e.g. “Assembly” = post-press/packing).
 4. **Do not add statuses** — Resist adding “packing,” “ready to ship,” or “stuck” as statuses. Use notes + optional hold_reason / fulfillment_phase instead.

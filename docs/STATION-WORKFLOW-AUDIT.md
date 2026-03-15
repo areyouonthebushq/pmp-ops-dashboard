@@ -3,6 +3,8 @@
 **Goal:** Ensure each station behaves like the correct operational surface for that role.  
 **Focus:** Workflow fit, not design language.
 
+**Note:** Press Station shell purged. These paths are now accessed via LOG console and Floor. See `purgatory-protocol.md`.
+
 ---
 
 ## 1. Press Station

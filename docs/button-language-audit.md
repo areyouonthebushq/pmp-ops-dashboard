@@ -521,7 +521,7 @@ The following docs should be updated once button/control language is normalized:
 | Document | Why |
 |----------|-----|
 | `docs/achtung-protocol.md` | References button labels in trigger surfaces section |
-| `docs/informationarchitecturev3.md` | Entry/exit points section references control labels |
+| `docs/INFORMATION-ARCHITECTURE.md` | Entry/exit points section references control labels |
 | `docs/STYLE-NORMALIZATION-PLAN.md` | Should incorporate button hierarchy and color role rules |
 | `docs/engine-language-guide.md` | ENGINE block click behavior and chart controls |
 | `docs/INTERACTION-CONSISTENCY-AUDIT.md` | Existing audit — should cross-reference this one |

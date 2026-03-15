@@ -1,7 +1,7 @@
 # PMP OPS — Capability Map Overlay
 
 **Strategic capability mapped onto the current Information Architecture.**  
-Use with `docs/informationarchitecturev3.md`.  
+Use with `docs/INFORMATION-ARCHITECTURE.md`.  
 *Read-only planning memo — no code changes.*
 
 ---
@@ -9,7 +9,7 @@ Use with `docs/informationarchitecturev3.md`.
 ## 1. Executive Summary
 
 **What PMP OPS is now**  
-PMP OPS is the **floor execution and operational visibility** layer for the plant: one place to see what’s running where, log production and outbound movement (LOG 2.0 with PRESS and OUTBOUND modes), track job-level notes and asset readiness, check packing readiness (PACK CARD), see fulfillment phase at a glance (SHIP), manage a compound library, and (with CREW) who’s here and who’s scheduled today. It holds job state, progress log (8 stages from pressed through held), QC log, notes channels, assets per job, pack card state, fulfillment phase, caution/blocker state, and audit history. It is optimized for real-time use in the room—press grid, LOG faceplate, station shells, TV view—and for “project memory” that lives next to the job (notes, assembly log, assets, PO/contract image).
+PMP OPS is the **floor execution and operational visibility** layer for the plant: one place to see what’s running where, log production and outbound movement (LOG 2.0 with PRESS and OUTBOUND modes), track job-level notes and asset readiness, check packing readiness (Card Zone PACKING), see fulfillment phase via LOG SHIP and Card Zone (SHIP page purged), manage a compound library, and (with CREW) who’s here and who’s scheduled today. It holds job state, progress log (8 stages from pressed through held), QC log, notes channels, assets per job, pack card state, fulfillment phase, caution/blocker state, and audit history. It is optimized for real-time use in the room—press grid, LOG faceplate, station shells, TV view—and for “project memory” that lives next to the job (notes, assembly log, assets, PO/contract image).
 
 **What it is not**  
 It is not a CRM, not a general document store, not a customer-facing portal, not a full project/task scheduler, and not (yet) the single source of truth for “job” across the business. It does not own lead pipeline, contracts/invoicing, broad task boards, or formal approval workflows. It does not replace Bitrix for those.
@@ -24,7 +24,7 @@ Without it, “what to build next” and “what stays in Bitrix” are fuzzy. T
 
 ## 2. Surface-by-Surface Capability Map
 
-*(Surfaces from IA v3. Includes SHIP, PACK CARD, LOG 2.0 dual-mode, and CREW as implemented.)*
+*(Surfaces from canonical IA. SHIP page purged; PACK CARD = Card Zone PACKING. LOG 2.0 single 6-action console; CREW as implemented.)*
 
 ### FLOOR (pg-floor)
 
@@ -95,7 +95,9 @@ Without it, “what to build next” and “what stays in Bitrix” are fuzzy. T
 
 ---
 
-### SHIP (pg-ship)
+### SHIP (purged — pg-ship removed)
+
+SHIP page purged. Fulfillment phase and RSP dropdown remain; LOG SHIP actions and Card Zone PACKING cover the workflow. See `purgatory-protocol.md` and INFORMATION-ARCHITECTURE.md § IA Purgatory.
 
 | Aspect | Assessment | Label |
 |--------|------------|--------|
@@ -415,4 +417,4 @@ Tempting Bitrix-like or generic features that would distract from floor and exec
 
 ---
 
-*End of Capability Map Overlay. Updated to reflect PACK CARD, LOG 2.0 (PRESS + OUTBOUND), and SHIP architecture. Use with `docs/informationarchitecturev3.md` for structure and `docs/PLANT-FEEDBACK-SYNTHESIS.md` for source-of-truth options and roadmap context.*
+*End of Capability Map Overlay. Updated to reflect PACK CARD, LOG 2.0 (PRESS + OUTBOUND), and SHIP architecture. Use with `docs/INFORMATION-ARCHITECTURE.md` for structure and `docs/PLANT-FEEDBACK-SYNTHESIS.md` for source-of-truth options and roadmap context.*

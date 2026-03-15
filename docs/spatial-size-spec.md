@@ -551,7 +551,7 @@ After implementing the normalization opportunities above, the following docs sho
 | `docs/button-language-spec.md` | Cross-reference the canonical control size tiers defined here. Section 5 (Color/Style Rules) can reference this spec for spatial details. |
 | `docs/spatial-surface-families.md` | Mark as superseded-by or companion-to this spec, since this spec now includes family definitions with normalization rules. |
 | `docs/spatial-size-audit.md` | No changes needed — the audit is the evidence base. This spec is the prescription. |
-| `docs/informationarchitecturev3.md` | Update the surface taxonomy section to reference the six canonical families. |
+| `docs/INFORMATION-ARCHITECTURE.md` | Update the surface taxonomy section to reference the six canonical families. |
 | `docs/engine-language-guide.md` | Cross-reference the Instrument family spatial rules for ENGINE-specific terminology. |
 
 ### Documents this spec supersedes

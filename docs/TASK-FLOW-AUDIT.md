@@ -158,9 +158,11 @@
 
 ### 2.9 Press: Sign in → choose press → enter work surface
 
+**Note:** Press Station shell purged. These paths are now accessed via LOG console and Floor. See `purgatory-protocol.md`.
+
 | # | Aspect | Detail |
 |---|--------|--------|
-| 1 | **Entry point** | Login (if auth) → Launcher. Launcher shows only "Press" (picker); tap Press → row of presses (Press 1, 2, 3, 7") → tap one. |
+| 1 | **Entry point** | Login (if auth) → Launcher. *(Historically: Press picker → Press 1/2/3/7".)* Launcher now: Admin, Floor Manager (role-gated), QC Station. |
 | 2 | **Required screens** | Launcher → press picker row → Press station shell. |
 | 3 | **Steps** | 1 (Press) + 1 (Press 1/2/3/7") = 2. |
 | 4 | **Obvious or hidden** | Obvious. One button then four press buttons. |

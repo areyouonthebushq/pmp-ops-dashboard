@@ -1,5 +1,7 @@
 # PMP OPS — Information Architecture v3
 
+> **Archived.** Superseded by [`INFORMATION-ARCHITECTURE.md`](INFORMATION-ARCHITECTURE.md). This file is retained as a historical snapshot.
+
 **Full information architecture map of the application.**  
 Includes one-sheets, visual references, and code-anchored structure.  
 *Nashville · Press Floor Operations · physicalmusicproducts.com*

@@ -454,7 +454,7 @@ After normalization work is implemented, update these docs:
 | Document | What to update |
 |----------|---------------|
 | `docs/achtung-protocol.md` | Verify button labels in the trigger surfaces and surface behavior sections match normalized labels |
-| `docs/informationarchitecturev3.md` | Update entry/exit point descriptions to use canonical control names |
+| `docs/INFORMATION-ARCHITECTURE.md` | Update entry/exit point descriptions to use canonical control names |
 | `docs/STYLE-NORMALIZATION-PLAN.md` | Incorporate button hierarchy, close-button rule, and color-role rules from this spec |
 | `docs/engine-language-guide.md` | Verify ENGINE control labels (period strip, compare toggles) match spec |
 | `docs/INTERACTION-CONSISTENCY-AUDIT.md` | Cross-reference this spec for resolved vs unresolved items |

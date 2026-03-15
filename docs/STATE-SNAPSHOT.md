@@ -11,7 +11,7 @@
 | Path | Purpose |
 |------|--------|
 | `index.html` | Single-page shell: login screen, launcher, TV view, app (#app), nav, floor/jobs/todos/qc/audit pages, slide panel, floor card overlay, confirm dialog, FAB; script/config for Supabase and app.js; SW registration. |
-| `app.js` | All app logic: state (S), storage layer, sync/realtime/polling, launcher, auth bootstrap, stations (press/QC/floor manager), admin shell, panel/floor card, CSV import/export, backup export, audit page, offline snapshot/queue/replay, theme. |
+| `app.js` | All app logic: state (S), storage layer, sync/realtime/polling, launcher, auth bootstrap, stations (QC/floor manager; Press Station purged), admin shell, panel/floor card, CSV import/export, backup export, audit page, offline snapshot/queue/replay, theme. |
 | `styles.css` | Design system (vars), layout, shell/mode/launcher, bar/nav, panels, floor card, station shells, TV, audit/offline/data-changed styles, minimal theme. |
 | `sw.js` | Service worker: precache shell (index.html, styles.css, app.js, supabase.js); fetch network-first with cache fallback for same-origin shell. |
 
@@ -57,7 +57,7 @@
 
 ### Launcher / station entry
 
-- **Present.** `#modeScreen` with Admin, Floor Manager, Press (picker p1–p4), QC; `enterByLauncher(choice, pressId)`; last choice persisted in localStorage; `applyLauncherByRole()` shows/hides buttons by `getAuthRole()`. Main files: `index.html`, `app.js`.
+- **Present.** `#modeScreen` with Admin, Floor Manager (role-gated), QC Station; last choice persisted in localStorage; `applyLauncherByRole()` shows/hides buttons by `getAuthRole()`. Press Station launcher and shell purged. Main files: `index.html`, `app.js`.
 
 ### Admin shell
 
@@ -65,7 +65,7 @@
 
 ### Press Station
 
-- **Present.** `#pressStationShell`, `openPressStation(pressId)`, `renderPressStationShell()`, log pressed (+10/+25/+50/+100), hold/resume, save note; `getStationContext()` / `getStationPress()` / `getStationJob()`; permissions from `getStationEditPermissions()` (press: canLogPressProgress only when on assigned press when role is press). Main files: `app.js`, `index.html`, `styles.css`.
+- **Purged.** Shell, launcher button, and dedicated UI removed. LOG console and Floor press grid now cover this workflow. See `purgatory-protocol.md`.
 
 ### QC Station
 
@@ -189,7 +189,7 @@ Wiring: index.html loads config → Supabase CDN → supabase.js → app.js. On 
 - [ ] Realtime updates appear across two browsers/tabs
 - [ ] Local fallback works when Supabase URL/key removed or init fails
 - [ ] Station launcher shows only allowed stations per role
-- [ ] Press station logging works (and only for assigned press when role is press)
+- [ ] Press logging via LOG + Floor (Press Station purged)
 - [ ] QC reject logging works
 - [ ] Floor manager inspect/edit (floor card quick edit) works and is gated by role
 - [ ] Audit page loads for admin and shows rows (and fails or is hidden for non-admin)
@@ -214,7 +214,7 @@ Wiring: index.html loads config → Supabase CDN → supabase.js → app.js. On 
 3. **Manual test**  
    - Login → launcher → Admin: full nav, export, backup, audit.  
    - Logout → login again; refresh with session → launcher without login.  
-   - Second role (e.g. press with assigned_press_id): launcher shows only Press, enter and log progress.  
+   - Second role (e.g. QC or floor_manager): launcher shows allowed stations; enter and use. (Press Station purged — see purgatory-protocol.md.)  
    - Two browsers: change data in one, confirm Realtime in the other (and panel-open notice when panel is open).  
    - Turn off network after one load: confirm OFFLINE and cached data; queue a write; turn on network and confirm replay.
 

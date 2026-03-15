@@ -49,7 +49,7 @@ These can be done in a single CSS session with no HTML changes, no JS changes, a
 
 **What:** Add `max-width: 1200px; margin: 0 auto;` to the five board-family page containers.
 
-**Where in CSS:** Target the table-wrapper or page-content containers for `#pg-floor`, `#pg-jobs`, `#pg-ship`, `#pg-crew`, `#pg-audit`. The simplest approach is a shared class on each page's content wrapper, or five individual rules.
+**Where in CSS:** Target the table-wrapper or page-content containers for `#pg-floor`, `#pg-jobs`, `#pg-crew`, `#pg-audit`. (`#pg-ship` purged — see `purgatory-protocol.md`.) The simplest approach is a shared class on each page's content wrapper, or four individual rules.
 
 **Expected result:** On screens wider than 1200px, board content centers with balanced gutters. On screens 1200px and narrower (most laptops), no visible change. Tables stop stretching. Columns stop drifting. Scan speed improves immediately.
 

@@ -458,11 +458,47 @@
     }
     .dev-control-rail {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-md);
+    flex-direction: column;
+    gap: 0;
     border-bottom: 1px solid var(--b2);
     padding-bottom: var(--space-sm);
+    }
+    /* Three instrument panels + EXPORT; Entity rail replaces devAreaSelect */
+    #pg-dev .dev-panels-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: var(--space-sm);
+    width: 100%;
+    }
+    #pg-dev .dev-panel {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--s1);
+    border: 1px solid var(--b2);
+    padding: 4px;
+    }
+    #pg-dev .dev-panel-label {
+    font-family: 'Inconsolata', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--d3);
+    text-transform: uppercase;
+    }
+    #pg-dev .dev-export-wrap {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    padding-left: var(--space-sm);
+    }
+    /* devAreaSelect kept for JS; hidden from UI */
+    #pg-dev .dev-area-select-wrap {
+    display: none !important;
     }
     .dev-rail-label {
     font-size: 11px;
@@ -530,28 +566,49 @@
     .dev-entry-area {
     color: var(--w);
     }
+    .dev-entry-tags {
+    font-family: 'Inconsolata', monospace;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--d3);
+    margin-top: var(--space-xs);
+    text-align: right;
+    }
     .dev-entry-text {
     font-size: 13px;
     color: var(--d);
     line-height: 1.4;
     }
 
-    /* ============================================================ DEV 2.0 — three rails (stage / type / entity) */
+    /* ============================================================ DEV 2.0 — three panels, grid of touching buttons */
     #pg-dev .dev-rail {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    align-items: center;
+    display: grid;
+    gap: 1px;
+    flex: 1 1 auto;
+    min-height: 0;
+    }
+    #pg-dev .dev-panel-stage .dev-rail {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    }
+    #pg-dev .dev-panel-type .dev-rail {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    }
+    #pg-dev .dev-panel-entity .dev-rail {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 1fr);
     }
     #pg-dev .dev-rail-btn {
-    min-height: 32px;
-    padding: 0 var(--space-md);
+    min-height: 28px;
+    margin: 0;
+    padding: 0 var(--space-xs);
     font-family: 'Inconsolata', monospace;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     border: 1px solid var(--b2);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
     background: var(--s2);
     color: var(--d2);
     display: flex;
@@ -589,7 +646,23 @@
     #pg-dev .dev-rail .dev-rail-btn.dev-entity-audit.active {
     background: var(--g3);
     color: var(--g);
-    border-color: var(--g2);
+    border-color: var(--g);
+    box-shadow: inset 0 0 0 1px rgba(0,230,118,0.2);
+    }
+    /* Narrow: stack panels vertically, one per row */
+    @media (max-width: 720px) {
+    #pg-dev .dev-panels-row {
+      flex-direction: column;
+    }
+    #pg-dev .dev-panel {
+      flex: 1 1 auto;
+      min-width: 100%;
+    }
+    #pg-dev .dev-export-wrap {
+      width: 100%;
+      justify-content: flex-end;
+      padding-left: 0;
+    }
     }
 
     /* ============================================================ SIGNAL PILLS */

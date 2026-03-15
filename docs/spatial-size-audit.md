@@ -435,7 +435,7 @@ Single member. The RSP is the only true workbench surface — a persistent editi
 |----------|---------------|
 | `docs/button-language-spec.md` | Add spatial placement rules (form control size tiers, button size tiers) |
 | `docs/STYLE-NORMALIZATION-PLAN.md` | Incorporate board-family max-width, typography scale, close-button normalization |
-| `docs/informationarchitecturev3.md` | Update surface family taxonomy with spatial families |
+| `docs/INFORMATION-ARCHITECTURE.md` | Update surface family taxonomy with spatial families |
 | `docs/engine-language-guide.md` | Note ENGINE's spatial relationship to the console family |
 
 ### Recommended new asset

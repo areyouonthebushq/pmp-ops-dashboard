@@ -68,7 +68,7 @@ What we should actively show.
 - **Floor view** — Press status cards, active jobs table, assign job (admin), click catalog → panel or floor card.
 - **Panel: edit + progress** — Open job → EDIT → change status or field → SAVE JOB; + LOG STACK (person, stage, qty); show recent entries.
 - **LOG page** — Select job → PRESS (or PASS/REJECT) → numpad → LOG PRESS → toast and recent; REJECT with defect type and QC log.
-- **Press Station** — Enter as press (or admin) → single press, job, progress, numpad → LOG +N PRESSED → toast.
+- **LOG + Floor (Press Station purged)** — Press operators use LOG console and Floor; LOG +N PRESSED → toast.
 - **QC (LOG or QC station)** — Enter as QC → LOG or QC station → select job → log pass or reject with type.
 - **Sync bar** — After save or log, point to "● SYNCED" (or SAVING → SYNCED) for persistence.
 - **Progress detail** — From floor or panel, open progress breakdown for one job (pressed/QC/rejected/remaining).
@@ -106,7 +106,7 @@ A short suggested flow using the strongest surfaces.
 3. **Floor** — Point to press status cards and active jobs table; assign a job to a press (dropdown); click a catalog → panel or floor card.
 4. **Panel** — Open job → EDIT → change a field → SAVE JOB. Then + LOG STACK (person, stage, qty); show recent progress.
 5. **LOG** — Nav → LOG → select same job → PRESS → numpad → LOG PRESS → toast. Then PASS or REJECT with defect type; show recent/QC log.
-6. **Press Station** — Launcher → Press → pick press → see job and progress → LOG +N PRESSED → toast.
+6. **LOG (Press Station purged)** — Launcher → Admin or QC; use LOG console for job → PRESS → numpad → LOG +N PRESSED → toast.
 7. **Sync bar** — After any save or log, point to "● SYNCED" (or SAVING → SYNCED): "Everything persists here."
 8. **Optional** — Progress detail for one job; or "If I try to delete, we confirm first" (then cancel). Audit only at the end if it works: "Admins can see change history."
 

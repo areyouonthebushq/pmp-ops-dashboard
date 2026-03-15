@@ -9,7 +9,7 @@ Not a reports page. Not a dashboard. The engine room.
 
 ## 1. Executive summary
 
-PMP OPS has strong surfaces for **doing work** (LOG, FLOOR, PACK CARD, NOTES) and for **seeing state** (JOBS, SHIP, Assets). What it does not yet have is a surface that answers the factory-scale question: **is the machine moving?**
+PMP OPS has strong surfaces for **doing work** (LOG, FLOOR, Card Zone PACKING, NOTES) and for **seeing state** (JOBS, LOG SHIP / Card Zone; SHIP page purged, Assets). What it does not yet have is a surface that answers the factory-scale question: **is the machine moving?**
 
 ENGINE is that surface. It is a data-first console that reads the same `progressLog`, job, press, and caution data the rest of the app already produces — and compresses it into big, scanable telemetry blocks. Think: factory engine room dials, not a spreadsheet. Mastering rack VU meters, not a pivot table.
 
@@ -27,7 +27,7 @@ ENGINE does not replace any existing surface. It reads the same data, shows it a
 | **Movement-first** | Every block answers a movement question: how many pressed today, how many QC'd, how many packed, how many quacked. |
 | **Click-through, not click-around** | Each block is a portal. Click → detail view or jump to the surface that owns that data. |
 | **Live** | ENGINE reads current state on render. No stale cache, no "run report." Same render cycle as FLOOR/JOBS. |
-| **A read surface** | ENGINE does not write data. LOG writes. FLOOR writes. PACK CARD writes. ENGINE reads. |
+| **A read surface** | ENGINE does not write data. LOG writes. FLOOR writes. Card Zone (PACKING face) writes. ENGINE reads. |
 | **In-family** | Same nav bar, same tokens, same visual grammar as the rest of PMP OPS. It should feel like a page the machine already wanted to have. |
 
 ### Thematic direction
@@ -135,7 +135,7 @@ Each block has a fixed structure:
 | PRESSES | FLOOR page |
 | ⚠ CAUTIONED | Detail list of cautioned jobs (inline expand); click job → RSP |
 | PACKED (MTD) | LOG page (SHIP mode, action = packed) |
-| READY / ON SKID | SHIP page |
+| READY / ON SKID | (SHIP page purged; use LOG SHIP + Card Zone PACKING) |
 | QPM | Detail view: monthly trend (inline expand, last 3–6 months) |
 
 ### 5.4 Date/period controls
@@ -213,7 +213,7 @@ ENGINE should be usable as a TV surface (fullscreen, no nav bar). This means:
 - Block 4: inline expand showing yield per job (top 5 by reject count).
 - Block 5: navigate to FLOOR.
 - Block 6: inline expand showing cautioned jobs list; click job → open RSP.
-- Block 8: navigate to SHIP.
+- Block 8: navigate to LOG or Card Zone (SHIP page purged).
 - Block 9: inline expand showing monthly totals (last 3 months).
 
 ### 7.3 MVP data computation
@@ -261,7 +261,7 @@ These are ordered roughly by leverage and feasibility, not by sequence commitmen
 | **3a** | **QPM goal line** | Set a monthly Quack target. Rail shows progress vs. goal. Block glows green when on pace, amber when behind. |
 | **3b** | **Yield alert** | If daily yield drops below threshold (e.g. 90%), the YIELD block turns red / pulses. No notification system — just visual. |
 | **3c** | **Press uptime / utilization** | Track press online hours vs. idle. Requires new data (press status timestamps — not yet logged). |
-| **4a** | **Pack readiness pipeline** | Block showing: jobs with `packHealth < 100%` vs. jobs approaching ship. PACK CARD data, read-only. |
+| **4a** | **Pack readiness pipeline** | Block showing: jobs with `packHealth < 100%` vs. jobs approaching ship. Card Zone PACKING data, read-only. |
 | **4b** | **Time-in-status** | How long have cautioned jobs been cautioned? How long have queued jobs been queued? Requires timestamps already present in `caution.since` and status change logs. |
 | **4c** | **Weekly / monthly summary** | Expand date controls to week and month views. Aggregate blocks for broader periods. |
 | **5** | **Ambient mode** | ENGINE as a slow-cycling ambient display (rotate through blocks one at a time, full-screen number + rail). For wall-mounted displays. |
@@ -291,28 +291,28 @@ ENGINE is the **dashboard** of the movement LOG writes. They are complementary. 
 
 The PRESSES block on ENGINE is a compressed read of what FLOOR shows in detail. Click → FLOOR.
 
-### 9.3 ENGINE and PACK CARD
+### 9.3 ENGINE and Card Zone PACKING
 
-| | ENGINE | PACK CARD |
+| | ENGINE | Card Zone (PACKING) |
 |---|---|---|
 | **Altitude** | Aggregate readiness signal | Per-job checklist |
 | **Data read** | Could read `packHealth()` across jobs (later phase) | Job-scoped `packCard` JSONB |
 
-In MVP, ENGINE does not read PACK CARD data directly. In a later phase, a "Pack Readiness" block could show how many jobs are pack-ready vs. not. PACK CARD remains the detail surface.
+In MVP, ENGINE does not read Card Zone PACKING data directly. In a later phase, a "Pack Readiness" block could show how many jobs are pack-ready vs. not. Card Zone PACKING remains the detail surface.
 
 ### 9.4 ENGINE and NOTES
 
 ENGINE does not read or surface notes directly. NOTES is the explanation/context layer. If ENGINE shows a cautioned job and the user clicks through, they land in RSP or NOTES — where the context lives.
 
-### 9.5 ENGINE and SHIP
+### 9.5 ENGINE and SHIP (purged)
 
-| | ENGINE | SHIP |
+| | ENGINE | SHIP (purged) |
 |---|---|---|
-| **Altitude** | Aggregate output numbers | Per-job fulfillment phase |
-| **READY block** | Count of units in `ready` stage | Jobs grouped by fulfillment phase |
-| **QPM block** | Total shipped + picked_up, current month | Phase visibility surface |
+| **Altitude** | Aggregate output numbers | (was: per-job fulfillment phase) |
+| **READY block** | Count of units in `ready` stage | SHIP page purged; use LOG SHIP + Card Zone PACKING |
+| **QPM block** | Total shipped + picked_up, current month | — |
 
-The READY block on ENGINE and the SHIP page answer the same question at different altitudes. ENGINE says "820 units ready." SHIP says "here are the jobs, here's their phase."
+The READY block on ENGINE answered the same question as the former SHIP page at different altitudes. SHIP page purged. See `purgatory-protocol.md`.
 
 ### 9.6 Summary: surface altitude map
 
@@ -325,13 +325,13 @@ The READY block on ENGINE and the SHIP page answer the same question at differen
                      │ click-through
   MEDIUM ALTITUDE (page-level)
   ┌──────┬───────┬──────┬──────┬───────────┐
-  │FLOOR │ JOBS  │ LOG  │ SHIP │ CREW/PVC  │
+  │FLOOR │ JOBS  │ LOG  │(SHIP purged)│ CREW/PVC  │
   │where │ what  │count │phase │ who/what  │
   └──┬───┴───┬───┴──┬───┴──┬───┴───────────┘
      │       │      │      │
   LOW ALTITUDE (job-scoped)
   ┌──────┬──────────┬──────────┬────────────┐
-  │ RSP  │ASSET CARD│PACK CARD │  NOTES     │
+  │ RSP  │RECEIVING │Card Zone PACKING│  NOTES     │
   │detail│readiness │pack-ready│ context    │
   └──────┴──────────┴──────────┴────────────┘
 ```
@@ -366,7 +366,7 @@ ENGINE sits at the top of this stack. It does not compete with any surface below
 
 ### Step 4: Click-through (small)
 
-- Wire block clicks: navigate to LOG/FLOOR/SHIP as specified.
+- Wire block clicks: navigate to LOG/FLOOR (SHIP page purged) as specified.
 - Inline expand for YIELD (per-job), CAUTIONED (job list), QPM (monthly totals).
 
 ### Step 5: Polish + TV readiness (small)
@@ -423,7 +423,7 @@ This is the same date logic LOG already uses for its daily feed.
 Suggested placement: after LOG, before NOTES.
 
 ```
-NAV: [FLOOR] [JOBS] [TODOS] [LOG] [ENGINE] [NOTES] [SHIP] [PVC] [CREW] [AUDIT] [DEV]
+NAV: [FLOOR] [JOBS] [TODOS] [LOG] [ENGINE] [NOTES] [PVC] [CREW] [AUDIT] [DEV] (SHIP purged)
 ```
 
 ENGINE sits between the write surface (LOG) and the context surface (NOTES). It is the read layer between doing and explaining.

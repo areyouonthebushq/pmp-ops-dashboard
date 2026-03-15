@@ -1,3 +1,5 @@
+> **Archived.** Superseded by [`achtung-protocol.md`](../achtung-protocol.md). Retained as historical reference.
+
 # ACHTUNG Expansion Plan (Historical)
 
 > **Status:** Historical — superseded by `achtung-protocol-unification-plan.md` and `achtung-canonical-model.md`.

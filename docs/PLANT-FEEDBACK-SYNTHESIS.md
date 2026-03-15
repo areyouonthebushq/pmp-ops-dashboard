@@ -33,7 +33,7 @@ The plant is asking for **three layers at once**:
 | Theme | Plain-language summary |
 |-------|-------------------------|
 | “Make it look more like Pip-Boy” | Request for a distinct, “console” or “machine” aesthetic — high contrast, monospace/technical feel, not generic SaaS. |
-| Console / machine feel | UI should feel like equipment: immediate, readable, at-a-glance. Aligns with existing LOG console, Press Station, and status-rail work. |
+| Console / machine feel | UI should feel like equipment: immediate, readable, at-a-glance. Aligns with existing LOG console and status-rail work. (Press Station purged — see `purgatory-protocol.md`.) |
 | Detail view on assets / mockups | Need to see assets (and ideally mockups) in context — not just checkmarks, but “what does this look like?” in a detail view. |
 
 **Product takeaway:** Visual identity and “machine feel” fit the current prototype (tone, typography, layout). Asset *detail* view (expand to see more) fits now; full mockup/photo upload and storage is a larger feature.
@@ -103,7 +103,7 @@ The plant is asking for **three layers at once**:
 
 ### NOW — Fits current prototype direction
 
-- **Console / machine feel** — Continue refining LOG console, Press Station, status rails, and typography so the app feels like floor equipment.
+- **Console / machine feel** — Continue refining LOG console, status rails, and typography so the app feels like floor equipment. (Press Station purged.)
 - **Rejects must not block logging** — Allow logging when rejects exceed current pressed count (or cap validation); treat as “needs reconciliation” instead of hard block.
 - **Asset detail view** — Expand asset row or add a simple detail view (e.g. overlay or panel) to see more than checkmarks (labels, who received, dates) using existing asset data.
 - **Change visibility in-place** — Improve existing “Data updated elsewhere” and refresh flow; optional: show “recent changes” or last-edited on job/panel without new backend.

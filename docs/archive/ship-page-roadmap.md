@@ -1,3 +1,5 @@
+> **Archived.** SHIP page purged. See [`purgatory-protocol.md`](../purgatory-protocol.md) and [`INFORMATION-ARCHITECTURE.md`](../INFORMATION-ARCHITECTURE.md) § IA Purgatory. Retained as historical reference.
+
 # SHIP Page Roadmap — Lightweight Fulfillment / Pickup / Shipping
 
 > **⚠ SUPERSEDED** — SHIP page was implemented, then hidden from nav (2026-03-04). Its role has been absorbed by LOG SHIP actions (BOXED/READY/QUACK), Card Zone PACKING face, and the JOBS LIVE column. This document is preserved as historical reference. See `docs/purgatory-protocol.md` for current status.
@@ -186,4 +188,4 @@ Phase 2 stays within “operational surface + proof”; it does not add TMS or C
 
 ---
 
-*End of SHIP Page Roadmap. See `docs/pipeline-taxonomy.md` for fulfillment stage mapping and `docs/informationarchitecturev3.md` for current IA and data model.*
+*End of SHIP Page Roadmap. See `docs/pipeline-taxonomy.md` for fulfillment stage mapping and `docs/INFORMATION-ARCHITECTURE.md` for current IA and data model.*

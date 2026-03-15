@@ -1,3 +1,5 @@
+> **Archived.** Superseded by [`achtung-protocol.md`](../achtung-protocol.md). Retained as historical reference.
+
 # ACHTUNG Protocol — Unification Plan
 
 > **Status:** Superseded by `docs/achtung-protocol.md`. Retained for historical context.
@@ -365,7 +367,7 @@ After code unification is complete, update docs in this order:
 |---|----------|--------|------------|
 | **1** | `docs/achtung-protocol.md` **(new)** | Create the canonical living reference for the unified ACHTUNG protocol. Define: meaning, lifecycle, data model, note contract, reason vocabulary, surface expectations. | — |
 | **2** | `docs/achtung-expansion-plan.md` (renamed from `caution-expansion-plan.md`) | Add header marking it as **historical / superseded by `achtung-protocol.md`**. Do not delete — it's useful context for how the protocol evolved. | #1 |
-| **3** | `docs/informationarchitecturev3.md` | Normalize "caution" → "ACHTUNG" in user-facing descriptions. Update Card Zone references. Add ACHTUNG protocol to the glossary. Reference `achtung-protocol.md`. | #1 |
+| **3** | `docs/OLD_informationarchitecturev3.md` | Normalize "caution" → "ACHTUNG" in user-facing descriptions. Update Card Zone references. Add ACHTUNG protocol to the glossary. Reference `achtung-protocol.md`. | #1 |
 | **4** | `docs/engine-language-guide.md` | Strengthen ACHTUNG entry. Confirm "Achtung" is the protocol name, not a reason. Add `attention` and `mismatch` to the vocabulary. | #1 |
 | **5** | `docs/engine-page-spec.md` | Rename CAUTIONED to ACHTUNG in block/metric labels. Add standalone ACHTUNG block to the spec. | #1 |
 | **6** | `docs/engine-metric-map.md` | Rename CAUTIONED metric to ACHTUNG. Update label/definition. | #1 |

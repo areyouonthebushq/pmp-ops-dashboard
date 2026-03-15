@@ -1,3 +1,5 @@
+> **Archived.** Press Station shell purged. See [`purgatory-protocol.md`](../purgatory-protocol.md). Retained as historical reference.
+
 # Press Station sync error — exact error surface (audit only)
 
 No code changed. Purpose: shortest path to the raw Supabase error.

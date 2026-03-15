@@ -2,7 +2,9 @@
 
 **Goal:** Plan an integrated running-total/status rail so the quantity-entry surfaces feel like complete machine instruments. Audit and proposal only; no patches applied.
 
-**Scope:** LOG console (#pg-log), Press Station shell (stations.js). Data from existing `getJobProgress(job)` (core.js); no data model changes.
+**Note:** Press Station shell purged. These paths are now accessed via LOG console and Floor. See `purgatory-protocol.md`.
+
+**Scope:** LOG console (#pg-log). (Press Station shell purged.) Data from existing `getJobProgress(job)` (core.js); no data model changes.
 
 ---
 

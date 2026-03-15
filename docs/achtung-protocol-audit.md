@@ -534,7 +534,7 @@ The term "caution" appears extensively. The term "achtung" appears in limited, s
 
 | Document | Current state | What needs updating |
 |----------|--------------|---------------------|
-| `docs/informationarchitecturev3.md` | Uses "caution" throughout. References old overlay names. | Normalize to ACHTUNG terminology. Update Card Zone references. Add protocol summary section. |
+| `docs/INFORMATION-ARCHITECTURE.md` | Uses "caution" throughout. References old overlay names. | Normalize to ACHTUNG terminology. Update Card Zone references. Add protocol summary section. |
 | `docs/capability-map-overlay.md` | Uses "caution" throughout. | Normalize terminology. Add ACHTUNG as a cross-system protocol capability. |
 | `docs/pipeline-taxonomy.md` | Uses "caution" to describe blocker recommendations. | Normalize terminology. Reference ACHTUNG as the canonical exception mechanism. |
 | `docs/engine-page-spec.md` | Defines CAUTIONED block, references caution. | Rename to ACHTUNG in metric labels. Clarify standalone vs. BLOCKERS bundling. |

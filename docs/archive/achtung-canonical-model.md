@@ -1,3 +1,5 @@
+> **Archived.** Findings folded into [`achtung-protocol.md`](../achtung-protocol.md). Retained as historical reference.
+
 # ACHTUNG — Canonical Model
 
 > **Status:** Superseded by `docs/achtung-protocol.md`. Retained for historical context.

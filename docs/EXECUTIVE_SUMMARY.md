@@ -7,7 +7,7 @@ PMP · OPS is a **floor-focused operations console** for a physical music produc
 - Tracks **press-floor work-in-progress** as jobs (orders) move from pressing through assembly and QC.
 - Provides **append-only operational logs** (press events, QC events, production/assembly notes).
 - Gives the floor and management a **shared situational picture** (what’s running, where, how far along, what’s blocked).
-- Coordinates work across different **stations** (Admin, Floor, Press Station, QC Station, TV/statboard).
+- Coordinates work across different **stations** (Admin, Floor Manager, QC Station, TV/statboard). Press Station purged — see `purgatory-protocol.md`.
 
 It runs entirely in the browser, with data persisted either:
 
@@ -50,8 +50,8 @@ The app serves several distinct but overlapping roles:
   - Uses **Floor view**, **LOG (unified log)**, and **NOTES** as day-to-day tools.
 
 - **Press operators**
-  - Log units pressed and sometimes QC outcomes from a **press-specific station shell**.
-  - Interact with a simplified, **single-press view**, not the whole admin UI.
+  - Log units pressed and QC outcomes via the **LOG console** and **Floor** (no dedicated Press Station; that shell was purged).
+  - Interact with LOG faceplate and Floor view rather than a separate station UI.
 
 - **QC operators**
   - Rapidly log rejects by defect type at a **QC Station** with a defect palette.
@@ -92,11 +92,7 @@ The app serves several distinct but overlapping roles:
   - Focused tools for **logging QC rejects** by defect type with minimal friction.
   - Summaries and breakdowns by type, date, and job where relevant.
 
-- **Press Station shell**
-  - A **mode-locked environment** for a single press, with:
-    - Current job identity and status.
-    - A localized logging console for that press only.
-  - Reduces cognitive noise for operators who only care about “their press.”
+- **Press Station shell** — **Purged.** Former single-press logging shell removed. LOG console and Floor press grid cover this workflow. See `purgatory-protocol.md`.
 
 - **Audit page**
   - **Admin-only** view into a Supabase-backed audit log.
@@ -145,7 +141,7 @@ The system **does not** try to be a CRM, chat tool, or deep workflow engine. It�
   - Needs to **backtrack history** when something goes wrong → append-only logs + Audit + NOTES.
 
 - **Press operator**
-  - Needs to know **“what should I be running right now?”** → Press Station + Floor.
+  - Needs to know **“what should I be running right now?”** → LOG + Floor (Press Station purged).
   - Needs a **simple way to log counts** without fear of breaking the system → faceplate-style console, single-number input, append-only logging.
 
 - **QC operator**

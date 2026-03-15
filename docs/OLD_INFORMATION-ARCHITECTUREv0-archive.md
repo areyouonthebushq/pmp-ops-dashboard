@@ -1,5 +1,9 @@
 # PMP OPS — Information Architecture
 
+> **Historical IA — superseded by [`INFORMATION-ARCHITECTURE.md`](INFORMATION-ARCHITECTURE.md). Preserved for alternate/unchosen paths.**
+
+---
+
 A single-page operations dashboard for vinyl production: **where is every job, what’s on each press, and what’s next.** This document describes the product’s information architecture in three layers—surfaces, flows, and data—with an emphasis on operational clarity.
 
 ---

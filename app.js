@@ -349,7 +349,6 @@ function addDevNote() {
   const areaEl = document.getElementById('devAreaSelect');
   const textEl = document.getElementById('devText');
   if (!areaEl || !textEl) return;
-  const area = (areaEl.value || '').trim();
   const text = (textEl.value || '').trim();
   if (!text) return;
   const person = currentDevPersonLabel();
@@ -357,6 +356,8 @@ function addDevNote() {
   const stage = (typeof devStage !== 'undefined' ? devStage : '') || '';
   const type = (typeof devType !== 'undefined' ? devType : '') || '';
   const entity = (typeof devEntity !== 'undefined' ? devEntity : '') || '';
+  // When entity is set, use it for legacy area (uppercase) so top-left label shows; else keep dropdown value
+  const area = (entity && String(entity).trim()) ? String(entity).toUpperCase() : (areaEl && (areaEl.value || '').trim()) || '';
   Storage.logDevNote({ area, stage, type, entity, text, person, timestamp })
     .then(() => {
       textEl.value = '';

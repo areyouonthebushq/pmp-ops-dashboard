@@ -104,6 +104,8 @@
 
 ## 7. Press station log
 
+**Note:** Press Station shell purged. These paths are now accessed via LOG console and Floor. See `purgatory-protocol.md`.
+
 | Field | Detail |
 |-------|--------|
 | **Initiating UI/action** | Press Station shell → numpad qty → "LOG +N PRESSED" (or "LOG PRESSED"). |

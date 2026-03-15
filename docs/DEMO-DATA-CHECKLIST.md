@@ -35,7 +35,7 @@ Last-mile checklist before importing and before showing Piper. Use with **docs/D
 - [ ] Floor stats show expected counts (e.g. Active, Queued, Total open).
 - [ ] At least one job appears on a **press card** (if CSV has pressing + press).
 - [ ] Clicking a job row opens the **right-side panel** with that job’s data.
-- [ ] **Press station** (launcher → Press 1 / 2): assigned job shows; can log quantity if needed.
+- [ ] **Press logging** (Press Station purged): use LOG console and Floor; assigned job shows on Floor; log quantity via LOG.
 - [ ] **QC** (launcher → QC or nav → QC Log): job list shows pressing/assembly jobs; can select and log reject.
 
 ---
@@ -47,7 +47,7 @@ Last-mile checklist before importing and before showing Piper. Use with **docs/D
 | **Floor** | Table lists non-done jobs; catalog, artist, album, format, color, qty, status, due visible; stats (ACTIVE, QUEUED, etc.) match expectations; clicking a row opens panel. |
 | **Press cards** | Each PRESS 1–4 (and 7" if used) shows “NO JOB ASSIGNED” or the job from CSV; job line shows catalog, artist, format, color, qty, due; progress bar and assets area present. |
 | **Right-side panel** | Open a job from floor → panel shows same catalog, artist, album; status, press, qty, format, color, due, location, notes match CSV; SAVE works. |
-| **Press station** | Launcher → choose a press → station shows assigned job (catalog, artist) and progress; numpad and LOG PRESSED work. |
+| **Press logging** | (Press Station purged.) Use LOG console: select job, PRESS, numpad, LOG; or Floor for assignment. |
 | **QC station** | Launcher → QC (or nav → QC Log) → “Select job” list includes pressing/assembly jobs from CSV; select one, enter qty, pick defect, log reject → toast; total and pills update. |
 
 ---

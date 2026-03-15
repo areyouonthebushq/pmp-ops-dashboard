@@ -1,5 +1,7 @@
 # PIN Login for Press Operators (Design — Future)
 
+**Note:** Press Station shell purged. PIN design retained as historical reference for future station auth. See `purgatory-protocol.md`.
+
 Design note for a future feature. **No implementation yet**; this documents the direction for when it’s time to build.
 
 ## Goal

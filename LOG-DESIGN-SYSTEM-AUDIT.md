@@ -1,5 +1,7 @@
 # Phase 1 — Design system audit (launcher / station menu)
 
+**Note:** Press Station shell purged. Launcher and station references to Press Station are historical. See `docs/purgatory-protocol.md`.
+
 ## 1. Spacing tokens (existing)
 
 | Token        | Value |

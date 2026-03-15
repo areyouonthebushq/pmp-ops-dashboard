@@ -32,9 +32,9 @@ This document is a high-level technical overview of the PMP · OPS dashboard as 
 - Declares the **overall page structure**, including:
   - Navigation bar and page shells (`#pg-jobs`, `#pg-floor`, `#pg-log`, `#pg-notes`, `#pg-audit`, station shells).
   - Key containers for dynamic content (`jobsTbl`, `floorTbl`, `logDailyFeed`, `notesFeed`, etc.).
-  - Mode launcher (Admin / Floor Manager / Press / QC).
+  - Mode launcher (Admin, Floor Manager role-gated, QC Station). Press Station launcher and shell purged — see `purgatory-protocol.md`.
   - Login screen (for Supabase auth).
-  - Station shells (Press Station, QC Station) and overlays.
+  - Station shells (QC Station, Floor Manager). Press Station shell purged — see `purgatory-protocol.md`. Overlays.
 - Loads:
   - Fonts, Sentry, Supabase client.
   - `supabase.js`, `styles.css`, and the main JS bundle(s).
@@ -46,7 +46,7 @@ This document is a high-level technical overview of the PMP · OPS dashboard as 
   - Navigation, toolbar, tables, progress bars.
   - LOG console faceplate.
   - NOTES terminal and notes feed.
-  - Station shells (Press Station, QC).
+  - Station shells (QC, Floor Manager). Press Station purged.
   - Auth and launcher views.
 - Emphasizes an **industrial console aesthetic** with:
   - Dark surfaces, narrow borders, and clear typographic hierarchy.
@@ -88,7 +88,7 @@ This document is a high-level technical overview of the PMP · OPS dashboard as 
     - Delegating to `renderNotesPage` and storage for persistence.
   - Mode / station selection:
     - Launcher actions.
-    - Enter/exit for Press Station and QC Station shells.
+    - Enter/exit for QC Station and Floor Manager shells. (Press Station shell purged — LOG console and Floor press grid cover that workflow.)
 
 #### 2.5 `render.js`
 
@@ -100,7 +100,7 @@ This document is a high-level technical overview of the PMP · OPS dashboard as 
   - **Notes page rendering**, including:
     - Per-job and per-channel notes.
     - NOTES feed composition (identity, payload, provenance).
-  - Station UIs (Press Station, QC Station subsets).
+  - Station UIs (QC Station, Floor Manager subsets). Press Station purged.
 
 - Rendering is mostly **string-based templating**: functions create HTML strings and assign them to `innerHTML` of specific containers.
 
@@ -279,7 +279,7 @@ The front-end enforcement and the Supabase RLS policies must stay in sync concep
   - Progress counts and QC summaries are calculated through shared helper functions, reducing duplication.
 
 - **Station shells**:
-  - Press Station and QC Station reuse core logic but present **role-specific subsets** of UI and actions.
+  - QC Station and Floor Manager reuse core logic but present **role-specific subsets** of UI and actions. Press Station shell purged — see `purgatory-protocol.md`; LOG console and Floor press grid cover that workflow.
   - This pattern reduces risk of cross-role mistakes while keeping the codebase unified.
 
 - **Console-like surfaces**:

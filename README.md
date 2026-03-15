@@ -16,7 +16,7 @@ It replaces whiteboards, text messages, spreadsheets, and the question "where is
 | Role | Station | What they do |
 |------|---------|-------------|
 | **Admin** | Full workspace | Create jobs, assign presses, manage assets, export data |
-| **Press Operator** | Press Station | Log pressed quantities per stack, hold/resume jobs |
+| **Press Operator** | LOG + Floor | Log pressed quantities via LOG console and Floor (Press Station purged) |
 | **QC Inspector** | QC Station | Rapid reject logging by defect type, tied to jobs |
 | **Floor Manager** | Floor Manager | Scan-first operations overview, quick-edit statboard |
 | **Everyone** | TV Mode | Wall-mounted display showing press status and queue |
@@ -69,7 +69,6 @@ Minimal theme available (toggle: `MIN` button) — same layout, black/white/gray
 Role-based stations share a common `station-shell` CSS component and read from the same state object `S`. Each station has scoped edit permissions:
 
 - **Admin**: Full panel access, all fields editable
-- **Press Station**: Log pressed quantities only, hold/resume
 - **QC Station**: Log rejects only
 - **Floor Manager**: Quick-edit statboard (status, press, location, due, notes)
 

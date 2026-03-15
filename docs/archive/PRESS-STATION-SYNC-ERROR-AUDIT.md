@@ -1,3 +1,5 @@
+> **Archived.** Press Station shell purged. See [`purgatory-protocol.md`](../purgatory-protocol.md). Retained as historical reference.
+
 # Press Station sync error — root-cause audit
 
 Audit-only. No code or SQL changed. Purpose: identify the exact failing operation so a fix can be applied.

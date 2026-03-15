@@ -2,7 +2,7 @@
 
 Punch-list for live demo readiness after the new-job consistency patch. Only issues that could disrupt the exact flow below are listed.
 
-**Demo flow:** 1. Launcher → 2. Admin floor → 3. Open existing job (right-side panel) → 4. Create new job (chooser → manual wizard) → 5. Import CSV (chooser) → 6. Press station → 7. QC station → 8. Refresh persistence → 9. Exit to launcher/login.
+**Demo flow:** 1. Launcher → 2. Admin floor → 3. Open existing job (right-side panel) → 4. Create new job (chooser → manual wizard) → 5. Import CSV (chooser) → 6. LOG (Press Station purged — use LOG console) → 7. QC station → 8. Refresh persistence → 9. Exit to launcher/login.
 
 ---
 
@@ -10,7 +10,7 @@ Punch-list for live demo readiness after the new-job consistency patch. Only iss
 
 **No demo blocker found.**
 
-- Entry (demo/login) and station choice (Admin, Press 1–4, QC) work; `#app` is shown for Admin/QC; null guards on `modeScreen` and `app` avoid throws if elements exist.
+- Entry (demo/login) and launcher choice (Admin, Floor Manager, QC Station; Press Station purged) work; `#app` is shown for Admin/QC; null guards on `modeScreen` and `app` avoid throws if elements exist.
 
 ---
 
@@ -51,11 +51,13 @@ Punch-list for live demo readiness after the new-job consistency patch. Only iss
 
 ---
 
-## 6. Press station
+## 6. Press station (purged)
+
+**Note:** Press Station shell purged. Use LOG console and Floor. See `purgatory-protocol.md`.
 
 **No demo blocker found.**
 
-- Launcher → Press 1/2/3/4 → `enterByLauncher('press', pressId)` → `openPressStation` → shell and render. Log quantity → `pressStationLogPressed` → `logJobProgress` → `Storage.logProgress`. Assignment and display match.
+*(Historically: Launcher → Press 1/2/3/4 → openPressStation → shell. Log quantity → pressStationLogPressed → logJobProgress.)* Today: LOG console for logging; Floor for assignment and display.
 
 ---
 
@@ -92,7 +94,7 @@ Punch-list for live demo readiness after the new-job consistency patch. Only iss
 | 3. Open existing job | No | — |
 | 4. New job (chooser → wizard) | No | Low: N and Escape with chooser/wizard open. |
 | 5. Import CSV via chooser | No | — |
-| 6. Press station | No | — |
+| 6. LOG (Press Station purged) | No | — |
 | 7. QC station | No | — |
 | 8. Refresh persistence | No | — |
 | 9. Exit to launcher/login | No | — |

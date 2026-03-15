@@ -502,18 +502,31 @@ function renderDevPage() {
   }
   feedEl.innerHTML = filtered.map(n => {
     const ts = n.timestamp ? new Date(n.timestamp).toLocaleString() : '';
-    const area = n.area || '';
-    const person = n.person || '';
+    const area = (n.area != null ? String(n.area) : '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const person = (n.person != null ? String(n.person) : '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const text = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `
-      <div class="dev-entry">
-        <div class="dev-entry-head">
-          <span class="dev-entry-area">${area}</span>
-          <span class="dev-entry-meta">${person || '—'} · ${ts}</span>
-        </div>
-        <div class="dev-entry-text">${text.replace(/\n/g, '<br>')}</div>
-      </div>
-    `;
+    const stageKey = n.stage != null && n.stage !== '' ? String(n.stage) : '';
+    const typeKey = n.type != null && n.type !== '' ? String(n.type) : '';
+    const stageLabel = stageKey && typeof DEV_STAGES !== 'undefined'
+      ? (DEV_STAGES.find(function (x) { return x.key === stageKey; }) || {}).label || stageKey
+      : '';
+    const typeLabel = typeKey && typeof DEV_WORK_TYPES !== 'undefined'
+      ? (DEV_WORK_TYPES.find(function (x) { return x.key === typeKey; }) || {}).label || typeKey
+      : '';
+    const tagsParts = [stageLabel, typeLabel].filter(Boolean);
+    const tagsHtml = tagsParts.length
+      ? '<div class="dev-entry-tags">' + tagsParts.join(' · ') + '</div>'
+      : '';
+    return (
+      '<div class="dev-entry">' +
+      '<div class="dev-entry-head">' +
+      '<span class="dev-entry-area">' + area + '</span>' +
+      '<span class="dev-entry-meta">' + (person || '—') + ' · ' + ts + '</span>' +
+      '</div>' +
+      '<div class="dev-entry-text">' + text.replace(/\n/g, '<br>') + '</div>' +
+      tagsHtml +
+      '</div>'
+    );
   }).join('');
 }
 

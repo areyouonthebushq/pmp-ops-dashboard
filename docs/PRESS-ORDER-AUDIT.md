@@ -2,6 +2,8 @@
 
 **Audit-only. No patches applied.**
 
+**Note:** Press Station shell purged. Launcher now shows Admin, Floor Manager (role-gated), QC Station. See `purgatory-protocol.md`.
+
 ---
 
 ## PHASE 1 — Press order regression audit

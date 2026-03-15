@@ -1,6 +1,6 @@
 # LOG 2.0 — Single Console, Two Modes
 
-> **⚠ SUPERSEDED IN PART** — The mode toggle described in this plan has been removed. LOG is now a single 6-action console (PRESS · PASS · REJECT · BOXED · READY · QUACK) with no toggle. "OUTBOUND" has been replaced by "SHIP" as the action family name. "PACKED" is now "BOXED", "SHIPPED" is now "QUACK". This document is preserved as historical reference. See `docs/informationarchitecturev3.md` §6.3 for current LOG spec.
+> **⚠ SUPERSEDED IN PART** — The mode toggle described in this plan has been removed. LOG is now a single 6-action console (PRESS · PASS · REJECT · BOXED · READY · QUACK) with no toggle. "OUTBOUND" has been replaced by "SHIP" as the action family name. "PACKED" is now "BOXED", "SHIPPED" is now "QUACK". This document is preserved as historical reference. See `docs/INFORMATION-ARCHITECTURE.md` §6.3 for current LOG spec. **Note:** Press Station purged. LOG 2.0 design applies to LOG console. See `purgatory-protocol.md`.
 
 **Purpose:** Plan LOG 2.0 as a unified console with mode switching between production/press logging and late-stage outbound logging. One console family, one source of truth, one event grammar.
 

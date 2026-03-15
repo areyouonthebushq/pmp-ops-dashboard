@@ -166,4 +166,4 @@ Conventions (e.g. “Start note with [SHIP] for shipping-related”) can be docu
 
 ---
 
-*End of Pipeline Taxonomy. For data model and status definitions see `core.js` (STATUS_ORDER, STATUS_OPTS, PROGRESS_STAGES) and `informationarchitecturev3.md`.*
+*End of Pipeline Taxonomy. For data model and status definitions see `core.js` (STATUS_ORDER, STATUS_OPTS, PROGRESS_STAGES) and `INFORMATION-ARCHITECTURE.md`.*

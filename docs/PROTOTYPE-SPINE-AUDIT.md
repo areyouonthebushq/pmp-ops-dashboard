@@ -383,7 +383,9 @@
 
 ## 3. Recommended prototype spine (one paragraph)
 
-The prototype spine is: **role-aware entry** (launcher shows Admin / Press / QC by role; optional login); **job records** (create one job via FAB → Manual Entry wizard, edit in panel, view on Floor and Jobs); **production logging** (log pressed qty from LOG page or Press Station with numpad and enter); **quality logging** (log QC pass and rejects with defect type on LOG page or QC Station); **persistence** (every save hits Supabase with sync bar feedback, optional offline queue and replay); and **operational visibility** (Floor = press status + active jobs + assign; Jobs = full list and filters; panel and floor card for detail and quick edit). Anything that doesn’t directly support this — TV, Todos, Floor Manager (until fixed), backup, and leading with Audit or CSV import — should be hidden, deferred, or not demoed so the spine reads clearly.
+**Note:** Press Station shell purged. These paths are now accessed via LOG console and Floor. See `purgatory-protocol.md`.
+
+The prototype spine is: **role-aware entry** (launcher shows Admin, Floor Manager, QC by role; optional login); **job records** (create one job via FAB → Manual Entry wizard, edit in panel, view on Floor and Jobs); **production logging** (log pressed qty from LOG page; Press Station purged — use LOG console); **quality logging** (log QC pass and rejects with defect type on LOG page or QC Station); **persistence** (every save hits Supabase with sync bar feedback, optional offline queue and replay); and **operational visibility** (Floor = press status + active jobs + assign; Jobs = full list and filters; panel and floor card for detail and quick edit). Anything that doesn’t directly support this — TV, Todos, Floor Manager (until fixed), backup, and leading with Audit or CSV import — should be hidden, deferred, or not demoed so the spine reads clearly.
 
 ---
 
@@ -404,12 +406,12 @@ The prototype spine is: **role-aware entry** (launcher shows Admin / Press / QC 
 
 ## 5. Top 10 things to lean into in a live demo
 
-1. **Launcher by role** — Show "as admin I see Admin, Press, QC; as press I only see Press; as QC I only see QC."
+1. **Launcher by role** — Show "as admin I see Admin, Floor Manager, QC Station; as QC I only see QC." (Press Station launcher purged.)
 2. **One job end-to-end** — FAB → Manual Entry → fill catalog/artist/status → Save → job appears on Floor and Jobs.
 3. **Floor view** — Press status cards, active jobs table, assign job (admin), click catalog → panel or floor card.
 4. **Panel: edit + progress** — Open job → EDIT → change status or field → SAVE JOB; then + LOG STACK (person, stage, qty) and show recent entries.
 5. **LOG page** — Select job → PRESS → numpad → LOG PRESS → toast and recent; then PASS or REJECT with defect type and show QC log.
-6. **Press Station** — Enter as press (or admin) → single press, job, progress, numpad → LOG +N PRESSED → toast and remaining.
+6. **LOG + Floor (Press Station purged)** — Press operators use LOG console and Floor; no dedicated Press Station shell.
 7. **QC Station or LOG for QC** — Enter as QC → LOG page or QC station → select job → log reject with type; show "we log quality."
 8. **Sync bar** — After a save or log, point to "● SYNCED" (or SAVING → SYNCED) to show persistence.
 9. **Progress detail** — From floor or panel, open progress breakdown for one job to show pressed/QC/rejected/remaining.

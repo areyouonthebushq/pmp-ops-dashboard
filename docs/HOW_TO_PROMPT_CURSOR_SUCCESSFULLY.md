@@ -111,7 +111,7 @@ When prompting for this repo, it helps to align with how the app is already desc
 - **Principles:** Append-only logs; job as central unit; structure over decoration; same design language across LOG and NOTES (siblings, not strangers).
 - **Audiences:** Admin, Floor Manager, Press Operator, QC Operator, TV/passive display, plant-wide (NOTES).
 
-Mentioning these (or pointing at `docs/EXECUTIVE_SUMMARY.md`, `docs/INFORMATION_ARCHITECTURE.md`) keeps the assistant in the same mental model as the project.
+Mentioning these (or pointing at `docs/EXECUTIVE_SUMMARY.md`, `docs/INFORMATION-ARCHITECTURE.md`) keeps the assistant in the same mental model as the project.
 
 ---
 
