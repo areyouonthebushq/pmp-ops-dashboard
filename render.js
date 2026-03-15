@@ -415,6 +415,11 @@ function setDevViewMode(mode) {
   if (typeof renderDevPage === 'function') renderDevPage();
 }
 
+function toggleDevViewMode() {
+  devViewMode = devViewMode === 'board' ? 'feed' : 'board';
+  if (typeof renderDevPage === 'function') renderDevPage();
+}
+
 function setDevStage(value) {
   devStage = value;
   if (typeof renderDevPage === 'function') renderDevPage();
@@ -498,10 +503,11 @@ function renderDevPage() {
     });
   }
 
-  var feedBtn = document.getElementById('devViewFeedBtn');
-  var boardBtn = document.getElementById('devViewBoardBtn');
-  if (feedBtn) feedBtn.classList.toggle('active', devViewMode === 'feed');
-  if (boardBtn) boardBtn.classList.toggle('active', devViewMode === 'board');
+  var toggleBtn = document.getElementById('devViewToggle');
+  if (toggleBtn) {
+    toggleBtn.classList.toggle('dev-view-board', devViewMode === 'board');
+    toggleBtn.setAttribute('aria-pressed', devViewMode === 'board');
+  }
 
   const sel = document.getElementById('devAreaSelect');
   if (sel && !sel.dataset.bound) {

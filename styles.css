@@ -361,7 +361,9 @@
     .bar-clock { font-size:13px; color: var(--d2); letter-spacing:1px; flex:1; text-align:center; }
     .bar-actions { display:flex; gap: var(--space-sm); flex-shrink:0; }
     .bar-btn {
-    padding: var(--space-xs) var(--space-md); font-size:11px; letter-spacing:1px;
+    padding: clamp(2px, 1vmin, var(--space-xs)) clamp(6px, 2vmin, var(--space-md));
+    font-size: clamp(9px, 2vmin, 11px);
+    letter-spacing: 0.05em;
     border:1px solid var(--b2); color: var(--d2);
     background:transparent; cursor:pointer; transition:all 0.15s;
     font-family:'Inconsolata',monospace;
@@ -499,9 +501,9 @@
     #pg-dev .dev-panel-stage { flex: 1 1 0; }
     #pg-dev .dev-panel-label {
     font-family: 'Inconsolata', monospace;
-    font-size: 10px;
+    font-size: clamp(8px, 1.8vmin, 10px);
     font-weight: 600;
-    letter-spacing: 2px;
+    letter-spacing: 0.15em;
     color: var(--d3);
     text-transform: uppercase;
     }
@@ -614,45 +616,35 @@
     line-height: 1.4;
     }
 
-    /* DEV view toggle: single slider (FEED | BOARD), full height of console button area */
+    /* DEV view toggle: vertical MIN-style pill (up/down), no words; full height of console area */
     #pg-dev .dev-view-toggle {
-    display: flex;
-    gap: 0;
-    width: 100%;
+    position: relative;
+    width: 18px;
+    min-width: 18px;
     align-self: stretch;
-    border-radius: 6px;
-    overflow: hidden;
+    min-height: 32px;
+    padding: 0;
+    border-radius: 9px;
     border: 1px solid var(--b2);
-    }
-    #pg-dev .dev-view-toggle-btn {
-    flex: 1;
-    padding: 0 6px;
-    font-family: 'Inconsolata', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    border: none;
-    border-right: 1px solid var(--b2);
     background: var(--s2);
-    color: var(--d3);
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: all 0.2s;
     }
-    #pg-dev .dev-view-toggle-btn:last-child {
-    border-right: none;
+    #pg-dev .dev-view-toggle::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--d3);
+    transition: all 0.2s;
     }
-    #pg-dev .dev-view-toggle-btn:hover:not(.active) {
-    background: var(--s3);
-    color: var(--d2);
-    }
-    #pg-dev .dev-view-toggle-btn.active {
-    background: var(--g3);
-    color: var(--g);
-    }
+    #pg-dev .dev-view-toggle.dev-view-board { border-color: var(--g2); background: var(--g3); }
+    #pg-dev .dev-view-toggle.dev-view-board::after { top: auto; bottom: 2px; background: var(--g); }
+    #pg-dev .dev-view-toggle:hover { border-color: var(--b3); background: var(--s3); }
+    #pg-dev .dev-view-toggle.dev-view-board:hover { border-color: var(--g2); background: var(--g3); }
 
     /* DEV board view — stage columns, summary, cards */
     #pg-dev .dev-board-wrap {
@@ -805,14 +797,14 @@
     grid-template-rows: repeat(3, 1fr);
     }
     #pg-dev .dev-rail-btn {
-    min-height: 32px;
+    min-height: clamp(28px, 6vmin, 32px);
     margin: 0;
-    padding: 0 4px;
+    padding: 0 clamp(2px, 1vw, 4px);
     font-family: 'Inconsolata', monospace;
-    font-size: 22px;
+    font-size: clamp(11px, 4vmin, 22px);
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.02em;
     border: 1px solid var(--b2);
     box-sizing: border-box;
     min-width: 0;
