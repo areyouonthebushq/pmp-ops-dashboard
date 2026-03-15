@@ -1,7 +1,6 @@
 # DEV 2.0 Roadmap
 
-**Status:** Canonical reference for stage / work type / entity model and DEV 2.0 vision.  
-**Used by:** dev-2.0-console-spec.md
+**Archived:** Original roadmap; canonical version is `docs/DEV_2_0_ROADMAP.md` (merged and updated with 12-entity model, EXCEPTION, semantic grouping, tune label).
 
 ---
 
@@ -52,7 +51,7 @@ Use for:
 - questions
 - quick captures
 
-### PLAY (playground)
+### PLAYGROUND
 Iterate. Explore. Mock up.
 Try forms and interactions without treating them as integrated truth.
 
@@ -63,7 +62,7 @@ Use for:
 - rough new surface concepts
 - isolated concept trials
 
-### TEST (testing)
+### TESTING
 Integrate.
 Wire into the real app enough to see whether the idea survives contact with real state, routing, behavior, and doctrine.
 
@@ -81,7 +80,7 @@ Use for:
 - trusted surfaces
 - current truth
 
-### SHOP (the_shop)
+### THE SHOP
 Real, but needs bench work.
 Something is live and known, but needs fixing, cleanup, tightening, tuning, or fallout repair.
 
@@ -92,7 +91,7 @@ Use for:
 - small repairs
 - recently landed work that needs attention
 
-### PURGE (purgatory)
+### PURGATORY
 Intentionally decommissioned.
 Documented, recoverable, inert, not active runtime truth.
 
@@ -115,8 +114,8 @@ Something works but needs visual, interaction, or wording tightening.
 ### think
 This needs doctrine, taxonomy, naming, architecture, tradeoff analysis, or framing before implementation.
 
-### tune
-Repair, cleanup, or tightening work on something already integrated or recently landed. (Key: `tune_up`.)
+### tune-up
+Repair, cleanup, or tightening work on something already integrated or recently landed.
 
 ### purge
 Decommissioning work. Remove from active runtime and document in Purgatory.
@@ -130,15 +129,19 @@ The app is broken right now. Restore loading, sync, or runtime truth first.
 
 Entity means: what system or surface this note is mainly about.
 
-**12 entities**, 4×3 grid. Semantic row grouping:
+### Current entity set (v1)
 
-- **Row 1 — Primary surfaces (main nav):** FLOOR, JOBS, LOG, NOTES  
-- **Row 2 — Object/detail/backstage:** CARD, RSP, EXCEPT, DEV  
-- **Row 3 — Secondary/utility:** ENGINE, CREW, PVC, AUDIT  
-
-Entity set (keys): `floor`, `jobs`, `log`, `notes`, `card`, `rsp`, `exception`, `dev`, `engine`, `crew`, `pvc`, `audit`.
-
-**EXCEPT** (exception protocol): The ACHTUNG/WRENCH exception protocol system. Use for protocol-level work; use specific surface entities (CARD, RSP) for surface-specific exception behavior.
+- RSP
+- CARD
+- LOG
+- NOTES
+- FLOOR
+- JOBS
+- ENGINE
+- DEV
+- CREW
+- PVC
+- AUDIT
 
 ### Rules
 - one primary entity max for v1
@@ -170,17 +173,17 @@ Entity set (keys): `floor`, `jobs`, `log`, `notes`, `card`, `rsp`, `exception`, 
 ## Promotion Logic
 
 ### Typical flow
-- NOTE → PLAY
-- PLAY → TEST
-- TEST → LIVE
-- LIVE → SHOP
-- LIVE / SHOP → PURGE
+- NOTE → PLAYGROUND
+- PLAYGROUND → TESTING
+- TESTING → LIVE
+- LIVE → THE SHOP
+- LIVE / THE SHOP → PURGATORY
 
 Not every note needs a full path.
 
 Some notes may remain in NOTE forever.
 Some may jump directly from NOTE to LIVE for tiny obvious fixes.
-Some may go from NOTE to PURGE as a decommission record.
+Some may go from NOTE to PURGATORY as a decommission record.
 
 ---
 
@@ -207,7 +210,7 @@ DEV 2.0 should eventually generate prompt packets from structured note data, not
 Use templates, not freeform AI improvisation.
 
 > **Pre-Phase 4 requirement:** A template library must exist before Phase 4 is built.
-> One template per work type: bug, polish, think, tune (tune_up), purge, debug.
+> One template per work type: bug, polish, think, tune-up, purge, debug.
 > This is a ChatGPT/doctrine pass, not a Cursor build.
 > Cursor should not invent templates on the fly.
 
@@ -319,7 +322,7 @@ Goal: make the structure useful.
 - filter DEV notes by entity
 - filter by type
 - filter by stage
-- allow quick views: CARD bugs, LOG polish, PLAY items, SHOP items
+- allow quick views: CARD bugs, LOG polish, PLAYGROUND items, THE SHOP items
 
 **Success condition**
 DEV becomes browsable as a lightweight internal workboard.
@@ -332,8 +335,8 @@ Goal: let notes move intentionally.
 **Build**
 - promote stage
 - demote stage
-- move to SHOP
-- move to PURGE
+- move to THE SHOP
+- move to PURGATORY
 
 **Success condition**
 A note can be promoted without being rewritten or duplicated.
@@ -347,7 +350,7 @@ Goal: reduce copy-paste babysitting.
 
 **Build**
 - generate prompt from entity, type, stage, note body
-- support template families: bug, polish, think, tune (tune_up), purge, debug
+- support template families: bug, polish, think, tune-up, purge, debug
 
 **Success condition**
 A structured DEV item can produce a strong first-pass Cursor prompt.

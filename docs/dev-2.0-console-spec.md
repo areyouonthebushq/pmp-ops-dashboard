@@ -37,11 +37,11 @@ One of (default NOTE; selection optional for “plain note”).
 | Key | Label |
 |-----|--------|
 | `note` | NOTE |
-| `playground` | PLAYGROUND |
-| `testing` | TESTING |
+| `playground` | PLAY |
+| `testing` | TEST |
 | `live` | LIVE |
-| `the_shop` | THE SHOP |
-| `purgatory` | PURGATORY |
+| `the_shop` | SHOP |
+| `purgatory` | PURGE |
 
 ### Rail 2 — Work type
 
@@ -68,14 +68,14 @@ One max; optional (“what system or surface this note is mainly about”). **12
 | `notes` | NOTES |
 | `card` | CARD |
 | `rsp` | RSP |
-| `exception` | EXCEPTION |
+| `exception` | EXCEPT |
 | `dev` | DEV |
 | `engine` | ENGINE |
 | `crew` | CREW |
 | `pvc` | PVC |
 | `audit` | AUDIT |
 
-**EXCEPTION:** The ACHTUNG/WRENCH exception protocol system. Use for protocol-level work; use specific surface entities (CARD, RSP) for surface-specific exception behavior.
+**EXCEPT** (exception protocol): The ACHTUNG/WRENCH exception protocol system. Use for protocol-level work; use specific surface entities (CARD, RSP) for surface-specific exception behavior.
 
 ---
 
@@ -113,10 +113,10 @@ Storage and Supabase: extend `dev_notes` (or equivalent) with optional `stage`, 
 Layout sketch (Entity = 4×3 semantic grid):
 
 ```
-[ STAGE:     NOTE | PLAYGROUND | TESTING | LIVE | THE SHOP | PURGATORY ]
+[ STAGE:     NOTE | PLAY | TEST | LIVE | SHOP | PURGE ]
 [ TYPE:      bug | polish | think | tune | purge | debug           ]
 [ ENTITY:    Row 1: FLOOR | JOBS | LOG | NOTES
-             Row 2: CARD | RSP | EXCEPTION | DEV
+             Row 2: CARD | RSP | EXCEPT | DEV
              Row 3: ENGINE | CREW | PVC | AUDIT ]
 [ <textarea>                                              ] [ + ]
 [ DEV NOTES feed... ]
@@ -149,7 +149,7 @@ Rails can wrap on small screens; same pattern as LOG action row.
 Implement Step 1 only of docs/dev-2.0-console-spec.md: constants and state for the DEV 2.0 three rails. No UI changes. No DOM. Code only.
 
 PART 1 — Constants
-1. Add DEV_STAGES to core.js (or render.js if you prefer DEV-only constants live there). Each entry: { key, label, cls }. Keys and labels from the spec Section 2 "Rail 1 — Stage": note/NOTE, playground/PLAYGROUND, testing/TESTING, live/LIVE, the_shop/THE SHOP, purgatory/PURGATORY. Use cls like "dev-stage-note", "dev-stage-playground", etc.
+1. Add DEV_STAGES to core.js (or render.js if you prefer DEV-only constants live there). Each entry: { key, label, cls }. Keys and labels from the spec Section 2 "Rail 1 — Stage": note/NOTE, playground/PLAY, testing/TEST, live/LIVE, the_shop/SHOP, purgatory/PURGE. Use cls like "dev-stage-note", "dev-stage-playground", etc.
 2. Add DEV_WORK_TYPES same shape. Section 2 "Rail 2 — Work type": bug, polish, think, tune_up (label "tune"), purge, debug. cls like "dev-type-bug", "dev-type-polish", etc.
 3. Add DEV_ENTITIES same shape. Section 2 "Rail 3 — Entity": rsp/RSP, card/CARD, log/LOG, notes/NOTES, floor/FLOOR, jobs/JOBS, engine/ENGINE, dev/DEV, crew/CREW, pvc/PVC, audit/AUDIT. cls like "dev-entity-rsp", etc.
 

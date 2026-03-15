@@ -282,11 +282,11 @@ function cautionPill(job) {
 // ============================================================
 const DEV_STAGES = [
   { key: 'note', label: 'NOTE', cls: 'dev-stage-note' },
-  { key: 'playground', label: 'PLAYGROUND', cls: 'dev-stage-playground' },
-  { key: 'testing', label: 'TESTING', cls: 'dev-stage-testing' },
+  { key: 'playground', label: 'PLAY', cls: 'dev-stage-playground' },
+  { key: 'testing', label: 'TEST', cls: 'dev-stage-testing' },
   { key: 'live', label: 'LIVE', cls: 'dev-stage-live' },
-  { key: 'the_shop', label: 'THE SHOP', cls: 'dev-stage-the-shop' },
-  { key: 'purgatory', label: 'PURGATORY', cls: 'dev-stage-purgatory' },
+  { key: 'the_shop', label: 'SHOP', cls: 'dev-stage-the-shop' },
+  { key: 'purgatory', label: 'PURGE', cls: 'dev-stage-purgatory' },
 ];
 
 const DEV_WORK_TYPES = [
@@ -306,7 +306,7 @@ const DEV_ENTITIES = [
   { key: 'notes', label: 'NOTES', cls: 'dev-entity-notes' },
   { key: 'card', label: 'CARD', cls: 'dev-entity-card' },
   { key: 'rsp', label: 'RSP', cls: 'dev-entity-rsp' },
-  { key: 'exception', label: 'EXCEPTION', cls: 'dev-entity-exception' },
+  { key: 'exception', label: 'EXCEPT', cls: 'dev-entity-exception' },
   { key: 'dev', label: 'DEV', cls: 'dev-entity-dev' },
   { key: 'engine', label: 'ENGINE', cls: 'dev-entity-engine' },
   { key: 'crew', label: 'CREW', cls: 'dev-entity-crew' },
