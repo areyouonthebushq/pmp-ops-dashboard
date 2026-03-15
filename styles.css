@@ -496,6 +496,18 @@
     align-items: center;
     padding-left: var(--space-sm);
     }
+    #pg-dev .dev-export-btn {
+    font-size: 11px;
+    padding: 4px var(--space-sm);
+    color: var(--d3);
+    border-color: var(--b2);
+    background: var(--s2);
+    }
+    #pg-dev .dev-export-btn:hover {
+    color: var(--d2);
+    border-color: var(--b3);
+    background: var(--s3);
+    }
     /* devAreaSelect kept for JS; hidden from UI */
     #pg-dev .dev-area-select-wrap {
     display: none !important;
@@ -574,6 +586,14 @@
     margin-top: var(--space-xs);
     text-align: right;
     }
+    .dev-entry-attribution {
+    font-family: 'Inconsolata', monospace;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    color: var(--d3);
+    margin-top: 2px;
+    text-align: right;
+    }
     .dev-entry-text {
     font-size: 13px;
     color: var(--d);
@@ -618,36 +638,21 @@
     #pg-dev .dev-rail-btn:hover:not(.active) {
     background: var(--s3);
     }
-    /* Stage rail — active theme */
-    #pg-dev .dev-rail .dev-rail-btn.dev-stage-note.active { background: var(--s3); color: var(--d); border-color: var(--b2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-stage-playground.active { background: var(--cy2); color: var(--cy); border-color: var(--cy2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-stage-testing.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-stage-live.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-stage-the-shop.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-stage-purgatory.active { background: var(--s3); color: var(--d3); border-color: var(--b2); }
-    /* Work type rail — active theme */
-    #pg-dev .dev-rail .dev-rail-btn.dev-type-bug.active { background: var(--r2); color: var(--r); border-color: var(--r2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-type-polish.active { background: var(--g3); color: var(--g); border-color: var(--g2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-type-think.active { background: var(--b3); color: var(--d); border-color: var(--b3); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-type-tune-up.active { background: var(--cy2); color: var(--cy); border-color: var(--cy2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-type-purge.active { background: var(--s3); color: var(--d3); border-color: var(--b2); }
-    #pg-dev .dev-rail .dev-rail-btn.dev-type-debug.active { background: var(--w2); color: var(--w); border-color: var(--w2); }
-    /* Entity rail — single neutral selected */
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-rsp.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-card.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-log.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-notes.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-floor.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-jobs.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-engine.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-dev.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-crew.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-pvc.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-audit.active {
-    background: var(--g3);
-    color: var(--g);
-    border-color: var(--g);
-    box-shadow: inset 0 0 0 1px rgba(0,230,118,0.2);
+    /* One color per rail family: Stage green, Type blue, Entity purple (console only; feed meta stays grey) */
+    #pg-dev .dev-panel-stage .dev-rail-btn.active {
+    background: hsl(140, 40%, 30%);
+    color: #a8e6a8;
+    border-color: hsl(140, 40%, 35%);
+    }
+    #pg-dev .dev-panel-type .dev-rail-btn.active {
+    background: hsl(210, 45%, 35%);
+    color: #a8c8f0;
+    border-color: hsl(210, 45%, 42%);
+    }
+    #pg-dev .dev-panel-entity .dev-rail-btn.active {
+    background: hsl(270, 40%, 35%);
+    color: #d4b8f0;
+    border-color: hsl(270, 40%, 42%);
     }
     /* Narrow: stack panels vertically, one per row */
     @media (max-width: 720px) {

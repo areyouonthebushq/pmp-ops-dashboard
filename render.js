@@ -503,7 +503,8 @@ function renderDevPage() {
   feedEl.innerHTML = filtered.map(n => {
     const ts = n.timestamp ? new Date(n.timestamp).toLocaleString() : '';
     const area = (n.area != null ? String(n.area) : '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const person = (n.person != null ? String(n.person) : '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const personRaw = (n.person != null ? String(n.person) : '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const personDisplay = personRaw ? personRaw.replace(/^DEV\s*/i, '').trim() || '—' : '—';
     const text = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const stageKey = n.stage != null && n.stage !== '' ? String(n.stage) : '';
     const typeKey = n.type != null && n.type !== '' ? String(n.type) : '';
@@ -521,10 +522,10 @@ function renderDevPage() {
       '<div class="dev-entry">' +
       '<div class="dev-entry-head">' +
       '<span class="dev-entry-area">' + area + '</span>' +
-      '<span class="dev-entry-meta">' + (person || '—') + ' · ' + ts + '</span>' +
       '</div>' +
       '<div class="dev-entry-text">' + text.replace(/\n/g, '<br>') + '</div>' +
       tagsHtml +
+      '<div class="dev-entry-attribution">' + personDisplay + ' · ' + ts + '</div>' +
       '</div>'
     );
   }).join('');
