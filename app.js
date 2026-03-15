@@ -1094,6 +1094,7 @@ function goPg(id) {
   if (pgEl) pgEl.classList.add('on');
   updateFAB();
   if (id === 'audit') loadAuditPage();
+  else if (id === 'playground' && typeof renderPlayground === 'function') renderPlayground();
   else renderAll();
 }
 
@@ -1136,7 +1137,7 @@ function updateFAB() {
     fab.style.display = 'flex';
     fab.textContent = '+';
     if (label) { label.textContent = 'NEW JOB [N]'; }
-  } else if (currentPage === 'audit' || currentPage === 'crew') {
+  } else if (currentPage === 'audit' || currentPage === 'crew' || currentPage === 'playground') {
     fab.style.display = 'none';
   } else {
     fab.style.display = 'none';

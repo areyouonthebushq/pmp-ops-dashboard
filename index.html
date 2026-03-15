@@ -450,6 +450,61 @@
           <div class="log-recent dev-feed" id="devFeed"></div>
         </div>
       </div>
+      <!-- DEV-only: playground entry (backstage, not in main nav) -->
+      <a href="#" class="dev-playground-duck" id="devPlaygroundDuck" onclick="event.preventDefault();goPg('playground');" title="PLAYGROUND — selector experiments" aria-label="Open PLAYGROUND"><svg class="dev-duck-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 14c0-2 2-4 5-4s5 2 5 4c0 1.5-.5 3-2 4H7c-1.5-1-2-2.5-2-4z"/><path d="M10 10c.5-1.5 2-2 3-1.5"/><circle cx="11" cy="12" r="1"/></svg></a>
+    </div>
+
+    <!-- ======= PLAYGROUND (DEV-only: job selector experiments) ======= -->
+    <div class="pg" id="pg-playground">
+      <div class="playground-shell">
+        <header class="playground-header">
+          <button type="button" class="playground-back" onclick="goPg('dev')">← DEV</button>
+          <h1 class="playground-title">PLAYGROUND</h1>
+          <span class="playground-sub">Job selector experiments · backstage</span>
+        </header>
+
+        <section class="playground-exp playground-exp-a" aria-labelledby="pg-exp-a-label">
+          <div class="playground-exp-label" id="pg-exp-a-label">A — Readout Module</div>
+          <div class="playground-module" id="playgroundModuleA">
+            <div class="playground-strip-label">JOB</div>
+            <div class="playground-readout">
+              <div class="playground-readout-pv" id="pgReadoutCatalog">—</div>
+              <div class="playground-readout-sv" id="pgReadoutArtist">—</div>
+            </div>
+            <div class="playground-readout-lights">
+              <span class="playground-light" id="pgLight1" aria-hidden="true"></span>
+              <span class="playground-light" id="pgLight2" aria-hidden="true"></span>
+            </div>
+            <div class="playground-controls">
+              <button type="button" class="playground-ctrl" id="pgPrev" onclick="playgroundPrev()" title="Previous">◀</button>
+              <button type="button" class="playground-ctrl" id="pgNext" onclick="playgroundNext()" title="Next">▶</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="playground-exp playground-exp-b" aria-labelledby="pg-exp-b-label">
+          <div class="playground-exp-label" id="pg-exp-b-label">B — Indexed Rail</div>
+          <div class="playground-rail-wrap" id="playgroundRailWrap">
+            <div class="playground-rail" id="playgroundRail"></div>
+          </div>
+        </section>
+
+        <section class="playground-exp playground-exp-c" aria-labelledby="pg-exp-c-label">
+          <div class="playground-exp-label" id="pg-exp-c-label">C — Snap / Tuner</div>
+          <div class="playground-snap-wrap" id="playgroundSnapWrap">
+            <div class="playground-snap-track" id="playgroundSnapTrack">
+              <div class="playground-snap-value" id="playgroundSnapValue">—</div>
+              <button type="button" class="playground-snap-prev" onclick="playgroundSnapPrev()" title="Previous">−</button>
+              <button type="button" class="playground-snap-next" onclick="playgroundSnapNext()" title="Next">+</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="playground-recommend" aria-labelledby="pg-rec-label">
+          <div class="playground-strip-label" id="pg-rec-label">RECOMMENDATION</div>
+          <div class="playground-rec-grid" id="playgroundRecGrid"></div>
+        </section>
+      </div>
     </div>
 
     <!-- ======= CREW PAGE (operational directory) ======= -->

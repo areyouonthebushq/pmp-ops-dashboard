@@ -3311,3 +3311,87 @@ ${allJobs.map(j => `<option value="${j.id}" ${selectedId === j.id ? 'selected' :
   if (searchRow) searchRow.style.display = (S.notesUtilityOpen === 'search') ? '' : 'none';
   if (searchBtn) searchBtn.classList.toggle('active', S.notesUtilityOpen === 'search');
 }
+
+// ============================================================
+// PLAYGROUND — DEV-only job selector experiments (no production changes)
+// ============================================================
+let playgroundJobIndex = 0;
+
+function getPlaygroundJobs() {
+  if (typeof sortJobsByCatalogAsc !== 'function' || typeof isJobArchived !== 'function') return [];
+  return sortJobsByCatalogAsc((S.jobs || []).filter(function (j) {
+    return !isJobArchived(j) && j.status !== 'done';
+  }));
+}
+
+function renderPlayground() {
+  const jobs = getPlaygroundJobs();
+  const n = jobs.length;
+  const idx = n === 0 ? -1 : Math.max(0, Math.min(playgroundJobIndex, n - 1));
+  playgroundJobIndex = idx;
+  const job = idx >= 0 ? jobs[idx] : null;
+
+  // A — Readout Module
+  const catalogEl = document.getElementById('pgReadoutCatalog');
+  const artistEl = document.getElementById('pgReadoutArtist');
+  if (catalogEl) catalogEl.textContent = job ? (job.catalog || '—') : '—';
+  if (artistEl) artistEl.textContent = job ? (job.artist || '—') : '—';
+  const light1 = document.getElementById('pgLight1');
+  const light2 = document.getElementById('pgLight2');
+  if (light1) light1.classList.toggle('on', n > 0);
+  if (light2) light2.classList.toggle('on', !!job);
+
+  // B — Indexed Rail
+  const railEl = document.getElementById('playgroundRail');
+  if (railEl) {
+    if (jobs.length === 0) {
+      railEl.innerHTML = '<div class="playground-rail-empty">No jobs</div>';
+    } else {
+      railEl.innerHTML = jobs.map(function (j, i) {
+        const active = i === idx;
+        return '<button type="button" class="playground-rail-row' + (active ? ' active' : '') + '" data-index="' + i + '" onclick="playgroundSetIndex(' + i + ')">' +
+          '<span class="playground-rail-cat">' + (j.catalog || '—') + '</span> ' +
+          '<span class="playground-rail-artist">' + (j.artist || '—') + '</span></button>';
+      }).join('');
+    }
+  }
+
+  // C — Snap
+  const snapValEl = document.getElementById('playgroundSnapValue');
+  if (snapValEl) snapValEl.textContent = job ? (job.catalog || '') + ' · ' + (job.artist || '—') : '—';
+
+  // Recommendation panel
+  const recEl = document.getElementById('playgroundRecGrid');
+  if (recEl) {
+    recEl.innerHTML = '<div class="playground-rec-row"><span class="playground-rec-dim">Complexity</span><span>A low</span><span>B med</span><span>C low</span></div>' +
+      '<div class="playground-rec-row"><span class="playground-rec-dim">Clarity</span><span>A high</span><span>B high</span><span>C med</span></div>' +
+      '<div class="playground-rec-row"><span class="playground-rec-dim">Mobile fit</span><span>A good</span><span>B good</span><span>C good</span></div>' +
+      '<div class="playground-rec-row"><span class="playground-rec-dim">Desktop fit</span><span>A strong</span><span>B strong</span><span>C ok</span></div>' +
+      '<div class="playground-rec-row"><span class="playground-rec-dim">Operational feel</span><span>A machine</span><span>B editorial</span><span>C indexer</span></div>' +
+      '<div class="playground-rec-row"><span class="playground-rec-dim">Best for NOTES</span><span>A</span><span>B</span><span>—</span></div>' +
+      '<div class="playground-rec-row"><span class="playground-rec-dim">Best for LOG</span><span>A</span><span>—</span><span>C</span></div>' +
+      '<div class="playground-rec-row playground-rec-row-full"><span class="playground-rec-dim">Fallback</span><span>Current dropdown if all worse</span></div>';
+  }
+}
+
+function playgroundPrev() {
+  const jobs = getPlaygroundJobs();
+  if (jobs.length === 0) return;
+  playgroundJobIndex = playgroundJobIndex <= 0 ? jobs.length - 1 : playgroundJobIndex - 1;
+  renderPlayground();
+}
+
+function playgroundNext() {
+  const jobs = getPlaygroundJobs();
+  if (jobs.length === 0) return;
+  playgroundJobIndex = playgroundJobIndex >= jobs.length - 1 ? 0 : playgroundJobIndex + 1;
+  renderPlayground();
+}
+
+function playgroundSetIndex(i) {
+  playgroundJobIndex = i;
+  renderPlayground();
+}
+
+function playgroundSnapPrev() { playgroundPrev(); }
+function playgroundSnapNext() { playgroundNext(); }
