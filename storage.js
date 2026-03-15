@@ -473,6 +473,7 @@ const Storage = {
       text: entry.text || '',
       person: entry.person || '',
       timestamp: entry.timestamp || new Date().toISOString(),
+      imported: entry.imported || false,
     };
     if (useSupabase()) {
       if (isOffline()) {

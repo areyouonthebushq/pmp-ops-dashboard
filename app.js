@@ -368,8 +368,10 @@ function addDevNote() {
 
 function devComposerKeydown(event) {
   if (event.key === 'Enter' && !event.shiftKey && !event.metaKey && !event.ctrlKey && !event.altKey) {
-    event.preventDefault();
-    addDevNote();
+    if (window.innerWidth > 720) {
+      event.preventDefault();
+      addDevNote();
+    }
   }
 }
 
@@ -405,6 +407,172 @@ function exportDevNotes() {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// DEV CSV import (see docs/DEV2-CSV-IMPORT-SPEC.md)
+var DEV_IMPORT_ALIASES = {
+  text: ['item', 'body', 'note', 'content'],
+  entity: ['surface', 'area', 'channel'],
+  type: ['work_type', 'worktype'],
+  stage: ['status', 'phase'],
+  person: ['author', 'user', 'created_by'],
+  timestamp: ['date', 'created_at', 'time'],
+  notes: []
+};
+
+function parseDevCsv(text) {
+  var s = text.replace(/^\uFEFF/, '');
+  var rows = [];
+  var i = 0;
+  while (i < s.length) {
+    var row = [];
+    while (i < s.length) {
+      if (s[i] === '"') {
+        i++;
+        var cell = '';
+        while (i < s.length && (s[i] !== '"' || (s[i + 1] === '"'))) {
+          if (s[i] === '"' && s[i + 1] === '"') { cell += '"'; i += 2; continue; }
+          cell += s[i];
+          i++;
+        }
+        if (s[i] === '"') i++;
+        row.push(cell);
+        if (s[i] === ',') i++;
+        else break;
+      } else {
+        var end = i;
+        while (end < s.length && s[end] !== ',' && s[end] !== '\r' && s[end] !== '\n') end++;
+        row.push(s.slice(i, end).replace(/^[\s\u00A0]+|[\s\u00A0]+$/g, ''));
+        i = end;
+        if (s[i] === ',') i++;
+        else break;
+      }
+    }
+    if (row.length) rows.push(row);
+    while (i < s.length && (s[i] === '\r' || s[i] === '\n')) i++;
+  }
+  return rows;
+}
+
+function mapDevImportColumns(headers) {
+  var norm = headers.map(function (h) { return (h || '').toString().trim().toLowerCase(); });
+  var canon = { text: -1, entity: -1, type: -1, stage: -1, person: -1, timestamp: -1, notes: -1 };
+  norm.forEach(function (h, idx) {
+    Object.keys(DEV_IMPORT_ALIASES).forEach(function (c) {
+      if (canon[c] >= 0) return;
+      if (h === c || (DEV_IMPORT_ALIASES[c] && DEV_IMPORT_ALIASES[c].indexOf(h) >= 0)) canon[c] = idx;
+    });
+  });
+  return canon;
+}
+
+function validateDevImportRow(cells, rowIndex, col, entities, types, stages) {
+  var text = (col.text >= 0 && cells[col.text] != null) ? String(cells[col.text]).trim() : '';
+  var entityRaw = col.entity >= 0 ? (cells[col.entity] || '').trim().toLowerCase() : '';
+  var typeRaw = col.type >= 0 ? (cells[col.type] || '').trim().toLowerCase() : '';
+  var stageRaw = col.stage >= 0 ? (cells[col.stage] || '').trim().toLowerCase() : 'note';
+  var personRaw = col.person >= 0 ? (cells[col.person] || '').trim() : '';
+  var timestampRaw = col.timestamp >= 0 ? (cells[col.timestamp] || '').trim() : '';
+  var notesRaw = col.notes >= 0 ? (cells[col.notes] || '').trim() : '';
+  var warnings = [];
+  var entity = '';
+  if (entityRaw && entities && entities.length) {
+    var e = entities.find(function (x) { return x.key === entityRaw; });
+    if (e) entity = e.key;
+    else warnings.push('Row ' + (rowIndex + 1) + ": unknown entity '" + entityRaw + "' — imported without entity tag.");
+  }
+  var type = '';
+  if (typeRaw && types && types.length) {
+    var t = types.find(function (x) { return x.key === typeRaw; });
+    if (t) type = t.key;
+    else warnings.push('Row ' + (rowIndex + 1) + ": unknown type '" + typeRaw + "' — imported without type tag.");
+  }
+  var stage = 'note';
+  if (stageRaw && stages && stages.length) {
+    var st = stages.find(function (x) { return x.key === stageRaw; });
+    if (st) stage = st.key;
+    else warnings.push('Row ' + (rowIndex + 1) + ": unknown stage '" + stageRaw + "' — defaulting to note.");
+  }
+  if (notesRaw && text) text = text + ' — ' + notesRaw;
+  else if (notesRaw) text = notesRaw;
+  return { valid: text.length > 0, text: text, entity: entity, type: type, stage: stage, person: personRaw || '', timestamp: timestampRaw || '', warnings: warnings };
+}
+
+function onDevImportFileSelected(input) {
+  var file = input && input.files && input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function () {
+    var text = (reader.result || '').toString();
+    var rows = parseDevCsv(text);
+    if (!rows.length) {
+      if (typeof toast === 'function') toast('CSV is empty or invalid');
+      input.value = '';
+      return;
+    }
+    var headers = rows[0];
+    var dataRows = rows.slice(1);
+    var col = mapDevImportColumns(headers);
+    if (col.text < 0) {
+      if (typeof toast === 'function') toast('CSV must have a text (or item/body/note/content) column');
+      input.value = '';
+      return;
+    }
+    var entities = typeof DEV_ENTITIES !== 'undefined' ? DEV_ENTITIES : [];
+    var types = typeof DEV_WORK_TYPES !== 'undefined' ? DEV_WORK_TYPES : [];
+    var stages = typeof DEV_STAGES !== 'undefined' ? DEV_STAGES : [];
+    var validRows = [];
+    var skipped = 0;
+    var allWarnings = [];
+    var taggedCount = 0;
+    for (var i = 0; i < dataRows.length; i++) {
+      var v = validateDevImportRow(dataRows[i], i + 1, col, entities, types, stages);
+      allWarnings.push.apply(allWarnings, v.warnings);
+      if (!v.valid) { skipped++; continue; }
+      validRows.push(v);
+      if (v.entity || v.type || v.stage) taggedCount++;
+    }
+    if (dataRows.length > 200) allWarnings.push('More than 200 rows — consider splitting.');
+    window.devImportPreview = {
+      validRows: validRows,
+      warnings: allWarnings,
+      skipped: skipped,
+      total: dataRows.length,
+      taggedCount: taggedCount,
+      previewRows: validRows.slice(0, 10)
+    };
+    input.value = '';
+    if (typeof renderDevPage === 'function') renderDevPage();
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function confirmDevImport() {
+  var p = window.devImportPreview;
+  if (!p || !p.validRows || !p.validRows.length) return;
+  var person = typeof currentDevPersonLabel === 'function' ? currentDevPersonLabel() : '';
+  var importTime = new Date().toISOString();
+  var done = 0;
+  var next = function (i) {
+    if (i >= p.validRows.length) {
+      window.devImportPreview = null;
+      if (typeof renderDevPage === 'function') renderDevPage();
+      if (typeof toast === 'function') toast('Imported ' + done + ' notes' + (p.warnings.length ? '. ' + p.warnings.length + ' warnings.' : ''));
+      return;
+    }
+    var r = p.validRows[i];
+    var area = r.entity ? String(r.entity).toUpperCase() : '';
+    var timestamp = r.timestamp && !isNaN(new Date(r.timestamp).getTime()) ? new Date(r.timestamp).toISOString() : importTime;
+    Storage.logDevNote({ area: area, stage: r.stage, type: r.type, entity: r.entity, text: r.text, person: r.person || person, timestamp: timestamp, imported: true })
+      .then(function () { done++; next(i + 1); })
+      .catch(function () { next(i + 1); });
+  };
+  next(0);
+}
+
+function cancelDevImport() {
+  window.devImportPreview = null;
+  if (typeof renderDevPage === 'function') renderDevPage();
 }
 
 function checkTodoReset() {

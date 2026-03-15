@@ -493,6 +493,31 @@ function renderDevRails() {
   fillRail(entityEl, typeof DEV_ENTITIES !== 'undefined' ? DEV_ENTITIES : [], devEntity, 'setDevEntity');
 }
 
+function renderDevImportPreview(feedEl, data) {
+  var p = data.previewRows || [];
+  var total = data.total != null ? data.total : 0;
+  var valid = (data.validRows && data.validRows.length) || 0;
+  var skipped = data.skipped != null ? data.skipped : 0;
+  var warnings = (data.warnings && data.warnings.length) || 0;
+  var tagged = data.taggedCount != null ? data.taggedCount : 0;
+  var rowsHtml = p.map(function (r, i) {
+    var text = (r.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 60);
+    if ((r.text || '').length > 60) text += '…';
+    return '<tr><td>' + (i + 1) + '</td><td>' + (r.entity || '—') + '</td><td>' + (r.type || '—') + '</td><td>' + (r.stage || '—') + '</td><td class="dev-import-preview-text">' + text + '</td></tr>';
+  }).join('');
+  var warnHtml = warnings ? '<div class="dev-import-warnings"><strong>Warnings: ' + warnings + '</strong><pre class="dev-import-warnings-list">' + (data.warnings || []).slice(0, 15).map(function (w) { return (w || '').replace(/</g, '&lt;'); }).join('\n') + (data.warnings.length > 15 ? '\n…' : '') + '</pre></div>' : '';
+  feedEl.innerHTML =
+    '<div class="dev-import-preview">' +
+    '<div class="dev-import-preview-head">Import preview</div>' +
+    '<div class="dev-import-preview-meta">Total rows: ' + total + ' · Valid: ' + valid + ' · Tagged: ' + tagged + ' · Skipped: ' + skipped + '</div>' +
+    warnHtml +
+    '<table class="dev-import-preview-tbl"><thead><tr><th>#</th><th>entity</th><th>type</th><th>stage</th><th>text</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
+    '<div class="dev-import-preview-actions">' +
+    '<button type="button" class="bar-btn dev-import-cancel" onclick="cancelDevImport()">CANCEL</button>' +
+    '<button type="button" class="bar-btn dev-import-confirm go" onclick="confirmDevImport()">IMPORT (' + valid + ')</button>' +
+    '</div></div>';
+}
+
 function renderDevPage() {
   const shell = document.getElementById('pg-dev');
   if (!shell) return;
@@ -505,6 +530,7 @@ function renderDevPage() {
       if (e.key !== 'Escape') return;
       var pg = document.getElementById('pg-dev');
       if (!pg || pg.style.display === 'none') return;
+      if (window.devImportPreview) { window.devImportPreview = null; }
       devStage = [];
       devType = [];
       devEntity = [];
@@ -528,8 +554,15 @@ function renderDevPage() {
 
   renderDevRails();
 
+  var utilZone = document.getElementById('devUtilZone');
+  if (utilZone) utilZone.style.display = devViewMode === 'board' ? 'none' : 'flex';
+
   const feedEl = document.getElementById('devFeed');
   if (!feedEl) return;
+  if (window.devImportPreview) {
+    renderDevImportPreview(feedEl, window.devImportPreview);
+    return;
+  }
   const filter = getDevAreaFilter();
   const notes = (Array.isArray(S.devNotes) ? S.devNotes : []).slice().sort((a, b) => {
     return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
@@ -550,6 +583,7 @@ function renderDevPage() {
         var entityLabel = (n.entity && typeof DEV_ENTITIES !== 'undefined') ? (DEV_ENTITIES.find(function (x) { return x.key === n.entity; }) || {}).label || n.entity : '';
         var typeLabel = (n.type && typeof DEV_WORK_TYPES !== 'undefined') ? (DEV_WORK_TYPES.find(function (x) { return x.key === n.type; }) || {}).label || n.type : '';
         var metaParts = [entityLabel, typeLabel].filter(Boolean);
+        if (n.imported) metaParts.unshift('IMPORTED');
         var metaHtml = metaParts.length ? '<div class="dev-board-card-meta">' + metaParts.join(' · ') + '</div>' : '';
         return '<div class="dev-board-card"><div class="dev-board-card-text">' + text.replace(/\n/g, '<br>') + '</div>' + metaHtml + '</div>';
       }).join('');
@@ -585,6 +619,7 @@ function renderDevPage() {
     const tagsHtml = tagsParts.length
       ? '<div class="dev-entry-tags">' + tagsParts.join(' · ') + '</div>'
       : '';
+    const importedMark = n.imported ? '<span class="dev-entry-imported">IMPORTED</span> ' : '';
     return (
       '<div class="dev-entry">' +
       '<div class="dev-entry-head">' +
@@ -592,7 +627,7 @@ function renderDevPage() {
       '</div>' +
       '<div class="dev-entry-text">' + text.replace(/\n/g, '<br>') + '</div>' +
       tagsHtml +
-      '<div class="dev-entry-attribution">' + personDisplay + ' · ' + ts + '</div>' +
+      '<div class="dev-entry-attribution">' + importedMark + personDisplay + ' · ' + ts + '</div>' +
       '</div>'
     );
   }).join('');

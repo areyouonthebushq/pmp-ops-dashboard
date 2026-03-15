@@ -426,9 +426,11 @@
               <div class="dev-panel dev-panel-stage">
                 <div id="devStageRail" class="dev-rail"></div>
               </div>
-              <!-- EXPORT hidden; will be relocated -->
-              <div class="dev-export-wrap">
-                <button type="button" class="bar-btn dev-export-btn" onclick="exportDevNotes()">EXPORT</button>
+              <div class="dev-util-zone" id="devUtilZone">
+                <label class="dev-icon-btn" title="Import CSV">↑
+                  <input type="file" id="devCsvInput" accept=".csv" style="display:none" onchange="onDevImportFileSelected(this)">
+                </label>
+                <button type="button" class="dev-icon-btn" onclick="exportDevNotes()" title="Export CSV">↓</button>
               </div>
             </div>
             <!-- devAreaSelect kept for JS (getDevAreaFilter / onDevAreaChange); hidden from UI, Entity rail replaces it -->
@@ -439,8 +441,8 @@
             </div>
           </div>
           <div class="dev-view-toggle" role="group" aria-label="View mode">
-              <button type="button" class="dev-view-toggle-btn" id="devViewFeedBtn" onclick="setDevViewMode('feed')">FEED</button>
-              <button type="button" class="dev-view-toggle-btn" id="devViewBoardBtn" onclick="setDevViewMode('board')">BOARD</button>
+              <button type="button" class="dev-view-toggle-btn" id="devViewFeedBtn" onclick="setDevViewMode('feed')" aria-label="Feed view"></button>
+              <button type="button" class="dev-view-toggle-btn" id="devViewBoardBtn" onclick="setDevViewMode('board')" aria-label="Board view"></button>
             </div>
           <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)"></textarea>
           <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">+</button>

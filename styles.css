@@ -448,6 +448,10 @@
     @keyframes pgIn { from { opacity:0; } to { opacity:1; } }
 
     /* ============================================================ DEV PAGE — backstage product memory (purple identity) */
+    /* When DEV page is visible: bar logo and mode badge use purple */
+    #app:has(#pg-dev.on) .bar-logo { color: var(--p); }
+    #app:has(#pg-dev.on) .bar-logo span { color: var(--p); }
+    #app:has(#pg-dev.on) .bar-mode { color: var(--p); border-color: var(--p); }
     .dev-terminal {
     border: 1px solid var(--b2);
     background: var(--s1);
@@ -518,21 +522,29 @@
     width: 3.2em;
     }
     /* EXPORT hidden; will be relocated. Panels use full width. */
-    #pg-dev .dev-export-wrap {
-    display: none !important;
+    #pg-dev .dev-util-zone {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: center;
+    flex-shrink: 0;
+    padding: var(--space-sm) 0;
+    border-top: 1px solid hsl(270, 15%, 14%);
     }
-    #pg-dev .dev-export-btn {
-    font-size: 11px;
-    padding: 4px var(--space-sm);
-    color: var(--d3);
-    border-color: var(--b2);
-    background: var(--s2);
+    #pg-dev .dev-icon-btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid hsl(270, 15%, 14%);
+    background: hsl(270, 10%, 10%);
+    color: hsl(270, 20%, 45%);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inconsolata', monospace;
     }
-    #pg-dev .dev-export-btn:hover {
-    color: var(--d2);
-    border-color: var(--b3);
-    background: var(--s3);
-    }
+    #pg-dev .dev-icon-btn:hover { border-color: hsl(270, 25%, 35%); color: hsl(270, 25%, 55%); }
     /* devAreaSelect kept for JS; hidden from UI */
     #pg-dev .dev-area-select-wrap {
     display: none !important;
@@ -566,6 +578,7 @@
     max-height: 160px;
     resize: vertical;
     }
+    #pg-dev .dev-textarea:focus { border-color: var(--p); }
     .dev-add-btn {
     align-self: stretch;
     display: flex;
@@ -584,6 +597,19 @@
     margin-top: var(--space-md);
     }
     #pg-dev .dev-feed-wrap { border-color: hsl(270, 15%, 14%); background: hsl(270, 10%, 8%); }
+    #pg-dev .dev-entry-imported { font-size: 9px; letter-spacing: 0.1em; color: var(--d3); text-transform: uppercase; margin-right: 6px; }
+    .dev-import-preview { padding: var(--space-md); font-family: 'Inconsolata', monospace; }
+    .dev-import-preview-head { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: hsl(270, 20%, 45%); margin-bottom: var(--space-sm); }
+    .dev-import-preview-meta { font-size: 10px; color: var(--d3); margin-bottom: var(--space-sm); }
+    .dev-import-warnings { margin-bottom: var(--space-sm); font-size: 10px; color: var(--w); }
+    .dev-import-warnings-list { white-space: pre-wrap; max-height: 80px; overflow-y: auto; margin-top: 2px; color: var(--d3); }
+    .dev-import-preview-tbl { width: 100%; border-collapse: collapse; font-size: 11px; color: var(--d2); margin-bottom: var(--space-md); }
+    .dev-import-preview-tbl th, .dev-import-preview-tbl td { border: 1px solid hsl(270, 15%, 14%); padding: 4px 6px; text-align: left; }
+    .dev-import-preview-tbl th { background: hsl(270, 10%, 8%); color: hsl(270, 20%, 45%); }
+    .dev-import-preview-tbl .dev-import-preview-text { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dev-import-preview-actions { display: flex; gap: var(--space-sm); }
+    .dev-import-cancel { flex: 0 0 auto; }
+    .dev-import-confirm { flex: 0 0 auto; }
     .dev-feed {
     padding: var(--space-sm);
     }
@@ -746,38 +772,34 @@
     text-align: center;
     font-family: 'Inconsolata', monospace;
     font-size: 11px;
+    color: var(--p);
+    border-top: 2px solid var(--p);
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
     border-bottom: 2px solid;
     }
     #pg-dev .dev-board-header-note {
-    color: #001a0a;
     background: var(--g3);
     border-color: var(--g2);
     }
     #pg-dev .dev-board-header-play {
-    color: #a8e6a8;
     background: hsl(140, 35%, 22%);
     border-color: hsl(140, 35%, 25%);
     }
     #pg-dev .dev-board-header-test {
-    color: #a8e6a8;
     background: hsl(140, 30%, 18%);
     border-color: hsl(140, 30%, 20%);
     }
     #pg-dev .dev-board-header-live {
-    color: #001a0a;
     background: var(--g);
     border-color: var(--g);
     }
     #pg-dev .dev-board-header-shop {
-    color: var(--w);
     background: var(--w2);
     border-color: var(--w2);
     }
     #pg-dev .dev-board-header-purge {
-    color: var(--d3);
     background: var(--s2);
     border-color: var(--b2);
     }
@@ -857,27 +879,14 @@
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
-    border-bottom: 2px solid transparent;
     }
     #pg-dev .dev-rail-btn:hover:not(.active) {
     color: hsl(270, 25%, 55%);
     }
-    /* Active: precise, severe — family color + weight + rule only (no filled box) */
-    #pg-dev .dev-panel-stage .dev-rail-btn.active {
-    color: var(--g);
+    /* Active: purple text, no underline (all three rails) */
+    #pg-dev .dev-rail-btn.active {
+    color: var(--p);
     font-weight: 700;
-    border-bottom-color: var(--g2);
-    }
-    #pg-dev .dev-panel-type .dev-rail-btn.active {
-    color: #8ab4e8;
-    font-weight: 700;
-    border-bottom-color: hsl(210, 45%, 42%);
-    }
-    #pg-dev .dev-panel-entity .dev-rail-btn.active,
-    #pg-dev .dev-rail .dev-rail-btn.dev-entity-exception.active {
-    color: #d4b8f0;
-    font-weight: 700;
-    border-bottom-color: hsl(270, 40%, 42%);
     }
     /* Narrow: stack panels and board columns vertically */
     @media (max-width: 720px) {
@@ -888,11 +897,7 @@
       flex: 1 1 auto;
       min-width: 100%;
     }
-    #pg-dev .dev-export-wrap {
-      width: 100%;
-      justify-content: flex-end;
-      padding-left: 0;
-    }
+    #pg-dev .dev-util-zone { margin-top: var(--space-xs); }
     #pg-dev .dev-board-cols {
       grid-template-columns: 1fr;
     }
