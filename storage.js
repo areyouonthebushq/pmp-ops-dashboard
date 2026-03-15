@@ -306,6 +306,7 @@ const Storage = {
     const raw = await safeGet(STORE_KEY);
     if (!raw) return { jobs: [], presses: [], todos: JSON.parse(JSON.stringify(DEFAULT_TODOS)), qcLog: [], devNotes: [], compounds: [], employees: [], scheduleEntries: [], lastReset: null, notesChannels: null };
     const data = JSON.parse(raw);
+    if (Array.isArray(data.devNotes)) data.devNotes = ensureDevNoteIds(data.devNotes);
     return {
       jobs: data.jobs || [],
       presses: data.presses || [],
@@ -466,6 +467,7 @@ const Storage = {
   logDevNote(entry) {
     if (window.Sentry) Sentry.addBreadcrumb({ category: 'storage', message: 'logDevNote: ' + (entry.area || '?'), level: 'info' });
     const note = {
+      id: entry.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2)),
       area: entry.area || '',
       stage: entry.stage != null ? String(entry.stage) : '',
       type: entry.type != null ? String(entry.type) : '',
@@ -506,6 +508,25 @@ const Storage = {
   /** Persist current S.devNotes (e.g. after bulk dedup in DevTools). Local: writes payload. Supabase: no-op — table is source of truth; dedup only affects local until next fetch. */
   saveDevNotes() {
     if (useSupabase()) return Promise.resolve();
+    return flushLocalSave();
+  },
+  /** Remove one DEV note by id; persist. Admin-only in UI. */
+  deleteDevNote(id) {
+    if (!id) return Promise.resolve();
+    if (useSupabase()) {
+      return supabaseWithRetry(function () { return window.PMP.Supabase.deleteDevNote(id); })
+        .then(function () {
+          if (Array.isArray(S.devNotes)) S.devNotes = S.devNotes.filter(function (n) { return n.id !== id; });
+          S.lastLocalWriteAt = Date.now();
+          setSyncState('synced');
+        })
+        .catch(function (e) {
+          console.error(e);
+          setSyncState('error', { toast: 'DELETE FAILED' });
+          return Promise.reject(e);
+        });
+    }
+    if (Array.isArray(S.devNotes)) S.devNotes = S.devNotes.filter(function (n) { return n.id !== id; });
     return flushLocalSave();
   },
   saveCompounds(compounds) {
@@ -577,6 +598,15 @@ const Storage = {
     return flushLocalSave();
   },
 };
+
+function ensureDevNoteIds(notes) {
+  if (!Array.isArray(notes)) return notes;
+  var uuid = typeof crypto !== 'undefined' && crypto.randomUUID ? function () { return crypto.randomUUID(); } : function () { return 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2); };
+  notes.forEach(function (n) {
+    if (!n.id) n.id = uuid();
+  });
+  return notes;
+}
 
 function buildLocalPayload() {
   return {

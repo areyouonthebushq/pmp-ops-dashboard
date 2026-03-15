@@ -288,6 +288,7 @@
       }));
 
       const devNotes = (devRes.data || []).map((row) => ({
+        id: row.id || null,
         area: row.area || '',
         stage: row.stage != null ? String(row.stage) : '',
         type: row.type != null ? String(row.type) : '',
@@ -295,6 +296,7 @@
         text: row.text || '',
         person: row.person || '',
         timestamp: row.timestamp || null,
+        imported: row.imported || false,
       }));
 
       const compounds = (compoundsRes.data || []).map((row) => ({
@@ -390,7 +392,14 @@
         type: entry.type != null ? entry.type : null,
         entity: entry.entity != null ? entry.entity : null,
       };
+      if (entry.id) row.id = entry.id;
       const { error } = await client.from('dev_notes').insert(row);
+      if (error) throw error;
+    },
+
+    async deleteDevNote(id) {
+      const client = getClient();
+      const { error } = await client.from('dev_notes').delete().eq('id', id);
       if (error) throw error;
     },
 

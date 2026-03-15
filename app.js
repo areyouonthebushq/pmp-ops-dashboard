@@ -267,6 +267,9 @@ async function loadAll() {
     if (data.lastReset) S._lastReset = data.lastReset;
     if (Array.isArray(data.devNotes)) {
       S.devNotes = data.devNotes;
+      S.devNotes.forEach(function (n) {
+        if (!n.id) n.id = (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+      });
     } else if (!Array.isArray(S.devNotes)) {
       S.devNotes = [];
     }
@@ -572,6 +575,62 @@ function confirmDevImport() {
 
 function cancelDevImport() {
   window.devImportPreview = null;
+  if (typeof renderDevPage === 'function') renderDevPage();
+}
+
+/** DEV note delete: show inline confirm (× → DELETE / CANCEL). Works for feed and board. Admin-only in UI. */
+function onDevEntryDeleteClick(btnEl) {
+  var entry = btnEl && btnEl.closest && (btnEl.closest('.dev-entry') || btnEl.closest('.dev-board-card'));
+  if (!entry || entry.classList.contains('confirm-delete')) return;
+  var actions = entry.querySelector('.dev-entry-actions');
+  if (!actions) return;
+  entry.classList.add('confirm-delete');
+  actions.innerHTML = '<button type="button" class="dev-entry-confirm-delete" onclick="onDevEntryConfirmDelete(this)">DELETE</button><button type="button" class="dev-entry-confirm-cancel" onclick="onDevEntryConfirmCancel(this)">CANCEL</button>';
+}
+
+function onDevEntryConfirmDelete(btnEl) {
+  var entry = btnEl && btnEl.closest && (btnEl.closest('.dev-entry') || btnEl.closest('.dev-board-card'));
+  var id = entry && entry.dataset.noteId;
+  if (!id) return;
+  Storage.deleteDevNote(id).then(function () {
+    if (typeof renderDevPage === 'function') renderDevPage();
+  }).catch(function () {});
+}
+
+function onDevEntryConfirmCancel(btnEl) {
+  var entry = btnEl && btnEl.closest && (btnEl.closest('.dev-entry') || btnEl.closest('.dev-board-card'));
+  if (!entry) return;
+  entry.classList.remove('confirm-delete');
+  var actions = entry.querySelector('.dev-entry-actions');
+  if (actions) actions.innerHTML = '<button type="button" class="dev-entry-delete-btn" aria-label="Delete note" onclick="event.stopPropagation(); onDevEntryDeleteClick(this);">×</button>';
+}
+
+function onDevDeleteImportedClick() {
+  window.devDeleteImportedConfirming = true;
+  if (typeof renderDevPage === 'function') renderDevPage();
+}
+
+function onDevDeleteImportedConfirm() {
+  var ids = (Array.isArray(S.devNotes) ? S.devNotes : []).filter(function (n) { return n.imported; }).map(function (n) { return n.id; });
+  window.devDeleteImportedConfirming = false;
+  if (!ids.length) {
+    if (typeof renderDevPage === 'function') renderDevPage();
+    return;
+  }
+  var i = 0;
+  function next() {
+    if (i >= ids.length) {
+      if (typeof renderDevPage === 'function') renderDevPage();
+      if (typeof toast === 'function') toast('Deleted ' + ids.length + ' imported notes');
+      return;
+    }
+    Storage.deleteDevNote(ids[i]).then(function () { i++; next(); }).catch(function () { i++; next(); });
+  }
+  next();
+}
+
+function onDevDeleteImportedCancel() {
+  window.devDeleteImportedConfirming = false;
   if (typeof renderDevPage === 'function') renderDevPage();
 }
 

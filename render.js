@@ -556,6 +556,23 @@ function renderDevPage() {
 
   var utilZone = document.getElementById('devUtilZone');
   if (utilZone) utilZone.style.display = devViewMode === 'board' ? 'none' : 'flex';
+  var deleteImportedWrap = document.getElementById('devDeleteImportedWrap');
+  if (deleteImportedWrap && isAdmin && devViewMode === 'feed') {
+    var importedNotes = (Array.isArray(S.devNotes) ? S.devNotes : []).filter(function (n) { return n.imported; });
+    if (importedNotes.length === 0) {
+      deleteImportedWrap.innerHTML = '';
+      deleteImportedWrap.style.display = 'none';
+    } else if (window.devDeleteImportedConfirming) {
+      deleteImportedWrap.style.display = '';
+      deleteImportedWrap.innerHTML = 'Delete <strong>' + importedNotes.length + '</strong> imported? <button type="button" class="dev-entry-confirm-delete" onclick="onDevDeleteImportedConfirm()">DELETE</button> <button type="button" class="dev-entry-confirm-cancel" onclick="onDevDeleteImportedCancel()">CANCEL</button>';
+    } else {
+      deleteImportedWrap.style.display = '';
+      deleteImportedWrap.innerHTML = '<button type="button" class="dev-icon-btn dev-delete-imported-btn" onclick="onDevDeleteImportedClick()" title="Delete all imported notes">Delete imported (' + importedNotes.length + ')</button>';
+    }
+  } else if (deleteImportedWrap) {
+    deleteImportedWrap.innerHTML = '';
+    deleteImportedWrap.style.display = 'none';
+  }
 
   const feedEl = document.getElementById('devFeed');
   if (!feedEl) return;
@@ -585,7 +602,11 @@ function renderDevPage() {
         var metaParts = [entityLabel, typeLabel].filter(Boolean);
         if (n.imported) metaParts.unshift('IMPORTED');
         var metaHtml = metaParts.length ? '<div class="dev-board-card-meta">' + metaParts.join(' · ') + '</div>' : '';
-        return '<div class="dev-board-card"><div class="dev-board-card-text">' + text.replace(/\n/g, '<br>') + '</div>' + metaHtml + '</div>';
+        var cardNoteId = (n.id || '').replace(/"/g, '&quot;');
+        var cardDeleteControl = isAdmin
+          ? '<div class="dev-entry-actions"><button type="button" class="dev-entry-delete-btn" aria-label="Delete note" onclick="event.stopPropagation(); onDevEntryDeleteClick(this);">×</button></div>'
+          : '';
+        return '<div class="dev-board-card" data-note-id="' + cardNoteId + '">' + cardDeleteControl + '<div class="dev-board-card-text">' + text.replace(/\n/g, '<br>') + '</div>' + metaHtml + '</div>';
       }).join('');
       return '<div class="dev-board-col"><div class="' + headerCls + '">' + (s.label || s.key) + '</div><div class="dev-board-col-body">' + cardsHtml + '</div></div>';
     }).join('');
@@ -620,8 +641,13 @@ function renderDevPage() {
       ? '<div class="dev-entry-tags">' + tagsParts.join(' · ') + '</div>'
       : '';
     const importedMark = n.imported ? '<span class="dev-entry-imported">IMPORTED</span> ' : '';
+    const noteId = (n.id || '').replace(/"/g, '&quot;');
+    const deleteControl = isAdmin
+      ? '<div class="dev-entry-actions"><button type="button" class="dev-entry-delete-btn" aria-label="Delete note" onclick="event.stopPropagation(); onDevEntryDeleteClick(this);">×</button></div>'
+      : '';
     return (
-      '<div class="dev-entry">' +
+      '<div class="dev-entry" data-note-id="' + noteId + '">' +
+      deleteControl +
       '<div class="dev-entry-head">' +
       '<span class="dev-entry-area">' + area + '</span>' +
       '</div>' +
