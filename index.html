@@ -442,13 +442,15 @@
             </select>
           </div>
         </div>
+            <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)" onkeydown="devComposerKeydown(event)"></textarea>
+          </div>
+          <div class="dev-composer-actions">
             <div class="dev-view-toggle" role="group" aria-label="View mode">
               <button type="button" class="dev-view-toggle-btn" id="devViewFeedBtn" onclick="setDevViewMode('feed')">FEED</button>
               <button type="button" class="dev-view-toggle-btn" id="devViewBoardBtn" onclick="setDevViewMode('board')">BOARD</button>
             </div>
-            <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)" onkeydown="devComposerKeydown(event)"></textarea>
+            <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">+</button>
           </div>
-          <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">+</button>
         </div>
         <div class="dev-feed-sec" style="display:none;">DEV NOTES</div>
         <div class="dev-feed-wrap">

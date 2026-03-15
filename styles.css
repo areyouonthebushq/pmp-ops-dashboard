@@ -463,6 +463,17 @@
     gap: var(--space-sm);
     align-items: stretch;
     }
+    #pg-dev .dev-composer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: stretch;
+    min-width: 0;
+    }
+    #pg-dev .dev-composer-actions .dev-add-btn {
+    flex: 1;
+    min-height: 32px;
+    }
     #pg-dev .dev-composer-col {
     display: flex;
     flex-direction: column;
@@ -619,20 +630,25 @@
     #pg-dev .dev-view-toggle {
     display: flex;
     gap: 1px;
+    min-height: 32px;
+    width: 100%;
     }
     #pg-dev .dev-view-toggle-btn {
     flex: 1;
-    padding: 4px var(--space-sm);
+    padding: 0 6px;
     font-family: 'Inconsolata', monospace;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
     border: 1px solid var(--b2);
     background: var(--s2);
     color: var(--d3);
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     }
     #pg-dev .dev-view-toggle-btn:hover:not(.active) {
     background: var(--s3);
