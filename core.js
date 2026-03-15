@@ -277,6 +277,41 @@ function cautionPill(job) {
   return '<span class="' + cls + '" onclick="event.stopPropagation();goToNotesWithFilter(\'' + job.id + '\')" style="cursor:pointer" title="' + tip + '">⚠ ' + label + '</span>';
 }
 
+// ============================================================
+// DEV 2.0 — stage / work type / entity (three rails, see docs/dev-2.0-console-spec.md)
+// ============================================================
+const DEV_STAGES = [
+  { key: 'note', label: 'NOTE', cls: 'dev-stage-note' },
+  { key: 'playground', label: 'PLAYGROUND', cls: 'dev-stage-playground' },
+  { key: 'testing', label: 'TESTING', cls: 'dev-stage-testing' },
+  { key: 'live', label: 'LIVE', cls: 'dev-stage-live' },
+  { key: 'the_shop', label: 'THE SHOP', cls: 'dev-stage-the-shop' },
+  { key: 'purgatory', label: 'PURGATORY', cls: 'dev-stage-purgatory' },
+];
+
+const DEV_WORK_TYPES = [
+  { key: 'bug', label: 'bug', cls: 'dev-type-bug' },
+  { key: 'polish', label: 'polish', cls: 'dev-type-polish' },
+  { key: 'think', label: 'think', cls: 'dev-type-think' },
+  { key: 'tune_up', label: 'tune-up', cls: 'dev-type-tune-up' },
+  { key: 'purge', label: 'purge', cls: 'dev-type-purge' },
+  { key: 'debug', label: 'debug', cls: 'dev-type-debug' },
+];
+
+const DEV_ENTITIES = [
+  { key: 'rsp', label: 'RSP', cls: 'dev-entity-rsp' },
+  { key: 'card', label: 'CARD', cls: 'dev-entity-card' },
+  { key: 'log', label: 'LOG', cls: 'dev-entity-log' },
+  { key: 'notes', label: 'NOTES', cls: 'dev-entity-notes' },
+  { key: 'floor', label: 'FLOOR', cls: 'dev-entity-floor' },
+  { key: 'jobs', label: 'JOBS', cls: 'dev-entity-jobs' },
+  { key: 'engine', label: 'ENGINE', cls: 'dev-entity-engine' },
+  { key: 'dev', label: 'DEV', cls: 'dev-entity-dev' },
+  { key: 'crew', label: 'CREW', cls: 'dev-entity-crew' },
+  { key: 'pvc', label: 'PVC', cls: 'dev-entity-pvc' },
+  { key: 'audit', label: 'AUDIT', cls: 'dev-entity-audit' },
+];
+
 function cautionNeedsNote(job) {
   if (!isJobCautioned(job)) return false;
   var since = job.caution.since;

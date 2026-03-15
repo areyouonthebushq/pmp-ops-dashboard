@@ -405,6 +405,25 @@ function renderCrewPage() {
 // DEV PAGE — backstage product memory
 // ============================================================
 
+let devStage = 'note';
+let devType = '';
+let devEntity = '';
+
+function setDevStage(value) {
+  devStage = value;
+  if (typeof renderDevPage === 'function') renderDevPage();
+}
+
+function setDevType(value) {
+  devType = value;
+  if (typeof renderDevPage === 'function') renderDevPage();
+}
+
+function setDevEntity(value) {
+  devEntity = value;
+  if (typeof renderDevPage === 'function') renderDevPage();
+}
+
 const DEV_AREAS = [
   'JOBS',
   'FLOOR',
