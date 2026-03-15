@@ -456,6 +456,19 @@
     flex-direction: column;
     gap: var(--space-md);
     }
+    /* Console + textarea share one column; + button in second column so right edges align */
+    #pg-dev .dev-composer-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-sm);
+    align-items: stretch;
+    }
+    #pg-dev .dev-composer-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    min-width: 0;
+    }
     .dev-control-rail {
     display: flex;
     flex-direction: column;
@@ -536,6 +549,7 @@
     gap: var(--space-sm);
     align-items: flex-start;
     }
+    /* DEV page: textarea lives in dev-composer-col; utility-row not used on DEV */
     .dev-textarea {
     min-height: 56px;
     max-height: 160px;

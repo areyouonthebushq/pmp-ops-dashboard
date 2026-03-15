@@ -508,13 +508,17 @@ function renderDevPage() {
     const text = (n.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const stageKey = n.stage != null && n.stage !== '' ? String(n.stage) : '';
     const typeKey = n.type != null && n.type !== '' ? String(n.type) : '';
+    const entityKey = n.entity != null && n.entity !== '' ? String(n.entity) : '';
     const stageLabel = stageKey && typeof DEV_STAGES !== 'undefined'
       ? (DEV_STAGES.find(function (x) { return x.key === stageKey; }) || {}).label || stageKey
       : '';
     const typeLabel = typeKey && typeof DEV_WORK_TYPES !== 'undefined'
       ? (DEV_WORK_TYPES.find(function (x) { return x.key === typeKey; }) || {}).label || typeKey
       : '';
-    const tagsParts = [stageLabel, typeLabel].filter(Boolean);
+    const entityLabel = entityKey && typeof DEV_ENTITIES !== 'undefined'
+      ? (DEV_ENTITIES.find(function (x) { return x.key === entityKey; }) || {}).label || entityKey
+      : '';
+    const tagsParts = [stageLabel, typeLabel, entityLabel].filter(Boolean);
     const tagsHtml = tagsParts.length
       ? '<div class="dev-entry-tags">' + tagsParts.join(' · ') + '</div>'
       : '';

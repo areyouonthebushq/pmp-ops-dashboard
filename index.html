@@ -414,6 +414,8 @@
     <!-- ======= DEV PAGE (admin/backstage) ======= -->
     <div class="pg" id="pg-dev">
       <div class="dev-terminal">
+        <div class="dev-composer-row">
+          <div class="dev-composer-col">
         <div class="dev-control-rail">
           <div class="dev-panels-row">
             <div class="dev-panel dev-panel-entity">
@@ -440,8 +442,8 @@
             </select>
           </div>
         </div>
-        <div class="dev-utility-row">
-          <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)" onkeydown="devComposerKeydown(event)"></textarea>
+            <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)" onkeydown="devComposerKeydown(event)"></textarea>
+          </div>
           <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">+</button>
         </div>
         <div class="dev-feed-sec" style="display:none;">DEV NOTES</div>
