@@ -380,7 +380,7 @@
     /* MIN toggle — compact side-to-side pill */
     .bar-min-toggle {
       position: relative; width: 32px; height: 18px; padding: 0;
-      border-radius: 9px; border: 1px solid var(--b2); background: var(--s2);
+      border-radius: 0; border: 1px solid var(--b2); background: var(--s2);
       cursor: pointer; transition: all 0.2s;
     }
     .bar-min-toggle::after {
@@ -624,7 +624,7 @@
     align-self: stretch;
     min-height: 32px;
     padding: 0;
-    border-radius: 9px;
+    border-radius: 0;
     border: 1px solid var(--b2);
     background: var(--s2);
     cursor: pointer;
