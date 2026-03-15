@@ -481,9 +481,10 @@
     border: 1px solid var(--b2);
     padding: 4px;
     }
-    #pg-dev .dev-panel-entity { flex: 4 1 0; }
-    #pg-dev .dev-panel-type { flex: 3 1 0; }
-    #pg-dev .dev-panel-stage { flex: 3 1 0; }
+    /* 50/25/25 so each button cell ≈ same width: Entity 4 cols, Type 2 cols, Stage 2 cols → 4:2:2 */
+    #pg-dev .dev-panel-entity { flex: 2 1 0; }
+    #pg-dev .dev-panel-type { flex: 1 1 0; }
+    #pg-dev .dev-panel-stage { flex: 1 1 0; }
     #pg-dev .dev-panel-label {
     font-family: 'Inconsolata', monospace;
     font-size: 10px;
