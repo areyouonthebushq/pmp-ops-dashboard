@@ -658,7 +658,8 @@
     color: #a8c8f0;
     border-color: hsl(210, 45%, 42%);
     }
-    #pg-dev .dev-panel-entity .dev-rail-btn.active {
+    #pg-dev .dev-panel-entity .dev-rail-btn.active,
+    #pg-dev .dev-rail .dev-rail-btn.dev-entity-exception.active {
     background: hsl(270, 40%, 35%);
     color: #d4b8f0;
     border-color: hsl(270, 40%, 42%);

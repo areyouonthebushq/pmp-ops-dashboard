@@ -58,21 +58,24 @@ One max; optional.
 
 ### Rail 3 — Entity
 
-One max; optional (“what system or surface this note is mainly about”).
+One max; optional (“what system or surface this note is mainly about”). **12 entities**, 4×3 grid with semantic row grouping.
 
 | Key | Label |
 |-----|--------|
-| `rsp` | RSP |
-| `card` | CARD |
-| `log` | LOG |
-| `notes` | NOTES |
 | `floor` | FLOOR |
 | `jobs` | JOBS |
-| `engine` | ENGINE |
+| `log` | LOG |
+| `notes` | NOTES |
+| `card` | CARD |
+| `rsp` | RSP |
+| `exception` | EXCEPTION |
 | `dev` | DEV |
+| `engine` | ENGINE |
 | `crew` | CREW |
 | `pvc` | PVC |
 | `audit` | AUDIT |
+
+**EXCEPTION:** The ACHTUNG/WRENCH exception protocol system. Use for protocol-level work; use specific surface entities (CARD, RSP) for surface-specific exception behavior.
 
 ---
 
@@ -107,13 +110,14 @@ Storage and Supabase: extend `dev_notes` (or equivalent) with optional `stage`, 
 - **Current:** `pg-dev` has `dev-control-rail` (channel dropdown + EXPORT), then `dev-utility-row` (textarea + + button), then `dev-feed`.
 - **Change:** Replace the single channel dropdown with **three horizontal button rails** (Stage | Work type | Entity). Keep EXPORT in the same control row or move to end of rails. Keep textarea and + below; Enter in textarea still submits. Feed below unchanged for Phase 1 (filtering by stage/type/entity can be Phase 2).
 
-Layout sketch:
+Layout sketch (Entity = 4×3 semantic grid):
 
 ```
 [ STAGE:     NOTE | PLAYGROUND | TESTING | LIVE | THE SHOP | PURGATORY ]
 [ TYPE:      bug | polish | think | tune | purge | debug           ]
-[ ENTITY:    RSP | CARD | LOG | NOTES | FLOOR | JOBS | ENGINE | DEV | CREW | PVC | AUDIT ]
-[ EXPORT ]
+[ ENTITY:    Row 1: FLOOR | JOBS | LOG | NOTES
+             Row 2: CARD | RSP | EXCEPTION | DEV
+             Row 3: ENGINE | CREW | PVC | AUDIT ]
 [ <textarea>                                              ] [ + ]
 [ DEV NOTES feed... ]
 ```

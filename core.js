@@ -298,15 +298,17 @@ const DEV_WORK_TYPES = [
   { key: 'debug', label: 'debug', cls: 'dev-type-debug' },
 ];
 
+/* Entity order = semantic grid: Row 1 primary nav (floor,jobs,log,notes), Row 2 object/backstage (card,rsp,exception,dev), Row 3 utility (engine,crew,pvc,audit). 4×3 grid. */
 const DEV_ENTITIES = [
-  { key: 'rsp', label: 'RSP', cls: 'dev-entity-rsp' },
-  { key: 'card', label: 'CARD', cls: 'dev-entity-card' },
-  { key: 'log', label: 'LOG', cls: 'dev-entity-log' },
-  { key: 'notes', label: 'NOTES', cls: 'dev-entity-notes' },
   { key: 'floor', label: 'FLOOR', cls: 'dev-entity-floor' },
   { key: 'jobs', label: 'JOBS', cls: 'dev-entity-jobs' },
-  { key: 'engine', label: 'ENGINE', cls: 'dev-entity-engine' },
+  { key: 'log', label: 'LOG', cls: 'dev-entity-log' },
+  { key: 'notes', label: 'NOTES', cls: 'dev-entity-notes' },
+  { key: 'card', label: 'CARD', cls: 'dev-entity-card' },
+  { key: 'rsp', label: 'RSP', cls: 'dev-entity-rsp' },
+  { key: 'exception', label: 'EXCEPTION', cls: 'dev-entity-exception' },
   { key: 'dev', label: 'DEV', cls: 'dev-entity-dev' },
+  { key: 'engine', label: 'ENGINE', cls: 'dev-entity-engine' },
   { key: 'crew', label: 'CREW', cls: 'dev-entity-crew' },
   { key: 'pvc', label: 'PVC', cls: 'dev-entity-pvc' },
   { key: 'audit', label: 'AUDIT', cls: 'dev-entity-audit' },
