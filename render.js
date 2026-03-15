@@ -405,9 +405,12 @@ function renderCrewPage() {
 // DEV PAGE — backstage product memory
 // ============================================================
 
-let devStage = 'note';
-let devType = '';
-let devEntity = '';
+/** @type {string[]} Multi-select: empty = no filter (show all). Compose uses first selected. */
+let devStage = [];
+/** @type {string[]} */
+let devType = [];
+/** @type {string[]} */
+let devEntity = [];
 let devViewMode = 'feed';
 
 function setDevViewMode(mode) {
@@ -420,18 +423,24 @@ function toggleDevViewMode() {
   if (typeof renderDevPage === 'function') renderDevPage();
 }
 
-function setDevStage(value) {
-  devStage = value;
+function setDevStage(key) {
+  const i = devStage.indexOf(key);
+  if (i >= 0) devStage.splice(i, 1);
+  else devStage.push(key);
   if (typeof renderDevPage === 'function') renderDevPage();
 }
 
-function setDevType(value) {
-  devType = value;
+function setDevType(key) {
+  const i = devType.indexOf(key);
+  if (i >= 0) devType.splice(i, 1);
+  else devType.push(key);
   if (typeof renderDevPage === 'function') renderDevPage();
 }
 
-function setDevEntity(value) {
-  devEntity = value;
+function setDevEntity(key) {
+  const i = devEntity.indexOf(key);
+  if (i >= 0) devEntity.splice(i, 1);
+  else devEntity.push(key);
   if (typeof renderDevPage === 'function') renderDevPage();
 }
 
@@ -460,7 +469,8 @@ function renderDevRails() {
   const entityEl = document.getElementById('devEntityRail');
   if (!stageEl || !typeEl || !entityEl) return;
 
-  function fillRail(container, options, currentValue, setterName) {
+  function fillRail(container, options, currentValues, setterName) {
+    const arr = Array.isArray(currentValues) ? currentValues : [];
     container.innerHTML = '';
     if (!Array.isArray(options)) return;
     options.forEach(function (entry) {
@@ -473,7 +483,7 @@ function renderDevRails() {
         else if (setterName === 'setDevType') setDevType(entry.key);
         else if (setterName === 'setDevEntity') setDevEntity(entry.key);
       };
-      btn.classList.toggle('active', currentValue === entry.key);
+      btn.classList.toggle('active', arr.includes(entry.key));
       container.appendChild(btn);
     });
   }
@@ -495,19 +505,17 @@ function renderDevPage() {
       if (e.key !== 'Escape') return;
       var pg = document.getElementById('pg-dev');
       if (!pg || pg.style.display === 'none') return;
-      if (document.activeElement && document.activeElement.id === 'devText') return;
-      devStage = '';
-      devType = '';
-      devEntity = '';
+      devStage = [];
+      devType = [];
+      devEntity = [];
       if (typeof renderDevPage === 'function') renderDevPage();
     });
   }
 
-  var toggleBtn = document.getElementById('devViewToggle');
-  if (toggleBtn) {
-    toggleBtn.classList.toggle('dev-view-board', devViewMode === 'board');
-    toggleBtn.setAttribute('aria-pressed', devViewMode === 'board');
-  }
+  var feedBtn = document.getElementById('devViewFeedBtn');
+  var boardBtn = document.getElementById('devViewBoardBtn');
+  if (feedBtn) feedBtn.classList.toggle('active', devViewMode === 'feed');
+  if (boardBtn) boardBtn.classList.toggle('active', devViewMode === 'board');
 
   const sel = document.getElementById('devAreaSelect');
   if (sel && !sel.dataset.bound) {
@@ -527,18 +535,12 @@ function renderDevPage() {
     return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
   });
   let filtered = filter ? notes.filter(n => (n.area || '') === filter) : notes;
-  if (devEntity) filtered = filtered.filter(n => (n.entity || '') === devEntity);
-  if (devType) filtered = filtered.filter(n => (n.type || '') === devType);
-  if (devStage) filtered = filtered.filter(n => (n.stage || 'note') === devStage);
+  if (devEntity.length > 0) filtered = filtered.filter(n => devEntity.includes(n.entity || ''));
+  if (devType.length > 0) filtered = filtered.filter(n => devType.includes(n.type || ''));
+  if (devStage.length > 0) filtered = filtered.filter(n => devStage.includes(n.stage || 'note'));
 
   if (devViewMode === 'board') {
     var stages = typeof DEV_STAGES !== 'undefined' ? DEV_STAGES : [];
-    var summaryParts = stages.map(function (s) {
-      var count = filtered.filter(function (n) { return (n.stage || 'note') === s.key; }).length;
-      return '<div class="dev-board-summary-cell"><span class="dev-board-summary-num">' + count + '</span><span class="dev-board-summary-label">' + (s.label || s.key) + '</span></div>';
-    });
-    var totalHtml = '<div class="dev-board-summary-total">Total: ' + filtered.length + '</div>';
-    var summaryHtml = '<div class="dev-board-summary-row">' + summaryParts.join('') + '</div>' + totalHtml;
     var colsHtml = stages.map(function (s) {
       var colNotes = filtered.filter(function (n) { return (n.stage || 'note') === s.key; });
       var headerCls = 'dev-board-header dev-board-header-' + (s.key === 'note' ? 'note' : s.key === 'playground' ? 'play' : s.key === 'testing' ? 'test' : s.key === 'live' ? 'live' : s.key === 'the_shop' ? 'shop' : 'purge');
@@ -553,7 +555,7 @@ function renderDevPage() {
       }).join('');
       return '<div class="dev-board-col"><div class="' + headerCls + '">' + (s.label || s.key) + '</div><div class="dev-board-col-body">' + cardsHtml + '</div></div>';
     }).join('');
-    feedEl.innerHTML = '<div class="dev-board-wrap">' + summaryHtml + '<div class="dev-board-cols">' + colsHtml + '</div></div>';
+    feedEl.innerHTML = '<div class="dev-board-wrap"><div class="dev-board-cols">' + colsHtml + '</div></div>';
     return;
   }
 

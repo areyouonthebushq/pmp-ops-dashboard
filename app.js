@@ -353,9 +353,9 @@ function addDevNote() {
   if (!text) return;
   const person = currentDevPersonLabel();
   const timestamp = new Date().toISOString();
-  const stage = (typeof devStage !== 'undefined' ? devStage : '') || '';
-  const type = (typeof devType !== 'undefined' ? devType : '') || '';
-  const entity = (typeof devEntity !== 'undefined' ? devEntity : '') || '';
+  const stage = (Array.isArray(devStage) ? devStage[0] : (typeof devStage !== 'undefined' ? devStage : '')) || '';
+  const type = (Array.isArray(devType) ? devType[0] : (typeof devType !== 'undefined' ? devType : '')) || '';
+  const entity = (Array.isArray(devEntity) ? devEntity[0] : (typeof devEntity !== 'undefined' ? devEntity : '')) || '';
   // When entity is set, use it for legacy area (uppercase) so top-left label shows; else keep dropdown value
   const area = (entity && String(entity).trim()) ? String(entity).toUpperCase() : (areaEl && (areaEl.value || '').trim()) || '';
   Storage.logDevNote({ area, stage, type, entity, text, person, timestamp })

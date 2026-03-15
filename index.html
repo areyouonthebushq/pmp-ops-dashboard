@@ -414,19 +414,16 @@
     <!-- ======= DEV PAGE (admin/backstage) ======= -->
     <div class="pg" id="pg-dev">
       <div class="dev-terminal">
-        <div class="dev-composer-row">
+        <div class="dev-composer-row" onkeydown="devComposerKeydown(event)">
           <div class="dev-control-rail">
             <div class="dev-panels-row">
               <div class="dev-panel dev-panel-entity">
-                <span class="dev-panel-label">ENTITY</span>
                 <div id="devEntityRail" class="dev-rail"></div>
               </div>
               <div class="dev-panel dev-panel-type">
-                <span class="dev-panel-label">TYPE</span>
                 <div id="devTypeRail" class="dev-rail"></div>
               </div>
               <div class="dev-panel dev-panel-stage">
-                <span class="dev-panel-label">STAGE</span>
                 <div id="devStageRail" class="dev-rail"></div>
               </div>
               <!-- EXPORT hidden; will be relocated -->
@@ -441,8 +438,11 @@
               </select>
             </div>
           </div>
-          <button type="button" class="dev-view-toggle" id="devViewToggle" onclick="toggleDevViewMode()" title="Feed / Board" aria-label="View mode: Feed or Board" aria-pressed="false"></button>
-          <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)" onkeydown="devComposerKeydown(event)"></textarea>
+          <div class="dev-view-toggle" role="group" aria-label="View mode">
+              <button type="button" class="dev-view-toggle-btn" id="devViewFeedBtn" onclick="setDevViewMode('feed')">FEED</button>
+              <button type="button" class="dev-view-toggle-btn" id="devViewBoardBtn" onclick="setDevViewMode('board')">BOARD</button>
+            </div>
+          <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)"></textarea>
           <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">+</button>
         </div>
         <div class="dev-feed-sec" style="display:none;">DEV NOTES</div>
