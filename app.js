@@ -4386,6 +4386,7 @@ document.addEventListener('keydown', e => {
     var has = function (id, cls) { var el = document.getElementById(id); return el && el.classList.contains(cls || 'on'); };
     return !!(panelOpen ||
       has('cardZoneOverlay') ||
+      has('floorCardOverlay') ||
       has('newJobChooserWrap') ||
       has('wizardWrap') ||
       has('compoundWizardWrap') ||
@@ -4398,7 +4399,7 @@ document.addEventListener('keydown', e => {
       has('engDetailOverlay') ||
       has('cautionPopup', 'open') ||
       has('cardAchtungPopup', 'open') ||
-      document.getElementById('poImageLightbox') ||
+      has('poImageLightbox', 'open') ||
       document.querySelector('.po-upload-prompt'));
   }
 

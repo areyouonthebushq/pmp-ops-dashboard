@@ -1853,8 +1853,7 @@ function renderLog() {
   }
   if (typeof logNumpadUpdateDisplay === 'function') logNumpadUpdateDisplay();
 
-  const achtungCtrl = document.getElementById('logAchtungCtrl');
-  if (achtungCtrl) achtungCtrl.style.display = 'none';
+
 
   const dateLabel = document.getElementById('logDateLabel');
   if (dateLabel) {
