@@ -52,7 +52,7 @@ One max; optional.
 | `bug` | bug |
 | `polish` | polish |
 | `think` | think |
-| `tune_up` | tune-up |
+| `tune_up` | tune |
 | `purge` | purge |
 | `debug` | debug |
 
@@ -111,7 +111,7 @@ Layout sketch:
 
 ```
 [ STAGE:     NOTE | PLAYGROUND | TESTING | LIVE | THE SHOP | PURGATORY ]
-[ TYPE:      bug | polish | think | tune-up | purge | debug           ]
+[ TYPE:      bug | polish | think | tune | purge | debug           ]
 [ ENTITY:    RSP | CARD | LOG | NOTES | FLOOR | JOBS | ENGINE | DEV | CREW | PVC | AUDIT ]
 [ EXPORT ]
 [ <textarea>                                              ] [ + ]
@@ -146,7 +146,7 @@ Implement Step 1 only of docs/dev-2.0-console-spec.md: constants and state for t
 
 PART 1 — Constants
 1. Add DEV_STAGES to core.js (or render.js if you prefer DEV-only constants live there). Each entry: { key, label, cls }. Keys and labels from the spec Section 2 "Rail 1 — Stage": note/NOTE, playground/PLAYGROUND, testing/TESTING, live/LIVE, the_shop/THE SHOP, purgatory/PURGATORY. Use cls like "dev-stage-note", "dev-stage-playground", etc.
-2. Add DEV_WORK_TYPES same shape. Section 2 "Rail 2 — Work type": bug, polish, think, tune_up (label "tune-up"), purge, debug. cls like "dev-type-bug", "dev-type-polish", etc.
+2. Add DEV_WORK_TYPES same shape. Section 2 "Rail 2 — Work type": bug, polish, think, tune_up (label "tune"), purge, debug. cls like "dev-type-bug", "dev-type-polish", etc.
 3. Add DEV_ENTITIES same shape. Section 2 "Rail 3 — Entity": rsp/RSP, card/CARD, log/LOG, notes/NOTES, floor/FLOOR, jobs/JOBS, engine/ENGINE, dev/DEV, crew/CREW, pvc/PVC, audit/AUDIT. cls like "dev-entity-rsp", etc.
 
 PART 2 — State and setters

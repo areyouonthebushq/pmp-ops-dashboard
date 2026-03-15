@@ -293,7 +293,7 @@ const DEV_WORK_TYPES = [
   { key: 'bug', label: 'bug', cls: 'dev-type-bug' },
   { key: 'polish', label: 'polish', cls: 'dev-type-polish' },
   { key: 'think', label: 'think', cls: 'dev-type-think' },
-  { key: 'tune_up', label: 'tune-up', cls: 'dev-type-tune-up' },
+  { key: 'tune_up', label: 'tune', cls: 'dev-type-tune-up' },
   { key: 'purge', label: 'purge', cls: 'dev-type-purge' },
   { key: 'debug', label: 'debug', cls: 'dev-type-debug' },
 ];
