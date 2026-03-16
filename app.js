@@ -634,6 +634,29 @@ function onDevDeleteImportedCancel() {
   if (typeof renderDevPage === 'function') renderDevPage();
 }
 
+function toggleDevSearch() {
+  window.devSearchOpen = !window.devSearchOpen;
+  var wrap = document.getElementById('devSearchWrap');
+  var inp = document.getElementById('devSearchInput');
+  if (wrap) wrap.style.display = window.devSearchOpen ? '' : 'none';
+  if (window.devSearchOpen && inp) {
+    inp.focus();
+    inp.value = '';
+  }
+  if (typeof renderDevPage === 'function') renderDevPage();
+}
+
+function devSearchKeydown(event) {
+  if (event.key === 'Escape') {
+    window.devSearchOpen = false;
+    var wrap = document.getElementById('devSearchWrap');
+    if (wrap) wrap.style.display = 'none';
+    var inp = document.getElementById('devSearchInput');
+    if (inp) { inp.value = ''; inp.blur(); }
+    if (typeof renderDevPage === 'function') renderDevPage();
+  }
+}
+
 function checkTodoReset() {
   const today = new Date().toDateString();
   if (S._lastReset === today) return;

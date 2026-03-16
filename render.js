@@ -530,6 +530,15 @@ function renderDevPage() {
       if (e.key !== 'Escape') return;
       var pg = document.getElementById('pg-dev');
       if (!pg || pg.style.display === 'none') return;
+      if (window.devSearchOpen) {
+        window.devSearchOpen = false;
+        var wrap = document.getElementById('devSearchWrap');
+        if (wrap) wrap.style.display = 'none';
+        var inp = document.getElementById('devSearchInput');
+        if (inp) { inp.value = ''; inp.blur(); }
+        if (typeof renderDevPage === 'function') renderDevPage();
+        return;
+      }
       if (window.devImportPreview) { window.devImportPreview = null; }
       devStage = [];
       devType = [];
@@ -542,6 +551,8 @@ function renderDevPage() {
   var boardBtn = document.getElementById('devViewBoardBtn');
   if (feedBtn) feedBtn.classList.toggle('active', devViewMode === 'feed');
   if (boardBtn) boardBtn.classList.toggle('active', devViewMode === 'board');
+  var terminal = shell.querySelector('.dev-terminal');
+  if (terminal) terminal.classList.toggle('dev-board-mode', devViewMode === 'board');
 
   const sel = document.getElementById('devAreaSelect');
   if (sel && !sel.dataset.bound) {
@@ -554,8 +565,10 @@ function renderDevPage() {
 
   renderDevRails();
 
-  var utilZone = document.getElementById('devUtilZone');
-  if (utilZone) utilZone.style.display = devViewMode === 'board' ? 'none' : 'flex';
+  var filterRow = document.getElementById('devFilterRow');
+  if (filterRow) filterRow.style.display = devViewMode === 'board' ? 'none' : 'flex';
+  var searchWrap = document.getElementById('devSearchWrap');
+  if (searchWrap) searchWrap.style.display = (window.devSearchOpen && devViewMode === 'feed') ? '' : 'none';
   var deleteImportedWrap = document.getElementById('devDeleteImportedWrap');
   if (deleteImportedWrap && isAdmin && devViewMode === 'feed') {
     var importedNotes = (Array.isArray(S.devNotes) ? S.devNotes : []).filter(function (n) { return n.imported; });
@@ -588,6 +601,9 @@ function renderDevPage() {
   if (devEntity.length > 0) filtered = filtered.filter(n => devEntity.includes(n.entity || ''));
   if (devType.length > 0) filtered = filtered.filter(n => devType.includes(n.type || ''));
   if (devStage.length > 0) filtered = filtered.filter(n => devStage.includes(n.stage || 'note'));
+  var searchInput = document.getElementById('devSearchInput');
+  var searchQ = (searchInput && searchInput.value) ? searchInput.value.trim().toLowerCase() : '';
+  if (searchQ) filtered = filtered.filter(function (n) { return (n.text || '').toLowerCase().indexOf(searchQ) !== -1; });
 
   if (devViewMode === 'board') {
     var stages = typeof DEV_STAGES !== 'undefined' ? DEV_STAGES : [];
@@ -599,7 +615,8 @@ function renderDevPage() {
         if (text.length > 120) text = text.slice(0, 117) + '...';
         var entityLabel = (n.entity && typeof DEV_ENTITIES !== 'undefined') ? (DEV_ENTITIES.find(function (x) { return x.key === n.entity; }) || {}).label || n.entity : '';
         var typeLabel = (n.type && typeof DEV_WORK_TYPES !== 'undefined') ? (DEV_WORK_TYPES.find(function (x) { return x.key === n.type; }) || {}).label || n.type : '';
-        var metaParts = [entityLabel, typeLabel].filter(Boolean);
+        var stageLabel = (n.stage && typeof DEV_STAGES !== 'undefined') ? (DEV_STAGES.find(function (x) { return x.key === n.stage; }) || {}).label || n.stage : '';
+        var metaParts = [entityLabel, typeLabel, stageLabel].filter(Boolean);
         if (n.imported) metaParts.unshift('IMPORTED');
         var metaHtml = metaParts.length ? '<div class="dev-board-card-meta">' + metaParts.join(' · ') + '</div>' : '';
         var cardNoteId = (n.id || '').replace(/"/g, '&quot;');
@@ -636,7 +653,7 @@ function renderDevPage() {
     const entityLabel = entityKey && typeof DEV_ENTITIES !== 'undefined'
       ? (DEV_ENTITIES.find(function (x) { return x.key === entityKey; }) || {}).label || entityKey
       : '';
-    const tagsParts = [stageLabel, typeLabel, entityLabel].filter(Boolean);
+    const tagsParts = [entityLabel, typeLabel, stageLabel].filter(Boolean);
     const tagsHtml = tagsParts.length
       ? '<div class="dev-entry-tags">' + tagsParts.join(' · ') + '</div>'
       : '';

@@ -415,6 +415,15 @@
     <div class="pg" id="pg-dev">
       <div class="dev-terminal">
         <div class="dev-composer-row" onkeydown="devComposerKeydown(event)">
+          <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)"></textarea>
+          <div class="dev-util-grid" role="group" aria-label="DEV actions">
+            <button type="button" class="dev-util-cell" onclick="addDevNote()" title="Add note" aria-label="Add note">+</button>
+            <button type="button" class="dev-util-cell" id="devSearchBtn" onclick="toggleDevSearch()" title="Search notes" aria-label="Search">⌕</button>
+            <button type="button" class="dev-util-cell" onclick="exportDevNotes()" title="Export CSV" aria-label="Export">↓</button>
+            <label class="dev-util-cell" title="Import CSV" aria-label="Import"><input type="file" id="devCsvInput" accept=".csv" style="display:none" onchange="onDevImportFileSelected(this)">↑</label>
+            <button type="button" class="dev-util-cell dev-view-toggle-btn" id="devViewFeedBtn" onclick="setDevViewMode('feed')" aria-label="Feed view"></button>
+            <button type="button" class="dev-util-cell dev-view-toggle-btn" id="devViewBoardBtn" onclick="setDevViewMode('board')" aria-label="Board view"></button>
+          </div>
           <div class="dev-control-rail">
             <div class="dev-panels-row">
               <div class="dev-panel dev-panel-entity">
@@ -426,27 +435,19 @@
               <div class="dev-panel dev-panel-stage">
                 <div id="devStageRail" class="dev-rail"></div>
               </div>
-              <div class="dev-util-zone" id="devUtilZone">
-                <label class="dev-icon-btn" title="Import CSV">↑
-                  <input type="file" id="devCsvInput" accept=".csv" style="display:none" onchange="onDevImportFileSelected(this)">
-                </label>
-                <button type="button" class="dev-icon-btn" onclick="exportDevNotes()" title="Export CSV">↓</button>
-                <span id="devDeleteImportedWrap" class="dev-delete-imported-wrap"></span>
-              </div>
             </div>
-            <!-- devAreaSelect kept for JS (getDevAreaFilter / onDevAreaChange); hidden from UI, Entity rail replaces it -->
             <div class="dev-area-select-wrap" aria-hidden="true">
               <select id="devAreaSelect" class="fs dev-area-select" onchange="onDevAreaChange()">
                 <option value="">ALL CHANNELS</option>
               </select>
             </div>
           </div>
-          <div class="dev-view-toggle" role="group" aria-label="View mode">
-              <button type="button" class="dev-view-toggle-btn" id="devViewFeedBtn" onclick="setDevViewMode('feed')" aria-label="Feed view"></button>
-              <button type="button" class="dev-view-toggle-btn" id="devViewBoardBtn" onclick="setDevViewMode('board')" aria-label="Board view"></button>
-            </div>
-          <textarea class="fta dev-textarea" id="devText" placeholder="Add DEV note (backstage only)"></textarea>
-          <button type="button" class="bar-btn dev-add-btn" onclick="addDevNote()">+</button>
+        </div>
+        <div class="dev-filter-row" id="devFilterRow">
+          <div class="dev-search-wrap" id="devSearchWrap" style="display:none">
+            <input type="text" class="dev-search-input" id="devSearchInput" placeholder="Search notes…" aria-label="Search DEV notes" onkeydown="devSearchKeydown(event)" oninput="if(typeof renderDevPage==='function') renderDevPage()">
+          </div>
+          <span id="devDeleteImportedWrap" class="dev-delete-imported-wrap"></span>
         </div>
         <div class="dev-feed-sec" style="display:none;">DEV NOTES</div>
         <div class="dev-feed-wrap">
@@ -454,7 +455,7 @@
         </div>
       </div>
       <!-- DEV-only: playground entry (backstage, not in main nav) -->
-      <a href="#" class="dev-playground-duck" id="devPlaygroundDuck" onclick="event.preventDefault();goPg('playground');" title="PLAYGROUND — selector experiments" aria-label="Open PLAYGROUND"><svg class="dev-duck-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 14c0-2 2-4 5-4s5 2 5 4c0 1.5-.5 3-2 4H7c-1.5-1-2-2.5-2-4z"/><path d="M10 10c.5-1.5 2-2 3-1.5"/><circle cx="11" cy="12" r="1"/></svg></a>
+      <a href="#" class="dev-playground-duck" id="devPlaygroundDuck" onclick="event.preventDefault();goPg('playground');" title="PLAYGROUND — selector experiments" aria-label="Open PLAYGROUND"><img src="images/duck.png" alt="" class="dev-duck-icon" width="20" height="20"></a>
     </div>
 
     <!-- ======= PLAYGROUND (DEV-only: job selector experiments) ======= -->
