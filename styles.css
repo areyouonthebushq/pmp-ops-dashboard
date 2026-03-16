@@ -448,10 +448,25 @@
     @keyframes pgIn { from { opacity:0; } to { opacity:1; } }
 
     /* ============================================================ DEV PAGE — backstage product memory (purple identity) */
-    /* When DEV page is visible: bar logo and mode badge use purple */
+    /* When DEV page is visible: header and footer assume purple structure to match the console */
+    #app:has(#pg-dev.on) .bar {
+    border-bottom-color: hsl(270, 25%, 22%);
+    }
     #app:has(#pg-dev.on) .bar-logo { color: var(--p); }
     #app:has(#pg-dev.on) .bar-logo span { color: var(--p); }
     #app:has(#pg-dev.on) .bar-mode { color: var(--p); border-color: var(--p); }
+    #app:has(#pg-dev.on) .bar-clock { color: var(--d2); }
+    #app:has(#pg-dev.on) .bar-clock-link:hover { color: var(--p); }
+    #app:has(#pg-dev.on) .bar-btn:hover { border-color: var(--p); color: var(--p); }
+    #app:has(#pg-dev.on) .bar-util-item:hover { color: var(--p); background: rgba(212,184,240,0.06); }
+    #app:has(#pg-dev.on) .syncbar-audit-link:hover { color: var(--p) !important; }
+    #app:has(#pg-dev.on) .nav { border-bottom-color: hsl(270, 25%, 22%); }
+    #app:has(#pg-dev.on) .nav-item.on { color: var(--p); border-bottom-color: var(--p); background: rgba(212,184,240,0.04); }
+    #app:has(#pg-dev.on) .nav-item:hover { color: var(--d2); }
+    #app:has(#pg-dev.on) .syncbar {
+    border-top-color: hsl(270, 25%, 22%);
+    }
+    #app:has(#pg-dev.on) .syncbar .sync-ok { color: var(--p); }
     .dev-terminal {
     border: 1px solid var(--b2);
     background: var(--s1);
